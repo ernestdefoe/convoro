@@ -15,6 +15,7 @@ const auth = useAuthModal();
 const page = usePage();
 const user = computed(() => (page.props as any).auth?.user ?? null);
 const isAdmin = computed(() => !!(page.props as any).auth?.isAdmin);
+const dmUnread = computed(() => Number((page.props as any).dmUnread ?? 0));
 const initials = computed(() => {
   if (!user.value) return '';
   const p = String(user.value.name).trim().split(/\s+/);
@@ -40,6 +41,10 @@ const initials = computed(() => {
           </div>
           <ThemeToggle />
           <template v-if="user">
+            <Link href="/messages" class="relative flex h-[34px] w-[34px] items-center justify-center rounded-full border border-line bg-surface-2 text-ink-2 hover:text-ink" aria-label="Messages">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+              <span v-if="dmUnread > 0" class="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">{{ dmUnread > 99 ? '99+' : dmUnread }}</span>
+            </Link>
             <NotificationBell />
             <UserMenu />
           </template>

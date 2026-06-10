@@ -30,6 +30,7 @@ class UserProfileController extends Controller
 
         return response()->json($users->map(fn (User $u) => [
             'id' => Str::slug($u->name, '.'),   // the handle inserted into the post
+            'uid' => $u->id,                    // numeric id (e.g. to start a DM)
             'name' => $u->name,
             'avatar' => $u->avatar_path,
             'initials' => Present::avatar($u)['initials'],

@@ -47,6 +47,7 @@ class Notifier
             'mention' => "{$actor} mentioned you in {$topic}",
             'reaction' => "{$actor} reacted ".($data['emoji'] ?? '')." to your post",
             'wall' => "{$actor} posted on your profile",
+            'message' => "{$actor} sent you a message",
             default => "{$actor} replied in {$topic}",
         };
     }

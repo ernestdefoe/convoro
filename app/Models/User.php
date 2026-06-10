@@ -37,6 +37,14 @@ class User extends Authenticatable
         return $this->hasMany(ProfilePost::class, 'profile_user_id');
     }
 
+    /** Direct-message conversations this user is part of. */
+    public function conversations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Conversation::class, 'conversation_user')
+            ->withPivot('last_read_at')
+            ->withTimestamps();
+    }
+
     /**
      * Get the attributes that should be cast.
      *

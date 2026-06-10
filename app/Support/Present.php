@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Models\Conversation;
+use App\Models\Message;
 use App\Models\Post;
 use App\Models\Topic;
 use App\Models\User;
@@ -90,6 +92,39 @@ class Present
             'reactions' => $react['summary'],
             'reactionTotal' => $react['total'],
             'lastActivity' => optional($t->last_post_at)->diffForHumans(),
+        ];
+    }
+
+    /** A single direct message. */
+    public static function message(Message $m, int $actorId): array
+    {
+        return [
+            'id' => $m->id,
+            'html' => $m->body_html,
+            'author' => self::avatar($m->user),
+            'createdAt' => optional($m->created_at)->diffForHumans(),
+            'mine' => (int) $m->user_id === $actorId,
+        ];
+    }
+
+    /** A conversation row for the inbox (1:1 or group). Assumes participants + lastMessage loaded. */
+    public static function conversation(Conversation $c, int $actorId): array
+    {
+        $others = $c->participants->where('id', '!=', $actorId)->values();
+        $last = $c->relationLoaded('lastMessage') ? $c->lastMessage : null;
+        $me = $c->participants->firstWhere('id', $actorId);
+        $lastRead = $me?->pivot?->last_read_at;
+        $unread = $last
+            && (int) $last->user_id !== $actorId
+            && (! $lastRead || $last->created_at->gt($lastRead));
+
+        return [
+            'id' => $c->id,
+            'title' => $c->is_group ? ($c->title ?: $others->pluck('name')->join(', ')) : ($others->first()?->name ?? 'Conversation'),
+            'avatar' => self::avatar($others->first()),
+            'excerpt' => $last ? self::excerpt($last->body_html, 80) : 'No messages yet',
+            'time' => optional($c->last_message_at)->diffForHumans(),
+            'unread' => $unread,
         ];
     }
 

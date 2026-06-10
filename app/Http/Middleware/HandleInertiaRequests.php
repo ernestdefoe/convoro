@@ -39,6 +39,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'site' => fn () => Settings::public(),
             'notifications' => fn () => $this->notifications($request),
+            'dmUnread' => fn () => $this->dmUnread($request),
             'pushKey' => config('webpush.vapid.public_key'),
             'flash' => ['status' => fn () => $request->session()->get('status')],
             'updateBanner' => fn () => $request->user()?->is_admin ? [
@@ -65,5 +66,22 @@ class HandleInertiaRequests extends Middleware
                 ->map(fn ($n) => Present::notification($n))->all(),
             'unread' => $user->unreadNotifications()->count(),
         ];
+    }
+
+    /** Number of conversations with unread messages for the current user. */
+    private function dmUnread(Request $request): int
+    {
+        $user = $request->user();
+        if (! $user) {
+            return 0;
+        }
+
+        return \Illuminate\Support\Facades\DB::table('conversation_user as cu')
+            ->join('messages as m', 'm.conversation_id', '=', 'cu.conversation_id')
+            ->where('cu.user_id', $user->id)
+            ->where('m.user_id', '!=', $user->id)
+            ->where(fn ($q) => $q->whereNull('cu.last_read_at')->orWhereColumn('m.created_at', '>', 'cu.last_read_at'))
+            ->distinct()
+            ->count('cu.conversation_id');
     }
 }
