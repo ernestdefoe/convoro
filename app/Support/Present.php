@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Post;
 use App\Models\Topic;
 use App\Models\User;
+use Illuminate\Notifications\DatabaseNotification;
 use Illuminate\Support\Str;
 
 /** Shapes Eloquent models into the plain prop arrays the Vue frontend consumes. */
@@ -75,6 +76,18 @@ class Present
             'reactionTotal' => $react['total'],
             'lastActivity' => optional($t->last_post_at)->diffForHumans(),
         ];
+    }
+
+    /** Shape a stored DatabaseNotification for the frontend (merges its data payload). */
+    public static function notification(DatabaseNotification $n): array
+    {
+        $data = is_array($n->data) ? $n->data : (array) json_decode((string) $n->data, true);
+
+        return array_merge([
+            'id' => $n->id,
+            'read' => $n->read_at !== null,
+            'time' => optional($n->created_at)->diffForHumans(),
+        ], $data);
     }
 
     public static function post(Post $p, ?int $actorId = null): array

@@ -22,6 +22,13 @@ createInertiaApp({
             .mount(el);
     },
     progress: {
-        color: '#4B5563',
+        color: '#5b5bd6',
     },
 });
+
+// Register the PWA service worker (installability + push). Safe no-op if unsupported.
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+}

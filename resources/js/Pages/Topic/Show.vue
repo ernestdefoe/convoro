@@ -86,7 +86,7 @@ function submitReply() {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6" /></svg> Back to Community
       </Link>
 
-      <div class="overflow-hidden rounded-q border border-line bg-surface shadow-sm">
+      <div class="overflow-hidden rounded-c border border-line bg-surface shadow-sm">
         <div class="border-b border-line p-6">
           <h1 class="flex flex-wrap items-center gap-3 text-2xl font-extrabold tracking-tight">
             {{ topic.title }}
@@ -141,12 +141,12 @@ function submitReply() {
         <div class="mt-3 flex items-center">
           <span class="text-xs text-ink-muted">Rich text · drag, drop or paste images — auto-converted to WebP</span>
           <button @click="submitReply" :disabled="posting"
-            class="ml-auto rounded-q bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600 disabled:opacity-60">
+            class="ml-auto rounded-c bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600 disabled:opacity-60">
             {{ posting ? 'Posting…' : 'Post reply' }}
           </button>
         </div>
       </div>
-      <div v-else-if="!loggedIn" class="mt-5 rounded-q border border-line bg-surface p-5 text-center text-sm text-ink-2">
+      <div v-else-if="!loggedIn" class="mt-5 rounded-c border border-line bg-surface p-5 text-center text-sm text-ink-2">
         <Link href="/login" class="font-semibold text-primary">Log in</Link> to join the conversation.
       </div>
     </div>

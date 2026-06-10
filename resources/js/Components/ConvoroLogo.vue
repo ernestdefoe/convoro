@@ -17,6 +17,6 @@ withDefaults(defineProps<{ size?: number; showWord?: boolean }>(), {
         <circle cx="17.6" cy="15.6" r="2.7" />
       </svg>
     </span>
-    <span v-if="showWord" class="text-[1.25rem]">Quorum</span>
+    <span v-if="showWord" class="text-[1.25rem]">Convoro</span>
   </span>
 </template>

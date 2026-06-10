@@ -28,7 +28,7 @@ const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, ''
         <Link href="/register" class="mb-3.5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14" /></svg> Start a topic
         </Link>
-        <div class="overflow-hidden rounded-q border border-line bg-surface shadow-sm">
+        <div class="overflow-hidden rounded-c border border-line bg-surface shadow-sm">
           <h4 class="border-b border-line px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">Categories</h4>
           <nav class="flex flex-col gap-0.5 p-2">
             <button @click="go({ category: null })" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold"
@@ -67,7 +67,7 @@ const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, ''
         <!-- Grid -->
         <div v-else class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           <Link v-for="t in topics.data" :key="t.id" :href="`/t/${t.slug}`"
-            class="flex flex-col overflow-hidden rounded-q border border-line bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            class="flex flex-col overflow-hidden rounded-c border border-line bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
             <div class="aspect-[16/8] bg-surface-2">
               <img v-if="t.cover" :src="t.cover" class="h-full w-full object-cover" loading="lazy" />
             </div>
@@ -84,13 +84,13 @@ const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, ''
         </div>
 
         <div v-if="topics.next" class="py-6 text-center">
-          <Link :href="topics.next" class="rounded-q border border-line bg-surface px-5 py-2.5 text-sm font-semibold hover:bg-surface-2">Load more</Link>
+          <Link :href="topics.next" class="rounded-c border border-line bg-surface px-5 py-2.5 text-sm font-semibold hover:bg-surface-2">Load more</Link>
         </div>
       </section>
 
       <!-- Right rail -->
       <aside class="hidden lg:block">
-        <div class="overflow-hidden rounded-q border border-line bg-surface shadow-sm">
+        <div class="overflow-hidden rounded-c border border-line bg-surface shadow-sm">
           <h4 class="border-b border-line px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">Community stats</h4>
           <div class="grid grid-cols-2 gap-2.5 p-4">
             <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats.members) }}</b><span class="text-[11px] text-ink-muted">Members</span></div>

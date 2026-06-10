@@ -16,27 +16,27 @@ export default {
                 sans: ['Inter', ...defaultTheme.fontFamily.sans],
             },
             colors: {
-                // Quorum tokens (driven by CSS custom properties → live theme editor).
+                // Convoro tokens (driven by CSS custom properties → live theme editor).
                 primary: {
-                    DEFAULT: 'rgb(var(--q-primary) / <alpha-value>)',
-                    600: 'rgb(var(--q-primary-600) / <alpha-value>)',
-                    700: 'rgb(var(--q-primary-700) / <alpha-value>)',
-                    soft: 'rgb(var(--q-primary-soft) / <alpha-value>)',
+                    DEFAULT: 'rgb(var(--c-primary) / <alpha-value>)',
+                    600: 'rgb(var(--c-primary-600) / <alpha-value>)',
+                    700: 'rgb(var(--c-primary-700) / <alpha-value>)',
+                    soft: 'rgb(var(--c-primary-soft) / <alpha-value>)',
                 },
                 surface: {
-                    DEFAULT: 'rgb(var(--q-surface) / <alpha-value>)',
-                    2: 'rgb(var(--q-surface-2) / <alpha-value>)',
+                    DEFAULT: 'rgb(var(--c-surface) / <alpha-value>)',
+                    2: 'rgb(var(--c-surface-2) / <alpha-value>)',
                 },
-                appbg: 'rgb(var(--q-bg) / <alpha-value>)',
-                line: 'rgb(var(--q-border) / <alpha-value>)',
+                appbg: 'rgb(var(--c-bg) / <alpha-value>)',
+                line: 'rgb(var(--c-border) / <alpha-value>)',
                 ink: {
-                    DEFAULT: 'rgb(var(--q-text) / <alpha-value>)',
-                    2: 'rgb(var(--q-text-2) / <alpha-value>)',
-                    muted: 'rgb(var(--q-muted) / <alpha-value>)',
+                    DEFAULT: 'rgb(var(--c-text) / <alpha-value>)',
+                    2: 'rgb(var(--c-text-2) / <alpha-value>)',
+                    muted: 'rgb(var(--c-muted) / <alpha-value>)',
                 },
             },
             borderRadius: {
-                q: 'var(--q-radius)',
+                c: 'var(--c-radius)',
             },
         },
     },

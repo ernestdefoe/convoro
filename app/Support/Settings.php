@@ -1,0 +1,81 @@
+<?php
+
+namespace App\Support;
+
+use App\Models\Setting;
+use Illuminate\Support\Facades\Cache;
+
+/**
+ * Key/value site settings with a forever-cache (flushed on write). Values are
+ * JSON-encoded so booleans/numbers round-trip. Cache store is database on shared
+ * hosting, so this needs no Redis.
+ */
+class Settings
+{
+    private const CACHE_KEY = 'convoro.settings';
+
+    /** Defaults — also the source of truth for which keys exist. */
+    public const DEFAULTS = [
+        'site.name' => 'Convoro',
+        'site.tagline' => 'A modern community',
+        'forum.default_view' => 'feed',     // feed | grid
+        'realtime.enabled' => false,         // off by default (shared-hosting baseline)
+        'theme.primary' => '#5b5bd6',
+        'theme.radius' => 12,
+        'theme.mode' => 'light',             // light | dark
+        'theme.font' => 'Inter',             // see Theme::FONTS
+        'theme.font_size' => 16,             // base px
+        'theme.container' => 1240,           // content max width px (0 = full width)
+    ];
+
+    /** @return array<string, mixed> */
+    public static function all(): array
+    {
+        $stored = Cache::rememberForever(self::CACHE_KEY, function () {
+            return Setting::query()->pluck('value', 'key')
+                ->map(fn ($v) => json_decode((string) $v, true))
+                ->all();
+        });
+
+        return array_merge(self::DEFAULTS, $stored);
+    }
+
+    public static function get(string $key, mixed $default = null): mixed
+    {
+        return self::all()[$key] ?? $default ?? (self::DEFAULTS[$key] ?? null);
+    }
+
+    public static function set(string $key, mixed $value): void
+    {
+        Setting::updateOrCreate(['key' => $key], ['value' => json_encode($value)]);
+        Cache::forget(self::CACHE_KEY);
+    }
+
+    /** @param array<string, mixed> $values */
+    public static function setMany(array $values): void
+    {
+        foreach ($values as $k => $v) {
+            Setting::updateOrCreate(['key' => $k], ['value' => json_encode($v)]);
+        }
+        Cache::forget(self::CACHE_KEY);
+    }
+
+    /** Only the public-safe subset shared to the frontend. */
+    public static function public(): array
+    {
+        return [
+            'name' => self::get('site.name'),
+            'tagline' => self::get('site.tagline'),
+            'defaultView' => self::get('forum.default_view'),
+            'realtime' => (bool) self::get('realtime.enabled'),
+            'theme' => [
+                'primary' => self::get('theme.primary'),
+                'radius' => (int) self::get('theme.radius'),
+                'mode' => self::get('theme.mode'),
+                'font' => self::get('theme.font'),
+                'fontSize' => (int) self::get('theme.font_size'),
+                'container' => (int) self::get('theme.container'),
+            ],
+        ];
+    }
+}

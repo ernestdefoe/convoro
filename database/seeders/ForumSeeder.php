@@ -16,10 +16,16 @@ class ForumSeeder extends Seeder
 {
     public function run(): void
     {
+        // Admin (Ernest)
+        User::updateOrCreate(
+            ['email' => 'ernestdefoe@gmail.com'],
+            ['name' => 'Ernest Defoe', 'password' => bcrypt('password'), 'is_admin' => true]
+        );
+
         // Users
         $names = ['Riley West', 'Ana Kovač', 'Devin Tran', 'Mara Pinto', 'Jules Marin', 'Sam Lee'];
         $users = collect($names)->map(fn ($n, $i) => User::firstOrCreate(
-            ['email' => Str::slug($n, '.') . '@quorum.test'],
+            ['email' => Str::slug($n, '.') . '@convoro.test'],
             ['name' => $n, 'password' => bcrypt('password')]
         ));
 
@@ -43,16 +49,16 @@ class ForumSeeder extends Seeder
         ));
 
         $seed = [
-            ['Quorum 1.0 is here — what’s new and the road ahead', 'Announcements', 0, true, true,
-                '<p>Today we’re shipping <strong>Quorum 1.0</strong> — a modern community platform that takes the best of what we love and leaves the friction behind.</p><blockquote>A true WYSIWYG composer, live threads, a one-click extension marketplace and a live theme editor — no markdown, no fuss.</blockquote><p>Drop your questions below — we’re answering live. 🎉</p>',
+            ['Convoro 1.0 is here — what’s new and the road ahead', 'Announcements', 0, true, true,
+                '<p>Today we’re shipping <strong>Convoro 1.0</strong> — a modern community platform that takes the best of what we love and leaves the friction behind.</p><blockquote>A true WYSIWYG composer, live threads, a one-click extension marketplace and a live theme editor — no markdown, no fuss.</blockquote><p>Drop your questions below — we’re answering live. 🎉</p>',
                 ['feature', 'guide']],
             ['Show off your theme editor creations 🎨', 'Design & Themes', 1, false, false,
-                '<p>Drop a screenshot of your customized Quorum theme. The live editor makes it ridiculously easy.</p>', ['showcase']],
+                '<p>Drop a screenshot of your customized Convoro theme. The live editor makes it ridiculously easy.</p>', ['showcase']],
             ['How do I migrate from XenForo? Step-by-step', 'Support', 2, false, false,
                 '<p>Putting together a clean import path. Users, posts, reactions and attachments all came over — attachments auto-converted to WebP which cut storage by ~60%.</p>', ['guide', 'help']],
             ['Built a Spotify now-playing extension in an afternoon', 'Extensions', 3, false, false,
                 '<p>The extension API + click-to-install made this trivial. Source is up — install it straight from the marketplace.</p>', ['showcase', 'feature']],
-            ['Quorum installs as a PWA on iOS & Android', 'Announcements', 4, false, false,
+            ['Convoro installs as a PWA on iOS & Android', 'Announcements', 4, false, false,
                 '<p>Push notifications, offline reading, one app icon — no app store needed.</p>', ['feature']],
             ['Friday game night thread 🎮', 'Off-topic', 5, false, true,
                 '<p>Live thread — drop in, we’re playing now.</p>', []],
@@ -72,7 +78,7 @@ class ForumSeeder extends Seeder
                 'slug' => Str::slug($title) . '-' . Str::lower(Str::random(4)),
                 'user_id' => $author->id,
                 'category_id' => $cat->id,
-                'cover_image' => 'https://picsum.photos/seed/quorum' . $i . '/600/300',
+                'cover_image' => 'https://picsum.photos/seed/convoro' . $i . '/600/300',
                 'is_pinned' => $pinned,
                 'is_live' => $live,
                 'created_at' => $when,

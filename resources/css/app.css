@@ -5,39 +5,39 @@
 @tailwind utilities;
 
 /* ---------------------------------------------------------------------------
-   Quorum design tokens — single source of truth for the theme.
+   Convoro design tokens — single source of truth for the theme.
    The live theme editor (P6) recompiles this :root block at runtime.
    Colors are space-separated RGB channels so Tailwind can apply opacity.
    --------------------------------------------------------------------------- */
 @layer base {
   :root {
-    --q-primary: 91 91 214;        /* #5B5BD6 */
-    --q-primary-600: 79 79 207;
-    --q-primary-700: 66 66 181;
-    --q-primary-soft: 236 237 251;
-    --q-bg: 243 244 249;
-    --q-surface: 255 255 255;
-    --q-surface-2: 248 249 252;
-    --q-border: 230 232 240;
-    --q-text: 27 32 48;
-    --q-text-2: 74 81 104;
-    --q-muted: 138 144 166;
-    --q-radius: 12px;
-    --q-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #a855f7 100%);
+    --c-primary: 91 91 214;        /* #5B5BD6 */
+    --c-primary-600: 79 79 207;
+    --c-primary-700: 66 66 181;
+    --c-primary-soft: 236 237 251;
+    --c-bg: 243 244 249;
+    --c-surface: 255 255 255;
+    --c-surface-2: 248 249 252;
+    --c-border: 230 232 240;
+    --c-text: 27 32 48;
+    --c-text-2: 74 81 104;
+    --c-muted: 138 144 166;
+    --c-radius: 12px;
+    --c-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #a855f7 100%);
   }
 
   [data-theme='dark'] {
-    --q-bg: 16 18 30;
-    --q-surface: 22 25 41;
-    --q-surface-2: 28 32 52;
-    --q-border: 42 47 70;
-    --q-text: 233 235 243;
-    --q-text-2: 174 180 208;
-    --q-muted: 120 127 152;
+    --c-bg: 16 18 30;
+    --c-surface: 22 25 41;
+    --c-surface-2: 28 32 52;
+    --c-border: 42 47 70;
+    --c-text: 233 235 243;
+    --c-text-2: 174 180 208;
+    --c-muted: 120 127 152;
   }
 
-  html { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
-  body { background: rgb(var(--q-bg)); color: rgb(var(--q-text)); -webkit-font-smoothing: antialiased; }
+  html { font-family: var(--c-font, 'Inter', ui-sans-serif, system-ui, sans-serif); }
+  body { background: rgb(var(--c-bg)); color: rgb(var(--c-text)); font-size: var(--c-font-size, 16px); -webkit-font-smoothing: antialiased; }
 }
 
-.q-grad { background: var(--q-grad); }
+.q-grad { background: var(--c-grad); }

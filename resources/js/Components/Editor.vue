@@ -82,7 +82,7 @@ function onFile(e: Event) {
 </script>
 
 <template>
-  <div class="relative overflow-hidden rounded-q border border-line bg-surface">
+  <div class="relative overflow-hidden rounded-c border border-line bg-surface">
     <div v-if="editor" class="flex flex-wrap items-center gap-0.5 border-b border-line bg-surface-2 px-2.5 py-2">
       <button type="button" class="tb" :class="{ on: isActive('bold') }" title="Bold" @click="editor.chain().focus().toggleBold().run()"><b>B</b></button>
       <button type="button" class="tb italic" :class="{ on: isActive('italic') }" title="Italic" @click="editor.chain().focus().toggleItalic().run()">I</button>
@@ -112,18 +112,18 @@ function onFile(e: Event) {
 </template>
 
 <style scoped>
-.tb { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; color: rgb(var(--q-text-2)); cursor: pointer; border: 0; background: none; font-size: 14px; }
-.tb:hover { background: rgb(var(--q-surface)); box-shadow: 0 0 0 1px rgb(var(--q-border)); }
-.tb.on { background: rgb(var(--q-primary-soft)); color: rgb(var(--q-primary-700)); }
+.tb { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; color: rgb(var(--c-text-2)); cursor: pointer; border: 0; background: none; font-size: 14px; }
+.tb:hover { background: rgb(var(--c-surface)); box-shadow: 0 0 0 1px rgb(var(--c-border)); }
+.tb.on { background: rgb(var(--c-primary-soft)); color: rgb(var(--c-primary-700)); }
 :deep(.ProseMirror) { min-height: 90px; }
-:deep(.ProseMirror p.is-editor-empty:first-child::before) { content: attr(data-placeholder); color: rgb(var(--q-muted)); float: left; height: 0; pointer-events: none; }
+:deep(.ProseMirror p.is-editor-empty:first-child::before) { content: attr(data-placeholder); color: rgb(var(--c-muted)); float: left; height: 0; pointer-events: none; }
 :deep(.prose-q) { line-height: 1.65; }
 :deep(.prose-q p) { margin: 0 0 10px; }
-:deep(.prose-q blockquote) { border-left: 3px solid rgb(var(--q-primary)); padding-left: 12px; color: rgb(var(--q-text-2)); margin: 0 0 10px; }
+:deep(.prose-q blockquote) { border-left: 3px solid rgb(var(--c-primary)); padding-left: 12px; color: rgb(var(--c-text-2)); margin: 0 0 10px; }
 :deep(.prose-q ul) { list-style: disc; padding-left: 22px; }
 :deep(.prose-q ol) { list-style: decimal; padding-left: 22px; }
 :deep(.prose-q h2) { font-size: 1.3em; font-weight: 700; margin: 4px 0 8px; }
-:deep(.prose-q pre) { background: rgb(var(--q-surface-2)); padding: 10px 12px; border-radius: 8px; font-family: monospace; font-size: 13px; overflow: auto; }
-:deep(.prose-q a) { color: rgb(var(--q-primary)); text-decoration: underline; }
-:deep(.prose-q img) { max-width: 100%; height: auto; border-radius: 10px; border: 1px solid rgb(var(--q-border)); margin: 4px 0; }
+:deep(.prose-q pre) { background: rgb(var(--c-surface-2)); padding: 10px 12px; border-radius: 8px; font-family: monospace; font-size: 13px; overflow: auto; }
+:deep(.prose-q a) { color: rgb(var(--c-primary)); text-decoration: underline; }
+:deep(.prose-q img) { max-width: 100%; height: auto; border-radius: 10px; border: 1px solid rgb(var(--c-border)); margin: 4px 0; }
 </style>

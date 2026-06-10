@@ -8,7 +8,7 @@ use HTMLPurifier_Config;
 /**
  * Sanitizes rich content (TipTap/ProseMirror HTML) before storage/display.
  * Allow-list only; strips scripts, event handlers and javascript:/data: URLs.
- * Quorum stores sanitized HTML — never Markdown.
+ * Convoro stores sanitized HTML — never Markdown.
  */
 class Content
 {
