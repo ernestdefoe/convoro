@@ -12,6 +12,22 @@ const props = defineProps<{
 const stripe = useForm({ key: props.stripe.key ?? '', secret: '', webhook_secret: '' });
 function saveStripe() { stripe.post('/admin/store/stripe', { preserveScroll: true }); }
 
+// Link a GitHub repo (registry)
+const repo = ref('');
+const linking = ref(false);
+function linkRepo() {
+  if (!repo.value.trim()) return;
+  linking.value = true;
+  router.post('/admin/store/link', { repo: repo.value.trim() }, {
+    preserveScroll: true,
+    onSuccess: () => (repo.value = ''),
+    onFinish: () => (linking.value = false),
+  });
+}
+function refreshRepo(p: any) {
+  router.post(`/admin/store/products/${p.id}/refresh`, {}, { preserveScroll: true });
+}
+
 // Product editor
 const blank = () => ({ id: null, name: '', type: 'extension', tagline: '', description: '', package: '', version: '1.0.0', price_dollars: '19', image: '', published: true, featured: false });
 const editing = ref<any>(null);
@@ -70,6 +86,18 @@ function uploadFile(p: any, e: Event) {
       </div>
     </section>
 
+    <!-- Link a GitHub repo (registry) -->
+    <section class="mb-6 max-w-2xl rounded-2xl border border-white/5 bg-[#14172a] p-6">
+      <h2 class="text-sm font-bold uppercase tracking-wide text-slate-400">Publish from GitHub</h2>
+      <p class="mt-1 text-xs text-slate-500">Link a public GitHub repo with an <code>extension.json</code> at its root — Convoro reads the manifest and lists it in the catalog. Updates pull from the latest release (or the default branch). No zips.</p>
+      <div class="mt-3 flex flex-wrap items-center gap-3">
+        <input v-model="repo" type="text" placeholder="owner/repository" class="w-72 rounded-lg border-white/10 bg-[#0f1120] font-mono text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+        <button type="button" :disabled="linking || !repo.trim()" @click="linkRepo" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">
+          {{ linking ? 'Linking…' : 'Link repo' }}
+        </button>
+      </div>
+    </section>
+
     <!-- Products -->
     <section class="rounded-2xl border border-white/5 bg-[#14172a] p-6">
       <div class="mb-4 flex items-center">
@@ -87,11 +115,13 @@ function uploadFile(p: any, e: Event) {
               <span class="font-semibold text-white">{{ p.name }}</span>
               <span v-if="!p.published" class="rounded bg-white/10 px-1.5 py-0.5 text-[11px] text-slate-400">Draft</span>
               <span v-if="p.featured" class="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] text-amber-300">Featured</span>
-              <span v-if="p.hasDownload" class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] text-emerald-300">File ✓</span>
+              <span v-if="p.source === 'github'" class="rounded bg-sky-500/15 px-1.5 py-0.5 text-[11px] text-sky-300">GitHub</span>
+              <span v-if="p.hasDownload" class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] text-emerald-300">{{ p.source === 'github' ? 'Linked ✓' : 'File ✓' }}</span>
             </div>
-            <div class="text-xs text-slate-500">${{ (p.price_cents/100).toFixed(2) }} · {{ p.sales }} sold · {{ p.package || 'no package id' }}</div>
+            <div class="text-xs text-slate-500">${{ (p.price_cents/100).toFixed(2) }} · {{ p.sales }} sold · {{ p.source === 'github' ? p.repo : (p.package || 'no package id') }}</div>
           </div>
-          <label class="cursor-pointer rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/5">
+          <button v-if="p.source === 'github'" @click="refreshRepo(p)" class="rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/5">Refresh</button>
+          <label v-else class="cursor-pointer rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/5">
             Upload zip<input type="file" accept=".zip" class="hidden" @change="(e) => uploadFile(p, e)" />
           </label>
           <button @click="openEdit(p)" class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/5">Edit</button>

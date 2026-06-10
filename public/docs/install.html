@@ -79,7 +79,7 @@ cp .env.example .env</code></pre>
       <p>When a new version is available you’ll see a banner in <strong>Admin → Marketplace</strong>. Click to update — Convoro downloads the release, applies it (preserving your config and uploads), and runs any new migrations. On shared hosting you can also just upload the new archive over the old files; your <code>.env</code> and <code>storage/</code> are never overwritten.</p>
 
       <h2 id="extensions">Extensions &amp; themes</h2>
-      <p>Open <strong>Admin → Marketplace</strong> to manage add-ons. Upload an extension’s <code>.zip</code> and toggle it on — no Composer or shell needed. On Composer-capable hosts, Convoro can also install packages directly. Click any installed card to configure its settings.</p>
+      <p>Open <strong>Admin → Marketplace</strong> and install from the <strong>catalog</strong> — extensions are published from GitHub, so a one-click install pulls the latest release straight from the repo (no zip uploads, no Packagist). Premium add-ons unlock with a license key, and Composer-capable hosts can also pull packages directly. Click any installed card to configure its settings. To publish your own, see <a href="/docs/extensions.html">Building extensions</a>.</p>
 
       <h2 id="troubleshooting">Troubleshooting</h2>
       <h3>I can’t set the document root to <code>public/</code></h3>

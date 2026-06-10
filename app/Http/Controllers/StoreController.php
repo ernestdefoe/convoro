@@ -95,8 +95,13 @@ class StoreController extends Controller
                 'package' => $p->package,
                 'price' => $p->priceLabel(),
                 'free' => $p->isFree(),
-                // Only free items expose a direct download; premium needs a license key.
-                'download_url' => ($p->isFree() && $p->download_path) ? route('catalog.download', $p) : null,
+                'source' => $p->source,
+                'repo' => $p->repo,
+                // GitHub-linked extensions install straight from the repo archive;
+                // free hosted items use the catalog download; premium needs a license.
+                'download_url' => $p->source === 'github'
+                    ? $p->download_url
+                    : (($p->isFree() && $p->download_path) ? route('catalog.download', $p) : null),
             ]);
 
         return response()->json(['items' => $items]);

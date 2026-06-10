@@ -60,18 +60,6 @@ function checkUpdates() {
   router.post('/admin/system/check-updates', {}, { preserveScroll: true });
 }
 
-const uploading = ref(false);
-const fileInput = ref<HTMLInputElement | null>(null);
-function pickPackage(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
-  uploading.value = true;
-  router.post('/admin/marketplace/install', { package: file }, {
-    forceFormData: true,
-    preserveScroll: true,
-    onFinish: () => { uploading.value = false; if (fileInput.value) fileInput.value.value = ''; },
-  });
-}
 
 const licenseKey = ref('');
 const redeeming = ref(false);
@@ -143,17 +131,13 @@ function saveSettings() {
     <!-- Result flash -->
     <p v-if="result" class="mb-4 rounded-lg px-4 py-2 text-sm" :class="result.ok ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-300'">{{ result.message }}</p>
 
-    <!-- Install from zip -->
+    <!-- Install options -->
     <section class="mb-6 rounded-2xl border border-white/5 bg-[#14172a] p-5">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-slate-400">Install an extension</h2>
-      <p class="mt-1 text-xs text-slate-500">Upload a Convoro extension package (<code>.zip</code>). No Composer or shell needed — works on shared hosting.</p>
-      <div class="mt-3 flex flex-wrap items-center gap-3">
-        <input ref="fileInput" type="file" accept=".zip,application/zip" class="text-sm text-slate-300" @change="pickPackage" />
-        <span v-if="uploading" class="text-sm text-slate-400">Installing…</span>
-      </div>
+      <h2 class="text-sm font-bold uppercase tracking-wide text-slate-400">Add an extension</h2>
+      <p class="mt-1 text-xs text-slate-500">Install from the <strong>catalog</strong> below (extensions are published from GitHub), redeem a premium <strong>license key</strong>, or — on Composer-capable hosts — pull a package directly.</p>
 
       <!-- Redeem a premium license key from the Convoro store -->
-      <div class="mt-5 border-t border-white/5 pt-5">
+      <div class="mt-5">
         <h3 class="text-xs font-bold uppercase tracking-wide text-slate-400">Have a license key?</h3>
         <p class="mt-1 text-xs text-slate-500">Bought a premium extension or theme from the Convoro store? Paste your key to install it here.</p>
         <div class="mt-3 flex flex-wrap items-center gap-3">

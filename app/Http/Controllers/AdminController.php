@@ -154,7 +154,9 @@ class AdminController extends Controller
                     'tagline' => $p->tagline, 'description' => $p->description, 'package' => $p->package,
                     'version' => $p->version, 'price_cents' => $p->price_cents, 'image' => $p->image,
                     'published' => $p->published, 'featured' => $p->featured,
-                    'hasDownload' => (bool) $p->download_path, 'sales' => $p->licenses_count,
+                    'source' => $p->source, 'repo' => $p->repo,
+                    'hasDownload' => $p->source === 'github' ? (bool) $p->download_url : (bool) $p->download_path,
+                    'sales' => $p->licenses_count,
                 ]),
             'stripe' => [
                 'key' => Settings::get('stripe.key'),
@@ -232,6 +234,33 @@ class AdminController extends Controller
         $data['slug'] = $product->slug ?: $this->uniqueSlug(\App\Models\Product::class, $data['name']);
         $data['version'] = $data['version'] ?: '1.0.0';
         $product->fill($data)->save();
+    }
+
+    /** Link (or refresh) a product from a GitHub repository (the registry). */
+    public function linkRepo(Request $request): RedirectResponse
+    {
+        $repo = $request->validate(['repo' => ['required', 'string', 'max:160']])['repo'];
+
+        try {
+            $product = \App\Support\GitHubRegistry::linkProduct($repo);
+
+            return back()->with('status', "Linked “{$product->name}” v{$product->version} from GitHub.");
+        } catch (\Throwable $e) {
+            return back()->with('status', 'Could not link: '.$e->getMessage());
+        }
+    }
+
+    public function refreshRepo(\App\Models\Product $product): RedirectResponse
+    {
+        abort_unless($product->source === 'github' && $product->repo, 422);
+
+        try {
+            \App\Support\GitHubRegistry::linkProduct($product->repo);
+
+            return back()->with('status', "Refreshed “{$product->name}” from GitHub.");
+        } catch (\Throwable $e) {
+            return back()->with('status', 'Refresh failed: '.$e->getMessage());
+        }
     }
 
     public function marketplace(): Response
@@ -316,19 +345,6 @@ class AdminController extends Controller
         \App\Jobs\ComposerTaskJob::dispatch($data['action'], $data['package']);
 
         return back()->with('extResult', ['ok' => true, 'message' => "Composer {$data['action']} queued for “{$data['package']}”. This can take a minute."]);
-    }
-
-    public function installExtension(Request $request): RedirectResponse
-    {
-        $request->validate(['package' => ['required', 'file', 'mimetypes:application/zip,application/x-zip-compressed,multipart/x-zip', 'max:51200']]);
-
-        try {
-            $id = \App\Support\ExtensionInstaller::installFromZip($request->file('package')->getRealPath());
-
-            return back()->with('extResult', ['ok' => true, 'message' => "Installed “{$id}”. Enable it to activate."]);
-        } catch (\Throwable $e) {
-            return back()->with('extResult', ['ok' => false, 'message' => $e->getMessage()]);
-        }
     }
 
     public function installLicense(Request $request): RedirectResponse

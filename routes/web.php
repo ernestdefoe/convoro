@@ -118,7 +118,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/tags/{tag}', [App\Http\Controllers\AdminController::class, 'destroyTag'])->name('tags.destroy');
 
     Route::get('/marketplace', [App\Http\Controllers\AdminController::class, 'marketplace'])->name('marketplace');
-    Route::post('/marketplace/install', [App\Http\Controllers\AdminController::class, 'installExtension'])->name('marketplace.install');
     Route::post('/marketplace/license', [App\Http\Controllers\AdminController::class, 'installLicense'])->name('marketplace.license');
     Route::post('/marketplace/enable', [App\Http\Controllers\AdminController::class, 'enableExtension'])->name('marketplace.enable');
     Route::post('/marketplace/disable', [App\Http\Controllers\AdminController::class, 'disableExtension'])->name('marketplace.disable');
@@ -128,6 +127,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/marketplace/catalog/install', [App\Http\Controllers\AdminController::class, 'installCatalogItem'])->name('marketplace.catalog.install');
     Route::get('/store', [App\Http\Controllers\AdminController::class, 'store'])->name('store');
     Route::post('/store/stripe', [App\Http\Controllers\AdminController::class, 'updateStripe'])->name('store.stripe');
+    Route::post('/store/link', [App\Http\Controllers\AdminController::class, 'linkRepo'])->name('store.link');
+    Route::post('/store/products/{product}/refresh', [App\Http\Controllers\AdminController::class, 'refreshRepo'])->name('products.refresh');
     Route::post('/store/products', [App\Http\Controllers\AdminController::class, 'storeProduct'])->name('products.store');
     Route::put('/store/products/{product}', [App\Http\Controllers\AdminController::class, 'updateProduct'])->name('products.update');
     Route::delete('/store/products/{product}', [App\Http\Controllers\AdminController::class, 'destroyProduct'])->name('products.destroy');
