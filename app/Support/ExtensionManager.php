@@ -89,7 +89,7 @@ class ExtensionManager
             'description' => (string) ($raw['description'] ?? ''),
             'author' => (string) ($raw['author'] ?? ''),
             'convoro' => (string) ($raw['convoro'] ?? '*'),    // version constraint
-            'type' => in_array(($raw['type'] ?? 'extension'), ['extension', 'theme'], true) ? $raw['type'] : 'extension',
+            'type' => in_array(($raw['type'] ?? 'extension'), ['extension', 'theme'], true) ? ($raw['type'] ?? 'extension') : 'extension',
             'namespace' => isset($raw['namespace']) ? rtrim((string) $raw['namespace'], '\\').'\\' : null,
             'provider' => $raw['provider'] ?? null,            // FQCN of a ServiceProvider
             'migrations' => $raw['migrations'] ?? null,        // dir relative to package
