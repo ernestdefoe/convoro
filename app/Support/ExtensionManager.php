@@ -71,7 +71,42 @@ class ExtensionManager
             }
         }
 
+        // Composer-installed extensions (type: convoro-extension). Their classes
+        // autoload via Composer itself, so they need no custom autoloader.
+        foreach (self::composerPackageDirs() as $dir) {
+            if (is_file($dir.'/extension.json') && ($m = self::manifest($dir.'/extension.json', $dir)) !== null) {
+                $m['_composer'] = true;
+                $found[$m['id']] = $m;
+            }
+        }
+
         return self::$cache = $found;
+    }
+
+    /** Absolute dirs of Composer packages declaring `type: convoro-extension`. */
+    private static function composerPackageDirs(): array
+    {
+        $installed = base_path('vendor/composer/installed.json');
+        if (! is_file($installed)) {
+            return [];
+        }
+        $data = json_decode((string) @file_get_contents($installed), true);
+        $packages = $data['packages'] ?? $data ?? [];
+        $vendor = base_path('vendor');
+
+        $dirs = [];
+        foreach ($packages as $p) {
+            if (($p['type'] ?? null) === 'convoro-extension' && ! empty($p['name'])) {
+                // installed.json paths are relative to vendor/composer/.
+                $rel = $p['install-path'] ?? ('../'.$p['name']);
+                $path = realpath($vendor.'/composer/'.$rel) ?: realpath($vendor.'/'.$p['name']);
+                if ($path && is_dir($path)) {
+                    $dirs[] = $path;
+                }
+            }
+        }
+
+        return $dirs;
     }
 
     /** Parse + normalize a manifest file. Returns null if malformed. */

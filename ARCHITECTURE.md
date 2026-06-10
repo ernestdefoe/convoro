@@ -80,7 +80,7 @@ convoro/
 **Design goal: the zip-upload path must work with zero Composer, zero shell, zero `dump-autoload`** — so the cheapest shared host (or a panel-only host with no terminal) can install an extension by uploading a zip through the admin Marketplace.
 
 > **Important framing (don't conflate the two):** *no SSH access ≠ no Composer access.* Plenty of shared hosts expose Composer through a control-panel task runner or a web-callable PHP API even when there's no shell — this is exactly how **Flarum's Extension Manager** installs extensions on shared hosting. So Convoro supports **two install paths**, and both must work without a terminal:
-> 1. **Composer path** — run `composer require vendor/pkg` via an in-process Composer runner (Composer's own PHP API / a queued job), then the package autoloads normally. Best for dependency resolution + updates. *(Planned — see roadmap; mirror Flarum/FoF Extension Manager.)*
+> 1. **Composer path** — `ComposerRunner` locates a composer binary/phar and runs `composer require vendor/pkg` via a queued `ComposerTaskJob` (off-request, then `dump-autoload -o`). Composer-installed packages of `type: convoro-extension` are auto-discovered by `ExtensionManager` (from `vendor/composer/installed.json`) and autoload via Composer itself. Surfaced in the Marketplace only when Composer is detected. Best for dependency resolution + updates.
 > 2. **Zip-upload path** — the no-Composer fallback described below (custom autoloader, no `dump-autoload`). Always available.
 
 ### Package layout

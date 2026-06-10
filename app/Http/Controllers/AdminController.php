@@ -166,7 +166,25 @@ class AdminController extends Controller
         return Inertia::render('Admin/Marketplace', [
             'update' => $this->updateState(),
             'extensions' => $installed,
+            'composer' => [
+                'available' => \App\Support\ComposerRunner::available(),
+                'task' => \App\Jobs\ComposerTaskJob::status(),
+            ],
         ]);
+    }
+
+    public function composerInstall(Request $request): RedirectResponse
+    {
+        abort_unless(\App\Support\ComposerRunner::available(), 422, 'Composer is not available on this server.');
+
+        $data = $request->validate([
+            'action' => ['required', 'in:require,remove'],
+            'package' => ['required', 'string', 'regex:#^[a-z0-9]([a-z0-9._-]*)/[a-z0-9]([a-z0-9._-]*)(:.+)?$#'],
+        ]);
+
+        \App\Jobs\ComposerTaskJob::dispatch($data['action'], $data['package']);
+
+        return back()->with('extResult', ['ok' => true, 'message' => "Composer {$data['action']} queued for “{$data['package']}”. This can take a minute."]);
     }
 
     public function installExtension(Request $request): RedirectResponse

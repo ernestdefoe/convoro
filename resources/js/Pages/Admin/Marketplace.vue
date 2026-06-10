@@ -9,7 +9,17 @@ interface Ext { id: string; name: string; version: string; description: string; 
 const props = defineProps<{
   update: { current: string; latest: string; available: boolean; url: string | null; checkedAt: string | null; enabled: boolean };
   extensions: Ext[];
+  composer: { available: boolean; task: { state: string; action?: string; package?: string; output?: string; finishedAt?: string | null } };
 }>();
+
+const composerPkg = ref('');
+function composerInstall() {
+  if (!composerPkg.value.trim()) return;
+  router.post('/admin/marketplace/composer', { action: 'require', package: composerPkg.value.trim() }, {
+    preserveScroll: true,
+    onSuccess: () => (composerPkg.value = ''),
+  });
+}
 
 const page = usePage();
 const result = computed(() => (page.props as any).flash?.extResult ?? null);
@@ -118,6 +128,28 @@ function saveSettings() {
       <div class="mt-3 flex flex-wrap items-center gap-3">
         <input ref="fileInput" type="file" accept=".zip,application/zip" class="text-sm text-slate-300" @change="pickPackage" />
         <span v-if="uploading" class="text-sm text-slate-400">Installing…</span>
+      </div>
+
+      <!-- Composer install path (only when Composer is available) -->
+      <div class="mt-5 border-t border-white/5 pt-5">
+        <h3 class="text-xs font-bold uppercase tracking-wide text-slate-400">Install via Composer</h3>
+        <template v-if="composer.available">
+          <p class="mt-1 text-xs text-slate-500">Have Composer (no SSH needed)? Pull a package straight from Packagist — dependencies resolved automatically.</p>
+          <div class="mt-3 flex flex-wrap items-center gap-3">
+            <input v-model="composerPkg" type="text" placeholder="vendor/package" :disabled="composer.task.state === 'running'"
+              class="w-72 rounded-lg border-white/10 bg-[#0f1120] font-mono text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+            <button type="button" :disabled="composer.task.state === 'running' || !composerPkg.trim()" @click="composerInstall"
+              class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">
+              {{ composer.task.state === 'running' ? 'Working…' : 'Install' }}
+            </button>
+          </div>
+          <p v-if="composer.task && composer.task.state !== 'idle'" class="mt-3 text-sm"
+            :class="composer.task.state === 'failed' ? 'text-red-300' : composer.task.state === 'done' ? 'text-emerald-300' : 'text-slate-400'">
+            <span class="font-semibold">{{ composer.task.action }} {{ composer.task.package }}</span> —
+            {{ composer.task.state === 'running' ? 'in progress…' : composer.task.state }}
+          </p>
+        </template>
+        <p v-else class="mt-1 text-xs text-slate-500">Composer isn’t available on this server — use the zip upload above instead. (Both work without a terminal.)</p>
       </div>
     </section>
 
