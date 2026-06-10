@@ -63,6 +63,18 @@ function pickPackage(e: Event) {
   });
 }
 
+const licenseKey = ref('');
+const redeeming = ref(false);
+function redeemLicense() {
+  if (!licenseKey.value.trim()) return;
+  redeeming.value = true;
+  router.post('/admin/marketplace/license', { key: licenseKey.value.trim() }, {
+    preserveScroll: true,
+    onSuccess: () => (licenseKey.value = ''),
+    onFinish: () => (redeeming.value = false),
+  });
+}
+
 function toggle(ext: { id: string; enabled: boolean }) {
   const url = ext.enabled ? '/admin/marketplace/disable' : '/admin/marketplace/enable';
   router.post(url, { id: ext.id }, { preserveScroll: true });
@@ -128,6 +140,20 @@ function saveSettings() {
       <div class="mt-3 flex flex-wrap items-center gap-3">
         <input ref="fileInput" type="file" accept=".zip,application/zip" class="text-sm text-slate-300" @change="pickPackage" />
         <span v-if="uploading" class="text-sm text-slate-400">Installing…</span>
+      </div>
+
+      <!-- Redeem a premium license key from the Convoro store -->
+      <div class="mt-5 border-t border-white/5 pt-5">
+        <h3 class="text-xs font-bold uppercase tracking-wide text-slate-400">Have a license key?</h3>
+        <p class="mt-1 text-xs text-slate-500">Bought a premium extension or theme from the Convoro store? Paste your key to install it here.</p>
+        <div class="mt-3 flex flex-wrap items-center gap-3">
+          <input v-model="licenseKey" type="text" placeholder="CONV-XXXX-XXXX-XXXX-XXXX" :disabled="redeeming"
+            class="w-72 rounded-lg border-white/10 bg-[#0f1120] font-mono text-sm uppercase text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+          <button type="button" :disabled="redeeming || !licenseKey.trim()" @click="redeemLicense"
+            class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">
+            {{ redeeming ? 'Redeeming…' : 'Redeem & install' }}
+          </button>
+        </div>
       </div>
 
       <!-- Composer install path (only when Composer is available) -->

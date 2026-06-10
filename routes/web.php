@@ -112,6 +112,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::get('/marketplace', [App\Http\Controllers\AdminController::class, 'marketplace'])->name('marketplace');
     Route::post('/marketplace/install', [App\Http\Controllers\AdminController::class, 'installExtension'])->name('marketplace.install');
+    Route::post('/marketplace/license', [App\Http\Controllers\AdminController::class, 'installLicense'])->name('marketplace.license');
     Route::post('/marketplace/enable', [App\Http\Controllers\AdminController::class, 'enableExtension'])->name('marketplace.enable');
     Route::post('/marketplace/disable', [App\Http\Controllers\AdminController::class, 'disableExtension'])->name('marketplace.disable');
     Route::post('/marketplace/uninstall', [App\Http\Controllers\AdminController::class, 'uninstallExtension'])->name('marketplace.uninstall');

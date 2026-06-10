@@ -77,6 +77,25 @@ class ExtensionInstaller
         }
     }
 
+    /** Download a release zip from a URL and install it. Returns the extension id. */
+    public static function installFromUrl(string $url): string
+    {
+        $tmp = storage_path('app/ext-tmp/'.bin2hex(random_bytes(8)).'.zip');
+        File::ensureDirectoryExists(dirname($tmp));
+
+        $res = \Illuminate\Support\Facades\Http::timeout(120)->get($url);
+        if (! $res->successful()) {
+            throw new \RuntimeException('Could not download the package (HTTP '.$res->status().').');
+        }
+        file_put_contents($tmp, $res->body());
+
+        try {
+            return self::installFromZip($tmp);
+        } finally {
+            @unlink($tmp);
+        }
+    }
+
     /** Enable an installed extension and run its migrations. */
     public static function enable(string $id): void
     {

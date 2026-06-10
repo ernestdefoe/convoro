@@ -200,6 +200,32 @@ class AdminController extends Controller
         }
     }
 
+    public function installLicense(Request $request): RedirectResponse
+    {
+        $key = $request->validate(['key' => ['required', 'string', 'max:64']])['key'];
+
+        try {
+            $res = \Illuminate\Support\Facades\Http::asJson()->acceptJson()->timeout(20)
+                ->post(rtrim(config('convoro.store_url'), '/').'/api/licenses/validate', ['key' => trim($key)]);
+
+            if (! $res->successful() || ! $res->json('valid')) {
+                return back()->with('extResult', ['ok' => false, 'message' => $res->json('message') ?? 'Invalid license key.']);
+            }
+
+            $download = $res->json('download_url');
+            $name = $res->json('product.name') ?? 'item';
+            if (! $download) {
+                return back()->with('extResult', ['ok' => true, 'message' => "License for “{$name}” is valid, but no download is available yet."]);
+            }
+
+            $id = \App\Support\ExtensionInstaller::installFromUrl($download);
+
+            return back()->with('extResult', ['ok' => true, 'message' => "Installed “{$id}” from your license. Enable it to activate."]);
+        } catch (\Throwable $e) {
+            return back()->with('extResult', ['ok' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
     public function enableExtension(Request $request): RedirectResponse
     {
         $id = $request->validate(['id' => ['required', 'string']])['id'];

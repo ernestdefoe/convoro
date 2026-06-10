@@ -13,6 +13,9 @@ return [
     // across both when SESSION_DOMAIN is set to the parent (e.g. .convoro.co).
     'marketing_domain' => env('CONVORO_MARKETING_DOMAIN', 'convoro.co'),
 
+    // The central store this install validates premium license keys against.
+    'store_url' => env('CONVORO_STORE_URL', 'https://convoro.co'),
+
     // Stripe (central store). Prefer admin Settings, fall back to env. Empty =
     // checkout disabled (store still browsable).
     'stripe' => [
