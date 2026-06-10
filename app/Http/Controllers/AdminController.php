@@ -10,6 +10,7 @@ use App\Models\Tag;
 use App\Models\Topic;
 use App\Models\User;
 use App\Support\IconGenerator;
+use App\Support\Permissions;
 use App\Support\Present;
 use App\Support\Settings;
 use Illuminate\Validation\Rule;
@@ -275,7 +276,8 @@ class AdminController extends Controller
         return Inertia::render('Admin/Members', [
             'users' => $users,
             'q' => $q,
-            'groups' => Group::orderBy('name')->get(['id', 'name', 'color', 'is_staff']),
+            'groups' => Group::orderBy('name')->get(['id', 'name', 'color', 'is_staff', 'permissions']),
+            'permissionCatalog' => Permissions::catalog(),
         ]);
     }
 
@@ -303,26 +305,39 @@ class AdminController extends Controller
         return back()->with('status', 'Member deleted.');
     }
 
-    public function storeGroup(Request $request): RedirectResponse
+    private function groupRules(): array
     {
-        $data = $request->validate([
+        return [
             'name' => ['required', 'string', 'max:40'],
             'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'is_staff' => ['boolean'],
+            'permissions' => ['array'],
+            'permissions.*' => [Rule::in(Permissions::keys())],
+        ];
+    }
+
+    public function storeGroup(Request $request): RedirectResponse
+    {
+        $data = $request->validate($this->groupRules());
+        Group::create([
+            'name' => $data['name'],
+            'color' => $data['color'],
+            'is_staff' => $request->boolean('is_staff'),
+            'permissions' => array_values($data['permissions'] ?? []),
         ]);
-        Group::create($data + ['is_staff' => $request->boolean('is_staff')]);
 
         return back();
     }
 
     public function updateGroup(Request $request, Group $group): RedirectResponse
     {
-        $data = $request->validate([
-            'name' => ['required', 'string', 'max:40'],
-            'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
-            'is_staff' => ['boolean'],
+        $data = $request->validate($this->groupRules());
+        $group->update([
+            'name' => $data['name'],
+            'color' => $data['color'],
+            'is_staff' => $request->boolean('is_staff'),
+            'permissions' => array_values($data['permissions'] ?? []),
         ]);
-        $group->update($data + ['is_staff' => $request->boolean('is_staff')]);
 
         return back();
     }

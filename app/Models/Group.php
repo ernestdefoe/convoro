@@ -9,7 +9,7 @@ class Group extends Model
 {
     protected $guarded = [];
 
-    protected $casts = ['is_staff' => 'boolean'];
+    protected $casts = ['is_staff' => 'boolean', 'permissions' => 'array'];
 
     public function users(): BelongsToMany
     {

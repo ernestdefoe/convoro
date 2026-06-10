@@ -140,9 +140,13 @@ class Present
         ], $data);
     }
 
-    public static function post(Post $p, ?int $actorId = null): array
+    public static function post(Post $p, ?int $actorId = null, ?User $actor = null): array
     {
         $react = self::reactions($p, $actorId);
+
+        $own = $actor && (int) $p->user_id === (int) $actor->id;
+        $canEdit = $actor && ($own ? $actor->hasPermission('post.edit_own') : $actor->hasPermission('post.edit_any'));
+        $canDelete = $actor && ($own ? $actor->hasPermission('post.delete_own') : $actor->hasPermission('post.delete_any'));
 
         return [
             'id' => $p->id,
@@ -153,6 +157,8 @@ class Present
             'editedAt' => optional($p->edited_at)->diffForHumans(),
             'reactions' => $react['summary'],
             'reactionTotal' => $react['total'],
+            'canEdit' => (bool) $canEdit,
+            'canDelete' => (bool) $canDelete,
         ];
     }
 }

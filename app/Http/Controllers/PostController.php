@@ -48,6 +48,45 @@ class PostController extends Controller
         return back();
     }
 
+    public function update(Request $request, Post $post): RedirectResponse
+    {
+        $user = $request->user();
+        $own = (int) $post->user_id === (int) $user->id;
+        abort_unless($own ? $user->hasPermission('post.edit_own') : $user->hasPermission('post.edit_any'), 403);
+
+        $data = $request->validate(['body_html' => ['required', 'string', 'max:120000']]);
+        $html = Content::clean($data['body_html']);
+        abort_if(trim(strip_tags($html)) === '', 422, 'Empty post.');
+
+        $post->update(['body_html' => $html, 'edited_at' => now()]);
+
+        return back();
+    }
+
+    public function destroy(Request $request, Post $post): RedirectResponse
+    {
+        $user = $request->user();
+        $own = (int) $post->user_id === (int) $user->id;
+        abort_unless($own ? $user->hasPermission('post.delete_own') : $user->hasPermission('post.delete_any'), 403);
+
+        $topic = $post->topic;
+
+        // Deleting the opening post removes the whole topic.
+        if ($post->is_first) {
+            abort_unless($own || $user->hasPermission('topic.delete_any'), 403);
+            $topic->tags()->detach();
+            $topic->posts()->delete();
+            $topic->delete();
+
+            return redirect()->route('forum.index');
+        }
+
+        $post->delete();
+        $topic->decrement('reply_count');
+
+        return back();
+    }
+
     /**
      * Notify @mentioned users (mention takes precedence) and other thread
      * participants (topic author + everyone who has posted), minus the author.

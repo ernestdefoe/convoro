@@ -68,7 +68,9 @@ class TopicController extends Controller
     {
         $topic->increment('view_count');
         $topic->load(['user', 'category', 'tags', 'posts.user', 'posts.reactions']);
-        $actorId = auth()->id();
+        $actor = auth()->user();
+        $actor?->loadMissing('groups');
+        $actorId = $actor?->id;
 
         return Inertia::render('Topic/Show', [
             'topic' => [

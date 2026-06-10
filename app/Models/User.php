@@ -44,6 +44,19 @@ class User extends Authenticatable
         return $this->belongsToMany(Group::class, 'group_user')->withTimestamps();
     }
 
+    /** Effective permission check: admins bypass; baseline for all; else via groups. */
+    public function hasPermission(string $key): bool
+    {
+        if ($this->is_admin) {
+            return true;
+        }
+        if (in_array($key, \App\Support\Permissions::BASELINE, true)) {
+            return true;
+        }
+
+        return $this->groups->contains(fn ($g) => in_array($key, (array) $g->permissions, true));
+    }
+
     /** Direct-message conversations this user is part of. */
     public function conversations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {

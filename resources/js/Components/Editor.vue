@@ -9,7 +9,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import { uploadImage, isImageFile } from '@/lib/upload';
 import { MentionText } from '@/lib/mentionSuggestion';
 
-const props = withDefaults(defineProps<{ placeholder?: string }>(), { placeholder: 'Write a reply…' });
+const props = withDefaults(defineProps<{ placeholder?: string; content?: string }>(), { placeholder: 'Write a reply…', content: '' });
 const emit = defineEmits<{ typing: [] }>();
 
 const uploading = ref(false);
@@ -37,7 +37,7 @@ const editor = useEditor({
     Placeholder.configure({ placeholder: props.placeholder }),
     MentionText,
   ],
-  content: '',
+  content: props.content,
   onUpdate: () => emit('typing'),
   editorProps: {
     attributes: { class: 'prose-q focus:outline-none' },

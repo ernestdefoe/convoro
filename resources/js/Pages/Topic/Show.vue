@@ -19,6 +19,20 @@ const pickerFor = ref<number | null>(null);
 const editor = ref<any>(null);
 const posting = ref(false);
 
+// edit / delete posts
+const editing = ref<any>(null);
+const editEditor = ref<any>(null);
+function openEdit(post: any) { editing.value = post; }
+function saveEdit() {
+  if (!editEditor.value || editEditor.value.isEmpty()) return;
+  router.put(`/posts/${editing.value.id}`, { body_html: editEditor.value.getHTML() }, { preserveScroll: true, onSuccess: () => (editing.value = null) });
+}
+function removePost(post: any) {
+  if (confirm(post.isFirst ? 'Delete this entire topic and all its replies?' : 'Delete this post?')) {
+    router.delete(`/posts/${post.id}`, { preserveScroll: true });
+  }
+}
+
 // Local copy so live-broadcast posts can be appended; resync when the server
 // sends fresh props (after our own post / a reaction toggle reload).
 const livePosts = ref<any[]>([...props.posts]);
@@ -135,6 +149,10 @@ function submitReply() {
             <div v-if="pickerFor === firstPost.id" class="absolute bottom-9 left-0 z-10 flex gap-1 rounded-full border border-line bg-surface px-2.5 py-1.5 shadow-xl">
               <button v-for="e in EMOJIS" :key="e" @click="react(firstPost.id, e)" class="text-xl transition hover:scale-125">{{ e }}</button>
             </div>
+            <div v-if="firstPost.canEdit || firstPost.canDelete" class="ml-auto flex gap-1">
+              <button v-if="firstPost.canEdit" @click="openEdit(firstPost)" class="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-ink-2 hover:bg-surface-2">Edit</button>
+              <button v-if="firstPost.canDelete" @click="removePost(firstPost)" class="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-red-500 hover:bg-red-500/10">Delete</button>
+            </div>
           </div>
         </div>
       </article>
@@ -165,9 +183,9 @@ function submitReply() {
                 <div v-if="pickerFor === post.id" class="absolute bottom-9 left-0 z-10 flex gap-1 rounded-full border border-line bg-surface px-2.5 py-1.5 shadow-xl">
                   <button v-for="e in EMOJIS" :key="e" @click="react(post.id, e)" class="text-xl transition hover:scale-125">{{ e }}</button>
                 </div>
-                <div class="ml-auto flex gap-1">
-                  <button class="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-ink-2 hover:bg-surface-2">Quote</button>
-                  <button class="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-ink-2 hover:bg-surface-2">Reply</button>
+                <div v-if="post.canEdit || post.canDelete" class="ml-auto flex gap-1">
+                  <button v-if="post.canEdit" @click="openEdit(post)" class="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-ink-2 hover:bg-surface-2">Edit</button>
+                  <button v-if="post.canDelete" @click="removePost(post)" class="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-red-500 hover:bg-red-500/10">Delete</button>
                 </div>
               </div>
             </div>
@@ -190,6 +208,19 @@ function submitReply() {
       </div>
       <div v-else-if="!loggedIn" class="mt-5 rounded-c border border-line bg-surface p-5 text-center text-sm text-ink-2">
         <button type="button" class="font-semibold text-primary hover:underline" @click="auth.open('login')">Log in</button> to join the conversation.
+      </div>
+    </div>
+
+    <!-- Edit post modal -->
+    <div v-if="editing" class="fixed inset-0 z-[80] flex items-center justify-center p-4">
+      <div class="absolute inset-0 bg-black/50" @click="editing = null"></div>
+      <div class="relative w-full max-w-2xl rounded-c border border-line bg-surface p-5 shadow-2xl">
+        <div class="mb-2.5 text-sm font-bold text-ink">Edit post</div>
+        <Editor ref="editEditor" :content="editing.html" />
+        <div class="mt-3 flex items-center gap-2">
+          <button @click="saveEdit" class="rounded-c bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600">Save</button>
+          <button @click="editing = null" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Cancel</button>
+        </div>
       </div>
     </div>
   </AppLayout>

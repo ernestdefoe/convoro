@@ -6,8 +6,11 @@ import { reactive, ref, watch } from 'vue';
 const props = defineProps<{
   users: { data: any[]; links: { url: string | null; label: string; active: boolean }[]; prev_page_url: string | null; next_page_url: string | null; total: number };
   q: string;
-  groups: { id: number; name: string; color: string; is_staff: boolean }[];
+  groups: { id: number; name: string; color: string; is_staff: boolean; permissions: string[] | null }[];
+  permissionCatalog: { key: string; label: string; category: string; baseline: boolean }[];
 }>();
+
+const assignablePerms = props.permissionCatalog.filter((p) => !p.baseline);
 
 const opts = { preserveScroll: true, preserveState: true };
 const search = ref(props.q ?? '');
@@ -37,14 +40,14 @@ function deleteMember() {
 }
 
 // --- groups manager ---
-const newGroup = reactive({ name: '', color: '#6366f1', is_staff: false });
+const newGroup = reactive({ name: '', color: '#6366f1', is_staff: false, permissions: [] as string[] });
 const editGroupId = ref<number | null>(null);
-const gbuf = reactive({ name: '', color: '#6366f1', is_staff: false });
+const gbuf = reactive({ name: '', color: '#6366f1', is_staff: false, permissions: [] as string[] });
 function addGroup() {
   if (!newGroup.name.trim()) return;
-  router.post('/admin/groups', { ...newGroup }, { ...opts, onSuccess: () => Object.assign(newGroup, { name: '', color: '#6366f1', is_staff: false }) });
+  router.post('/admin/groups', { ...newGroup }, { ...opts, onSuccess: () => Object.assign(newGroup, { name: '', color: '#6366f1', is_staff: false, permissions: [] }) });
 }
-function startGroup(g: any) { editGroupId.value = g.id; Object.assign(gbuf, { name: g.name, color: g.color, is_staff: g.is_staff }); }
+function startGroup(g: any) { editGroupId.value = g.id; Object.assign(gbuf, { name: g.name, color: g.color, is_staff: g.is_staff, permissions: [...(g.permissions ?? [])] }); }
 function saveGroup() { router.put(`/admin/groups/${editGroupId.value}`, { ...gbuf }, { ...opts, onSuccess: () => (editGroupId.value = null) }); }
 function delGroup(g: any) { if (confirm(`Delete group “${g.name}”?`)) router.delete(`/admin/groups/${g.id}`, opts); }
 
@@ -93,6 +96,13 @@ const inp = 'rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focu
             <label class="flex items-center gap-1.5 text-xs text-slate-400"><input v-model="newGroup.is_staff" type="checkbox" class="rounded border-white/10 bg-[#0f1120] text-indigo-500" /> Staff</label>
             <button class="ml-auto rounded-lg bg-indigo-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-600" @click="addGroup">Add</button>
           </div>
+          <div class="space-y-1 pt-1">
+            <div class="text-[11px] uppercase tracking-wide text-slate-500">Permissions</div>
+            <label v-for="p in assignablePerms" :key="p.key" class="flex items-center gap-2 text-xs text-slate-300">
+              <input v-model="newGroup.permissions" type="checkbox" :value="p.key" class="rounded border-white/10 bg-[#0f1120] text-indigo-500" /> {{ p.label }}
+            </label>
+            <p class="text-[11px] text-slate-500">All members can post, react &amp; edit their own content by default.</p>
+          </div>
         </div>
         <ul class="space-y-2">
           <li v-for="g in groups" :key="g.id" class="rounded-xl border border-white/5 p-2.5">
@@ -103,6 +113,11 @@ const inp = 'rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focu
                 <label class="flex items-center gap-1.5 text-xs text-slate-400"><input v-model="gbuf.is_staff" type="checkbox" class="rounded border-white/10 bg-[#0f1120] text-indigo-500" /> Staff</label>
                 <button class="ml-auto rounded-lg bg-emerald-500 px-2.5 py-1 text-sm font-semibold text-white" @click="saveGroup">Save</button>
                 <button class="text-sm text-slate-400" @click="editGroupId = null">Cancel</button>
+              </div>
+              <div class="mt-2 space-y-1">
+                <label v-for="p in assignablePerms" :key="p.key" class="flex items-center gap-2 text-xs text-slate-300">
+                  <input v-model="gbuf.permissions" type="checkbox" :value="p.key" class="rounded border-white/10 bg-[#0f1120] text-indigo-500" /> {{ p.label }}
+                </label>
               </div>
             </template>
             <div v-else class="flex items-center gap-2">
