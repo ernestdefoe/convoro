@@ -36,6 +36,7 @@ const initials = computed(() => {
         </Link>
         <nav class="ml-2 hidden items-center gap-1 md:flex">
           <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Forum') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Community</Link>
+          <Link href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Extensions') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Extensions</Link>
           <a class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Members</a>
           <a class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Leaderboard</a>
         </nav>
