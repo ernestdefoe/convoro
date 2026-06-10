@@ -26,6 +26,8 @@ Route::get('/welcome', fn () => Inertia::render('Welcome', [
 Route::get('/dashboard', fn () => redirect()->route('forum.index'))->middleware('auth')->name('dashboard');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/new', [TopicController::class, 'create'])->name('topics.create');
+    Route::post('/topics', [TopicController::class, 'store'])->name('topics.store');
     Route::post('/t/{topic}/posts', [PostController::class, 'store'])->name('posts.store');
     Route::post('/posts/{post}/react', [ReactionController::class, 'toggle'])->name('posts.react');
     Route::post('/uploads/image', [App\Http\Controllers\UploadController::class, 'image'])->name('uploads.image');

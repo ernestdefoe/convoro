@@ -1,9 +1,18 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TopicCard from '@/Components/forum/TopicCard.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
+import { useAuthModal } from '@/lib/authModal';
+
+const pg = usePage();
+const auth = useAuthModal();
+const loggedIn = computed(() => !!(pg.props as any).auth?.user);
+function startTopic() {
+  loggedIn.value ? router.visit('/new') : auth.open('register');
+}
 
 const props = defineProps<{
   view: 'feed' | 'grid';
@@ -26,9 +35,9 @@ const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, ''
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-[224px_1fr_268px]">
       <!-- Left sidebar -->
       <aside class="hidden lg:block">
-        <Link href="/register" class="mb-3.5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600">
+        <button type="button" @click="startTopic" class="mb-3.5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14" /></svg> Start a topic
-        </Link>
+        </button>
         <div class="overflow-hidden rounded-c border border-line bg-surface shadow-sm">
           <h4 class="border-b border-line px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">Categories</h4>
           <nav class="flex flex-col gap-0.5 p-2">
