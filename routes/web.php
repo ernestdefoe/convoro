@@ -22,9 +22,8 @@ Route::get('/welcome', fn () => Inertia::render('Welcome', [
     'canRegister' => Route::has('register'),
 ]))->name('welcome');
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Legacy auth landing → send everyone to the community home.
+Route::get('/dashboard', fn () => redirect()->route('forum.index'))->middleware('auth')->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::post('/t/{topic}/posts', [PostController::class, 'store'])->name('posts.store');
