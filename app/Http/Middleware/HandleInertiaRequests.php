@@ -38,6 +38,7 @@ class HandleInertiaRequests extends Middleware
                 'isAdmin' => (bool) $request->user()?->is_admin,
             ],
             'site' => fn () => Settings::public(),
+            'themeFonts' => fn () => $request->user()?->is_admin ? \App\Support\Theme::fontOptions() : null,
             'seo' => fn () => \App\Support\Seo::make(),
             'extAssets' => fn () => \App\Support\ExtensionManager::assetsFor('forum'),
             'notifications' => fn () => $this->notifications($request),

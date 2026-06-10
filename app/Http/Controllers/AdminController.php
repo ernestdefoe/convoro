@@ -845,6 +845,8 @@ class AdminController extends Controller
             'font' => ['required', 'in:'.implode(',', array_keys(\App\Support\Theme::FONTS))],
             'font_size' => ['required', 'integer', 'min:12', 'max:20'],
             'container' => ['required', 'integer', 'in:0,1100,1240,1400,1600'],
+            'avatar_shape' => ['nullable', 'in:circle,rounded,square'],
+            'post_style' => ['nullable', 'in:card,bordered,flat'],
         ]);
 
         Settings::setMany([
@@ -854,6 +856,8 @@ class AdminController extends Controller
             'theme.font' => $data['font'],
             'theme.font_size' => (int) $data['font_size'],
             'theme.container' => (int) $data['container'],
+            'theme.avatar_shape' => $data['avatar_shape'] ?? Settings::get('theme.avatar_shape', 'circle'),
+            'theme.post_style' => $data['post_style'] ?? Settings::get('theme.post_style', 'card'),
         ]);
 
         return back();

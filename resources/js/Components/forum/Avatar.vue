@@ -21,12 +21,12 @@ const bg = computed(() => gradients[(props.avatar.color - 1) % 6]);
     v-if="avatar.avatar"
     :src="avatar.avatar"
     :alt="avatar.initials"
-    class="shrink-0 rounded-full object-cover"
-    :style="{ width: size + 'px', height: size + 'px' }"
+    class="shrink-0 object-cover"
+    :style="{ width: size + 'px', height: size + 'px', borderRadius: 'var(--c-avatar-radius, 9999px)' }"
   />
   <span
     v-else
-    class="grid shrink-0 place-items-center rounded-full font-bold text-white"
-    :style="{ width: size + 'px', height: size + 'px', fontSize: size * 0.38 + 'px', background: bg }"
+    class="grid shrink-0 place-items-center font-bold text-white"
+    :style="{ width: size + 'px', height: size + 'px', fontSize: size * 0.38 + 'px', background: bg, borderRadius: 'var(--c-avatar-radius, 9999px)' }"
   >{{ avatar.initials }}</span>
 </template>

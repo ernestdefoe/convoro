@@ -63,6 +63,11 @@ class Theme
             '--c-container' => $container > 0 ? $container.'px' : '100%',
             '--c-font' => self::fontStack((string) Settings::get('theme.font', 'Inter')),
             '--c-font-size' => max(12, min(20, $fontSize)).'px',
+            '--c-avatar-radius' => match ((string) Settings::get('theme.avatar_shape', 'circle')) {
+                'square' => '6px',
+                'rounded' => '14px',
+                default => '9999px',
+            },
         ];
 
         $body = '';

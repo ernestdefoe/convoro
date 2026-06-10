@@ -134,7 +134,7 @@ function submitReply() {
       </Link>
 
       <!-- Blog-style opening post -->
-      <article class="overflow-hidden rounded-c border border-line bg-surface shadow-sm">
+      <article class="q-post overflow-hidden rounded-c border border-line bg-surface shadow-sm">
         <img v-if="topic.cover" :src="topic.cover" alt="" class="h-56 w-full object-cover sm:h-72" />
         <div class="p-6 sm:p-9">
           <div class="flex flex-wrap items-center gap-2">
@@ -189,7 +189,7 @@ function submitReply() {
       <section v-if="replies.length" class="mt-6">
         <h2 class="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">{{ replies.length }} {{ replies.length === 1 ? 'reply' : 'replies' }}</h2>
         <div class="space-y-3">
-          <article v-for="post in replies" :key="post.id" class="flex gap-4 rounded-c border border-line bg-surface p-6 shadow-sm">
+          <article v-for="post in replies" :key="post.id" class="q-post flex gap-4 rounded-c border border-line bg-surface p-6 shadow-sm">
             <div class="w-24 shrink-0 text-center">
               <Link :href="post.author.url"><Avatar :avatar="post.author" :size="44" class="mx-auto" /></Link>
               <div class="mt-2 text-sm font-bold">{{ post.author.name }}</div>

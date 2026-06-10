@@ -8,6 +8,7 @@ import UserMenu from '@/Components/forum/UserMenu.vue';
 import PwaBanner from '@/Components/PwaBanner.vue';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
 import AuthModal from '@/Components/AuthModal.vue';
+import ThemeEditor from '@/Components/ThemeEditor.vue';
 import Slot from '@/Components/ext/Slot.vue';
 import { useAuthModal } from '@/lib/authModal';
 
@@ -71,5 +72,6 @@ const initials = computed(() => {
 
     <PwaBanner />
     <AuthModal />
+    <ThemeEditor />
   </div>
 </template>

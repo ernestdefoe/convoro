@@ -50,6 +50,8 @@ class Settings
         'theme.font' => 'Inter',             // see Theme::FONTS
         'theme.font_size' => 16,             // base px
         'theme.container' => 1240,           // content max width px (0 = full width)
+        'theme.avatar_shape' => 'circle',    // circle | rounded | square
+        'theme.post_style' => 'card',        // card | bordered | flat
     ];
 
     /** @return array<string, mixed> */
@@ -102,6 +104,8 @@ class Settings
                 'font' => self::get('theme.font'),
                 'fontSize' => (int) self::get('theme.font_size'),
                 'container' => (int) self::get('theme.container'),
+                'avatarShape' => self::get('theme.avatar_shape'),
+                'postStyle' => self::get('theme.post_style'),
             ],
         ];
     }

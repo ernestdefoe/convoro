@@ -43,6 +43,14 @@
 
 .q-grad { background: var(--c-grad); }
 
+/* Post container style (live theme editor): card (default) | bordered | flat */
+[data-post-style='bordered'] .q-post { box-shadow: none !important; }
+[data-post-style='flat'] .q-post {
+  box-shadow: none !important;
+  border-color: transparent !important;
+  background: transparent !important;
+}
+
 /* Respect users who prefer reduced motion (accessibility). */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

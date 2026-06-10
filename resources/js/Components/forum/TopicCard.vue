@@ -9,7 +9,7 @@ defineProps<{ topic: any }>();
 <template>
   <Link
     :href="`/t/${topic.slug}`"
-    class="flex gap-4 rounded-c border border-line bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md"
+    class="q-post flex gap-4 rounded-c border border-line bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md"
   >
     <Avatar :avatar="topic.author" :size="44" />
     <div class="min-w-0 flex-1">
