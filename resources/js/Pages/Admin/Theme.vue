@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
-import { onBeforeUnmount, watch } from 'vue';
+import { computed, onBeforeUnmount, watch } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps<{
@@ -62,6 +62,23 @@ function hexToRgb(hex: string): [number, number, number] {
 const darken = (rgb: number[], f: number) => rgb.map((c) => Math.round(c * f));
 const mixWhite = (rgb: number[], a: number) => rgb.map((c) => Math.round(c + (255 - c) * a));
 const triplet = (rgb: number[]) => `${rgb[0]} ${rgb[1]} ${rgb[2]}`;
+
+// ---- WCAG contrast (accessibility) for white text on the brand color ----
+function luminance(rgb: number[]): number {
+  const a = rgb.map((v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2];
+}
+const contrast = computed(() => {
+  const l1 = luminance([255, 255, 255]);
+  const l2 = luminance(hexToRgb(form.primary));
+  const [hi, lo] = l1 > l2 ? [l1, l2] : [l2, l1];
+  const ratio = (hi + 0.05) / (lo + 0.05);
+  const level = ratio >= 7 ? 'AAA' : ratio >= 4.5 ? 'AA' : ratio >= 3 ? 'AA Large only' : 'Fail';
+  return { ratio: ratio.toFixed(2), level, ok: ratio >= 4.5, warn: ratio >= 3 && ratio < 4.5 };
+});
 
 function ensureFont(key: string) {
   const id = 'convoro-preview-font';
@@ -137,6 +154,20 @@ function save() {
             <input v-model="form.primary" type="color" class="h-10 w-12 cursor-pointer rounded border-white/10 bg-transparent" />
             <input v-model="form.primary" type="text" class="w-32 rounded-lg border-white/10 bg-[#0f1120] font-mono text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
           </div>
+
+          <!-- WCAG / ADA contrast check for white button text -->
+          <div class="mt-3 flex items-center gap-2 rounded-lg border border-white/5 bg-[#0f1120] px-3 py-2">
+            <span class="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold"
+                  :class="contrast.ok ? 'bg-emerald-500/20 text-emerald-400' : contrast.warn ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'">
+              {{ contrast.ok ? '✓' : '!' }}
+            </span>
+            <span class="text-sm text-slate-300">White text contrast {{ contrast.ratio }}:1</span>
+            <span class="ml-auto text-xs font-semibold"
+                  :class="contrast.ok ? 'text-emerald-400' : contrast.warn ? 'text-amber-400' : 'text-red-400'">WCAG {{ contrast.level }}</span>
+          </div>
+          <p v-if="!contrast.ok" class="mt-1.5 text-xs text-slate-500">
+            Aim for 4.5:1 (AA) so button labels stay readable for everyone — try a darker brand color.
+          </p>
         </section>
 
         <!-- Appearance -->

@@ -5,6 +5,7 @@ import ConvoroLogo from '@/Components/ConvoroLogo.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import NotificationBell from '@/Components/forum/NotificationBell.vue';
 import PwaBanner from '@/Components/PwaBanner.vue';
+import ThemeToggle from '@/Components/ThemeToggle.vue';
 
 const page = usePage();
 const user = computed(() => (page.props as any).auth?.user ?? null);
@@ -31,6 +32,7 @@ const initials = computed(() => {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
             <input class="w-40 border-0 bg-transparent p-0 text-sm text-ink placeholder:text-ink-muted focus:ring-0" placeholder="Search…" />
           </div>
+          <ThemeToggle />
           <template v-if="user">
             <Link v-if="isAdmin" href="/admin" class="hidden rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2 sm:block">Admin</Link>
             <NotificationBell />

@@ -5,6 +5,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
+        {{-- Apply the visitor's saved light/dark choice before paint (no flash) --}}
+        <script>(function(){try{var t=localStorage.getItem('convoro_theme');if(t){document.documentElement.dataset.theme=t;}}catch(e){}})();</script>
+
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
         <!-- PWA -->
