@@ -5,7 +5,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 defineProps<{
   info: { version: string; php: string; laravel: string; database: string; cache: string; queue: string };
-  update: { current: string; latest: string; available: boolean; url: string | null; checkedAt: string | null; enabled: boolean };
+  update: { current: string; latest: string; available: boolean; url: string | null; checkedAt: string | null; enabled: boolean; running: boolean; lastStatus: string | null };
 }>();
 
 const page = usePage();
@@ -57,9 +57,12 @@ function applyUpdate() {
         <p v-if="update.checkedAt" class="mt-2 text-xs text-slate-500">Last checked {{ update.checkedAt }}</p>
         <div class="mt-3 flex flex-wrap gap-2">
           <button class="rounded-lg bg-white/5 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10" @click="checkUpdates">Check for updates</button>
-          <button v-if="update.available" :disabled="updating" class="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60" @click="applyUpdate">
-            {{ updating ? 'Updating…' : `Update to ${update.latest}` }}
+          <button v-if="update.available && !update.running" :disabled="updating" class="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60" @click="applyUpdate">
+            {{ updating ? 'Starting…' : `Update to ${update.latest}` }}
           </button>
+          <span v-if="update.running" class="inline-flex items-center gap-2 rounded-lg bg-amber-500/15 px-3 py-2 text-sm font-semibold text-amber-400">
+            <span class="h-2 w-2 animate-pulse rounded-full bg-amber-400"></span> Updating in background…
+          </span>
           <a v-if="update.available && update.url" :href="update.url" target="_blank" class="rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5">Release notes</a>
         </div>
       </section>

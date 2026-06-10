@@ -54,6 +54,8 @@ class AdminController extends Controller
             'url' => Settings::get('update.url'),
             'checkedAt' => Settings::get('update.checked_at'),
             'enabled' => (bool) config('convoro.update_url'),
+            'running' => (bool) Settings::get('update.running', false),
+            'lastStatus' => Settings::get('update.last_status'),
         ];
     }
 
@@ -126,9 +128,14 @@ class AdminController extends Controller
 
     public function applyUpdate(): RedirectResponse
     {
-        $result = \App\Support\Updater::apply();
+        if (Settings::get('update.running')) {
+            return back()->with('status', 'An update is already in progress.');
+        }
 
-        return back()->with('status', $result['message']);
+        Settings::setMany(['update.running' => true, 'update.last_status' => 'Update started…']);
+        \App\Jobs\ApplyUpdateJob::dispatch();
+
+        return back()->with('status', 'Update started — it runs in the background and finishes in a moment. Refresh to see the new version.');
     }
 
     public function marketplace(): Response

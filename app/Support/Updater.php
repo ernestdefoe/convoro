@@ -131,15 +131,16 @@ class Updater
             new \RecursiveDirectoryIterator($src, \FilesystemIterator::SKIP_DOTS),
             \RecursiveIteratorIterator::SELF_FIRST
         );
+        $ok = true;
         foreach ($iter as $item) {
             $target = $dest.DIRECTORY_SEPARATOR.$iter->getSubPathname();
             if ($item->isDir()) {
                 File::ensureDirectoryExists($target);
-            } else {
-                @copy($item->getPathname(), $target);
+            } elseif (! @copy($item->getPathname(), $target)) {
+                $ok = false;
             }
         }
 
-        return true;
+        return $ok;
     }
 }
