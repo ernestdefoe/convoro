@@ -13,12 +13,18 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
-#[Fillable(['name', 'email', 'password', 'digest_frequency', 'is_admin', 'bio', 'avatar_path', 'cover_path'])]
+#[Fillable(['name', 'email', 'password', 'digest_frequency', 'is_admin', 'bio', 'avatar_path', 'cover_path', 'registration_ip', 'last_ip', 'banned_at', 'ban_reason'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasApiTokens, HasFactory, HasPushSubscriptions, Notifiable;
+
+    /** Whether this account is currently banned. */
+    public function isBanned(): bool
+    {
+        return $this->banned_at !== null;
+    }
 
     /** Topics started by this user. */
     public function topics(): HasMany

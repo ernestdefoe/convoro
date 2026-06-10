@@ -20,6 +20,7 @@ class PostController extends Controller
     public function store(Request $request, Topic $topic): RedirectResponse
     {
         abort_if($topic->is_locked, 403);
+        abort_if($request->user()->isBanned(), 403, 'Your account is suspended.');
 
         $data = $request->validate([
             'body_html' => ['required', 'string', 'max:120000'],
@@ -32,6 +33,7 @@ class PostController extends Controller
         $post = Post::create([
             'topic_id' => $topic->id,
             'user_id' => $request->user()->id,
+            'ip_address' => $request->ip(),
             'body_html' => $html,
             'body_json' => $data['body_json'] ?? null,
         ]);

@@ -19,6 +19,7 @@ const I = {
   store: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z',
   system: 'M12 15a3 3 0 100-6 3 3 0 000 6z M4 12h2M18 12h2M12 4v2M12 18v2',
   puzzle: 'M4 7h3a2 2 0 002-2 2 2 0 114 0 2 2 0 002 2h3v3a2 2 0 002 2 2 2 0 110 4 2 2 0 00-2 2v3h-3',
+  shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
 };
 
 const groups = computed(() => [
@@ -26,6 +27,7 @@ const groups = computed(() => [
   { label: 'Community', items: [
     { label: 'Members', href: '/admin/members', component: 'Admin/Members', icon: I.members },
     { label: 'Categories & Tags', href: '/admin/content', component: 'Admin/Content', icon: I.tags },
+    { label: 'Moderation', href: '/admin/moderation', component: 'Admin/Moderation', icon: I.shield },
   ] },
   { label: 'Configuration', items: [
     { label: 'Settings', href: '/admin/settings', component: 'Admin/Settings', icon: I.cog },

@@ -76,6 +76,7 @@ Route::middleware('auth')->group(function () {
     Route::put('/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/posts/{post}/react', [ReactionController::class, 'toggle'])->name('posts.react');
+    Route::post('/report', [App\Http\Controllers\ReportController::class, 'store'])->name('report.store');
     Route::post('/uploads/image', [App\Http\Controllers\UploadController::class, 'image'])->name('uploads.image');
 
     Route::post('/push/subscribe', [App\Http\Controllers\PushController::class, 'subscribe'])->name('push.subscribe');
@@ -95,6 +96,19 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/', [App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
+
+    // Moderation suite
+    Route::get('/moderation', [App\Http\Controllers\ModerationController::class, 'index'])->name('moderation');
+    Route::post('/moderation/reports/{report}/resolve', [App\Http\Controllers\ModerationController::class, 'resolveReport'])->name('moderation.reports.resolve');
+    Route::post('/moderation/reports/{report}/dismiss', [App\Http\Controllers\ModerationController::class, 'dismissReport'])->name('moderation.reports.dismiss');
+    Route::delete('/moderation/posts/{post}', [App\Http\Controllers\ModerationController::class, 'deletePost'])->name('moderation.posts.delete');
+    Route::post('/moderation/posts/{post}/move', [App\Http\Controllers\ModerationController::class, 'movePost'])->name('moderation.posts.move');
+    Route::post('/moderation/topics/{topic}/move', [App\Http\Controllers\ModerationController::class, 'moveTopic'])->name('moderation.topics.move');
+    Route::post('/moderation/users/{user}/ban', [App\Http\Controllers\ModerationController::class, 'banUser'])->name('moderation.users.ban');
+    Route::post('/moderation/users/{user}/unban', [App\Http\Controllers\ModerationController::class, 'unbanUser'])->name('moderation.users.unban');
+    Route::post('/moderation/ip-bans', [App\Http\Controllers\ModerationController::class, 'banIp'])->name('moderation.ip.ban');
+    Route::delete('/moderation/ip-bans/{ipBan}', [App\Http\Controllers\ModerationController::class, 'unbanIp'])->name('moderation.ip.unban');
+
     Route::get('/settings', [App\Http\Controllers\AdminController::class, 'settings'])->name('settings');
     Route::post('/settings', [App\Http\Controllers\AdminController::class, 'updateSettings'])->name('settings.update');
     Route::get('/email', [App\Http\Controllers\AdminController::class, 'email'])->name('email');

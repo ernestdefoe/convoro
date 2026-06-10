@@ -25,6 +25,8 @@ class TopicController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        abort_if($request->user()->isBanned(), 403, 'Your account is suspended.');
+
         $data = $request->validate([
             'title' => ['required', 'string', 'min:3', 'max:160'],
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
@@ -52,6 +54,7 @@ class TopicController extends Controller
 
         $topic->posts()->create([
             'user_id' => $request->user()->id,
+            'ip_address' => $request->ip(),
             'body_html' => $html,
             'body_json' => $data['body_json'] ?? null,
             'is_first' => true,

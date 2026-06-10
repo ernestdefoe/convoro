@@ -37,10 +37,14 @@ class RegisteredUserController extends Controller
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
+        abort_if(\App\Models\IpBan::isBanned($request->ip()), 403, 'Registration is not available.');
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'registration_ip' => $request->ip(),
+            'last_ip' => $request->ip(),
         ]);
 
         event(new Registered($user));

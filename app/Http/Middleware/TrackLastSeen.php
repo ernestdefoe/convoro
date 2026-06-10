@@ -19,7 +19,7 @@ class TrackLastSeen
         $user = $request->user();
         if ($user && Cache::add('seen:'.$user->id, true, 60)) {
             // updateQuietly to avoid touching updated_at / firing events.
-            $user->forceFill(['last_seen_at' => now()])->saveQuietly();
+            $user->forceFill(['last_seen_at' => now(), 'last_ip' => $request->ip()])->saveQuietly();
         }
 
         return $next($request);

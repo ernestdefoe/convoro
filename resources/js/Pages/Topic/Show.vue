@@ -18,6 +18,16 @@ const page = usePage();
 const user = computed(() => (page.props as any).auth?.user ?? null);
 const loggedIn = computed(() => !!user.value);
 
+function report(post: any) {
+  if (!loggedIn.value) { auth.open('login'); return; }
+  const reason = prompt('Report this post to the moderators? Optionally tell us why:');
+  if (reason === null) return;
+  router.post('/report', { type: 'post', id: post.id, reason }, { preserveScroll: true });
+}
+function canReport(post: any) {
+  return loggedIn.value && post.author?.id && post.author.id !== (user.value as any)?.id;
+}
+
 const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🔥'];
 const pickerFor = ref<number | null>(null);
 const editor = ref<any>(null);
@@ -175,9 +185,10 @@ function submitReply() {
             <div v-if="pickerFor === firstPost.id" class="absolute bottom-9 left-0 z-10 flex gap-1 rounded-full border border-line bg-surface px-2.5 py-1.5 shadow-xl">
               <button v-for="e in EMOJIS" :key="e" @click="react(firstPost.id, e)" class="text-xl transition hover:scale-125">{{ e }}</button>
             </div>
-            <div v-if="firstPost.canEdit || firstPost.canDelete" class="ml-auto flex gap-1">
+            <div v-if="firstPost.canEdit || firstPost.canDelete || canReport(firstPost)" class="ml-auto flex gap-1">
               <button v-if="firstPost.canEdit" @click="openEdit(firstPost)" class="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-ink-2 hover:bg-surface-2">Edit</button>
               <button v-if="firstPost.canDelete" @click="removePost(firstPost)" class="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-red-500 hover:bg-red-500/10">Delete</button>
+              <button v-if="canReport(firstPost)" @click="report(firstPost)" title="Report to moderators" class="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-ink-muted hover:bg-surface-2 hover:text-ink-2">⚑ Report</button>
             </div>
           </div>
         </div>
@@ -211,9 +222,10 @@ function submitReply() {
                 <div v-if="pickerFor === post.id" class="absolute bottom-9 left-0 z-10 flex gap-1 rounded-full border border-line bg-surface px-2.5 py-1.5 shadow-xl">
                   <button v-for="e in EMOJIS" :key="e" @click="react(post.id, e)" class="text-xl transition hover:scale-125">{{ e }}</button>
                 </div>
-                <div v-if="post.canEdit || post.canDelete" class="ml-auto flex gap-1">
+                <div v-if="post.canEdit || post.canDelete || canReport(post)" class="ml-auto flex gap-1">
                   <button v-if="post.canEdit" @click="openEdit(post)" class="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-ink-2 hover:bg-surface-2">Edit</button>
                   <button v-if="post.canDelete" @click="removePost(post)" class="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-red-500 hover:bg-red-500/10">Delete</button>
+                  <button v-if="canReport(post)" @click="report(post)" title="Report to moderators" class="rounded-lg px-2.5 py-1 text-[13px] font-semibold text-ink-muted hover:bg-surface-2 hover:text-ink-2">⚑ Report</button>
                 </div>
               </div>
             </div>
