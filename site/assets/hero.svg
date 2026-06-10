@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 560" width="1000" height="560" font-family="Inter, system-ui, sans-serif">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6366f1"/><stop offset=".5" stop-color="#8b5cf6"/><stop offset="1" stop-color="#a855f7"/>
+    </linearGradient>
+  </defs>
+  <rect width="1000" height="560" fill="#f6f7fb"/>
+  <!-- top bar -->
+  <rect x="0" y="0" width="1000" height="56" fill="#ffffff"/>
+  <rect x="0" y="55" width="1000" height="1" fill="#e7e8f0"/>
+  <rect x="28" y="18" width="20" height="20" rx="6" fill="url(#g)"/>
+  <circle cx="36" cy="25" r="2.4" fill="#fff"/><circle cx="42" cy="31" r="2.4" fill="#fff"/><circle cx="32" cy="31" r="2.4" fill="#fff"/>
+  <text x="58" y="33" font-size="16" font-weight="800" fill="#14172a">Convoro</text>
+  <text x="150" y="33" font-size="13" font-weight="700" fill="#5b5bd6">Community</text>
+  <text x="240" y="33" font-size="13" font-weight="600" fill="#7a8194">Extensions</text>
+  <text x="335" y="33" font-size="13" font-weight="600" fill="#7a8194">Members</text>
+  <rect x="788" y="14" width="180" height="28" rx="14" fill="#f0f1f8"/>
+  <text x="806" y="32" font-size="12" fill="#9aa0b2">Search…</text>
+
+  <!-- left rail -->
+  <rect x="28" y="84" width="180" height="40" rx="10" fill="url(#g)"/>
+  <text x="118" y="109" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">+ Start a topic</text>
+  <rect x="28" y="138" width="180" height="220" rx="12" fill="#fff"/>
+  <rect x="28" y="138" width="180" height="34" rx="12" fill="#fff"/>
+  <text x="44" y="160" font-size="11" font-weight="700" fill="#9aa0b2">CATEGORIES</text>
+  <g fill="#475069" font-size="13" font-weight="600">
+    <rect x="40" y="184" width="156" height="30" rx="8" fill="#eef0fb"/><text x="56" y="204" fill="#5b5bd6">📣 Announcements</text>
+    <text x="56" y="240">💬 General</text>
+    <text x="56" y="272">❓ Support</text>
+    <text x="56" y="304">🎨 Design</text>
+  </g>
+
+  <!-- main feed cards -->
+  <g>
+    <rect x="224" y="84" width="500" height="128" rx="14" fill="#fff" stroke="#e7e8f0"/>
+    <rect x="244" y="104" width="90" height="22" rx="11" fill="#eef0fb"/><text x="256" y="119" font-size="11" font-weight="700" fill="#5b5bd6">General</text>
+    <text x="244" y="152" font-size="17" font-weight="800" fill="#14172a">Welcome to our community 👋</text>
+    <text x="244" y="176" font-size="13" fill="#7a8194">A modern place to talk, share, and build together —</text>
+    <text x="244" y="194" font-size="13" fill="#7a8194">reactions, live threads, and zero markdown in sight.</text>
+
+    <rect x="224" y="224" width="500" height="128" rx="14" fill="#fff" stroke="#e7e8f0"/>
+    <rect x="244" y="244" width="74" height="22" rx="11" fill="#fdeede"/><text x="256" y="259" font-size="11" font-weight="700" fill="#e8830c">Support</text>
+    <text x="244" y="292" font-size="17" font-weight="800" fill="#14172a">How do I theme my site?</text>
+    <text x="244" y="316" font-size="13" fill="#7a8194">Open the live theme editor in admin and recolor</text>
+    <text x="244" y="334" font-size="13" fill="#7a8194">everything in real time — no CSS required.</text>
+  </g>
+
+  <!-- right rail stats -->
+  <rect x="740" y="84" width="232" height="150" rx="14" fill="#fff" stroke="#e7e8f0"/>
+  <text x="758" y="112" font-size="11" font-weight="700" fill="#9aa0b2">COMMUNITY STATS</text>
+  <g>
+    <rect x="758" y="124" width="96" height="46" rx="9" fill="#f6f7fb"/><text x="770" y="148" font-size="17" font-weight="800" fill="#14172a">1.2k</text><text x="770" y="163" font-size="10" fill="#7a8194">Members</text>
+    <rect x="862" y="124" width="96" height="46" rx="9" fill="#f6f7fb"/><text x="874" y="148" font-size="17" font-weight="800" fill="#14172a">3.4k</text><text x="874" y="163" font-size="10" fill="#7a8194">Topics</text>
+    <rect x="758" y="176" width="96" height="46" rx="9" fill="#f6f7fb"/><text x="770" y="200" font-size="17" font-weight="800" fill="#14172a">18k</text><text x="770" y="215" font-size="10" fill="#7a8194">Posts</text>
+    <rect x="862" y="176" width="96" height="46" rx="9" fill="#f6f7fb"/><text x="874" y="200" font-size="17" font-weight="800" fill="#14172a">42k</text><text x="874" y="215" font-size="10" fill="#7a8194">Reactions</text>
+  </g>
+
+  <!-- theme editor card -->
+  <rect x="740" y="246" width="232" height="106" rx="14" fill="#14172a"/>
+  <text x="758" y="274" font-size="12" font-weight="800" fill="#fff">Live theme editor</text>
+  <circle cx="766" cy="300" r="9" fill="#6366f1"/><circle cx="792" cy="300" r="9" fill="#16a34a"/><circle cx="818" cy="300" r="9" fill="#e8830c"/><circle cx="844" cy="300" r="9" fill="#dc2626"/><circle cx="870" cy="300" r="9" fill="#0ea5e9"/>
+  <rect x="758" y="320" width="196" height="8" rx="4" fill="#2a2f4a"/>
+  <rect x="758" y="320" width="120" height="8" rx="4" fill="url(#g)"/>
+
+  <!-- bottom composer strip -->
+  <rect x="224" y="364" width="748" height="160" rx="14" fill="#fff" stroke="#e7e8f0"/>
+  <rect x="244" y="384" width="708" height="30" rx="8" fill="#f6f7fb"/>
+  <g fill="#7a8194" font-size="13" font-weight="700"><text x="256" y="404">B</text><text x="280" y="404" font-style="italic">i</text><text x="300" y="404">🔗</text><text x="324" y="404">🖼️</text><text x="348" y="404">{ }</text></g>
+  <text x="244" y="444" font-size="14" fill="#14172a" font-weight="600">Share your thoughts… rich text, no markdown.</text>
+  <rect x="244" y="462" width="120" height="20" rx="6" fill="#eef0fb"/><text x="256" y="476" font-size="11" fill="#5b5bd6">drag &amp; drop → WebP</text>
+  <rect x="852" y="476" width="100" height="34" rx="9" fill="url(#g)"/><text x="902" y="498" font-size="13" font-weight="700" fill="#fff" text-anchor="middle">Post</text>
+</svg>
