@@ -154,6 +154,7 @@ class AdminController extends Controller
                 'version' => $m['version'],
                 'description' => $m['description'],
                 'author' => $m['author'],
+                'type' => $m['type'],
                 'premium' => $m['premium'],
                 'enabled' => in_array($m['id'], $enabled, true),
                 'removable' => $m['_writable'] && str_starts_with($m['_path'], \App\Support\ExtensionInstaller::targetRoot()),

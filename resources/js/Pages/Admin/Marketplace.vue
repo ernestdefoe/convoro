@@ -3,13 +3,35 @@ import { Head, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
-defineProps<{
+const props = defineProps<{
   update: { current: string; latest: string; available: boolean; url: string | null; checkedAt: string | null; enabled: boolean };
-  extensions: { id: string; name: string; version: string; description: string; author: string; premium: boolean; enabled: boolean; removable: boolean }[];
+  extensions: { id: string; name: string; version: string; description: string; author: string; type: string; premium: boolean; enabled: boolean; removable: boolean }[];
 }>();
 
 const page = usePage();
 const result = computed(() => (page.props as any).flash?.extResult ?? null);
+
+// Filter + search over installed items.
+const filter = ref<'all' | 'extension' | 'theme'>('all');
+const query = ref('');
+const counts = computed(() => ({
+  all: props.extensions.length,
+  extension: props.extensions.filter((e) => e.type === 'extension').length,
+  theme: props.extensions.filter((e) => e.type === 'theme').length,
+}));
+const pills = [
+  { key: 'all' as const, label: 'All' },
+  { key: 'extension' as const, label: 'Extensions' },
+  { key: 'theme' as const, label: 'Themes' },
+];
+const visibleExtensions = computed(() => {
+  const q = query.value.trim().toLowerCase();
+  return props.extensions.filter((e) => {
+    if (filter.value !== 'all' && e.type !== filter.value) return false;
+    if (!q) return true;
+    return [e.name, e.description, e.author, e.id].some((v) => (v || '').toLowerCase().includes(q));
+  });
+});
 
 function checkUpdates() {
   router.post('/admin/system/check-updates', {}, { preserveScroll: true });
@@ -76,18 +98,40 @@ function uninstall(ext: { id: string; name: string }) {
 
     <!-- Installed extensions -->
     <section class="rounded-2xl border border-white/5 bg-[#14172a] p-5">
-      <h2 class="mb-3 text-sm font-bold uppercase tracking-wide text-slate-400">Installed extensions</h2>
+      <div class="mb-4 flex flex-wrap items-center gap-3">
+        <h2 class="text-sm font-bold uppercase tracking-wide text-slate-400">Installed</h2>
+
+        <!-- Type pills -->
+        <div class="flex items-center gap-1 rounded-lg bg-[#0f1120] p-1">
+          <button v-for="p in pills" :key="p.key" type="button" @click="filter = p.key"
+            class="rounded-md px-3 py-1 text-xs font-semibold transition"
+            :class="filter === p.key ? 'bg-indigo-500 text-white' : 'text-slate-400 hover:text-slate-200'">
+            {{ p.label }}
+            <span class="ml-1 opacity-70">{{ counts[p.key] }}</span>
+          </button>
+        </div>
+
+        <!-- Search -->
+        <div class="ml-auto flex items-center gap-2 rounded-lg border border-white/10 bg-[#0f1120] px-3 py-1.5">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-slate-500"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+          <input v-model="query" type="search" placeholder="Search…" class="w-44 border-0 bg-transparent p-0 text-sm text-slate-100 placeholder:text-slate-500 focus:ring-0" />
+        </div>
+      </div>
 
       <div v-if="!extensions.length" class="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-slate-400">
         No extensions installed yet. Upload one above to get started.
       </div>
+      <div v-else-if="!visibleExtensions.length" class="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-slate-400">
+        Nothing matches your filter.
+      </div>
 
       <div v-else class="space-y-3">
-        <div v-for="ext in extensions" :key="ext.id" class="flex flex-wrap items-center gap-3 rounded-xl border border-white/5 bg-[#0f1120] p-4">
+        <div v-for="ext in visibleExtensions" :key="ext.id" class="flex flex-wrap items-center gap-3 rounded-xl border border-white/5 bg-[#0f1120] p-4">
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <span class="font-semibold text-white">{{ ext.name }}</span>
               <span class="rounded bg-white/5 px-1.5 py-0.5 text-[11px] text-slate-400">v{{ ext.version }}</span>
+              <span class="rounded bg-sky-500/15 px-1.5 py-0.5 text-[11px] font-semibold capitalize text-sky-300">{{ ext.type }}</span>
               <span v-if="ext.premium" class="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-amber-300">Premium</span>
               <span v-if="ext.enabled" class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-300">Enabled</span>
             </div>
