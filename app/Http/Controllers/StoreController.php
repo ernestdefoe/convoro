@@ -87,6 +87,7 @@ class StoreController extends Controller
                 'ref' => $r['ref'],
                 'price_cents' => $priceCents,
                 'submitter_email' => $data['email'],
+                'owner_id' => $request->user()?->id,
                 'status' => 'pending',
                 'published' => false,
             ],
@@ -94,6 +95,62 @@ class StoreController extends Controller
 
         return redirect()->route('store.index')->with('status',
             "Thanks! “{$m['name']}” was submitted for review. We'll email {$data['email']} once it's approved.");
+    }
+
+    /** Author dashboard: the listings this member owns (price etc. editable here). */
+    public function manage(Request $request): Response
+    {
+        $user = $request->user();
+        $mine = Product::query()
+            ->where('owner_id', $user->id)
+            ->orWhere(fn ($q) => $q->whereNull('owner_id')->where('submitter_email', $user->email))
+            ->orderBy('name')->get()
+            ->map(fn (Product $p) => [
+                'slug' => $p->slug, 'name' => $p->name, 'type' => $p->type,
+                'tagline' => $p->tagline, 'description' => $p->description,
+                'free' => $p->isFree(), 'price' => round($p->price_cents / 100, 2),
+                'published' => (bool) $p->published, 'status' => $p->status,
+            ]);
+
+        return Inertia::render('Store/Manage', [
+            'products' => $mine,
+            'checkoutEnabled' => StripeService::configured(),
+            'seo' => Seo::make(['title' => 'Manage your extensions']),
+        ]);
+    }
+
+    /** Author updates their own listing (pricing, copy). Owner or admin only. */
+    public function updateListing(Request $request, Product $product): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless(
+            $user->is_admin || (int) $product->owner_id === (int) $user->id
+                || ($product->owner_id === null && $product->submitter_email && $product->submitter_email === $user->email),
+            403,
+        );
+
+        $data = $request->validate([
+            'tagline' => ['nullable', 'string', 'max:200'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'pricing' => ['required', 'in:free,premium'],
+            'price' => ['nullable', 'numeric', 'min:1', 'max:9999'],
+        ]);
+
+        $cents = $data['pricing'] === 'premium' ? (int) round(((float) ($data['price'] ?? 0)) * 100) : 0;
+        if ($data['pricing'] === 'premium' && $cents < 100) {
+            return back()->with('storeError', 'Set a price of at least $1 for a premium listing.');
+        }
+
+        // Claim ownership on first edit if it was matched by email.
+        if ($product->owner_id === null) {
+            $product->owner_id = $user->id;
+        }
+        $product->tagline = $data['tagline'] ?? $product->tagline;
+        $product->description = $data['description'] ?? $product->description;
+        $product->price_cents = $cents;
+        $product->save();
+
+        return back()->with('status', "Updated “{$product->name}”.");
     }
 
     public function show(Product $product): Response

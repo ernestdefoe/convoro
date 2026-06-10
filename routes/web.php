@@ -18,6 +18,9 @@ Route::domain(config('convoro.marketing_domain'))->group(function () {
     Route::get('/extensions', [App\Http\Controllers\StoreController::class, 'index'])->name('store.index');
     Route::get('/extensions/submit', [App\Http\Controllers\StoreController::class, 'submitForm'])->name('store.submit');
     Route::post('/extensions/submit', [App\Http\Controllers\StoreController::class, 'submit'])->name('store.submit.post');
+    // Author self-service: manage your own listings (price etc.) — no admin access needed.
+    Route::get('/extensions/manage', [App\Http\Controllers\StoreController::class, 'manage'])->middleware('auth')->name('store.manage');
+    Route::post('/extensions/{product}/manage', [App\Http\Controllers\StoreController::class, 'updateListing'])->middleware('auth')->name('store.manage.update');
     Route::get('/extensions/purchased', [App\Http\Controllers\StoreController::class, 'success'])->name('store.success');
     Route::get('/extensions/{product}', [App\Http\Controllers\StoreController::class, 'show'])->name('store.show');
     Route::post('/extensions/{product}/checkout', [App\Http\Controllers\StoreController::class, 'checkout'])->name('store.checkout');
@@ -153,11 +156,11 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/store/stripe/callback', [App\Http\Controllers\AdminController::class, 'stripeCallback'])->name('store.stripe.callback');
     Route::post('/store/stripe/disconnect', [App\Http\Controllers\AdminController::class, 'disconnectStripe'])->name('store.stripe.disconnect');
     Route::post('/store/link', [App\Http\Controllers\AdminController::class, 'linkRepo'])->name('store.link');
-    Route::post('/store/products/{product}/refresh', [App\Http\Controllers\AdminController::class, 'refreshRepo'])->name('products.refresh');
+    Route::post('/store/products/{product:id}/refresh', [App\Http\Controllers\AdminController::class, 'refreshRepo'])->name('products.refresh');
     Route::post('/store/products', [App\Http\Controllers\AdminController::class, 'storeProduct'])->name('products.store');
-    Route::put('/store/products/{product}', [App\Http\Controllers\AdminController::class, 'updateProduct'])->name('products.update');
-    Route::delete('/store/products/{product}', [App\Http\Controllers\AdminController::class, 'destroyProduct'])->name('products.destroy');
-    Route::post('/store/products/{product}/file', [App\Http\Controllers\AdminController::class, 'uploadProductFile'])->name('products.file');
+    Route::put('/store/products/{product:id}', [App\Http\Controllers\AdminController::class, 'updateProduct'])->name('products.update');
+    Route::delete('/store/products/{product:id}', [App\Http\Controllers\AdminController::class, 'destroyProduct'])->name('products.destroy');
+    Route::post('/store/products/{product:id}/file', [App\Http\Controllers\AdminController::class, 'uploadProductFile'])->name('products.file');
     Route::get('/system', [App\Http\Controllers\AdminController::class, 'system'])->name('system');
     Route::post('/system/run', [App\Http\Controllers\AdminController::class, 'runMaintenance'])->name('system.run');
     Route::post('/system/check-updates', [App\Http\Controllers\AdminController::class, 'checkUpdates'])->name('system.check');
