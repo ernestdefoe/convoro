@@ -38,37 +38,86 @@ class MessageController extends Controller
         $conversation->participants()->updateExistingPivot($me, ['last_read_at' => now()]);
 
         $conversation->load(['participants', 'messages.user']);
-        $other = $conversation->participants->where('id', '!=', $me)->first();
+        $others = $conversation->participants->where('id', '!=', $me)->values();
 
         return Inertia::render('Messages/Show', [
             'conversation' => [
                 'id' => $conversation->id,
-                'title' => $conversation->is_group ? ($conversation->title ?: $conversation->participants->where('id', '!=', $me)->pluck('name')->join(', ')) : ($other?->name ?? 'Conversation'),
-                'partner' => Present::avatar($other),
+                'isGroup' => (bool) $conversation->is_group,
+                'title' => $conversation->is_group
+                    ? ($conversation->title ?: $others->pluck('name')->join(', '))
+                    : ($others->first()?->name ?? 'Conversation'),
+                'partner' => Present::avatar($others->first()),
+                'participants' => $conversation->participants->map(fn ($u) => Present::avatar($u))->values(),
             ],
             'messages' => $conversation->messages->sortBy('created_at')->values()->map(fn ($m) => Present::message($m, $me)),
         ]);
     }
 
-    /** Start (or reuse) a 1:1 conversation with another user. */
+    /**
+     * Start (or reuse) a conversation. One recipient → a 1:1 DM (reused if it
+     * already exists); multiple recipients → a group conversation (optional title).
+     */
     public function store(Request $request): RedirectResponse
     {
-        $data = $request->validate(['user_id' => ['required', 'integer', 'exists:users,id']]);
+        $data = $request->validate([
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],   // back-compat (single)
+            'user_ids' => ['nullable', 'array'],
+            'user_ids.*' => ['integer', 'exists:users,id'],
+            'title' => ['nullable', 'string', 'max:120'],
+        ]);
         $me = (int) $request->user()->id;
-        $other = (int) $data['user_id'];
-        abort_if($other === $me, 422, 'You cannot message yourself.');
 
-        $conversation = Conversation::where('is_group', false)
-            ->whereHas('participants', fn ($q) => $q->where('users.id', $me))
-            ->whereHas('participants', fn ($q) => $q->where('users.id', $other))
-            ->first();
+        $ids = collect($data['user_ids'] ?? [])
+            ->push($data['user_id'] ?? null)
+            ->filter()->map('intval')
+            ->reject(fn ($id) => $id === $me)
+            ->unique()->values();
 
-        if (! $conversation) {
-            $conversation = Conversation::create(['is_group' => false]);
-            $conversation->participants()->attach([$me, $other]);
+        abort_if($ids->isEmpty(), 422, 'Choose at least one person to message.');
+
+        if ($ids->count() === 1) {
+            $other = $ids->first();
+            $conversation = Conversation::where('is_group', false)
+                ->whereHas('participants', fn ($q) => $q->where('users.id', $me))
+                ->whereHas('participants', fn ($q) => $q->where('users.id', $other))
+                ->first();
+
+            if (! $conversation) {
+                $conversation = Conversation::create(['is_group' => false]);
+                $conversation->participants()->attach([$me, $other]);
+            }
+        } else {
+            $conversation = Conversation::create(['is_group' => true, 'title' => $data['title'] ?: null]);
+            $conversation->participants()->attach($ids->push($me)->unique()->all());
         }
 
         return redirect()->route('messages.show', $conversation);
+    }
+
+    /** Add one or more people to a conversation (turns a DM into a group). */
+    public function addParticipants(Request $request, Conversation $conversation): RedirectResponse
+    {
+        $me = (int) $request->user()->id;
+        abort_unless($this->isParticipant($conversation, $me), 403);
+
+        $data = $request->validate([
+            'user_ids' => ['required', 'array', 'min:1'],
+            'user_ids.*' => ['integer', 'exists:users,id'],
+        ]);
+
+        $new = collect($data['user_ids'])->map('intval')->unique()
+            ->reject(fn ($id) => $conversation->participants()->where('users.id', $id)->exists())
+            ->values();
+
+        if ($new->isNotEmpty()) {
+            $conversation->participants()->attach($new->all());
+            if ($conversation->participants()->count() > 2) {
+                $conversation->update(['is_group' => true]);
+            }
+        }
+
+        return back();
     }
 
     public function message(Request $request, Conversation $conversation): RedirectResponse

@@ -79,6 +79,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/messages', [App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
     Route::get('/messages/{conversation}', [App\Http\Controllers\MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages/{conversation}', [App\Http\Controllers\MessageController::class, 'message'])->name('messages.send');
+    Route::post('/messages/{conversation}/participants', [App\Http\Controllers\MessageController::class, 'addParticipants'])->name('messages.participants');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read', [NotificationController::class, 'readAll'])->name('notifications.readAll');

@@ -9,6 +9,8 @@ defineProps<{ conversations: any[] }>();
 const composing = ref(false);
 const query = ref('');
 const results = ref<any[]>([]);
+const selected = ref<any[]>([]);
+const groupTitle = ref('');
 let t: any = null;
 
 watch(query, (q) => {
@@ -22,10 +24,20 @@ watch(query, (q) => {
   }, 200);
 });
 
-function startWith(u: any) {
-  // user search returns id = slug; we need the numeric id — store both? search returns slug only,
-  // so resolve by posting the slug is wrong. We post the numeric user id via a dedicated field.
-  router.post('/messages', { user_id: u.uid }, { preserveScroll: true });
+function addPerson(u: any) {
+  if (!selected.value.some((s) => s.uid === u.uid)) selected.value.push(u);
+  query.value = '';
+  results.value = [];
+}
+function removePerson(uid: number) {
+  selected.value = selected.value.filter((s) => s.uid !== uid);
+}
+function start() {
+  if (!selected.value.length) return;
+  router.post('/messages', {
+    user_ids: selected.value.map((s) => s.uid),
+    title: selected.value.length > 1 ? (groupTitle.value.trim() || null) : null,
+  }, { preserveScroll: true });
 }
 </script>
 
@@ -39,12 +51,31 @@ function startWith(u: any) {
       </div>
 
       <div v-if="composing" class="mb-4 rounded-c border border-line bg-surface p-3">
-        <input v-model="query" type="text" placeholder="Search people…" class="w-full rounded-lg border-line bg-surface-2 text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary" />
+        <!-- Selected people as chips -->
+        <div v-if="selected.length" class="mb-2 flex flex-wrap gap-2">
+          <span v-for="s in selected" :key="s.uid" class="inline-flex items-center gap-1.5 rounded-full bg-primary/15 py-1 pl-1 pr-2 text-sm font-semibold text-primary">
+            <Avatar :avatar="s" :size="22" /> {{ s.name }}
+            <button type="button" class="ml-0.5 text-primary/70 hover:text-primary" @click="removePerson(s.uid)" aria-label="Remove">✕</button>
+          </span>
+        </div>
+
+        <input v-model="query" type="text" placeholder="Add people by name…" class="w-full rounded-lg border-line bg-surface-2 text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary" />
         <div v-if="results.length" class="mt-2 divide-y divide-line/60">
-          <button v-for="u in results" :key="u.uid" type="button" class="flex w-full items-center gap-2.5 px-1 py-2 text-left hover:bg-surface-2" @click="startWith(u)">
+          <button v-for="u in results" :key="u.uid" type="button" class="flex w-full items-center gap-2.5 px-1 py-2 text-left hover:bg-surface-2" @click="addPerson(u)">
             <Avatar :avatar="u" :size="30" />
             <span class="text-sm font-semibold text-ink">{{ u.name }}</span>
+            <span class="ml-auto text-xs font-semibold text-primary">Add</span>
           </button>
+        </div>
+
+        <!-- Optional group name once it's more than one person -->
+        <input v-if="selected.length > 1" v-model="groupTitle" type="text" placeholder="Group name (optional)" class="mt-2 w-full rounded-lg border-line bg-surface-2 text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary" />
+
+        <div class="mt-3 flex items-center gap-2">
+          <button type="button" :disabled="!selected.length" @click="start" class="rounded-c bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-50">
+            {{ selected.length > 1 ? `Start group (${selected.length})` : 'Start conversation' }}
+          </button>
+          <span class="text-xs text-ink-muted">Add more than one person to start a group.</span>
         </div>
       </div>
 
