@@ -22,21 +22,31 @@ function avatarEl(a, size) {
   return d;
 }
 
+function card(title) {
+  const box = document.createElement('div');
+  box.style.cssText = `margin-top:20px;border:1px solid ${T.line};background:${T.surface};border-radius:var(--c-radius,12px);box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden`;
+  const h = document.createElement('h4');
+  h.textContent = title;
+  h.style.cssText = `margin:0;padding:12px 16px;border-bottom:1px solid ${T.line};font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:${T.muted}`;
+  const body = document.createElement('div');
+  body.style.cssText = 'padding:16px';
+  box.append(h, body);
+  return { box, body };
+}
+
 if (c && typeof c.registerSlot === 'function') {
   c.registerSlot('forum:sidebar', {
     ext: 'convoro-members-online',
     order: 20,
     mount(el) {
-      const box = document.createElement('div');
-      box.style.cssText = `margin-top:14px;border:1px solid ${T.line};background:${T.surface};border-radius:var(--c-radius,12px);padding:16px`;
+      const { box, body } = card('Members');
       el.appendChild(box);
 
       fetch('/api/ext/members', { headers: { Accept: 'application/json' } })
         .then((r) => (r.ok ? r.json() : null))
         .then((d) => {
           if (!d) { box.remove(); return; }
-          box.innerHTML = `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:${T.muted}">Members</div>
-            <div style="display:flex;align-items:baseline;gap:8px;margin-top:8px">
+          body.innerHTML = `<div style="display:flex;align-items:baseline;gap:8px">
               <b style="font-size:26px;color:${T.primary}">${d.online}</b>
               <span style="font-size:13px;color:${T.muted}">online now</span>
             </div>
@@ -53,7 +63,7 @@ if (c && typeof c.registerSlot === 'function') {
               link.appendChild(avatarEl(a, 30));
               row.appendChild(link);
             });
-            box.append(lbl, row);
+            body.append(lbl, row);
           }
         })
         .catch(() => box.remove());

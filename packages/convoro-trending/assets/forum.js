@@ -8,10 +8,10 @@ const T = {
 
 function card(title) {
   const box = document.createElement('div');
-  box.style.cssText = `margin-top:14px;border:1px solid ${T.line};background:${T.surface};border-radius:var(--c-radius,12px);overflow:hidden`;
+  box.style.cssText = `margin-top:20px;border:1px solid ${T.line};background:${T.surface};border-radius:var(--c-radius,12px);box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden`;
   const h = document.createElement('h4');
   h.textContent = title;
-  h.style.cssText = `margin:0;padding:12px 16px;border-bottom:1px solid ${T.line};font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:${T.muted}`;
+  h.style.cssText = `margin:0;padding:12px 16px;border-bottom:1px solid ${T.line};font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:${T.muted}`;
   box.appendChild(h);
   return box;
 }
