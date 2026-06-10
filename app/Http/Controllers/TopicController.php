@@ -90,6 +90,12 @@ class TopicController extends Controller
             ],
             'posts' => $topic->posts->sortBy('created_at')->values()->map(fn ($p) => Present::post($p, $actorId, $actor)),
             'canReply' => auth()->check() && ! $topic->is_locked,
+            'seo' => \App\Support\Seo::make([
+                'title' => $topic->title,
+                'description' => \App\Support\Seo::clean(optional($topic->firstPost)->body_html),
+                'image' => $topic->cover_image,
+                'type' => 'article',
+            ]),
         ]);
     }
 }

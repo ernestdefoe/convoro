@@ -14,6 +14,10 @@ Route::get('/install', [App\Http\Controllers\InstallController::class, 'show'])-
 Route::post('/install/test-db', [App\Http\Controllers\InstallController::class, 'testDatabase'])->name('install.testdb');
 Route::post('/install', [App\Http\Controllers\InstallController::class, 'install'])->name('install.run');
 
+// SEO
+Route::get('/sitemap.xml', [App\Http\Controllers\SitemapController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt', [App\Http\Controllers\SitemapController::class, 'robots'])->name('robots');
+
 // PWA
 Route::get('/manifest.webmanifest', [App\Http\Controllers\PwaController::class, 'manifest'])->name('pwa.manifest');
 

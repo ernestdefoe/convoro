@@ -482,6 +482,8 @@ class AdminController extends Controller
                 'pwa_banner' => (bool) Settings::get('pwa.banner'),
                 'pwa_short_name' => Settings::get('pwa.short_name'),
                 'fa_kit_url' => Settings::get('fa.kit_url'),
+                'seo_description' => Settings::get('seo.description'),
+                'seo_image' => Settings::get('seo.image'),
             ],
         ]);
     }
@@ -498,6 +500,8 @@ class AdminController extends Controller
             'pwa_banner' => ['required', 'boolean'],
             'pwa_short_name' => ['required', 'string', 'max:30'],
             'fa_kit_url' => ['nullable', 'string', 'max:300', 'regex:#^https://[^\s]+\.js$#'],
+            'seo_description' => ['nullable', 'string', 'max:300'],
+            'seo_image' => ['nullable', 'string', 'max:2048'],
         ]);
 
         Settings::setMany([
@@ -510,6 +514,8 @@ class AdminController extends Controller
             'pwa.banner' => (bool) $data['pwa_banner'],
             'pwa.short_name' => $data['pwa_short_name'],
             'fa.kit_url' => $data['fa_kit_url'] ?? '',
+            'seo.description' => $data['seo_description'] ?? '',
+            'seo.image' => $data['seo_image'] ?? '',
         ]);
 
         return back();

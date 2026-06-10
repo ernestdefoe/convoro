@@ -38,6 +38,7 @@ class HandleInertiaRequests extends Middleware
                 'isAdmin' => (bool) $request->user()?->is_admin,
             ],
             'site' => fn () => Settings::public(),
+            'seo' => fn () => \App\Support\Seo::make(),
             'extAssets' => fn () => \App\Support\ExtensionManager::assetsFor('forum'),
             'notifications' => fn () => $this->notifications($request),
             'dmUnread' => fn () => $this->dmUnread($request),

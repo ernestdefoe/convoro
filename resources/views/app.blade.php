@@ -8,7 +8,38 @@
         {{-- Apply the visitor's saved light/dark choice before paint (no flash) --}}
         <script>(function(){try{var t=localStorage.getItem('convoro_theme');if(t){document.documentElement.dataset.theme=t;}}catch(e){}})();</script>
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        @php($seo = $page['props']['seo'] ?? [])
+        <title inertia>{{ $seo['title'] ?? config('app.name', 'Convoro') }}</title>
+
+        {{-- SEO / social meta (server-rendered for crawlers; Inertia is client-side) --}}
+        @if (!empty($seo))
+            @if (!empty($seo['description']))
+                <meta name="description" content="{{ $seo['description'] }}">
+            @endif
+            @if (!empty($seo['noindex']))
+                <meta name="robots" content="noindex, nofollow">
+            @endif
+            <link rel="canonical" href="{{ $seo['url'] ?? url()->current() }}">
+
+            <meta property="og:type" content="{{ $seo['type'] ?? 'website' }}">
+            <meta property="og:site_name" content="{{ $seo['siteName'] ?? config('app.name') }}">
+            <meta property="og:title" content="{{ $seo['title'] ?? config('app.name') }}">
+            <meta property="og:url" content="{{ $seo['url'] ?? url()->current() }}">
+            @if (!empty($seo['description']))
+                <meta property="og:description" content="{{ $seo['description'] }}">
+            @endif
+            @if (!empty($seo['image']))
+                <meta property="og:image" content="{{ $seo['image'] }}">
+                <meta name="twitter:card" content="summary_large_image">
+                <meta name="twitter:image" content="{{ $seo['image'] }}">
+            @else
+                <meta name="twitter:card" content="summary">
+            @endif
+            <meta name="twitter:title" content="{{ $seo['title'] ?? config('app.name') }}">
+            @if (!empty($seo['description']))
+                <meta name="twitter:description" content="{{ $seo['description'] }}">
+            @endif
+        @endif
 
         <!-- PWA -->
         <link rel="manifest" href="/manifest.webmanifest">
