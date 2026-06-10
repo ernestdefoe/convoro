@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import AppLayout from '@/Layouts/AppLayout.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import DigestPreferenceForm from './Partials/DigestPreferenceForm.vue';
 import ProfileDetailsForm from './Partials/ProfileDetailsForm.vue';
@@ -12,62 +12,37 @@ defineProps<{
     mustVerifyEmail?: boolean;
     status?: string;
 }>();
+
+const card = 'rounded-c border border-line bg-surface p-6 sm:p-8';
 </script>
 
 <template>
-    <Head title="Profile" />
+    <Head title="Settings" />
 
-    <AuthenticatedLayout>
-        <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200"
-            >
-                Profile
-            </h2>
-        </template>
+    <AppLayout>
+        <div class="mx-auto max-w-2xl">
+            <h1 class="mb-6 text-2xl font-extrabold tracking-tight text-ink">Settings</h1>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
-                    <UpdateProfileInformationForm
-                        :must-verify-email="mustVerifyEmail"
-                        :status="status"
-                        class="max-w-xl"
-                    />
+            <div class="space-y-5">
+                <div :class="card">
+                    <ProfileDetailsForm />
                 </div>
-
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
-                    <ProfileDetailsForm class="max-w-xl" />
+                <div :class="card">
+                    <UpdateProfileInformationForm :must-verify-email="mustVerifyEmail" :status="status" />
                 </div>
-
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
-                    <DigestPreferenceForm class="max-w-xl" />
+                <div :class="card">
+                    <DigestPreferenceForm />
                 </div>
-
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
-                    <PushToggle class="max-w-xl" />
+                <div :class="card">
+                    <PushToggle />
                 </div>
-
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
-                    <UpdatePasswordForm class="max-w-xl" />
+                <div :class="card">
+                    <UpdatePasswordForm />
                 </div>
-
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
-                    <DeleteUserForm class="max-w-xl" />
+                <div :class="card">
+                    <DeleteUserForm />
                 </div>
             </div>
         </div>
-    </AuthenticatedLayout>
+    </AppLayout>
 </template>

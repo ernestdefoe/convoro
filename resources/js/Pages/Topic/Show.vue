@@ -4,6 +4,9 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import Editor from '@/Components/Editor.vue';
+import { useAuthModal } from '@/lib/authModal';
+
+const auth = useAuthModal();
 
 const props = defineProps<{ topic: any; posts: any[]; canReply: boolean }>();
 const page = usePage();
@@ -138,8 +141,8 @@ function submitReply() {
       <!-- Replies -->
       <section v-if="replies.length" class="mt-6">
         <h2 class="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">{{ replies.length }} {{ replies.length === 1 ? 'reply' : 'replies' }}</h2>
-        <div class="overflow-hidden rounded-c border border-line bg-surface shadow-sm">
-          <article v-for="post in replies" :key="post.id" class="flex gap-4 border-b border-line p-6 last:border-b-0">
+        <div class="space-y-3">
+          <article v-for="post in replies" :key="post.id" class="flex gap-4 rounded-c border border-line bg-surface p-6 shadow-sm">
             <div class="w-24 shrink-0 text-center">
               <Link :href="post.author.url"><Avatar :avatar="post.author" :size="44" class="mx-auto" /></Link>
               <div class="mt-2 text-sm font-bold">{{ post.author.name }}</div>
@@ -185,7 +188,7 @@ function submitReply() {
         </div>
       </div>
       <div v-else-if="!loggedIn" class="mt-5 rounded-c border border-line bg-surface p-5 text-center text-sm text-ink-2">
-        <Link href="/login" class="font-semibold text-primary">Log in</Link> to join the conversation.
+        <button type="button" class="font-semibold text-primary hover:underline" @click="auth.open('login')">Log in</button> to join the conversation.
       </div>
     </div>
   </AppLayout>

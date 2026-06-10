@@ -6,6 +6,10 @@ import Avatar from '@/Components/forum/Avatar.vue';
 import NotificationBell from '@/Components/forum/NotificationBell.vue';
 import PwaBanner from '@/Components/PwaBanner.vue';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
+import AuthModal from '@/Components/AuthModal.vue';
+import { useAuthModal } from '@/lib/authModal';
+
+const auth = useAuthModal();
 
 const page = usePage();
 const user = computed(() => (page.props as any).auth?.user ?? null);
@@ -42,8 +46,8 @@ const initials = computed(() => {
             </Link>
           </template>
           <template v-else>
-            <Link href="/login" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Log in</Link>
-            <Link href="/register" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600">Join</Link>
+            <button type="button" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="auth.open('login')">Log in</button>
+            <button type="button" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600" @click="auth.open('register')">Join</button>
           </template>
         </div>
       </div>
@@ -54,5 +58,6 @@ const initials = computed(() => {
     </main>
 
     <PwaBanner />
+    <AuthModal />
   </div>
 </template>

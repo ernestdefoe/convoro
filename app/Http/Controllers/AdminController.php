@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Category;
 use App\Models\Post;
 use App\Models\Reaction;
+use App\Models\Tag;
 use App\Models\Topic;
 use App\Models\User;
 use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -34,6 +37,103 @@ class AdminController extends Controller
     public function accessibility(): Response
     {
         return Inertia::render('Admin/Accessibility');
+    }
+
+    // ---- Categories & Tags ------------------------------------------------
+
+    public function content(): Response
+    {
+        return Inertia::render('Admin/Content', [
+            'categories' => Category::orderBy('position')->withCount('topics')->get()
+                ->map(fn ($c) => [
+                    'id' => $c->id, 'name' => $c->name, 'slug' => $c->slug, 'description' => $c->description,
+                    'icon' => $c->icon, 'color' => $c->color, 'position' => $c->position, 'topics' => $c->topics_count,
+                ]),
+            'tags' => Tag::orderBy('name')->withCount('topics')->get()
+                ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'slug' => $t->slug, 'color' => $t->color, 'topics' => $t->topics_count]),
+        ]);
+    }
+
+    private function uniqueSlug(string $model, string $name, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($name) ?: 'item';
+        $slug = $base;
+        $i = 2;
+        while ($model::where('slug', $slug)->when($ignoreId, fn ($q) => $q->where('id', '!=', $ignoreId))->exists()) {
+            $slug = $base.'-'.$i++;
+        }
+
+        return $slug;
+    }
+
+    public function storeCategory(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:60'],
+            'description' => ['nullable', 'string', 'max:200'],
+            'icon' => ['nullable', 'string', 'max:8'],
+            'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+        ]);
+        $data['slug'] = $this->uniqueSlug(Category::class, $data['name']);
+        $data['position'] = (int) (Category::max('position') ?? 0) + 1;
+        Category::create($data);
+
+        return back();
+    }
+
+    public function updateCategory(Request $request, Category $category): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:60'],
+            'description' => ['nullable', 'string', 'max:200'],
+            'icon' => ['nullable', 'string', 'max:8'],
+            'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'position' => ['nullable', 'integer', 'min:0'],
+        ]);
+        $data['slug'] = $this->uniqueSlug(Category::class, $data['name'], $category->id);
+        $category->update($data);
+
+        return back();
+    }
+
+    public function destroyCategory(Category $category): RedirectResponse
+    {
+        abort_if($category->topics()->exists(), 422, 'Move or delete this category\'s topics first.');
+        $category->delete();
+
+        return back();
+    }
+
+    public function storeTag(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:40'],
+            'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+        ]);
+        $data['slug'] = $this->uniqueSlug(Tag::class, $data['name']);
+        Tag::create($data);
+
+        return back();
+    }
+
+    public function updateTag(Request $request, Tag $tag): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:40'],
+            'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+        ]);
+        $data['slug'] = $this->uniqueSlug(Tag::class, $data['name'], $tag->id);
+        $tag->update($data);
+
+        return back();
+    }
+
+    public function destroyTag(Tag $tag): RedirectResponse
+    {
+        $tag->topics()->detach();
+        $tag->delete();
+
+        return back();
     }
 
     public function settings(): Response
