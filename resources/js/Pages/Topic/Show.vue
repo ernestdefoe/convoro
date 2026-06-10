@@ -125,7 +125,7 @@ function submitReply() {
           <div v-if="firstPost" class="relative mt-7 flex flex-wrap items-center gap-2 border-t border-line pt-5">
             <button v-for="r in firstPost.reactions" :key="r.emoji" @click="react(firstPost.id, r.emoji)"
               class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[13px] font-semibold"
-              :class="r.mine ? 'border-primary/40 bg-primary-soft text-primary-700' : 'border-line bg-surface-2 text-ink-2 hover:bg-surface'">
+              :class="r.mine ? 'border-primary/40 bg-primary/15 text-primary' : 'border-line bg-surface-2 text-ink-2 hover:bg-surface'">
               {{ r.emoji }} {{ r.count }}
             </button>
             <button @click="pickerFor = pickerFor === firstPost.id ? null : firstPost.id"
@@ -155,7 +155,7 @@ function submitReply() {
               <div class="relative mt-3.5 flex flex-wrap items-center gap-2">
                 <button v-for="r in post.reactions" :key="r.emoji" @click="react(post.id, r.emoji)"
                   class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[13px] font-semibold"
-                  :class="r.mine ? 'border-primary/40 bg-primary-soft text-primary-700' : 'border-line bg-surface-2 text-ink-2 hover:bg-surface'">
+                  :class="r.mine ? 'border-primary/40 bg-primary/15 text-primary' : 'border-line bg-surface-2 text-ink-2 hover:bg-surface'">
                   {{ r.emoji }} {{ r.count }}
                 </button>
                 <button @click="pickerFor = pickerFor === post.id ? null : post.id"

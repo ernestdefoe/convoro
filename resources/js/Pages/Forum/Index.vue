@@ -33,10 +33,10 @@ const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, ''
           <h4 class="border-b border-line px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">Categories</h4>
           <nav class="flex flex-col gap-0.5 p-2">
             <button @click="go({ category: null })" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold"
-              :class="!activeCategory ? 'bg-primary-soft text-primary-700' : 'text-ink-2 hover:bg-surface-2'">All topics</button>
+              :class="!activeCategory ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">All topics</button>
             <button v-for="c in categories" :key="c.slug" @click="go({ category: c.slug })"
               class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold"
-              :class="activeCategory === c.slug ? 'bg-primary-soft text-primary-700' : 'text-ink-2 hover:bg-surface-2'">
+              :class="activeCategory === c.slug ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">
               <CategoryIcon :icon="c.icon" /> {{ c.name }}
               <span class="ml-auto rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink-muted">{{ c.count }}</span>
             </button>

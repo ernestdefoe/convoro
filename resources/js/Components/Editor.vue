@@ -123,7 +123,7 @@ function onFile(e: Event) {
   font-size: 11px; font-weight: 600; line-height: 1; white-space: nowrap;
   padding: 5px 7px; border-radius: 6px; pointer-events: none; z-index: 30;
 }
-.tb.on { background: rgb(var(--c-primary-soft)); color: rgb(var(--c-primary-700)); }
+.tb.on { background: rgb(var(--c-primary) / 0.15); color: rgb(var(--c-primary)); }
 :deep(.ProseMirror) { min-height: 90px; }
 :deep(.ProseMirror p.is-editor-empty:first-child::before) { content: attr(data-placeholder); color: rgb(var(--c-muted)); float: left; height: 0; pointer-events: none; }
 :deep(.prose-q) { line-height: 1.65; }

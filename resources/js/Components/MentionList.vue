@@ -30,7 +30,7 @@ defineExpose({ onKeyDown });
       :key="item.id"
       type="button"
       class="flex w-full items-center gap-2.5 px-3 py-2 text-left"
-      :class="i === selected ? 'bg-primary-soft' : 'hover:bg-surface-2'"
+      :class="i === selected ? 'bg-primary/15' : 'hover:bg-surface-2'"
       @mousedown.prevent="select(i)"
       @mouseenter="selected = i"
     >

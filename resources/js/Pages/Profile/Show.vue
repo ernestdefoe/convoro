@@ -51,7 +51,7 @@ function removePost(id: number) {
           </div>
           <div class="mt-3 flex items-center gap-2">
             <h1 class="text-2xl font-extrabold tracking-tight">{{ profile.name }}</h1>
-            <span v-if="profile.isAdmin" class="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-bold text-primary-700">Admin</span>
+            <span v-if="profile.isAdmin" class="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">Admin</span>
           </div>
           <p v-if="profile.bio" class="mt-1 text-ink-2">{{ profile.bio }}</p>
           <div class="mt-3 flex flex-wrap gap-4 text-sm text-ink-muted">

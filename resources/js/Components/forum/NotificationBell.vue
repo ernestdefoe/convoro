@@ -111,7 +111,7 @@ function onDocClick(e: MouseEvent) {
           :key="n.id"
           type="button"
           class="flex w-full gap-3 border-b border-line/60 px-4 py-3 text-left hover:bg-surface-2"
-          :class="!n.read ? 'bg-primary-soft/40' : ''"
+          :class="!n.read ? 'bg-primary/10' : ''"
           @click="go(n)"
         >
           <Avatar :avatar="{ initials: n.actor.initials, color: n.actor.color }" :size="34" />
