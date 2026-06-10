@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\PostCreated;
 use App\Models\Post;
 use App\Models\Topic;
 use App\Support\Content;
+use App\Support\Present;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -22,7 +24,7 @@ class PostController extends Controller
         $html = Content::clean($data['body_html']);
         abort_if(trim(strip_tags($html)) === '', 422, 'Empty post.');
 
-        Post::create([
+        $post = Post::create([
             'topic_id' => $topic->id,
             'user_id' => $request->user()->id,
             'body_html' => $html,
@@ -31,6 +33,10 @@ class PostController extends Controller
 
         $topic->increment('reply_count');
         $topic->update(['last_post_at' => now()]);
+
+        // Live-broadcast the new post to everyone viewing this topic.
+        $post->load(['user', 'reactions']);
+        broadcast(new PostCreated(Present::post($post, null), $topic->id));
 
         return back();
     }

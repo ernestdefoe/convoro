@@ -1,18 +1,63 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import Editor from '@/Components/Editor.vue';
 
 const props = defineProps<{ topic: any; posts: any[]; canReply: boolean }>();
 const page = usePage();
-const loggedIn = computed(() => !!(page.props as any).auth?.user);
+const user = computed(() => (page.props as any).auth?.user ?? null);
+const loggedIn = computed(() => !!user.value);
 
 const EMOJIS = ['👍', '❤️', '😂', '😮', '😢', '🎉', '🔥'];
 const pickerFor = ref<number | null>(null);
 const editor = ref<any>(null);
 const posting = ref(false);
+
+// Local copy so live-broadcast posts can be appended; resync when the server
+// sends fresh props (after our own post / a reaction toggle reload).
+const livePosts = ref<any[]>([...props.posts]);
+watch(() => props.posts, (val) => { livePosts.value = [...val]; });
+
+// ---- Realtime (Reverb presence channel) ----
+const hereCount = ref(0);
+const typingName = ref<string | null>(null);
+let typingTimer: any = null;
+let channel: any = null;
+const Echo = () => (window as any).Echo;
+
+onMounted(() => {
+  if (!Echo()) return;
+  channel = Echo().join(`topic.${props.topic.id}`)
+    .here((users: any[]) => (hereCount.value = users.length))
+    .joining(() => (hereCount.value++))
+    .leaving(() => (hereCount.value = Math.max(0, hereCount.value - 1)))
+    .listen('.PostCreated', (e: any) => {
+      if (e.post && !livePosts.value.some((p) => p.id === e.post.id)) {
+        livePosts.value.push(e.post);
+      }
+    })
+    .listenForWhisper('typing', (e: any) => {
+      if (user.value && e.name === user.value.name) return;
+      typingName.value = e.name;
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => (typingName.value = null), 2800);
+    });
+});
+
+onBeforeUnmount(() => {
+  if (Echo()) Echo().leave(`topic.${props.topic.id}`);
+});
+
+let whisperThrottle = 0;
+function onTyping() {
+  const now = Date.now();
+  if (channel && user.value && now - whisperThrottle > 1200) {
+    whisperThrottle = now;
+    channel.whisper('typing', { name: user.value.name });
+  }
+}
 
 function react(postId: number, emoji: string) {
   pickerFor.value = null;
@@ -42,12 +87,11 @@ function submitReply() {
       </Link>
 
       <div class="overflow-hidden rounded-q border border-line bg-surface shadow-sm">
-        <!-- Header -->
         <div class="border-b border-line p-6">
           <h1 class="flex flex-wrap items-center gap-3 text-2xl font-extrabold tracking-tight">
             {{ topic.title }}
-            <span v-if="topic.isLive" class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-600">
-              <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500"></span>LIVE
+            <span v-if="hereCount > 0" class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-600">
+              <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500"></span>LIVE · {{ hereCount }} here
             </span>
           </h1>
           <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -57,8 +101,7 @@ function submitReply() {
           </div>
         </div>
 
-        <!-- Posts -->
-        <article v-for="post in posts" :key="post.id" class="flex gap-4 border-b border-line p-6 last:border-b-0">
+        <article v-for="post in livePosts" :key="post.id" class="flex gap-4 border-b border-line p-6 last:border-b-0">
           <div class="w-28 shrink-0 text-center">
             <Avatar :avatar="post.author" :size="44" class="mx-auto" />
             <div class="mt-2 text-sm font-bold">{{ post.author.name }}</div>
@@ -68,7 +111,6 @@ function submitReply() {
             <div class="mb-2.5 text-xs text-ink-muted">{{ post.createdAt }}<span v-if="post.editedAt"> · edited {{ post.editedAt }}</span></div>
             <div class="prose-q text-ink" v-html="post.html"></div>
 
-            <!-- Reactions -->
             <div class="relative mt-3.5 flex flex-wrap items-center gap-2">
               <button v-for="r in post.reactions" :key="r.emoji" @click="react(post.id, r.emoji)"
                 class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[13px] font-semibold"
@@ -91,10 +133,11 @@ function submitReply() {
         </article>
       </div>
 
-      <!-- Composer -->
+      <div v-if="typingName" class="mt-3 text-sm italic text-ink-muted">{{ typingName }} is typing…</div>
+
       <div v-if="canReply" class="mt-5">
         <div class="mb-2.5 text-sm font-bold">Reply</div>
-        <Editor ref="editor" placeholder="Share your thoughts… (rich text — no markdown needed)" />
+        <Editor ref="editor" placeholder="Share your thoughts… (rich text — no markdown needed)" @typing="onTyping" />
         <div class="mt-3 flex items-center">
           <span class="text-xs text-ink-muted">Rich text · drag, drop or paste images — auto-converted to WebP</span>
           <button @click="submitReply" :disabled="posting"
