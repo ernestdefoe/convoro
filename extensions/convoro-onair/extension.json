@@ -1,0 +1,14 @@
+{
+  "id": "convoro-onair",
+  "name": "OnAir",
+  "version": "1.0.0",
+  "description": "Show a live stream in your community. Embed a YouTube or Twitch broadcast with a pulsing LIVE badge in the sidebar while you're on air — no streaming infrastructure required.",
+  "author": "Convoro",
+  "convoro": ">=0.1.0",
+  "namespace": "Convoro\\Ext\\OnAir\\",
+  "provider": "Convoro\\Ext\\OnAir\\Extension",
+  "admin_url": "/admin/ext/onair",
+  "assets": { "forum": "assets/forum.js" },
+  "premium": false,
+  "price": 0
+}
