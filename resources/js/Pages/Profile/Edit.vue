@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import DigestPreferenceForm from './Partials/DigestPreferenceForm.vue';
+import ProfileDetailsForm from './Partials/ProfileDetailsForm.vue';
 import PushToggle from './Partials/PushToggle.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
@@ -35,6 +36,12 @@ defineProps<{
                         :status="status"
                         class="max-w-xl"
                     />
+                </div>
+
+                <div
+                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
+                >
+                    <ProfileDetailsForm class="max-w-xl" />
                 </div>
 
                 <div

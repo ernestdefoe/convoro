@@ -31,6 +31,11 @@ class AdminController extends Controller
         ]);
     }
 
+    public function accessibility(): Response
+    {
+        return Inertia::render('Admin/Accessibility');
+    }
+
     public function settings(): Response
     {
         return Inertia::render('Admin/Settings', [

@@ -24,6 +24,21 @@ class Present
             'name' => $user->name,
             'initials' => $initials,
             'color' => ($user->id % 6) + 1, // av-g1..6
+            'avatar' => $user->avatar_path ?: null,
+            'url' => '/u/'.$user->id,
+        ];
+    }
+
+    /** Shape a profile wall post for the frontend. */
+    public static function profilePost(\App\Models\ProfilePost $p, ?int $actorId = null): array
+    {
+        return [
+            'id' => $p->id,
+            'html' => $p->body_html,
+            'author' => self::avatar($p->author),
+            'createdAt' => optional($p->created_at)->diffForHumans(),
+            'canDelete' => $actorId !== null
+                && ($actorId === (int) $p->author_id || $actorId === (int) $p->profile_user_id),
         ];
     }
 

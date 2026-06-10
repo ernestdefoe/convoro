@@ -19,6 +19,7 @@ const initials = computed(() => {
 
 <template>
   <div class="min-h-screen bg-appbg text-ink">
+    <a href="#main" class="skip-link">Skip to content</a>
     <header class="sticky top-0 z-40 border-b border-line bg-surface/85 backdrop-blur">
       <div class="mx-auto flex h-[60px] max-w-[var(--c-container)] items-center gap-5 px-6">
         <Link href="/"><ConvoroLogo :size="34" /></Link>
@@ -36,8 +37,8 @@ const initials = computed(() => {
           <template v-if="user">
             <Link v-if="isAdmin" href="/admin" class="hidden rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2 sm:block">Admin</Link>
             <NotificationBell />
-            <Link href="/profile" aria-label="Your profile">
-              <Avatar :avatar="{ initials, color: (user.id % 6) + 1 }" :size="34" />
+            <Link :href="`/u/${user.id}`" aria-label="Your profile">
+              <Avatar :avatar="{ initials, color: (user.id % 6) + 1, avatar: user.avatar_path }" :size="34" />
             </Link>
           </template>
           <template v-else>
@@ -48,7 +49,7 @@ const initials = computed(() => {
       </div>
     </header>
 
-    <main class="mx-auto max-w-[var(--c-container)] px-6 py-6">
+    <main id="main" tabindex="-1" class="mx-auto max-w-[var(--c-container)] px-6 py-6">
       <slot />
     </main>
 

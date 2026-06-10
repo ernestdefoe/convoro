@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-const props = withDefaults(defineProps<{ avatar: { initials: string; color: number }; size?: number }>(), {
+const props = withDefaults(defineProps<{ avatar: { initials: string; color: number; avatar?: string | null }; size?: number }>(), {
   size: 40,
 });
 
@@ -17,7 +17,15 @@ const bg = computed(() => gradients[(props.avatar.color - 1) % 6]);
 </script>
 
 <template>
+  <img
+    v-if="avatar.avatar"
+    :src="avatar.avatar"
+    :alt="avatar.initials"
+    class="shrink-0 rounded-full object-cover"
+    :style="{ width: size + 'px', height: size + 'px' }"
+  />
   <span
+    v-else
     class="grid shrink-0 place-items-center rounded-full font-bold text-white"
     :style="{ width: size + 'px', height: size + 'px', fontSize: size * 0.38 + 'px', background: bg }"
   >{{ avatar.initials }}</span>

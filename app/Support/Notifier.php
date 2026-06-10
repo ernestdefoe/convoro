@@ -46,6 +46,7 @@ class Notifier
         return match ($data['type'] ?? 'reply') {
             'mention' => "{$actor} mentioned you in {$topic}",
             'reaction' => "{$actor} reacted ".($data['emoji'] ?? '')." to your post",
+            'wall' => "{$actor} posted on your profile",
             default => "{$actor} replied in {$topic}",
         };
     }

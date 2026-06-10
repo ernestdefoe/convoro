@@ -15,6 +15,7 @@ Route::get('/manifest.webmanifest', [App\Http\Controllers\PwaController::class, 
 // Community (forum)
 Route::get('/', [ForumController::class, 'index'])->name('forum.index');
 Route::get('/t/{topic}', [TopicController::class, 'show'])->name('topics.show');
+Route::get('/u/{user}', [App\Http\Controllers\UserProfileController::class, 'show'])->name('profiles.show');
 
 Route::get('/welcome', fn () => Inertia::render('Welcome', [
     'canLogin' => Route::has('login'),
@@ -45,9 +46,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/settings', [App\Http\Controllers\AdminController::class, 'updateSettings'])->name('settings.update');
     Route::get('/theme', [App\Http\Controllers\AdminController::class, 'theme'])->name('theme');
     Route::post('/theme', [App\Http\Controllers\AdminController::class, 'updateTheme'])->name('theme.update');
+    Route::get('/accessibility', [App\Http\Controllers\AdminController::class, 'accessibility'])->name('accessibility');
 });
 
 Route::middleware('auth')->group(function () {
+    Route::post('/u/{user}/wall', [App\Http\Controllers\UserProfileController::class, 'storeWall'])->name('profiles.wall.store');
+    Route::delete('/profile-posts/{profilePost}', [App\Http\Controllers\UserProfileController::class, 'destroyWall'])->name('profiles.wall.destroy');
+    Route::post('/profile/details', [App\Http\Controllers\UserProfileController::class, 'updateDetails'])->name('profile.details');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
