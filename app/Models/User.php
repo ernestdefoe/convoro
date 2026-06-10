@@ -38,6 +38,12 @@ class User extends Authenticatable
         return $this->hasMany(ProfilePost::class, 'profile_user_id');
     }
 
+    /** Groups this user belongs to. */
+    public function groups(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(Group::class, 'group_user')->withTimestamps();
+    }
+
     /** Direct-message conversations this user is part of. */
     public function conversations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {

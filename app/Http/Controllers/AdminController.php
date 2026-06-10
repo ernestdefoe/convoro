@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Group;
 use App\Models\Post;
 use App\Models\Reaction;
 use App\Models\Tag;
 use App\Models\Topic;
 use App\Models\User;
+use App\Support\IconGenerator;
 use App\Support\Settings;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -240,6 +243,126 @@ class AdminController extends Controller
         $tag->delete();
 
         return back();
+    }
+
+    // ---- Members & Groups -------------------------------------------------
+
+    public function members(Request $request): Response
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $users = User::query()
+            ->when($q !== '', fn ($qq) => $qq->where(fn ($w) => $w
+                ->whereLike('name', "%{$q}%", caseSensitive: false)
+                ->orWhereLike('email', "%{$q}%", caseSensitive: false)))
+            ->with('groups')
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString()
+            ->through(fn (User $u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'email' => $u->email,
+                'is_admin' => (bool) $u->is_admin,
+                'joined' => optional($u->created_at)->isoFormat('MMM D, YYYY'),
+                'avatar' => $u->avatar_path,
+                'initials' => Present::avatar($u)['initials'],
+                'color' => Present::avatar($u)['color'],
+                'groups' => $u->groups->map(fn ($g) => ['id' => $g->id, 'name' => $g->name, 'color' => $g->color]),
+            ]);
+
+        return Inertia::render('Admin/Members', [
+            'users' => $users,
+            'q' => $q,
+            'groups' => Group::orderBy('name')->get(['id', 'name', 'color', 'is_staff']),
+        ]);
+    }
+
+    public function updateMember(Request $request, User $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:60'],
+            'email' => ['required', 'email', 'max:160', Rule::unique('users', 'email')->ignore($user->id)],
+            'is_admin' => ['required', 'boolean'],
+            'groups' => ['array'],
+            'groups.*' => ['integer', 'exists:groups,id'],
+        ]);
+
+        $user->update(['name' => $data['name'], 'email' => $data['email'], 'is_admin' => (bool) $data['is_admin']]);
+        $user->groups()->sync($data['groups'] ?? []);
+
+        return back()->with('status', 'Member updated.');
+    }
+
+    public function destroyMember(Request $request, User $user): RedirectResponse
+    {
+        abort_if($user->id === $request->user()->id, 422, 'You cannot delete your own account here.');
+        $user->delete();
+
+        return back()->with('status', 'Member deleted.');
+    }
+
+    public function storeGroup(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:40'],
+            'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'is_staff' => ['boolean'],
+        ]);
+        Group::create($data + ['is_staff' => $request->boolean('is_staff')]);
+
+        return back();
+    }
+
+    public function updateGroup(Request $request, Group $group): RedirectResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:40'],
+            'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'is_staff' => ['boolean'],
+        ]);
+        $group->update($data + ['is_staff' => $request->boolean('is_staff')]);
+
+        return back();
+    }
+
+    public function destroyGroup(Group $group): RedirectResponse
+    {
+        $group->delete();
+
+        return back();
+    }
+
+    // ---- PWA --------------------------------------------------------------
+
+    public function pwa(): Response
+    {
+        return Inertia::render('Admin/Pwa', [
+            'values' => [
+                'short_name' => Settings::get('pwa.short_name'),
+                'banner' => (bool) Settings::get('pwa.banner'),
+            ],
+            'icons' => array_map(fn ($n) => '/icons/'.$n.'?v='.now()->timestamp, array_keys(IconGenerator::SIZES)),
+        ]);
+    }
+
+    public function updatePwa(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'short_name' => ['required', 'string', 'max:30'],
+            'banner' => ['required', 'boolean'],
+        ]);
+        Settings::setMany(['pwa.short_name' => $data['short_name'], 'pwa.banner' => (bool) $data['banner']]);
+
+        return back()->with('status', 'PWA settings saved.');
+    }
+
+    public function uploadIcon(Request $request): RedirectResponse
+    {
+        $request->validate(['icon' => ['required', 'image', 'max:8192']]);
+        IconGenerator::generate(file_get_contents($request->file('icon')->getRealPath()));
+
+        return back()->with('status', 'Icons regenerated from your image.');
     }
 
     public function settings(): Response

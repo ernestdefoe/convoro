@@ -7,7 +7,9 @@ const current = computed(() => page.component);
 
 const nav = [
   { label: 'Dashboard', href: '/admin', component: 'Admin/Dashboard', icon: 'M3 12l9-9 9 9M5 10v10h14V10' },
+  { label: 'Members', href: '/admin/members', component: 'Admin/Members', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 010 7.75' },
   { label: 'Categories & Tags', href: '/admin/content', component: 'Admin/Content', icon: 'M3 7h18M3 12h18M3 17h10' },
+  { label: 'PWA', href: '/admin/pwa', component: 'Admin/Pwa', icon: 'M12 2a10 10 0 100 20 10 10 0 000-20M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20' },
   { label: 'Settings', href: '/admin/settings', component: 'Admin/Settings', icon: 'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4' },
   { label: 'Theme', href: '/admin/theme', component: 'Admin/Theme', icon: 'M12 3a9 9 0 100 18h.5a2.5 2.5 0 002.5-2.5 2.5 2.5 0 012.5-2.5H21a0 0 0 000 0' },
   { label: 'Accessibility', href: '/admin/accessibility', component: 'Admin/Accessibility', icon: 'M12 2a2 2 0 110 4 2 2 0 010-4z M21 9l-6-1h-6L3 9 M9 22l3-8 3 8 M12 8v6' },

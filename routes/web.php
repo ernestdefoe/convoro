@@ -54,6 +54,17 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/theme', [App\Http\Controllers\AdminController::class, 'updateTheme'])->name('theme.update');
     Route::get('/accessibility', [App\Http\Controllers\AdminController::class, 'accessibility'])->name('accessibility');
 
+    Route::get('/members', [App\Http\Controllers\AdminController::class, 'members'])->name('members');
+    Route::put('/members/{user}', [App\Http\Controllers\AdminController::class, 'updateMember'])->name('members.update');
+    Route::delete('/members/{user}', [App\Http\Controllers\AdminController::class, 'destroyMember'])->name('members.destroy');
+    Route::post('/groups', [App\Http\Controllers\AdminController::class, 'storeGroup'])->name('groups.store');
+    Route::put('/groups/{group}', [App\Http\Controllers\AdminController::class, 'updateGroup'])->name('groups.update');
+    Route::delete('/groups/{group}', [App\Http\Controllers\AdminController::class, 'destroyGroup'])->name('groups.destroy');
+
+    Route::get('/pwa', [App\Http\Controllers\AdminController::class, 'pwa'])->name('pwa');
+    Route::post('/pwa', [App\Http\Controllers\AdminController::class, 'updatePwa'])->name('pwa.update');
+    Route::post('/pwa/icon', [App\Http\Controllers\AdminController::class, 'uploadIcon'])->name('pwa.icon');
+
     Route::get('/content', [App\Http\Controllers\AdminController::class, 'content'])->name('content');
     Route::post('/categories', [App\Http\Controllers\AdminController::class, 'storeCategory'])->name('categories.store');
     Route::put('/categories/{category}', [App\Http\Controllers\AdminController::class, 'updateCategory'])->name('categories.update');
