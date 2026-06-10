@@ -16,6 +16,8 @@ Route::domain(config('convoro.marketing_domain'))->group(function () {
     Route::get('/', [App\Http\Controllers\MarketingController::class, 'home'])->name('marketing.home');
     // Public extension directory (premium is purchased on the detail page).
     Route::get('/extensions', [App\Http\Controllers\StoreController::class, 'index'])->name('store.index');
+    Route::get('/extensions/submit', [App\Http\Controllers\StoreController::class, 'submitForm'])->name('store.submit');
+    Route::post('/extensions/submit', [App\Http\Controllers\StoreController::class, 'submit'])->name('store.submit.post');
     Route::get('/extensions/purchased', [App\Http\Controllers\StoreController::class, 'success'])->name('store.success');
     Route::get('/extensions/{product}', [App\Http\Controllers\StoreController::class, 'show'])->name('store.show');
     Route::post('/extensions/{product}/checkout', [App\Http\Controllers\StoreController::class, 'checkout'])->name('store.checkout');
@@ -129,6 +131,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/marketplace/settings', [App\Http\Controllers\AdminController::class, 'updateExtensionSettings'])->name('marketplace.settings');
     Route::post('/marketplace/composer', [App\Http\Controllers\AdminController::class, 'composerInstall'])->name('marketplace.composer');
     Route::post('/marketplace/catalog/install', [App\Http\Controllers\AdminController::class, 'installCatalogItem'])->name('marketplace.catalog.install');
+    Route::get('/extensions/{id}', [App\Http\Controllers\AdminController::class, 'extensionSettings'])->name('extensions.settings');
     Route::get('/store', [App\Http\Controllers\AdminController::class, 'store'])->name('store');
     Route::post('/store/stripe', [App\Http\Controllers\AdminController::class, 'updateStripe'])->name('store.stripe');
     Route::get('/store/stripe/connect', [App\Http\Controllers\AdminController::class, 'connectStripe'])->name('store.stripe.connect');

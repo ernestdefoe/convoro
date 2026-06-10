@@ -38,7 +38,68 @@ class AdminController extends Controller
                     'name' => $u->name,
                     'joined' => optional($u->created_at)->diffForHumans(),
                 ]),
+            'queue' => $this->queueOverview(),
+            'analytics' => \App\Support\ExtensionManager::isEnabled('convoro-analytics')
+                ? $this->analyticsOverview() : null,
         ]);
+    }
+
+    /** Queue / jobs health for the dashboard panel. Best-effort — never throws. */
+    private function queueOverview(): array
+    {
+        $connection = (string) config('queue.default');
+        $pending = null;
+        try {
+            $pending = \Illuminate\Support\Facades\Queue::size();
+        } catch (\Throwable) {
+        }
+
+        $failed = 0;
+        try {
+            $failed = \Illuminate\Support\Facades\DB::table('failed_jobs')->count();
+        } catch (\Throwable) {
+        }
+
+        return [
+            'connection' => $connection,
+            'pending' => $pending,
+            'failed' => $failed,
+            'horizon' => \App\Support\ExtensionManager::isEnabled('convoro-horizon'),
+        ];
+    }
+
+    /** Analytics summary surfaced on the dashboard when the extension is enabled. */
+    private function analyticsOverview(): array
+    {
+        $since = now()->subDays(13)->startOfDay();
+        $rows = \Illuminate\Support\Facades\DB::table('users')->where('created_at', '>=', $since)
+            ->selectRaw('DATE(created_at) d, COUNT(*) c')->groupBy('d')->pluck('c', 'd');
+        $signups = [];
+        for ($i = 13; $i >= 0; $i--) {
+            $d = now()->subDays($i)->toDateString();
+            $signups[] = [
+                'date' => \Illuminate\Support\Carbon::parse($d)->format('M j'),
+                'day' => \Illuminate\Support\Carbon::parse($d)->format('j'),
+                'count' => (int) ($rows[$d] ?? 0),
+            ];
+        }
+
+        $topPosters = \Illuminate\Support\Facades\DB::table('posts')
+            ->join('users', 'users.id', '=', 'posts.user_id')
+            ->select('users.name', \Illuminate\Support\Facades\DB::raw('COUNT(*) c'))
+            ->groupBy('users.id', 'users.name')->orderByDesc('c')->limit(5)->get()
+            ->map(fn ($p) => ['name' => $p->name, 'count' => (int) $p->c])->all();
+
+        $activeTopics = \Illuminate\Support\Facades\DB::table('topics')
+            ->orderByDesc('reply_count')->limit(5)->get(['title', 'slug', 'reply_count'])
+            ->map(fn ($t) => ['title' => $t->title, 'slug' => $t->slug, 'replies' => (int) $t->reply_count])->all();
+
+        return [
+            'online' => \Illuminate\Support\Facades\DB::table('users')->where('last_seen_at', '>=', now()->subMinutes(5))->count(),
+            'signups' => $signups,
+            'topPosters' => $topPosters,
+            'activeTopics' => $activeTopics,
+        ];
     }
 
     public function accessibility(): Response
@@ -154,6 +215,7 @@ class AdminController extends Controller
                     'tagline' => $p->tagline, 'description' => $p->description, 'package' => $p->package,
                     'version' => $p->version, 'price_cents' => $p->price_cents, 'image' => $p->image,
                     'published' => $p->published, 'featured' => $p->featured,
+                    'status' => $p->status, 'submitter' => $p->submitter_email,
                     'source' => $p->source, 'repo' => $p->repo,
                     'hasDownload' => $p->source === 'github' ? (bool) $p->download_url : (bool) $p->download_path,
                     'sales' => $p->licenses_count,
@@ -435,6 +497,27 @@ class AdminController extends Controller
         \App\Support\ExtensionInstaller::uninstall($id);
 
         return back()->with('extResult', ['ok' => true, 'message' => "Removed “{$id}”."]);
+    }
+
+    public function extensionSettings(string $id): Response
+    {
+        $m = collect(\App\Support\ExtensionManager::all())->firstWhere('id', $id);
+        abort_if(! $m, 404);
+
+        return Inertia::render('Admin/ExtensionSettings', [
+            'ext' => [
+                'id' => $m['id'],
+                'name' => $m['name'],
+                'version' => $m['version'],
+                'description' => $m['description'],
+                'author' => $m['author'],
+                'type' => $m['type'],
+                'enabled' => \App\Support\ExtensionManager::isEnabled($m['id']),
+                'settings' => $m['settings'],
+                'values' => \App\Support\ExtensionManager::settingValues($m['id']),
+                'adminUrl' => $m['admin_url'],
+            ],
+        ]);
     }
 
     public function updateExtensionSettings(Request $request): RedirectResponse

@@ -146,12 +146,13 @@ function uploadFile(p: any, e: Event) {
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <span class="font-semibold text-white">{{ p.name }}</span>
-              <span v-if="!p.published" class="rounded bg-white/10 px-1.5 py-0.5 text-[11px] text-slate-400">Draft</span>
+              <span v-if="p.status === 'pending'" class="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] text-amber-300">Submitted · review</span>
+              <span v-else-if="!p.published" class="rounded bg-white/10 px-1.5 py-0.5 text-[11px] text-slate-400">Draft</span>
               <span v-if="p.featured" class="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] text-amber-300">Featured</span>
               <span v-if="p.source === 'github'" class="rounded bg-sky-500/15 px-1.5 py-0.5 text-[11px] text-sky-300">GitHub</span>
               <span v-if="p.hasDownload" class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] text-emerald-300">{{ p.source === 'github' ? 'Linked ✓' : 'File ✓' }}</span>
             </div>
-            <div class="text-xs text-slate-500">${{ (p.price_cents/100).toFixed(2) }} · {{ p.sales }} sold · {{ p.source === 'github' ? p.repo : (p.package || 'no package id') }}</div>
+            <div class="text-xs text-slate-500">${{ (p.price_cents/100).toFixed(2) }} · {{ p.sales }} sold · {{ p.source === 'github' ? p.repo : (p.package || 'no package id') }}<span v-if="p.submitter"> · submitted by {{ p.submitter }}</span></div>
           </div>
           <button v-if="p.source === 'github'" @click="refreshRepo(p)" class="rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/5">Refresh</button>
           <label v-else class="cursor-pointer rounded-lg border border-white/10 px-2.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/5">

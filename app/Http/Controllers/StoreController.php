@@ -25,6 +25,77 @@ class StoreController extends Controller
         ]);
     }
 
+    /** Public "submit your extension/theme" form on convoro.co. */
+    public function submitForm(): Response
+    {
+        return Inertia::render('Store/Submit', [
+            'checkoutEnabled' => StripeService::configured(),
+            'seo' => Seo::make([
+                'title' => 'Submit your extension or theme',
+                'description' => 'Publish your Convoro extension or theme to the directory. Link a public GitHub repo — free listings are instant; premium items sell through the Convoro store.',
+            ]),
+        ]);
+    }
+
+    /**
+     * Accept a public submission: validate the GitHub repo's manifest, then
+     * create an UNPUBLISHED, pending product (the store owner approves it).
+     */
+    public function submit(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'repo' => ['required', 'string', 'max:255'],
+            'pricing' => ['required', 'in:free,premium'],
+            'price' => ['nullable', 'numeric', 'min:1', 'max:9999'],
+            'email' => ['required', 'email', 'max:255'],
+        ]);
+
+        $repo = \App\Support\GitHubRegistry::normalizeRepo($data['repo']);
+        if (! $repo) {
+            return back()->with('storeError', 'That does not look like a GitHub repository. Use the owner/name or full URL.');
+        }
+
+        try {
+            $r = \App\Support\GitHubRegistry::resolve($repo);
+        } catch (\Throwable $e) {
+            return back()->with('storeError', $e->getMessage());
+        }
+
+        $m = $r['manifest'];
+        $priceCents = $data['pricing'] === 'premium' ? (int) round(((float) ($data['price'] ?? 0)) * 100) : 0;
+        if ($data['pricing'] === 'premium' && $priceCents < 100) {
+            return back()->with('storeError', 'Set a price of at least $1 for a premium listing.');
+        }
+
+        $existing = Product::where('package', $m['id'])->first();
+        if ($existing && $existing->published) {
+            return back()->with('storeError', "“{$m['name']}” is already listed in the directory.");
+        }
+
+        Product::updateOrCreate(
+            ['package' => $m['id']],
+            [
+                'slug' => \Illuminate\Support\Str::slug($m['id']),
+                'name' => $m['name'],
+                'type' => in_array(($m['type'] ?? 'extension'), ['extension', 'theme'], true) ? ($m['type'] ?? 'extension') : 'extension',
+                'tagline' => \Illuminate\Support\Str::limit(strip_tags($m['description'] ?? ''), 180),
+                'description' => $m['description'] ?? '',
+                'version' => $r['version'],
+                'source' => 'github',
+                'repo' => $repo,
+                'download_url' => $r['download_url'],
+                'ref' => $r['ref'],
+                'price_cents' => $priceCents,
+                'submitter_email' => $data['email'],
+                'status' => 'pending',
+                'published' => false,
+            ],
+        );
+
+        return redirect()->route('store.index')->with('status',
+            "Thanks! “{$m['name']}” was submitted for review. We'll email {$data['email']} once it's approved.");
+    }
+
     public function show(Product $product): Response
     {
         abort_unless($product->published, 404);

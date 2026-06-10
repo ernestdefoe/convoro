@@ -39,6 +39,15 @@ class HandleInertiaRequests extends Middleware
             ],
             'site' => fn () => Settings::public(),
             'themeFonts' => fn () => $request->user()?->is_admin ? \App\Support\Theme::fontOptions() : null,
+            'adminExtNav' => fn () => $request->user()?->is_admin
+                ? collect(\App\Support\ExtensionManager::enabled())
+                    ->filter(fn ($m) => ! empty($m['settings']) || ! empty($m['admin_url']))
+                    ->map(fn ($m) => [
+                        'id' => $m['id'],
+                        'name' => $m['name'],
+                        'href' => $m['admin_url'] ?: '/admin/extensions/'.$m['id'],
+                    ])->values()->all()
+                : null,
             'seo' => fn () => \App\Support\Seo::make(),
             'extAssets' => fn () => \App\Support\ExtensionManager::assetsFor('forum'),
             'notifications' => fn () => $this->notifications($request),

@@ -1,58 +1,104 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
-
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="public/assets/convoro-logo.svg" width="320" alt="Convoro" onerror="this.style.display='none'">
 </p>
 
-## About Laravel
+<h1 align="center">Convoro</h1>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+<p align="center">
+  <strong>The modern, AI-native community platform.</strong><br>
+  A fast, beautiful forum you can theme live, extend without a build step, and run anywhere.
+</p>
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+<p align="center">
+  <a href="https://convoro.co">Website</a> ·
+  <a href="https://community.convoro.co">Live demo</a> ·
+  <a href="https://convoro.co/docs/install.html">Install guide</a> ·
+  <a href="https://convoro.co/docs/extensions.html">Build extensions</a> ·
+  <a href="https://convoro.co/extensions">Directory</a>
+</p>
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## What is Convoro?
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+Convoro is a self-hosted community/forum platform that brings together the best ideas from
+modern discussion software into one cohesive, contemporary package. It pairs a polished
+discussion experience with a **live theme editor**, a **built-in extension directory**, and a
+first-class **AI build pipeline** so anyone — human or AI assistant — can extend it quickly.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Highlights
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- **🎨 Live theme editor** — a front-facing drawer to restyle your whole community in real time
+  (colors, radius, fonts, layout, avatars, post style) with a built-in accessibility/contrast
+  auditor. Save to publish for everyone. Every install gets the exact same experience.
+- **🧩 Extensions with no build step** — drop a folder (or one-click install from the directory),
+  Convoro autoloads its PHP, runs its migrations, and injects its prebuilt frontend bundle. No
+  Composer, no `dump-autoload`, no shell required.
+- **🛒 Built-in directory & store** — a Packagist-style registry. Authors **submit a public
+  GitHub repo**; free add-ons install in one click and premium ones sell with a license key.
+- **🤖 AI-native** — point any AI model at [`/llms.txt`](https://convoro.co/llms.txt) or
+  [`/api/ai/spec.json`](https://convoro.co/api/ai/spec.json) and it has the full manifest schema,
+  frontend slots, theme tokens, and publish flow to scaffold a working extension on the first try.
+- **⚡ Real-time** — live topics, presence, and typing indicators over WebSockets (Laravel Reverb).
+- **📨 Messaging** — direct and multi-participant group conversations built into core.
+- **📈 Admin** — categorized navigation, dashboard analytics, a queue/jobs overview, members &
+  moderation tools, SEO, PWA, and email (SMTP or PHP mail).
 
-## Agentic Development
+## Tech stack
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+- **Backend:** Laravel 13 (PHP 8.3+), MariaDB/MySQL, Redis (cache / queue / session)
+- **Frontend:** Inertia.js + Vue 3 + TypeScript, Vite, Tailwind CSS
+- **Real-time:** Laravel Reverb + Echo
+- **Media:** GD-powered image pipeline (auto-WebP + responsive sizes)
+
+## Requirements
+
+- PHP **8.3+** with the usual extensions (`mbstring`, `pdo`, `gd`, `intl`, `zip`)
+- MySQL **8+** / MariaDB **10.6+**
+- Redis (recommended) for cache, queue, and sessions
+- Node 18+ (only to build assets from source)
+
+## Quick start (from source)
 
 ```bash
-composer require laravel/boost --dev
+git clone https://github.com/ernestdefoe/convoro.git
+cd convoro
 
-php artisan boost:install
+composer install
+npm install && npm run build
+
+cp .env.example .env
+php artisan key:generate
+
+# point DB_* / REDIS_* at your services, then:
+php artisan migrate
+php artisan storage:link
+
+# serve (dev)
+php artisan serve
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Or visit `/install` in a browser for the guided setup wizard (requirements check, database test,
+admin account) — no command line needed.
 
-## Contributing
+> **Production:** run a queue worker (`php artisan queue:work`), the scheduler
+> (`php artisan schedule:run` every minute via cron), and `php artisan reverb:start` for real-time.
+> See the [install guide](https://convoro.co/docs/install.html).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Download
 
-## Code of Conduct
+Tagged releases — including ready-to-deploy archives with vendored dependencies and prebuilt
+assets — are published on the [**Releases**](https://github.com/ernestdefoe/convoro/releases) page.
+Grab the latest `convoro-x.y.z.zip`, unzip on your server, and run the install wizard.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Building extensions
 
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+A Convoro extension is a self-contained folder with an `extension.json` manifest — no build step on
+the server. Read the [**developer guide**](https://convoro.co/docs/extensions.html), or hand your AI
+assistant [`/llms.txt`](https://convoro.co/llms.txt) and let it scaffold one for you. Publish by
+linking your public GitHub repo at [convoro.co/extensions/submit](https://convoro.co/extensions/submit).
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Convoro core is open-source software licensed under the [MIT license](LICENSE).
+Premium extensions and themes distributed through the Convoro store carry their own licenses.

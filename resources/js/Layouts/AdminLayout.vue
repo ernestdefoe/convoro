@@ -4,24 +4,47 @@ import { computed } from 'vue';
 
 const page = usePage();
 const current = computed(() => page.component);
+const url = computed(() => (page.props as any).ziggy?.location ?? (page as any).url ?? '');
 
-const nav = [
-  { label: 'Dashboard', href: '/admin', component: 'Admin/Dashboard', icon: 'M3 12l9-9 9 9M5 10v10h14V10' },
-  { label: 'Members', href: '/admin/members', component: 'Admin/Members', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 010 7.75' },
-  { label: 'Categories & Tags', href: '/admin/content', component: 'Admin/Content', icon: 'M3 7h18M3 12h18M3 17h10' },
-  { label: 'PWA', href: '/admin/pwa', component: 'Admin/Pwa', icon: 'M12 2a10 10 0 100 20 10 10 0 000-20M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20' },
-  { label: 'Settings', href: '/admin/settings', component: 'Admin/Settings', icon: 'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4' },
-  { label: 'Email', href: '/admin/email', component: 'Admin/Email', icon: 'M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z M22 6l-10 7L2 6' },
-  { label: 'Accessibility', href: '/admin/accessibility', component: 'Admin/Accessibility', icon: 'M12 2a2 2 0 110 4 2 2 0 010-4z M21 9l-6-1h-6L3 9 M9 22l3-8 3 8 M12 8v6' },
-  { label: 'Marketplace', href: '/admin/marketplace', component: 'Admin/Marketplace', icon: 'M3 9l1-5h16l1 5M4 9v10h16V9M9 9v10M15 9v10' },
-  { label: 'Store', href: '/admin/store', component: 'Admin/Store', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
-  { label: 'System', href: '/admin/system', component: 'Admin/System', icon: 'M12 15a3 3 0 100-6 3 3 0 000 6z M4 12h2M18 12h2M12 4v2M12 18v2' },
-];
+const extNav = computed(() => ((page.props as any).adminExtNav ?? []) as { id: string; name: string; href: string }[]);
+
+const I = {
+  dash: 'M3 12l9-9 9 9M5 10v10h14V10',
+  members: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 100-8 4 4 0 000 8 M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 010 7.75',
+  tags: 'M3 7h18M3 12h18M3 17h10',
+  pwa: 'M12 2a10 10 0 100 20 10 10 0 000-20M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20',
+  cog: 'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4',
+  mail: 'M4 4h16a2 2 0 012 2v12a2 2 0 01-2 2H4a2 2 0 01-2-2V6a2 2 0 012-2z M22 6l-10 7L2 6',
+  market: 'M3 9l1-5h16l1 5M4 9v10h16V9M9 9v10M15 9v10',
+  store: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z',
+  system: 'M12 15a3 3 0 100-6 3 3 0 000 6z M4 12h2M18 12h2M12 4v2M12 18v2',
+  puzzle: 'M4 7h3a2 2 0 002-2 2 2 0 114 0 2 2 0 002 2h3v3a2 2 0 002 2 2 2 0 110 4 2 2 0 00-2 2v3h-3',
+};
+
+const groups = computed(() => [
+  { label: null, items: [{ label: 'Dashboard', href: '/admin', component: 'Admin/Dashboard', icon: I.dash }] },
+  { label: 'Community', items: [
+    { label: 'Members', href: '/admin/members', component: 'Admin/Members', icon: I.members },
+    { label: 'Categories & Tags', href: '/admin/content', component: 'Admin/Content', icon: I.tags },
+  ] },
+  { label: 'Configuration', items: [
+    { label: 'Settings', href: '/admin/settings', component: 'Admin/Settings', icon: I.cog },
+    { label: 'Email', href: '/admin/email', component: 'Admin/Email', icon: I.mail },
+    { label: 'PWA', href: '/admin/pwa', component: 'Admin/Pwa', icon: I.pwa },
+  ] },
+  { label: 'Extensions', items: [
+    { label: 'Marketplace', href: '/admin/marketplace', component: 'Admin/Marketplace', icon: I.market },
+    { label: 'Store', href: '/admin/store', component: 'Admin/Store', icon: I.store },
+    ...extNav.value.map((e) => ({ label: e.name, href: e.href, component: '', icon: I.puzzle })),
+  ] },
+  { label: 'System', items: [{ label: 'System', href: '/admin/system', component: 'Admin/System', icon: I.system }] },
+]);
 
 const banner = () => (page.props as any).updateBanner ?? null;
 
-function active(c: string) {
-  return current.value === c;
+function active(item: { component: string; href: string }) {
+  if (item.component) return current.value === item.component;
+  return typeof url.value === 'string' && url.value.startsWith(item.href);
 }
 </script>
 
@@ -34,17 +57,20 @@ function active(c: string) {
         <span class="text-sm font-bold text-white">Convoro Admin</span>
       </div>
 
-      <nav class="flex flex-col gap-1">
-        <Link
-          v-for="item in nav"
-          :key="item.href"
-          :href="item.href"
-          class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition"
-          :class="active(item.component) ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path :d="item.icon" /></svg>
-          {{ item.label }}
-        </Link>
+      <nav class="flex flex-col gap-1 overflow-y-auto">
+        <template v-for="(group, gi) in groups" :key="gi">
+          <div v-if="group.label" class="px-3 pb-1 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ group.label }}</div>
+          <Link
+            v-for="item in group.items"
+            :key="item.href"
+            :href="item.href"
+            class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition"
+            :class="active(item) ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path :d="item.icon" /></svg>
+            {{ item.label }}
+          </Link>
+        </template>
       </nav>
 
       <Link href="/" class="mt-auto flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-white/5 hover:text-white">

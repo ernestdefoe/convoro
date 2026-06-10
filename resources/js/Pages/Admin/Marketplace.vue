@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, router, usePage } from '@inertiajs/vue3';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
@@ -81,28 +81,6 @@ function toggle(ext: { id: string; enabled: boolean }) {
 function uninstall(ext: { id: string; name: string }) {
   if (!confirm(`Remove “${ext.name}”? This deletes the extension and rolls back its database tables.`)) return;
   router.post('/admin/marketplace/uninstall', { id: ext.id }, { preserveScroll: true });
-}
-
-// Settings detail panel (opened by clicking a card).
-const active = ref<Ext | null>(null);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const formValues = ref<Record<string, any>>({});
-const saving = ref(false);
-function openSettings(ext: Ext) {
-  active.value = ext;
-  formValues.value = { ...ext.values };
-}
-function closeSettings() {
-  active.value = null;
-}
-function saveSettings() {
-  if (!active.value) return;
-  saving.value = true;
-  router.post('/admin/marketplace/settings', { id: active.value.id, values: formValues.value }, {
-    preserveScroll: true,
-    onSuccess: () => closeSettings(),
-    onFinish: () => (saving.value = false),
-  });
 }
 </script>
 
@@ -204,10 +182,8 @@ function saveSettings() {
 
       <div v-else class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <div v-for="ext in visibleExtensions" :key="ext.id"
-          @click="openSettings(ext)"
-          class="flex cursor-pointer flex-col rounded-2xl border bg-[#0f1120] p-5 transition hover:border-indigo-500/50 hover:bg-[#12152b]"
-          :class="ext.enabled ? 'border-indigo-500/30' : 'border-white/5'"
-          role="button" :title="`Open ${ext.name} settings`">
+          class="flex flex-col rounded-2xl border bg-[#0f1120] p-5 transition"
+          :class="ext.enabled ? 'border-indigo-500/30' : 'border-white/5'">
           <!-- Header: icon + name + version -->
           <div class="flex items-start gap-3">
             <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg font-bold"
@@ -244,12 +220,14 @@ function saveSettings() {
             </button>
             <span class="text-xs font-semibold" :class="ext.enabled ? 'text-emerald-300' : 'text-slate-500'">{{ ext.enabled ? 'Enabled' : 'Disabled' }}</span>
 
-            <span v-if="ext.settings.length" class="ml-auto inline-flex items-center gap-1 text-xs font-semibold text-indigo-300">
+            <Link v-if="ext.settings.length || ext.adminUrl" :href="ext.adminUrl || `/admin/extensions/${ext.id}`"
+              class="ml-auto inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/10">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4" /></svg>
               Settings
-            </span>
-            <button v-else-if="ext.removable" type="button" @click.stop="uninstall(ext)"
-              class="ml-auto rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400">Remove</button>
+            </Link>
+            <button v-if="ext.removable" type="button" @click.stop="uninstall(ext)"
+              :class="(ext.settings.length || ext.adminUrl) ? '' : 'ml-auto'"
+              class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400">Remove</button>
           </div>
         </div>
       </div>
@@ -294,78 +272,5 @@ function saveSettings() {
       </div>
     </section>
 
-    <!-- Extension detail / settings panel -->
-    <div v-if="active" class="fixed inset-0 z-[80] flex items-center justify-center p-4">
-      <div class="absolute inset-0 bg-black/60" @click="closeSettings" />
-      <div class="relative max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-white/10 bg-[#14172a] shadow-2xl">
-        <!-- Header -->
-        <div class="flex items-start gap-3 border-b border-white/5 p-5">
-          <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg"
-            :class="active.type === 'theme' ? 'bg-fuchsia-500/15 text-fuchsia-300' : 'bg-indigo-500/15 text-indigo-300'">
-            {{ active.type === 'theme' ? '🎨' : '🧩' }}
-          </div>
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-2">
-              <h3 class="font-bold text-white">{{ active.name }}</h3>
-              <span class="rounded bg-white/5 px-1.5 py-0.5 text-[11px] text-slate-400">v{{ active.version }}</span>
-            </div>
-            <p v-if="active.author" class="text-[11px] text-slate-500">by {{ active.author }} · {{ active.id }}</p>
-          </div>
-          <button type="button" class="text-slate-400 hover:text-white" @click="closeSettings" aria-label="Close">✕</button>
-        </div>
-
-        <div class="space-y-5 p-5">
-          <p class="text-sm text-slate-400">{{ active.description }}</p>
-
-          <a v-if="active.adminUrl" :href="active.adminUrl"
-            class="inline-flex items-center gap-2 rounded-lg bg-indigo-500/15 px-3 py-2 text-sm font-semibold text-indigo-300 hover:bg-indigo-500/25">
-            Open management page
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10" /></svg>
-          </a>
-
-          <!-- Settings form -->
-          <form v-if="active.settings.length" class="space-y-4" @submit.prevent="saveSettings">
-            <div v-for="field in active.settings" :key="field.key">
-              <!-- boolean -->
-              <label v-if="field.type === 'boolean'" class="flex items-center gap-3">
-                <input type="checkbox" v-model="formValues[field.key]" class="rounded border-white/10 bg-[#0f1120] text-indigo-500 focus:ring-indigo-500" />
-                <span class="text-sm font-medium text-slate-200">{{ field.label }}</span>
-              </label>
-
-              <template v-else>
-                <label class="block text-sm font-medium text-slate-300">{{ field.label }}</label>
-                <textarea v-if="field.type === 'textarea'" v-model="formValues[field.key]" rows="3"
-                  class="mt-1.5 w-full rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
-                <select v-else-if="field.type === 'select'" v-model="formValues[field.key]"
-                  class="mt-1.5 w-full rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500">
-                  <option v-for="o in field.options || []" :key="o.value" :value="o.value">{{ o.label }}</option>
-                </select>
-                <input v-else :type="field.type === 'number' ? 'number' : (field.type === 'color' ? 'color' : 'text')"
-                  v-model="formValues[field.key]"
-                  class="mt-1.5 w-full rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
-              </template>
-              <p v-if="field.help" class="mt-1 text-xs text-slate-500">{{ field.help }}</p>
-            </div>
-
-            <div class="flex items-center gap-3 pt-1">
-              <button type="submit" :disabled="saving" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">
-                {{ saving ? 'Saving…' : 'Save settings' }}
-              </button>
-              <button type="button" class="text-sm font-semibold text-slate-400 hover:text-slate-200" @click="closeSettings">Cancel</button>
-            </div>
-          </form>
-
-          <p v-else class="rounded-lg border border-dashed border-white/10 p-4 text-center text-sm text-slate-500">
-            This {{ active.type }} has no configurable settings.
-          </p>
-
-          <!-- Danger zone -->
-          <div v-if="active.removable" class="border-t border-white/5 pt-4">
-            <button type="button" @click="uninstall(active)"
-              class="rounded-lg px-3 py-1.5 text-xs font-semibold text-red-400 hover:bg-red-500/10">Remove this {{ active.type }}</button>
-          </div>
-        </div>
-      </div>
-    </div>
   </AdminLayout>
 </template>
