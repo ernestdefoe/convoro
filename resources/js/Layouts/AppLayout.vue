@@ -28,7 +28,7 @@ const initials = computed(() => {
       <div class="mx-auto flex h-[60px] max-w-[var(--c-container)] items-center gap-5 px-6">
         <Link href="/"><ConvoroLogo :size="34" /></Link>
         <nav class="ml-2 hidden items-center gap-1 md:flex">
-          <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold text-primary-700" :class="$page.component.startsWith('Forum') ? 'bg-primary-soft' : 'text-ink-2 hover:bg-surface-2'">Community</Link>
+          <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Forum') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Community</Link>
           <a class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Members</a>
           <a class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Leaderboard</a>
         </nav>
@@ -39,7 +39,7 @@ const initials = computed(() => {
           </div>
           <ThemeToggle />
           <template v-if="user">
-            <Link v-if="isAdmin" href="/admin" class="hidden rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2 sm:block">Admin</Link>
+            <a v-if="isAdmin" href="/admin" target="_blank" rel="noopener" class="hidden rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2 sm:block">Admin</a>
             <NotificationBell />
             <Link :href="`/u/${user.id}`" aria-label="Your profile">
               <Avatar :avatar="{ initials, color: (user.id % 6) + 1, avatar: user.avatar_path }" :size="34" />

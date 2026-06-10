@@ -33,6 +33,10 @@
         <!-- Live theme tokens (admin theme editor) -->
         <style id="convoro-theme">{!! \App\Support\Theme::css() !!}</style>
 
+        @if ($faKit = \App\Support\Settings::get('fa.kit_url'))
+            <script src="{{ $faKit }}" crossorigin="anonymous"></script>
+        @endif
+
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

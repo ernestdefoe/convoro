@@ -29,6 +29,7 @@
         "@tiptap/extension-underline": "^3.26.0",
         "@tiptap/pm": "^3.26.0",
         "@tiptap/starter-kit": "^3.26.0",
+        "@tiptap/suggestion": "^3.26.0",
         "@tiptap/vue-3": "^3.26.0",
         "laravel-echo": "^2.3.7",
         "pusher-js": "^8.5.0"

@@ -7,6 +7,7 @@ import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import { uploadImage, isImageFile } from '@/lib/upload';
+import { MentionText } from '@/lib/mentionSuggestion';
 
 const props = withDefaults(defineProps<{ placeholder?: string }>(), { placeholder: 'Write a reply…' });
 const emit = defineEmits<{ typing: [] }>();
@@ -34,6 +35,7 @@ const editor = useEditor({
     Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer nofollow', target: '_blank' } }),
     Image,
     Placeholder.configure({ placeholder: props.placeholder }),
+    MentionText,
   ],
   content: '',
   onUpdate: () => emit('typing'),

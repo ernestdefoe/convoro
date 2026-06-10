@@ -3,7 +3,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps<{
-  values: { name: string; tagline: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string };
+  values: { name: string; tagline: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string };
 }>();
 
 const form = useForm({
@@ -14,6 +14,7 @@ const form = useForm({
   digests: props.values.digests,
   pwa_banner: props.values.pwa_banner,
   pwa_short_name: props.values.pwa_short_name,
+  fa_kit_url: props.values.fa_kit_url ?? '',
 });
 
 function save() {
@@ -68,6 +69,13 @@ function save() {
           <input v-model="form.pwa_banner" type="checkbox" class="rounded border-white/10 bg-[#0f1120] text-indigo-500 focus:ring-indigo-500" />
           <span class="text-sm text-slate-300">Show the “install app” banner to visitors on supported devices</span>
         </label>
+      </div>
+
+      <div class="rounded-2xl border border-white/5 bg-[#14172a] p-6 space-y-3">
+        <h2 class="text-sm font-bold uppercase tracking-wide text-slate-400">Icons</h2>
+        <p class="text-sm text-slate-500">Convoro bundles Font Awesome Free. To use a Pro or custom <a href="https://fontawesome.com/kits" target="_blank" class="text-indigo-400 underline">Font Awesome Kit</a>, paste its script URL here.</p>
+        <input v-model="form.fa_kit_url" type="url" placeholder="https://kit.fontawesome.com/xxxxxxxx.js"
+          class="w-full rounded-lg border-white/10 bg-[#0f1120] font-mono text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
       </div>
 
       <div class="flex items-center gap-3">

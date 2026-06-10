@@ -23,6 +23,7 @@ class Settings
         'digests.enabled' => true,           // master switch for digest emails
         'pwa.banner' => true,                // show the "install app" banner
         'pwa.short_name' => 'Convoro',       // PWA short name
+        'fa.kit_url' => '',                  // optional Font Awesome Kit script URL (Pro/custom icons)
         'theme.primary' => '#5b5bd6',
         'theme.radius' => 12,
         'theme.mode' => 'light',             // light | dark

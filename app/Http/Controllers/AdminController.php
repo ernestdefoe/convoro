@@ -239,6 +239,7 @@ class AdminController extends Controller
                 'digests' => (bool) Settings::get('digests.enabled'),
                 'pwa_banner' => (bool) Settings::get('pwa.banner'),
                 'pwa_short_name' => Settings::get('pwa.short_name'),
+                'fa_kit_url' => Settings::get('fa.kit_url'),
             ],
         ]);
     }
@@ -253,6 +254,7 @@ class AdminController extends Controller
             'digests' => ['required', 'boolean'],
             'pwa_banner' => ['required', 'boolean'],
             'pwa_short_name' => ['required', 'string', 'max:30'],
+            'fa_kit_url' => ['nullable', 'string', 'max:300', 'regex:#^https://[^\s]+\.js$#'],
         ]);
 
         Settings::setMany([
@@ -263,6 +265,7 @@ class AdminController extends Controller
             'digests.enabled' => (bool) $data['digests'],
             'pwa.banner' => (bool) $data['pwa_banner'],
             'pwa.short_name' => $data['pwa_short_name'],
+            'fa.kit_url' => $data['fa_kit_url'] ?? '',
         ]);
 
         return back();

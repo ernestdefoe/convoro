@@ -8,13 +8,35 @@ use App\Notifications\ProfileWallNotification;
 use App\Support\Content;
 use App\Support\Notifier;
 use App\Support\Present;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class UserProfileController extends Controller
 {
+    /** Typeahead for @mentions in the editor. Returns handle + avatar by name. */
+    public function search(Request $request): JsonResponse
+    {
+        $q = trim((string) $request->query('q', ''));
+
+        $users = User::query()
+            ->when($q !== '', fn ($query) => $query->whereLike('name', "%{$q}%", caseSensitive: false))
+            ->orderBy('name')
+            ->limit(8)
+            ->get();
+
+        return response()->json($users->map(fn (User $u) => [
+            'id' => Str::slug($u->name, '.'),   // the handle inserted into the post
+            'name' => $u->name,
+            'avatar' => $u->avatar_path,
+            'initials' => Present::avatar($u)['initials'],
+            'color' => Present::avatar($u)['color'],
+        ]));
+    }
+
     /** Public profile: header, stats, recent activity, and the wall. */
     public function show(Request $request, User $user): Response
     {

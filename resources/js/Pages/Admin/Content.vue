@@ -80,7 +80,9 @@ const inp = 'rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focu
             <input v-model="newCat.color" type="color" class="h-9 w-10 rounded border-white/10 bg-transparent" />
             <button class="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="addCategory">Add</button>
           </div>
-          <div class="mt-2 flex flex-wrap gap-1">
+          <input v-model="newCat.icon" :class="inp" class="mt-2 w-full font-mono" placeholder="Font Awesome class — e.g. fa-solid fa-rocket" />
+          <div class="mt-1 text-[11px] text-slate-500">or pick one:</div>
+          <div class="mt-1 flex flex-wrap gap-1">
             <button v-for="ic in faIcons" :key="ic" type="button" class="grid h-8 w-8 place-items-center rounded-lg border text-sm"
               :class="newCat.icon === ic ? 'border-indigo-500 bg-indigo-500/20 text-white' : 'border-white/10 text-slate-400 hover:text-white'" @click="newCat.icon = ic">
               <i :class="ic"></i>
@@ -98,6 +100,7 @@ const inp = 'rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focu
                 <button class="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white" @click="saveCat">Save</button>
                 <button class="rounded-lg px-3 py-1.5 text-sm text-slate-400 hover:text-white" @click="editCatId = null">Cancel</button>
               </div>
+              <input v-model="catBuf.icon" :class="inp" class="mt-2 w-full font-mono" placeholder="Font Awesome class — e.g. fa-solid fa-rocket" />
               <div class="mt-2 flex flex-wrap gap-1">
                 <button v-for="ic in faIcons" :key="ic" type="button" class="grid h-8 w-8 place-items-center rounded-lg border text-sm"
                   :class="catBuf.icon === ic ? 'border-indigo-500 bg-indigo-500/20 text-white' : 'border-white/10 text-slate-400 hover:text-white'" @click="catBuf.icon = ic">
