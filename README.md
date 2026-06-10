@@ -53,7 +53,7 @@ first-class **AI build pipeline** so anyone — human or AI assistant — can ex
 
 ## Requirements
 
-- PHP **8.3+** with the usual extensions (`mbstring`, `pdo`, `gd`, `intl`, `zip`)
+- PHP **8.4+** with the usual extensions (`mbstring`, `pdo`, `gd`, `intl`, `zip`)
 - MySQL **8+** / MariaDB **10.6+**
 - Redis (recommended) for cache, queue, and sessions
 - Node 18+ (only to build assets from source)
