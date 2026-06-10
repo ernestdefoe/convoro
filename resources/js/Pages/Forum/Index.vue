@@ -85,6 +85,7 @@ const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, ''
               <span v-if="t.category" class="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
                 :style="{ color: t.category.color, background: t.category.color + '22' }"><CategoryIcon :icon="t.category.icon" /> {{ t.category.name }}</span>
               <h3 class="text-[15px] font-bold leading-snug">{{ t.title }}</h3>
+              <p v-if="t.excerpt" class="mt-1.5 line-clamp-3 text-[13px] leading-relaxed text-ink-2">{{ t.excerpt }}</p>
               <div class="mt-auto flex items-center gap-2 pt-3 text-xs text-ink-muted">
                 <Avatar :avatar="t.author" :size="24" /><span>{{ t.author.name }}</span>
                 <span class="ml-auto">💬 {{ t.replyCount }}</span>
