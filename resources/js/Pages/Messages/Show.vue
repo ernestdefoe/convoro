@@ -2,6 +2,7 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import Editor from '@/Components/Editor.vue';
+import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
@@ -54,6 +55,7 @@ onBeforeUnmount(() => { if (Echo()) Echo().leave(`conversation.${props.conversat
 <template>
   <Head :title="conversation.title" />
   <AppLayout>
+    <ReadingScrubber :target="thread" />
     <div class="mx-auto flex h-[calc(100vh-140px)] max-w-[760px] flex-col">
       <div class="mb-3 flex items-center gap-3">
         <Link href="/messages" class="text-ink-muted hover:text-ink" aria-label="Back to messages">

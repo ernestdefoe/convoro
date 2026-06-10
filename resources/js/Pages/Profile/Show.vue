@@ -4,6 +4,7 @@ import { computed, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import Editor from '@/Components/Editor.vue';
+import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 
 const props = defineProps<{
   profile: { id: number; name: string; bio: string | null; avatar: string | null; cover: string | null; initials: string; color: number; joined: string; isAdmin: boolean; isSelf: boolean };
@@ -40,6 +41,7 @@ function message() {
 <template>
   <Head :title="profile.name" />
   <AppLayout>
+    <ReadingScrubber />
     <div class="mx-auto max-w-[920px]">
       <!-- Cover + identity -->
       <div class="overflow-hidden rounded-c border border-line bg-surface">

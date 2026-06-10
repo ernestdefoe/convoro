@@ -1,24 +1,42 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
 
-// A reading-progress scrubber for the whole page (e.g. a discussion thread).
-// Shows how far you've read and can be dragged to jump anywhere in the thread.
+// A reading-progress scrubber. By default it tracks the whole page (e.g. a
+// discussion thread or a long profile). Pass `target` to track an inner
+// scroll container instead (e.g. a DM thread that scrolls within a box).
+// Drag the handle to jump anywhere.
+const props = defineProps<{ target?: HTMLElement | null }>();
+
 const progress = ref(0);
 const dragging = ref(false);
 const track = ref<HTMLElement | null>(null);
 
-function docMax() {
-  return Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+// Only worth showing once there's a meaningful amount to scroll (skip short
+// posts / brief DM threads where a progress rail is just noise).
+const SHOW_THRESHOLD = 700;
+const visible = ref(false);
+
+function maxScroll() {
+  return props.target
+    ? Math.max(1, props.target.scrollHeight - props.target.clientHeight)
+    : Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
 }
-function onScroll() {
-  progress.value = Math.min(1, Math.max(0, window.scrollY / docMax()));
+function curScroll() {
+  return props.target ? props.target.scrollTop : window.scrollY;
+}
+function update() {
+  const max = maxScroll();
+  visible.value = max >= SHOW_THRESHOLD;
+  progress.value = Math.min(1, Math.max(0, curScroll() / max));
 }
 function seek(clientY: number) {
   const t = track.value;
   if (!t) return;
   const r = t.getBoundingClientRect();
   const frac = Math.min(1, Math.max(0, (clientY - r.top) / r.height));
-  window.scrollTo({ top: frac * docMax() });
+  const top = frac * maxScroll();
+  if (props.target) props.target.scrollTo({ top });
+  else window.scrollTo({ top });
 }
 function start(e: PointerEvent) {
   dragging.value = true;
@@ -28,19 +46,27 @@ function start(e: PointerEvent) {
 function move(e: PointerEvent) { if (dragging.value) seek(e.clientY); }
 function end() { dragging.value = false; }
 
-onMounted(() => {
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onScroll);
-  onScroll();
-});
-onBeforeUnmount(() => {
-  window.removeEventListener('scroll', onScroll);
-  window.removeEventListener('resize', onScroll);
-});
+let scrollEl: HTMLElement | Window | null = null;
+function bind() {
+  scrollEl = props.target ?? window;
+  scrollEl.addEventListener('scroll', update, { passive: true } as any);
+  window.addEventListener('resize', update);
+  update();
+}
+function unbind() {
+  scrollEl?.removeEventListener('scroll', update as any);
+  window.removeEventListener('resize', update);
+}
+
+onMounted(bind);
+onBeforeUnmount(unbind);
+// Re-bind if the target element appears/changes after mount.
+watch(() => props.target, () => { unbind(); bind(); });
 </script>
 
 <template>
   <div
+    v-show="visible"
     ref="track"
     class="group fixed right-2 top-1/2 z-30 hidden h-[55vh] w-3 -translate-y-1/2 cursor-pointer md:block"
     title="Reading progress — drag to jump"
