@@ -125,31 +125,49 @@ function uninstall(ext: { id: string; name: string }) {
         Nothing matches your filter.
       </div>
 
-      <div v-else class="space-y-3">
-        <div v-for="ext in visibleExtensions" :key="ext.id" class="flex flex-wrap items-center gap-3 rounded-xl border border-white/5 bg-[#0f1120] p-4">
-          <div class="min-w-0 flex-1">
-            <div class="flex items-center gap-2">
-              <span class="font-semibold text-white">{{ ext.name }}</span>
-              <span class="rounded bg-white/5 px-1.5 py-0.5 text-[11px] text-slate-400">v{{ ext.version }}</span>
-              <span class="rounded bg-sky-500/15 px-1.5 py-0.5 text-[11px] font-semibold capitalize text-sky-300">{{ ext.type }}</span>
-              <span v-if="ext.premium" class="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-amber-300">Premium</span>
-              <span v-if="ext.enabled" class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-300">Enabled</span>
+      <div v-else class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div v-for="ext in visibleExtensions" :key="ext.id"
+          class="flex flex-col rounded-2xl border bg-[#0f1120] p-5 transition"
+          :class="ext.enabled ? 'border-indigo-500/30' : 'border-white/5'">
+          <!-- Header: icon + name + version -->
+          <div class="flex items-start gap-3">
+            <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg font-bold"
+              :class="ext.type === 'theme' ? 'bg-fuchsia-500/15 text-fuchsia-300' : 'bg-indigo-500/15 text-indigo-300'">
+              {{ ext.type === 'theme' ? '🎨' : '🧩' }}
             </div>
-            <p class="mt-0.5 truncate text-sm text-slate-400">{{ ext.description }}</p>
-            <p v-if="ext.author" class="mt-0.5 text-[11px] text-slate-500">by {{ ext.author }} · {{ ext.id }}</p>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5">
+                <span class="truncate font-bold text-white">{{ ext.name }}</span>
+                <span class="shrink-0 rounded bg-white/5 px-1.5 py-0.5 text-[11px] text-slate-400">v{{ ext.version }}</span>
+              </div>
+              <p v-if="ext.author" class="mt-0.5 truncate text-[11px] text-slate-500">by {{ ext.author }}</p>
+            </div>
           </div>
 
-          <!-- Enable/disable toggle -->
-          <button type="button" @click="toggle(ext)"
-            class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition"
-            :class="ext.enabled ? 'bg-indigo-500' : 'bg-white/15'"
-            :aria-pressed="ext.enabled" :aria-label="(ext.enabled ? 'Disable ' : 'Enable ') + ext.name">
-            <span class="inline-block h-4 w-4 transform rounded-full bg-white transition" :class="ext.enabled ? 'translate-x-6' : 'translate-x-1'" />
-          </button>
+          <!-- Description -->
+          <p class="mt-3 line-clamp-3 flex-1 text-sm text-slate-400">{{ ext.description }}</p>
 
-          <button v-if="ext.removable" type="button" @click="uninstall(ext)"
-            class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400">Remove</button>
-          <span v-else class="px-2.5 py-1.5 text-[11px] text-slate-600" title="Bundled with Convoro">bundled</span>
+          <!-- Badges -->
+          <div class="mt-3 flex flex-wrap items-center gap-1.5">
+            <span class="rounded bg-sky-500/15 px-1.5 py-0.5 text-[11px] font-semibold capitalize text-sky-300">{{ ext.type }}</span>
+            <span v-if="ext.premium" class="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-amber-300">Premium</span>
+            <span v-if="ext.enabled" class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-300">Enabled</span>
+            <span v-if="!ext.removable" class="rounded bg-white/5 px-1.5 py-0.5 text-[11px] text-slate-500" title="Ships with Convoro">Bundled</span>
+          </div>
+
+          <!-- Footer actions -->
+          <div class="mt-4 flex items-center gap-3 border-t border-white/5 pt-3">
+            <button type="button" @click="toggle(ext)"
+              class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition"
+              :class="ext.enabled ? 'bg-indigo-500' : 'bg-white/15'"
+              :aria-pressed="ext.enabled" :aria-label="(ext.enabled ? 'Disable ' : 'Enable ') + ext.name">
+              <span class="inline-block h-4 w-4 transform rounded-full bg-white transition" :class="ext.enabled ? 'translate-x-6' : 'translate-x-1'" />
+            </button>
+            <span class="text-xs font-semibold" :class="ext.enabled ? 'text-emerald-300' : 'text-slate-500'">{{ ext.enabled ? 'Enabled' : 'Disabled' }}</span>
+
+            <button v-if="ext.removable" type="button" @click="uninstall(ext)"
+              class="ml-auto rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400">Remove</button>
+          </div>
         </div>
       </div>
     </section>
