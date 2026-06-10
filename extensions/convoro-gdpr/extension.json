@@ -1,0 +1,15 @@
+{
+  "id": "convoro-gdpr",
+  "name": "GDPR & Privacy",
+  "version": "1.0.0",
+  "description": "GDPR / privacy compliance for communities worldwide: a granular cookie-consent banner with proof-of-consent logging, member self-service data export and account erasure, and configurable IP-log retention.",
+  "author": "Convoro",
+  "convoro": ">=0.1.0",
+  "namespace": "Convoro\\Ext\\Gdpr\\",
+  "provider": "Convoro\\Ext\\Gdpr\\Extension",
+  "migrations": "migrations",
+  "admin_url": "/admin/ext/gdpr",
+  "assets": { "forum": "assets/forum.js" },
+  "premium": false,
+  "price": 0
+}
