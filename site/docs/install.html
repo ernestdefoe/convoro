@@ -37,6 +37,12 @@
       <h1>Installing Convoro</h1>
       <p>Convoro installs entirely in your browser. The release archive ships with everything bundled — no Composer step, no Node, no command line required. If you can upload a file and create a database, you can run Convoro.</p>
 
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin:24px 0 8px">
+        <a class="btn btn-primary" href="/download">⬇ Download Convoro (.zip)</a>
+        <a class="btn btn-ghost" href="/download/targz">.tar.gz</a>
+      </div>
+      <p class="muted" style="font-size:13px;margin-top:4px">Self-contained — <code>vendor/</code> and compiled assets are already inside.</p>
+
       <h2 id="requirements">Requirements</h2>
       <ul>
         <li><strong>PHP 8.3+</strong> with extensions: <code>pdo</code>, <code>mbstring</code>, <code>openssl</code>, <code>tokenizer</code>, <code>gd</code>, <code>fileinfo</code>, <code>ctype</code>, <code>json</code>, <code>zip</code></li>
@@ -47,7 +53,7 @@
 
       <h2 id="shared">Shared hosting (no SSH)</h2>
       <div class="step"><div class="n">1</div><div><strong>Create a database.</strong> In your hosting panel (cPanel, Plesk, etc.) create an empty database and a user with full access to it. Note the name, user, and password.</div></div>
-      <div class="step"><div class="n">2</div><div><strong>Download &amp; upload.</strong> Grab the latest <code>convoro-x.y.z.zip</code> from the releases page, upload it to your web root, and extract it there.</div></div>
+      <div class="step"><div class="n">2</div><div><strong>Download &amp; upload.</strong> <a href="/download">Download the latest Convoro release</a> (<a href="/download/targz">.tar.gz</a>), upload it to your web root, and extract it there.</div></div>
       <div class="step"><div class="n">3</div><div><strong>Point your domain at the <code>public/</code> folder.</strong> Most panels let you set the document root. (If you can’t, move the contents of <code>public/</code> up — see Troubleshooting.)</div></div>
       <div class="step"><div class="n">4</div><div><strong>Open your site.</strong> Visit your domain — Convoro sends you straight to the <code>/install</code> wizard. Confirm requirements, enter your database details, name your community, and create your admin account.</div></div>
       <div class="step"><div class="n">5</div><div><strong>Done.</strong> The installer writes your config, runs migrations, and locks itself. You’re live. 🎉</div></div>

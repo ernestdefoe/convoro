@@ -22,23 +22,23 @@ const features = [
   <MarketingLayout>
     <!-- Hero -->
     <section class="relative overflow-hidden">
-      <div class="pointer-events-none absolute inset-x-0 -top-40 h-[420px] bg-gradient-to-b from-indigo-100/70 to-transparent"></div>
+      <div class="pointer-events-none absolute inset-x-0 -top-40 h-[420px] bg-gradient-to-b from-primary/10 to-transparent"></div>
       <div class="relative mx-auto max-w-4xl px-6 pt-24 pb-16 text-center">
-        <span class="inline-block rounded-full bg-indigo-50 px-4 py-1.5 text-sm font-bold text-indigo-600">The community platform you actually own</span>
+        <span class="inline-block rounded-full bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary">The community platform you actually own</span>
         <h1 class="mt-6 text-5xl font-black leading-[1.05] tracking-tight sm:text-6xl">
           Build a community that feels
-          <span class="bg-gradient-to-r from-indigo-600 to-fuchsia-500 bg-clip-text text-transparent">premium</span>.
+          <span class="bg-gradient-to-r from-indigo-500 to-fuchsia-500 bg-clip-text text-transparent">premium</span>.
         </h1>
-        <p class="mx-auto mt-6 max-w-2xl text-xl text-slate-600">
+        <p class="mx-auto mt-6 max-w-2xl text-xl text-ink-2">
           Convoro is batteries-included forum software — live theme editor, true WYSIWYG posting, reactions, profiles, DMs, a built-in marketplace, and PWA push. Install it in a browser, even on cheap shared hosting.
         </p>
         <div class="mt-9 flex flex-wrap justify-center gap-3.5">
-          <a href="/docs/install.html" class="rounded-xl bg-indigo-600 px-6 py-3.5 font-bold text-white shadow-xl shadow-indigo-600/30 hover:bg-indigo-700">Install in minutes →</a>
-          <a href="https://community.convoro.co" class="rounded-xl border border-slate-200 bg-white px-6 py-3.5 font-bold text-slate-700 hover:bg-slate-50">Explore the live demo</a>
+          <a href="/docs/install.html" class="rounded-xl bg-primary px-6 py-3.5 font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary-600">Install in minutes →</a>
+          <a href="https://community.convoro.co" class="rounded-xl border border-line bg-surface px-6 py-3.5 font-bold text-ink-2 hover:bg-surface-2">Explore the live demo</a>
         </div>
       </div>
       <div class="mx-auto max-w-5xl px-6 pb-8">
-        <div class="overflow-hidden rounded-2xl border border-slate-200 shadow-2xl shadow-slate-900/10">
+        <div class="overflow-hidden rounded-2xl border border-line shadow-2xl shadow-black/10">
           <img src="/site-assets/hero.png" alt="The Convoro community interface" class="w-full" loading="lazy" />
         </div>
       </div>
@@ -48,18 +48,18 @@ const features = [
     <section class="mx-auto max-w-6xl px-6 py-20">
       <div class="mx-auto mb-12 max-w-2xl text-center">
         <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Everything a community needs — in the box</h2>
-        <p class="mt-3 text-lg text-slate-600">The best of Flarum, Invision, and XenForo, reimagined into one cohesive platform.</p>
+        <p class="mt-3 text-lg text-ink-2">The best of Flarum, Invision, and XenForo, reimagined into one cohesive platform.</p>
       </div>
       <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <div v-for="f in features" :key="f.title" class="rounded-2xl border border-slate-200 bg-white p-7 transition hover:shadow-lg hover:shadow-slate-900/5">
-          <div class="grid h-11 w-11 place-items-center rounded-xl bg-indigo-50 text-xl">{{ f.icon }}</div>
+        <div v-for="f in features" :key="f.title" class="rounded-2xl border border-line bg-surface p-7 transition hover:shadow-lg hover:shadow-black/5">
+          <div class="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-xl">{{ f.icon }}</div>
           <h3 class="mt-4 text-lg font-bold">{{ f.title }}</h3>
-          <p class="mt-1.5 text-slate-600">{{ f.body }}</p>
+          <p class="mt-1.5 text-ink-2">{{ f.body }}</p>
         </div>
       </div>
     </section>
 
-    <!-- Hosting band -->
+    <!-- Hosting band (intentionally dark in both themes) -->
     <section class="bg-slate-900 py-20 text-white">
       <div class="mx-auto max-w-4xl px-6 text-center">
         <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Runs anywhere — even $3 shared hosting</h2>
@@ -75,21 +75,21 @@ const features = [
     <!-- Featured products -->
     <section v-if="featured.length" class="mx-auto max-w-6xl px-6 py-20">
       <div class="mb-10 flex items-end justify-between">
-        <div><h2 class="text-3xl font-extrabold tracking-tight">Premium add-ons</h2><p class="mt-2 text-slate-600">Extend further with first-party extensions and themes.</p></div>
-        <Link href="/store" class="hidden font-bold text-indigo-600 hover:text-indigo-700 sm:block">Browse the store →</Link>
+        <div><h2 class="text-3xl font-extrabold tracking-tight">Premium add-ons</h2><p class="mt-2 text-ink-2">Extend further with first-party extensions and themes.</p></div>
+        <Link href="/store" class="hidden font-bold text-primary hover:text-primary-600 sm:block">Browse the store →</Link>
       </div>
       <div class="grid gap-5 sm:grid-cols-3">
-        <Link v-for="p in featured" :key="p.slug" :href="`/store/${p.slug}`" class="group rounded-2xl border border-slate-200 bg-white p-6 transition hover:shadow-lg">
-          <div class="grid h-12 w-12 place-items-center rounded-xl bg-indigo-50 text-2xl">{{ p.type === 'theme' ? '🎨' : '🧩' }}</div>
-          <h3 class="mt-4 font-bold group-hover:text-indigo-600">{{ p.name }}</h3>
-          <p class="mt-1 line-clamp-2 text-sm text-slate-600">{{ p.tagline }}</p>
-          <div class="mt-4 font-extrabold text-indigo-600">{{ p.price }}</div>
+        <Link v-for="p in featured" :key="p.slug" :href="`/store/${p.slug}`" class="group rounded-2xl border border-line bg-surface p-6 transition hover:shadow-lg">
+          <div class="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-2xl">{{ p.type === 'theme' ? '🎨' : '🧩' }}</div>
+          <h3 class="mt-4 font-bold group-hover:text-primary">{{ p.name }}</h3>
+          <p class="mt-1 line-clamp-2 text-sm text-ink-2">{{ p.tagline }}</p>
+          <div class="mt-4 font-extrabold text-primary">{{ p.price }}</div>
         </Link>
       </div>
     </section>
 
     <!-- CTA -->
-    <section class="mx-auto max-w-6xl px-6 pb-24">
+    <section class="mx-auto max-w-6xl px-6 pb-24 pt-4">
       <div class="rounded-3xl bg-gradient-to-br from-indigo-600 to-fuchsia-500 px-8 py-16 text-center text-white">
         <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Ready to launch your community?</h2>
         <p class="mt-3 text-lg text-white/90">Download Convoro and be online in minutes.</p>

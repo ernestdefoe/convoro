@@ -30,6 +30,10 @@ Route::get('/install', [App\Http\Controllers\InstallController::class, 'show'])-
 Route::post('/install/test-db', [App\Http\Controllers\InstallController::class, 'testDatabase'])->name('install.testdb');
 Route::post('/install', [App\Http\Controllers\InstallController::class, 'install'])->name('install.run');
 
+// Release downloads (latest self-contained archive).
+Route::get('/download', [App\Http\Controllers\DownloadController::class, 'zip'])->name('download');
+Route::get('/download/targz', [App\Http\Controllers\DownloadController::class, 'targz'])->name('download.targz');
+
 // SEO
 Route::get('/sitemap.xml', [App\Http\Controllers\SitemapController::class, 'sitemap'])->name('sitemap');
 Route::get('/robots.txt', [App\Http\Controllers\SitemapController::class, 'robots'])->name('robots');
