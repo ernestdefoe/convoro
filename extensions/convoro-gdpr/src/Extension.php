@@ -49,8 +49,8 @@ class Extension extends ServiceProvider
         // Member self-service (must be signed in).
         Route::middleware(['web', 'auth'])->group(function () {
             Route::get('/privacy', fn () => response(self::privacyPage()))->name('gdpr.privacy');
-            Route::get('/privacy/export', [self::class, 'exportData'])->name('gdpr.export');
-            Route::post('/privacy/erase', [self::class, 'eraseAccount'])->name('gdpr.erase');
+            Route::get('/privacy/export', fn (Request $r) => self::exportData($r))->name('gdpr.export');
+            Route::post('/privacy/erase', fn (Request $r) => self::eraseAccount($r))->name('gdpr.erase');
         });
 
         // Admin settings.
@@ -106,7 +106,7 @@ class Extension extends ServiceProvider
     }
 
     /** Download every piece of personal data we hold for the current member (JSON). */
-    public function exportData(Request $request)
+    public static function exportData(Request $request)
     {
         $u = $request->user();
         $export = [
@@ -154,7 +154,7 @@ class Extension extends ServiceProvider
     }
 
     /** Right to erasure: anonymize the account in place (keeps threads intact). */
-    public function eraseAccount(Request $request)
+    public static function eraseAccount(Request $request)
     {
         $u = $request->user();
         if ($u->is_admin) {

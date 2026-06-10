@@ -1,0 +1,15 @@
+{
+  "id": "convoro-calendar",
+  "name": "Events",
+  "version": "1.0.0",
+  "description": "Community events with RSVPs and iCal export. Members create events, others RSVP going/maybe, and a themed /events page plus an upcoming-events sidebar widget keep everyone in the loop.",
+  "author": "Convoro",
+  "convoro": ">=0.1.0",
+  "namespace": "Convoro\\Ext\\Calendar\\",
+  "provider": "Convoro\\Ext\\Calendar\\Extension",
+  "migrations": "migrations",
+  "admin_url": "/admin/ext/events",
+  "assets": { "forum": "assets/forum.js" },
+  "premium": false,
+  "price": 0
+}
