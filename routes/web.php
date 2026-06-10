@@ -118,6 +118,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/marketplace/uninstall', [App\Http\Controllers\AdminController::class, 'uninstallExtension'])->name('marketplace.uninstall');
     Route::post('/marketplace/settings', [App\Http\Controllers\AdminController::class, 'updateExtensionSettings'])->name('marketplace.settings');
     Route::post('/marketplace/composer', [App\Http\Controllers\AdminController::class, 'composerInstall'])->name('marketplace.composer');
+    Route::get('/store', [App\Http\Controllers\AdminController::class, 'store'])->name('store');
+    Route::post('/store/stripe', [App\Http\Controllers\AdminController::class, 'updateStripe'])->name('store.stripe');
+    Route::post('/store/products', [App\Http\Controllers\AdminController::class, 'storeProduct'])->name('products.store');
+    Route::put('/store/products/{product}', [App\Http\Controllers\AdminController::class, 'updateProduct'])->name('products.update');
+    Route::delete('/store/products/{product}', [App\Http\Controllers\AdminController::class, 'destroyProduct'])->name('products.destroy');
+    Route::post('/store/products/{product}/file', [App\Http\Controllers\AdminController::class, 'uploadProductFile'])->name('products.file');
     Route::get('/system', [App\Http\Controllers\AdminController::class, 'system'])->name('system');
     Route::post('/system/run', [App\Http\Controllers\AdminController::class, 'runMaintenance'])->name('system.run');
     Route::post('/system/check-updates', [App\Http\Controllers\AdminController::class, 'checkUpdates'])->name('system.check');

@@ -143,6 +143,97 @@ class AdminController extends Controller
         return back()->with('status', 'Update started — it runs in the background and finishes in a moment. Refresh to see the new version.');
     }
 
+    // ---- Store (central, convoro.co) ------------------------------------
+
+    public function store(): Response
+    {
+        return Inertia::render('Admin/Store', [
+            'products' => \App\Models\Product::orderByDesc('featured')->orderBy('name')->withCount('licenses')->get()
+                ->map(fn ($p) => [
+                    'id' => $p->id, 'slug' => $p->slug, 'name' => $p->name, 'type' => $p->type,
+                    'tagline' => $p->tagline, 'description' => $p->description, 'package' => $p->package,
+                    'version' => $p->version, 'price_cents' => $p->price_cents, 'image' => $p->image,
+                    'published' => $p->published, 'featured' => $p->featured,
+                    'hasDownload' => (bool) $p->download_path, 'sales' => $p->licenses_count,
+                ]),
+            'stripe' => [
+                'key' => Settings::get('stripe.key'),
+                'secretSet' => trim((string) Settings::get('stripe.secret')) !== '',
+                'webhookSet' => trim((string) Settings::get('stripe.webhook_secret')) !== '',
+                'webhookUrl' => url('/store/webhook'),
+            ],
+        ]);
+    }
+
+    public function updateStripe(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'key' => ['nullable', 'string', 'max:255'],
+            'secret' => ['nullable', 'string', 'max:255'],
+            'webhook_secret' => ['nullable', 'string', 'max:255'],
+        ]);
+        Settings::set('stripe.key', $data['key'] ?? '');
+        if ($request->filled('secret')) {
+            Settings::set('stripe.secret', $data['secret']);
+        }
+        if ($request->filled('webhook_secret')) {
+            Settings::set('stripe.webhook_secret', $data['webhook_secret']);
+        }
+
+        return back()->with('status', 'Stripe settings saved.');
+    }
+
+    public function storeProduct(Request $request): RedirectResponse
+    {
+        $this->saveProduct($request, new \App\Models\Product);
+
+        return back();
+    }
+
+    public function updateProduct(Request $request, \App\Models\Product $product): RedirectResponse
+    {
+        $this->saveProduct($request, $product);
+
+        return back();
+    }
+
+    public function destroyProduct(\App\Models\Product $product): RedirectResponse
+    {
+        $product->delete();
+
+        return back();
+    }
+
+    public function uploadProductFile(Request $request, \App\Models\Product $product): RedirectResponse
+    {
+        $request->validate(['file' => ['required', 'file', 'mimes:zip', 'max:51200']]);
+        $path = 'products/'.$product->slug.'.zip';
+        $request->file('file')->storeAs('products', $product->slug.'.zip');
+        $product->update(['download_path' => $path]);
+
+        return back()->with('status', 'Download uploaded.');
+    }
+
+    private function saveProduct(Request $request, \App\Models\Product $product): void
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:120'],
+            'type' => ['required', 'in:extension,theme'],
+            'tagline' => ['nullable', 'string', 'max:200'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'package' => ['nullable', 'string', 'max:120'],
+            'version' => ['nullable', 'string', 'max:20'],
+            'price_cents' => ['required', 'integer', 'min:0'],
+            'image' => ['nullable', 'string', 'max:2048'],
+            'published' => ['boolean'],
+            'featured' => ['boolean'],
+        ]);
+
+        $data['slug'] = $product->slug ?: $this->uniqueSlug(\App\Models\Product::class, $data['name']);
+        $data['version'] = $data['version'] ?: '1.0.0';
+        $product->fill($data)->save();
+    }
+
     public function marketplace(): Response
     {
         $enabled = \App\Support\ExtensionManager::enabledIds();

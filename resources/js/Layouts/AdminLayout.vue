@@ -15,6 +15,7 @@ const nav = [
   { label: 'Theme', href: '/admin/theme', component: 'Admin/Theme', icon: 'M12 3a9 9 0 100 18h.5a2.5 2.5 0 002.5-2.5 2.5 2.5 0 012.5-2.5H21a0 0 0 000 0' },
   { label: 'Accessibility', href: '/admin/accessibility', component: 'Admin/Accessibility', icon: 'M12 2a2 2 0 110 4 2 2 0 010-4z M21 9l-6-1h-6L3 9 M9 22l3-8 3 8 M12 8v6' },
   { label: 'Marketplace', href: '/admin/marketplace', component: 'Admin/Marketplace', icon: 'M3 9l1-5h16l1 5M4 9v10h16V9M9 9v10M15 9v10' },
+  { label: 'Store', href: '/admin/store', component: 'Admin/Store', icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z' },
   { label: 'System', href: '/admin/system', component: 'Admin/System', icon: 'M12 15a3 3 0 100-6 3 3 0 000 6z M4 12h2M18 12h2M12 4v2M12 18v2' },
 ];
 
