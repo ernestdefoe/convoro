@@ -4,6 +4,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
+import ReaderMode from '@/Components/forum/ReaderMode.vue';
 import Editor from '@/Components/Editor.vue';
 import { useAuthModal } from '@/lib/authModal';
 
@@ -118,6 +119,7 @@ function submitReply() {
             <span v-if="hereCount > 0" class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-600">
               <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500"></span>LIVE · {{ hereCount }} here
             </span>
+            <ReaderMode v-if="firstPost" :title="topic.title" :html="firstPost.html" :byline="firstPost.author.name" class="ml-auto" />
           </div>
 
           <h1 class="mt-3 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">{{ topic.title }}</h1>

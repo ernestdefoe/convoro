@@ -88,7 +88,7 @@ class TopicController extends Controller
                 'replyCount' => $topic->reply_count,
                 'viewCount' => $topic->view_count,
             ],
-            'posts' => $topic->posts->sortBy('created_at')->values()->map(fn ($p) => Present::post($p, $actorId)),
+            'posts' => $topic->posts->sortBy('created_at')->values()->map(fn ($p) => Present::post($p, $actorId, $actor)),
             'canReply' => auth()->check() && ! $topic->is_locked,
         ]);
     }
