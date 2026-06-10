@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import TopicCard from '@/Components/forum/TopicCard.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
+import Slot from '@/Components/ext/Slot.vue';
 import { useAuthModal } from '@/lib/authModal';
 
 const pg = usePage();
@@ -114,6 +115,9 @@ const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, ''
             <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats.reactions) }}</b><span class="text-[11px] text-ink-muted">Reactions</span></div>
           </div>
         </div>
+
+        <!-- Widget extensions render here -->
+        <Slot name="forum:sidebar" />
       </aside>
     </div>
   </AppLayout>

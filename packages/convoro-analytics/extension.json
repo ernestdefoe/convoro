@@ -1,0 +1,13 @@
+{
+  "id": "convoro-analytics",
+  "name": "Analytics",
+  "version": "1.0.0",
+  "description": "Admin analytics dashboard — members, content, engagement, signups over time, top posters and most active topics.",
+  "author": "Convoro",
+  "convoro": ">=0.1.0",
+  "namespace": "Convoro\\Ext\\Analytics\\",
+  "provider": "Convoro\\Ext\\Analytics\\Extension",
+  "admin_url": "/admin/ext/analytics",
+  "premium": false,
+  "price": 0
+}

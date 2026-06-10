@@ -1,0 +1,13 @@
+{
+  "id": "convoro-online-now",
+  "name": "Online Now",
+  "version": "1.0.0",
+  "description": "A sidebar widget showing who's online right now, with avatars.",
+  "author": "Convoro",
+  "convoro": ">=0.1.0",
+  "namespace": "Convoro\\Ext\\OnlineNow\\",
+  "provider": "Convoro\\Ext\\OnlineNow\\Extension",
+  "assets": { "forum": "assets/forum.js" },
+  "premium": false,
+  "price": 0
+}

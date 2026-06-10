@@ -1,0 +1,13 @@
+{
+  "id": "convoro-trending",
+  "name": "Trending Topics",
+  "version": "1.0.0",
+  "description": "A sidebar widget showing the hottest topics by recent replies.",
+  "author": "Convoro",
+  "convoro": ">=0.1.0",
+  "namespace": "Convoro\\Ext\\Trending\\",
+  "provider": "Convoro\\Ext\\Trending\\Extension",
+  "assets": { "forum": "assets/forum.js" },
+  "premium": false,
+  "price": 0
+}

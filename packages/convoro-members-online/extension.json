@@ -1,0 +1,13 @@
+{
+  "id": "convoro-members-online",
+  "name": "Members Online",
+  "version": "1.0.0",
+  "description": "A sidebar widget: how many members are online now, the total membership, and the newest members.",
+  "author": "Convoro",
+  "convoro": ">=0.1.0",
+  "namespace": "Convoro\\Ext\\MembersOnline\\",
+  "provider": "Convoro\\Ext\\MembersOnline\\Extension",
+  "assets": { "forum": "assets/forum.js" },
+  "premium": false,
+  "price": 0
+}
