@@ -11,10 +11,7 @@
   "permissions": [
     { "key": "announcement.view", "label": "See announcements", "category": "Announcements", "baseline": true }
   ],
-  "settings": [
-    { "key": "active", "label": "Show the announcement", "type": "boolean", "default": true },
-    { "key": "body", "label": "Announcement text", "type": "textarea", "default": "Welcome to Convoro — this banner is served by a real, installable extension. 🎉", "help": "Shown as a dismissible bar on discussion pages." }
-  ],
+  "admin_url": "/admin/ext/announcements",
   "assets": { "forum": "assets/forum.js" },
   "premium": false,
   "price": 0

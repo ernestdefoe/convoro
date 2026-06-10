@@ -4,7 +4,7 @@ import { computed, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 interface SettingField { key: string; label: string; type?: string; default?: unknown; help?: string; options?: { value: string; label: string }[] }
-interface Ext { id: string; name: string; version: string; description: string; author: string; type: string; premium: boolean; enabled: boolean; removable: boolean; settings: SettingField[]; values: Record<string, unknown> }
+interface Ext { id: string; name: string; version: string; description: string; author: string; type: string; premium: boolean; enabled: boolean; removable: boolean; settings: SettingField[]; values: Record<string, unknown>; adminUrl: string | null }
 
 const props = defineProps<{
   update: { current: string; latest: string; available: boolean; url: string | null; checkedAt: string | null; enabled: boolean };
@@ -234,6 +234,12 @@ function saveSettings() {
 
         <div class="space-y-5 p-5">
           <p class="text-sm text-slate-400">{{ active.description }}</p>
+
+          <a v-if="active.adminUrl" :href="active.adminUrl"
+            class="inline-flex items-center gap-2 rounded-lg bg-indigo-500/15 px-3 py-2 text-sm font-semibold text-indigo-300 hover:bg-indigo-500/25">
+            Open management page
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10" /></svg>
+          </a>
 
           <!-- Settings form -->
           <form v-if="active.settings.length" class="space-y-4" @submit.prevent="saveSettings">

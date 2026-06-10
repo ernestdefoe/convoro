@@ -98,6 +98,7 @@ class ExtensionManager
             'assets' => is_array($raw['assets'] ?? null) ? $raw['assets'] : [],
             'premium' => (bool) ($raw['premium'] ?? false),
             'price' => $raw['price'] ?? 0,
+            'admin_url' => isset($raw['admin_url']) && is_string($raw['admin_url']) ? $raw['admin_url'] : null,
             'icon' => $raw['icon'] ?? null,
             '_path' => $dir,
             '_writable' => is_writable($dir),

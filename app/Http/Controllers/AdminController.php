@@ -160,6 +160,7 @@ class AdminController extends Controller
                 'removable' => $m['_writable'] && str_starts_with($m['_path'], \App\Support\ExtensionInstaller::targetRoot()),
                 'settings' => $m['settings'],
                 'values' => \App\Support\ExtensionManager::settingValues($m['id']),
+                'adminUrl' => $m['admin_url'],
             ]);
 
         return Inertia::render('Admin/Marketplace', [
