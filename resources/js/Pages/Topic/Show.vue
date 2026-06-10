@@ -119,7 +119,7 @@ function submitReply() {
             <span v-if="hereCount > 0" class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-600">
               <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500"></span>LIVE · {{ hereCount }} here
             </span>
-            <ReaderMode v-if="firstPost" :title="topic.title" :html="firstPost.html" :byline="firstPost.author.name" class="ml-auto" />
+            <ReaderMode v-if="firstPost" :title="topic.title" :html="firstPost.html" :byline="firstPost.author.name" :cover="topic.cover" class="ml-auto" />
           </div>
 
           <h1 class="mt-3 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">{{ topic.title }}</h1>
@@ -216,7 +216,7 @@ function submitReply() {
     <!-- Edit post modal -->
     <div v-if="editing" class="fixed inset-0 z-[80] flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-black/50" @click="editing = null"></div>
-      <div class="relative w-full max-w-2xl rounded-c border border-line bg-surface p-5 shadow-2xl">
+      <div class="relative max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-c border border-line bg-surface p-5 shadow-2xl">
         <div class="mb-2.5 text-sm font-bold text-ink">Edit post</div>
         <Editor ref="editEditor" :content="editing.html" />
         <div class="mt-3 flex items-center gap-2">

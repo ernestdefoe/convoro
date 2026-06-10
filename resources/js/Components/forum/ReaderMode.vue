@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 
-const props = defineProps<{ title: string; html: string; byline?: string }>();
+const props = defineProps<{ title: string; html: string; byline?: string; cover?: string | null }>();
 
 const open = ref(false);
 const scroller = ref<HTMLElement | null>(null);
@@ -44,6 +44,7 @@ watch(open, (v) => {
   document.body.style.overflow = v ? 'hidden' : '';
   if (v) {
     progress.value = 0;
+    nextTick(() => { if (scroller.value) scroller.value.scrollTop = 0; });
     document.addEventListener('keydown', onKey);
   } else {
     document.removeEventListener('keydown', onKey);
@@ -89,6 +90,7 @@ onBeforeUnmount(() => { document.body.style.overflow = ''; document.removeEventL
         <!-- reading column -->
         <div ref="scroller" class="h-full overflow-y-auto px-5 py-16" @scroll="onScroll">
           <article class="mx-auto max-w-[680px]">
+            <img v-if="cover" :src="cover" alt="" class="mb-8 max-h-[40vh] w-full rounded-xl object-cover" />
             <h1 class="text-3xl font-extrabold leading-tight tracking-tight text-ink sm:text-4xl">{{ title }}</h1>
             <div class="mt-3 text-sm text-ink-muted">
               <span v-if="byline">{{ byline }} · </span>{{ readingTime }} min read
