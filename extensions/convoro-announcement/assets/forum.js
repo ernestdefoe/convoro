@@ -25,7 +25,7 @@ if (c && typeof c.registerSlot === 'function') {
             'border-radius:var(--c-radius,12px)',
             'background:rgb(var(--c-primary) / 0.10)',
             'border:1px solid rgb(var(--c-primary) / 0.30)',
-            'color:rgb(var(--c-ink, 17 24 39))',
+            'color:rgb(var(--c-text, 27 32 48))',
             'font-size:14px', 'line-height:1.4',
           ].join(';');
 

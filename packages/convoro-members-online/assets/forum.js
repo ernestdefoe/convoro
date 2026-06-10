@@ -1,9 +1,9 @@
 // Convoro widget: Members Online (forum sidebar).
 const c = window.Convoro;
 const T = {
-  surface: 'rgb(var(--c-surface,255 255 255))', surface2: 'rgb(var(--c-surface-2,243 244 249))',
-  ink: 'rgb(var(--c-ink,17 24 39))', muted: 'rgb(var(--c-ink-muted,122 129 148))',
-  line: 'rgb(var(--c-line,230 232 240))', primary: 'rgb(var(--c-primary,91 91 214))',
+  surface: 'rgb(var(--c-surface,255 255 255))', surface2: 'rgb(var(--c-surface-2,248 249 252))',
+  ink: 'rgb(var(--c-text,27 32 48))', muted: 'rgb(var(--c-muted,138 144 166))',
+  line: 'rgb(var(--c-border,230 232 240))', primary: 'rgb(var(--c-primary,91 91 214))',
 };
 const PALETTE = ['#6366f1', '#16a34a', '#e8830c', '#dc2626', '#0ea5e9', '#a855f7'];
 
