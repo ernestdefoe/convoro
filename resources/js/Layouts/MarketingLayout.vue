@@ -3,10 +3,13 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import ConvoroLogo from '@/Components/ConvoroLogo.vue';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
+import AuthModal from '@/Components/AuthModal.vue';
+import { useAuthModal } from '@/lib/authModal';
 
 const page = usePage();
 const user = computed(() => (page.props as any).auth?.user ?? null);
 const forumUrl = 'https://community.convoro.co';
+const auth = useAuthModal();
 </script>
 
 <template>
@@ -27,8 +30,8 @@ const forumUrl = 'https://community.convoro.co';
             <a :href="forumUrl" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary-600">Go to community</a>
           </template>
           <template v-else>
-            <Link href="/login" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Log in</Link>
-            <Link href="/register" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary-600">Get started</Link>
+            <button type="button" @click="auth.open('login')" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Log in</button>
+            <button type="button" @click="auth.open('register')" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/25 hover:bg-primary-600">Get started</button>
           </template>
         </div>
       </div>
@@ -47,5 +50,7 @@ const forumUrl = 'https://community.convoro.co';
         </div>
       </div>
     </footer>
+
+    <AuthModal />
   </div>
 </template>
