@@ -12,6 +12,10 @@ use Inertia\Inertia;
 // PWA
 Route::get('/manifest.webmanifest', [App\Http\Controllers\PwaController::class, 'manifest'])->name('pwa.manifest');
 
+// Enabled extensions' prebuilt frontend bundles (served from storage/).
+Route::get('/ext-asset/{id}/{surface}', [App\Http\Controllers\ExtAssetController::class, 'show'])
+    ->where('id', '[A-Za-z0-9._-]+')->name('ext.asset');
+
 // Community (forum)
 Route::get('/', [ForumController::class, 'index'])->name('forum.index');
 Route::get('/t/{topic}', [TopicController::class, 'show'])->name('topics.show');
@@ -79,6 +83,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/tags/{tag}', [App\Http\Controllers\AdminController::class, 'destroyTag'])->name('tags.destroy');
 
     Route::get('/marketplace', [App\Http\Controllers\AdminController::class, 'marketplace'])->name('marketplace');
+    Route::post('/marketplace/install', [App\Http\Controllers\AdminController::class, 'installExtension'])->name('marketplace.install');
+    Route::post('/marketplace/enable', [App\Http\Controllers\AdminController::class, 'enableExtension'])->name('marketplace.enable');
+    Route::post('/marketplace/disable', [App\Http\Controllers\AdminController::class, 'disableExtension'])->name('marketplace.disable');
+    Route::post('/marketplace/uninstall', [App\Http\Controllers\AdminController::class, 'uninstallExtension'])->name('marketplace.uninstall');
     Route::get('/system', [App\Http\Controllers\AdminController::class, 'system'])->name('system');
     Route::post('/system/run', [App\Http\Controllers\AdminController::class, 'runMaintenance'])->name('system.run');
     Route::post('/system/check-updates', [App\Http\Controllers\AdminController::class, 'checkUpdates'])->name('system.check');

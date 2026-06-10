@@ -77,10 +77,49 @@ convoro/
 
 ## Extension system
 
-- An extension is a **Composer package** (`type: convoro-extension`) with a root `extend.php` returning an array of extenders, mirroring the modern extender pattern but Convoro-native:
-  - `Extend\Routes`, `Extend\Frontend` (Vue page/component registration + assets), `Extend\Model`, `Extend\Policy`, `Extend\Settings`, `Extend\Event`, `Extend\ThemeVar`, `Extend\AdminPage`.
-- Frontend extension points: named slots + an event bus so extensions inject Vue components without forking core.
-- **Marketplace (admin)** — the in-app extension/theme manager (named **"Marketplace"**, not "Extension Manager"): browses the Convoro registry, and click-to-install runs `composer require` server-side (queued job), then rebuilds caches + assets. Enable/disable toggles a stored flag.
+**Design goal: zero Composer, zero shell, zero `dump-autoload`** — extensions must install by uploading a zip through the admin Marketplace on the cheapest shared host. (A Composer/registry path can layer on top later for VPS power users, but the archive path is the ground truth.)
+
+### Package layout
+```
+{id}/                       e.g. ernestdefoe-hello
+  extension.json            manifest (required)
+  src/                      PHP, PSR-4 — autoloaded by ExtensionManager (no Composer)
+    Extension.php           optional Laravel ServiceProvider (register()/boot())
+  migrations/               standard Laravel migrations (run on enable)
+  assets/
+    forum.js                prebuilt ESM, injected on the forum (shipped built)
+    admin.js                prebuilt ESM, injected in admin (optional)
+  icon.svg, README.md
+```
+
+### Manifest (`extension.json`)
+```json
+{
+  "id": "ernestdefoe-hello",
+  "name": "Hello",
+  "version": "1.0.0",
+  "description": "…",
+  "author": "Ernest DeFoe",
+  "convoro": ">=0.1.0",
+  "namespace": "Convoro\\Ext\\Hello\\",
+  "provider": "Convoro\\Ext\\Hello\\Extension",
+  "migrations": "migrations",
+  "permissions": [{ "key": "hello.use", "label": "Use Hello", "category": "Hello", "baseline": true }],
+  "assets": { "forum": "assets/forum.js", "admin": "assets/admin.js" },
+  "premium": false,
+  "price": 0
+}
+```
+
+### Runtime (`App\Support\ExtensionManager`)
+- **Two roots scanned**: `base_path('extensions')` (first-party, shipped with the release) and `storage_path('app/extensions')` (uploaded via Marketplace — writable, survives self-updates since deploy/update skip `storage/`).
+- **Custom PSR-4 autoloader** registered in `ExtensionServiceProvider::register()` maps each manifest `namespace` → its `src/` — so extension classes load without Composer knowing they exist.
+- **Enabled set** stored in settings (`extensions.enabled` = array of ids). Booting an enabled extension: register its `provider` (a real Laravel `ServiceProvider`) + add its migration path.
+- **Permissions** declared in the manifest are merged into `Permissions::catalog()/keys()/baseline()` for enabled extensions, so they appear in the group editor automatically.
+- **Frontend** assets for enabled extensions are served by a guarded route `/ext-asset/{id}/{surface}` (path-traversal-checked) and injected as `<script type="module">`; they hook into core through a `window.Convoro` client API (named slots + registration), so no core rebuild is needed.
+
+### Marketplace (admin)
+The in-app manager (named **"Marketplace"**, not "Extension Manager"): lists installed extensions with enable/disable toggles + uninstall, **upload-a-zip** installer (extract → validate manifest + `convoro` version constraint → run migrations on enable), and (later) a remote catalog with click-to-install + license-gated premium items.
 - **Premium / paid items**: the Marketplace supports both free and **paid** extensions/themes. Paid items are gated by a **license key** issued by the convoro.co members/store backend; the in-app Marketplace authenticates the key against the store API before `composer require` (from a licensed/authenticated Composer registry). Free items install with no key. See the post-build launch plan for the storefront side.
 
 ## Shared hosting & distribution (no SSH, no Composer)

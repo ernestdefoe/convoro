@@ -145,9 +145,65 @@ class AdminController extends Controller
 
     public function marketplace(): Response
     {
+        $enabled = \App\Support\ExtensionManager::enabledIds();
+        $installed = collect(\App\Support\ExtensionManager::all())
+            ->values()
+            ->map(fn ($m) => [
+                'id' => $m['id'],
+                'name' => $m['name'],
+                'version' => $m['version'],
+                'description' => $m['description'],
+                'author' => $m['author'],
+                'premium' => $m['premium'],
+                'enabled' => in_array($m['id'], $enabled, true),
+                'removable' => $m['_writable'] && str_starts_with($m['_path'], \App\Support\ExtensionInstaller::targetRoot()),
+            ]);
+
         return Inertia::render('Admin/Marketplace', [
             'update' => $this->updateState(),
+            'extensions' => $installed,
         ]);
+    }
+
+    public function installExtension(Request $request): RedirectResponse
+    {
+        $request->validate(['package' => ['required', 'file', 'mimetypes:application/zip,application/x-zip-compressed,multipart/x-zip', 'max:51200']]);
+
+        try {
+            $id = \App\Support\ExtensionInstaller::installFromZip($request->file('package')->getRealPath());
+
+            return back()->with('extResult', ['ok' => true, 'message' => "Installed “{$id}”. Enable it to activate."]);
+        } catch (\Throwable $e) {
+            return back()->with('extResult', ['ok' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function enableExtension(Request $request): RedirectResponse
+    {
+        $id = $request->validate(['id' => ['required', 'string']])['id'];
+        try {
+            \App\Support\ExtensionInstaller::enable($id);
+
+            return back()->with('extResult', ['ok' => true, 'message' => "Enabled “{$id}”."]);
+        } catch (\Throwable $e) {
+            return back()->with('extResult', ['ok' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
+    public function disableExtension(Request $request): RedirectResponse
+    {
+        $id = $request->validate(['id' => ['required', 'string']])['id'];
+        \App\Support\ExtensionInstaller::disable($id);
+
+        return back()->with('extResult', ['ok' => true, 'message' => "Disabled “{$id}”."]);
+    }
+
+    public function uninstallExtension(Request $request): RedirectResponse
+    {
+        $id = $request->validate(['id' => ['required', 'string']])['id'];
+        \App\Support\ExtensionInstaller::uninstall($id);
+
+        return back()->with('extResult', ['ok' => true, 'message' => "Removed “{$id}”."]);
     }
 
     // ---- Categories & Tags ------------------------------------------------

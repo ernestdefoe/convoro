@@ -50,7 +50,7 @@ class User extends Authenticatable
         if ($this->is_admin) {
             return true;
         }
-        if (in_array($key, \App\Support\Permissions::BASELINE, true)) {
+        if (in_array($key, \App\Support\Permissions::baseline(), true)) {
             return true;
         }
 

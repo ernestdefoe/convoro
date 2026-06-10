@@ -7,6 +7,7 @@ import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
 import ReaderMode from '@/Components/forum/ReaderMode.vue';
 import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import Editor from '@/Components/Editor.vue';
+import Slot from '@/Components/ext/Slot.vue';
 import { uploadImage } from '@/lib/upload';
 import { useAuthModal } from '@/lib/authModal';
 
@@ -181,6 +182,8 @@ function submitReply() {
           </div>
         </div>
       </article>
+
+      <Slot name="topic:below" :ctx="{ topicId: topic.id, slug: topic.slug }" />
 
       <!-- Replies -->
       <section v-if="replies.length" class="mt-6">

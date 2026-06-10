@@ -27,15 +27,36 @@ class Permissions
 
     public static function keys(): array
     {
-        return array_keys(self::CATALOG);
+        $keys = array_keys(self::CATALOG);
+        foreach (ExtensionManager::permissionAdditions() as $p) {
+            $keys[] = $p['key'];
+        }
+
+        return array_values(array_unique($keys));
     }
 
-    /** Catalog shaped for the admin group editor. */
+    /** Permission keys granted to every authenticated user (core + extensions). */
+    public static function baseline(): array
+    {
+        $base = self::BASELINE;
+        foreach (ExtensionManager::permissionAdditions() as $p) {
+            if (! empty($p['baseline'])) {
+                $base[] = $p['key'];
+            }
+        }
+
+        return array_values(array_unique($base));
+    }
+
+    /** Catalog shaped for the admin group editor (core + enabled extensions). */
     public static function catalog(): array
     {
         $out = [];
         foreach (self::CATALOG as $key => [$label, $category]) {
             $out[] = ['key' => $key, 'label' => $label, 'category' => $category, 'baseline' => in_array($key, self::BASELINE, true)];
+        }
+        foreach (ExtensionManager::permissionAdditions() as $p) {
+            $out[] = $p;
         }
 
         return $out;

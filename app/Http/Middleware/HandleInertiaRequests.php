@@ -38,12 +38,14 @@ class HandleInertiaRequests extends Middleware
                 'isAdmin' => (bool) $request->user()?->is_admin,
             ],
             'site' => fn () => Settings::public(),
+            'extAssets' => fn () => \App\Support\ExtensionManager::assetsFor('forum'),
             'notifications' => fn () => $this->notifications($request),
             'dmUnread' => fn () => $this->dmUnread($request),
             'pushKey' => config('webpush.vapid.public_key'),
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
                 'mailTest' => fn () => $request->session()->get('mailTest'),
+                'extResult' => fn () => $request->session()->get('extResult'),
             ],
             'updateBanner' => fn () => $request->user()?->is_admin ? [
                 'available' => (bool) Settings::get('update.available', false),
