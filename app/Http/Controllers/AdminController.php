@@ -381,6 +381,7 @@ class AdminController extends Controller
     public function marketplace(): Response
     {
         $enabled = \App\Support\ExtensionManager::enabledIds();
+        $covers = \App\Models\Product::whereNotNull('image')->pluck('image', 'package'); // package => cover URL
         $installed = collect(\App\Support\ExtensionManager::all())
             ->values()
             ->map(fn ($m) => [
@@ -396,6 +397,7 @@ class AdminController extends Controller
                 'settings' => $m['settings'],
                 'values' => \App\Support\ExtensionManager::settingValues($m['id']),
                 'adminUrl' => $m['admin_url'],
+                'image' => $covers[$m['id']] ?? null,
             ]);
 
         // Browsable catalog from the central store (free items install directly;

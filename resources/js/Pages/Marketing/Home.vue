@@ -34,7 +34,7 @@ const features = [
         </p>
         <div class="mt-9 flex flex-wrap justify-center gap-3.5">
           <a href="/docs/install.html" class="rounded-xl bg-primary px-6 py-3.5 font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary-600">Install in minutes →</a>
-          <a href="https://community.convoro.co" class="rounded-xl border border-line bg-surface px-6 py-3.5 font-bold text-ink-2 hover:bg-surface-2">Explore the live demo</a>
+          <a href="https://community.convoro.co/demo" class="rounded-xl border border-line bg-surface px-6 py-3.5 font-bold text-ink-2 hover:bg-surface-2">Try the live demo</a>
         </div>
       </div>
       <div class="mx-auto max-w-5xl px-6 pb-8">
@@ -120,7 +120,7 @@ const features = [
         <p class="mt-3 text-lg text-white/90">Download Convoro and be online in minutes.</p>
         <div class="mt-8 flex flex-wrap justify-center gap-3.5">
           <a href="/docs/install.html" class="rounded-xl bg-white px-6 py-3.5 font-bold text-indigo-600 hover:bg-indigo-50">Read the install guide</a>
-          <a href="https://community.convoro.co" class="rounded-xl border border-white/40 px-6 py-3.5 font-bold text-white hover:bg-white/10">See it live</a>
+          <a href="https://community.convoro.co/demo" class="rounded-xl border border-white/40 px-6 py-3.5 font-bold text-white hover:bg-white/10">Try it live</a>
         </div>
       </div>
     </section>

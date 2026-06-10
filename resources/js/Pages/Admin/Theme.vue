@@ -130,85 +130,85 @@ function save() {
       <!-- Controls -->
       <form class="space-y-4" @submit.prevent="save">
         <!-- Presets -->
-        <section class="rounded-2xl border border-white/5 bg-[#14172a] p-5">
-          <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Presets</h3>
+        <section class="rounded-2xl border border-line bg-surface p-5">
+          <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-2">Presets</h3>
           <div class="grid grid-cols-4 gap-2">
-            <button v-for="p in presets" :key="p.name" type="button" class="group rounded-xl border border-white/5 p-2 text-center hover:border-white/20" @click="applyPreset(p)">
+            <button v-for="p in presets" :key="p.name" type="button" class="group rounded-xl border border-line p-2 text-center hover:border-line" @click="applyPreset(p)">
               <span class="mx-auto block h-8 w-8 rounded-lg" :style="{ background: p.primary }" />
-              <span class="mt-1 block text-[11px] text-slate-400 group-hover:text-white">{{ p.name }}</span>
+              <span class="mt-1 block text-[11px] text-ink-2 group-hover:text-ink">{{ p.name }}</span>
             </button>
           </div>
         </section>
 
         <!-- Colors -->
-        <section class="rounded-2xl border border-white/5 bg-[#14172a] p-5">
-          <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Colors</h3>
-          <label class="block text-sm font-medium text-slate-300">Brand color</label>
+        <section class="rounded-2xl border border-line bg-surface p-5">
+          <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-2">Colors</h3>
+          <label class="block text-sm font-medium text-ink-2">Brand color</label>
           <div class="mt-2 flex items-center gap-3">
-            <input v-model="form.primary" type="color" class="h-10 w-12 cursor-pointer rounded border-white/10 bg-transparent" />
-            <input v-model="form.primary" type="text" class="w-32 rounded-lg border-white/10 bg-[#0f1120] font-mono text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+            <input v-model="form.primary" type="color" class="h-10 w-12 cursor-pointer rounded border-line bg-transparent" />
+            <input v-model="form.primary" type="text" class="w-32 rounded-lg border-line bg-appbg font-mono text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500" />
           </div>
 
           <!-- WCAG / ADA contrast check for white button text -->
-          <div class="mt-3 flex items-center gap-2 rounded-lg border border-white/5 bg-[#0f1120] px-3 py-2">
+          <div class="mt-3 flex items-center gap-2 rounded-lg border border-line bg-appbg px-3 py-2">
             <span class="flex h-5 w-5 items-center justify-center rounded-full text-[11px] font-bold"
                   :class="contrast.ok ? 'bg-emerald-500/20 text-emerald-400' : contrast.warn ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'">
               {{ contrast.ok ? '✓' : '!' }}
             </span>
-            <span class="text-sm text-slate-300">White text contrast {{ contrast.ratio }}:1</span>
+            <span class="text-sm text-ink-2">White text contrast {{ contrast.ratio }}:1</span>
             <span class="ml-auto text-xs font-semibold"
                   :class="contrast.ok ? 'text-emerald-400' : contrast.warn ? 'text-amber-400' : 'text-red-400'">WCAG {{ contrast.level }}</span>
           </div>
-          <p v-if="!contrast.ok" class="mt-1.5 text-xs text-slate-500">
+          <p v-if="!contrast.ok" class="mt-1.5 text-xs text-ink-muted">
             Aim for 4.5:1 (AA) so button labels stay readable for everyone — try a darker brand color.
           </p>
         </section>
 
         <!-- Appearance -->
-        <section class="rounded-2xl border border-white/5 bg-[#14172a] p-5">
-          <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Appearance</h3>
+        <section class="rounded-2xl border border-line bg-surface p-5">
+          <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-2">Appearance</h3>
           <div class="grid grid-cols-2 gap-2">
-            <button v-for="m in ['light','dark']" :key="m" type="button" class="rounded-lg border px-3 py-2 text-sm font-semibold capitalize" :class="form.mode === m ? 'border-indigo-500 bg-indigo-500/10 text-white' : 'border-white/10 text-slate-400 hover:text-white'" @click="form.mode = m">{{ m }}</button>
+            <button v-for="m in ['light','dark']" :key="m" type="button" class="rounded-lg border px-3 py-2 text-sm font-semibold capitalize" :class="form.mode === m ? 'border-indigo-500 bg-indigo-500/10 text-ink' : 'border-line text-ink-2 hover:text-ink'" @click="form.mode = m">{{ m }}</button>
           </div>
         </section>
 
         <!-- Typography -->
-        <section class="rounded-2xl border border-white/5 bg-[#14172a] p-5">
-          <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Typography</h3>
-          <label class="block text-sm font-medium text-slate-300">Font</label>
-          <select v-model="form.font" class="mt-1.5 w-full rounded-lg border-white/10 bg-[#0f1120] text-slate-100 focus:border-indigo-500 focus:ring-indigo-500">
+        <section class="rounded-2xl border border-line bg-surface p-5">
+          <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-2">Typography</h3>
+          <label class="block text-sm font-medium text-ink-2">Font</label>
+          <select v-model="form.font" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500">
             <option v-for="f in fonts" :key="f.value" :value="f.value">{{ f.label }}</option>
           </select>
-          <label class="mt-4 block text-sm font-medium text-slate-300">Base size — {{ form.font_size }}px</label>
+          <label class="mt-4 block text-sm font-medium text-ink-2">Base size — {{ form.font_size }}px</label>
           <input v-model.number="form.font_size" type="range" min="12" max="20" class="mt-2 w-full accent-indigo-500" />
         </section>
 
         <!-- Layout -->
-        <section class="rounded-2xl border border-white/5 bg-[#14172a] p-5">
-          <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-slate-400">Layout</h3>
-          <label class="block text-sm font-medium text-slate-300">Corner radius — {{ form.radius }}px</label>
+        <section class="rounded-2xl border border-line bg-surface p-5">
+          <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-2">Layout</h3>
+          <label class="block text-sm font-medium text-ink-2">Corner radius — {{ form.radius }}px</label>
           <input v-model.number="form.radius" type="range" min="0" max="28" class="mt-2 w-full accent-indigo-500" />
-          <label class="mt-4 block text-sm font-medium text-slate-300">Content width</label>
-          <select v-model.number="form.container" class="mt-1.5 w-full rounded-lg border-white/10 bg-[#0f1120] text-slate-100 focus:border-indigo-500 focus:ring-indigo-500">
+          <label class="mt-4 block text-sm font-medium text-ink-2">Content width</label>
+          <select v-model.number="form.container" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500">
             <option v-for="c in containers" :key="c.value" :value="c.value">{{ c.label }}{{ c.value ? ` (${c.value}px)` : '' }}</option>
           </select>
         </section>
 
-        <div class="sticky bottom-4 flex items-center gap-3 rounded-2xl border border-white/5 bg-[#14172a] p-4">
+        <div class="sticky bottom-4 flex items-center gap-3 rounded-2xl border border-line bg-surface p-4">
           <button type="submit" :disabled="form.processing" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">Save theme</button>
           <span v-if="form.recentlySuccessful" class="text-sm text-emerald-400">Saved for everyone.</span>
-          <span class="ml-auto text-xs text-slate-500">Live preview →</span>
+          <span class="ml-auto text-xs text-ink-muted">Live preview →</span>
         </div>
       </form>
 
       <!-- Live preview (real Convoro tokens; reflects light/dark + font + radius + colors) -->
-      <div class="overflow-hidden rounded-2xl border border-white/5">
+      <div class="overflow-hidden rounded-2xl border border-line">
         <div class="bg-appbg p-5 text-ink" style="font-family: var(--c-font); font-size: var(--c-font-size);">
           <!-- mock header -->
           <div class="flex items-center gap-3 rounded-c border border-line bg-surface px-4 py-3">
-            <span class="flex h-8 w-8 items-center justify-center rounded-c bg-primary font-bold text-white">C</span>
+            <span class="flex h-8 w-8 items-center justify-center rounded-c bg-primary font-bold text-ink">C</span>
             <span class="font-extrabold tracking-tight">Convoro</span>
-            <span class="ml-auto rounded-full bg-primary px-3 py-1 text-xs font-semibold text-white">Join</span>
+            <span class="ml-auto rounded-full bg-primary px-3 py-1 text-xs font-semibold text-ink">Join</span>
           </div>
 
           <!-- mock topic card -->
@@ -222,7 +222,7 @@ function save() {
             </div>
             <p class="mt-3 text-ink-2">The quick brown fox jumps over the lazy dog. This sample shows your font, size, colors and corners in context.</p>
             <div class="mt-4 flex flex-wrap items-center gap-2">
-              <button class="rounded-c bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600">Reply</button>
+              <button class="rounded-c bg-primary px-4 py-2 text-sm font-semibold text-ink hover:bg-primary-600">Reply</button>
               <button class="rounded-c bg-primary-soft px-4 py-2 text-sm font-semibold text-primary-700">React</button>
               <span class="rounded-full bg-primary-soft px-3 py-1 text-xs font-semibold text-primary-700">#announcement</span>
               <a class="ml-1 text-sm font-semibold text-primary-700 hover:underline">View thread →</a>

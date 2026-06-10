@@ -32,27 +32,27 @@ function save() {
     <template #subtitle>Settings · {{ ext.type }} · v{{ ext.version }}<span v-if="ext.author"> · by {{ ext.author }}</span></template>
 
     <div class="mb-4">
-      <Link href="/admin/marketplace" class="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-400 hover:text-white">
+      <Link href="/admin/marketplace" class="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-2 hover:text-ink">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
         Marketplace
       </Link>
     </div>
 
     <div class="max-w-2xl space-y-5">
-      <div class="rounded-2xl border border-white/5 bg-[#14172a] p-5">
+      <div class="rounded-2xl border border-line bg-surface p-5">
         <div class="flex items-start gap-3">
           <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg"
             :class="ext.type === 'theme' ? 'bg-fuchsia-500/15 text-fuchsia-300' : 'bg-indigo-500/15 text-indigo-300'">
             {{ ext.type === 'theme' ? '🎨' : '🧩' }}
           </div>
           <div class="min-w-0 flex-1">
-            <p class="text-sm text-slate-300">{{ ext.description }}</p>
+            <p class="text-sm text-ink-2">{{ ext.description }}</p>
             <div class="mt-2 flex items-center gap-2">
               <span class="rounded px-1.5 py-0.5 text-[11px] font-semibold"
-                :class="ext.enabled ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/5 text-slate-400'">
+                :class="ext.enabled ? 'bg-emerald-500/15 text-emerald-300' : 'bg-surface-2 text-ink-2'">
                 {{ ext.enabled ? 'Enabled' : 'Disabled' }}
               </span>
-              <span class="text-[11px] text-slate-500">{{ ext.id }}</span>
+              <span class="text-[11px] text-ink-muted">{{ ext.id }}</span>
             </div>
           </div>
         </div>
@@ -63,26 +63,26 @@ function save() {
         </a>
       </div>
 
-      <form v-if="ext.settings.length" class="rounded-2xl border border-white/5 bg-[#14172a] p-5 space-y-4" @submit.prevent="save">
+      <form v-if="ext.settings.length" class="rounded-2xl border border-line bg-surface p-5 space-y-4" @submit.prevent="save">
         <div v-for="field in ext.settings" :key="field.key">
           <label v-if="field.type === 'boolean'" class="flex items-center gap-3">
-            <input type="checkbox" v-model="formValues[field.key]" class="rounded border-white/10 bg-[#0f1120] text-indigo-500 focus:ring-indigo-500" />
-            <span class="text-sm font-medium text-slate-200">{{ field.label }}</span>
+            <input type="checkbox" v-model="formValues[field.key]" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />
+            <span class="text-sm font-medium text-ink">{{ field.label }}</span>
           </label>
 
           <template v-else>
-            <label class="block text-sm font-medium text-slate-300">{{ field.label }}</label>
+            <label class="block text-sm font-medium text-ink-2">{{ field.label }}</label>
             <textarea v-if="field.type === 'textarea'" v-model="formValues[field.key]" rows="3"
-              class="mt-1.5 w-full rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+              class="mt-1.5 w-full rounded-lg border-line bg-appbg text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500" />
             <select v-else-if="field.type === 'select'" v-model="formValues[field.key]"
-              class="mt-1.5 w-full rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500">
+              class="mt-1.5 w-full rounded-lg border-line bg-appbg text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500">
               <option v-for="o in field.options || []" :key="o.value" :value="o.value">{{ o.label }}</option>
             </select>
             <input v-else :type="field.type === 'number' ? 'number' : (field.type === 'color' ? 'color' : 'text')"
               v-model="formValues[field.key]"
-              class="mt-1.5 w-full rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+              class="mt-1.5 w-full rounded-lg border-line bg-appbg text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500" />
           </template>
-          <p v-if="field.help" class="mt-1 text-xs text-slate-500">{{ field.help }}</p>
+          <p v-if="field.help" class="mt-1 text-xs text-ink-muted">{{ field.help }}</p>
         </div>
 
         <div class="flex items-center gap-3 pt-1">
@@ -92,7 +92,7 @@ function save() {
         </div>
       </form>
 
-      <p v-else class="rounded-2xl border border-dashed border-white/10 p-8 text-center text-sm text-slate-500">
+      <p v-else class="rounded-2xl border border-dashed border-line p-8 text-center text-sm text-ink-muted">
         This {{ ext.type }} has no configurable settings.
       </p>
     </div>

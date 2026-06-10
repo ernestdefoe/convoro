@@ -223,6 +223,7 @@ class StoreController extends Controller
                 'package' => $p->package,
                 'price' => $p->priceLabel(),
                 'free' => $p->isFree(),
+                'image' => $p->image,
                 'source' => $p->source,
                 'repo' => $p->repo,
                 // GitHub-linked extensions install straight from the repo archive;

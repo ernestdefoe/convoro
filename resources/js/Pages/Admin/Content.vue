@@ -59,7 +59,7 @@ function delTag(t: any) {
   if (confirm(`Delete tag “${t.name}”?`)) router.delete(`/admin/tags/${t.id}`, opts);
 }
 
-const inp = 'rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500';
+const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500';
 </script>
 
 <template>
@@ -70,40 +70,40 @@ const inp = 'rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focu
 
     <div class="grid gap-6 lg:grid-cols-2">
       <!-- Categories -->
-      <section class="rounded-2xl border border-white/5 bg-[#14172a] p-5">
-        <h3 class="mb-3 text-sm font-bold text-white">Categories</h3>
+      <section class="rounded-2xl border border-line bg-surface p-5">
+        <h3 class="mb-3 text-sm font-bold text-ink">Categories</h3>
 
-        <div class="mb-4 rounded-xl border border-white/5 bg-[#0f1120] p-3">
+        <div class="mb-4 rounded-xl border border-line bg-appbg p-3">
           <div class="flex items-center gap-2">
-            <span class="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-slate-300"><i v-if="newCat.icon" :class="newCat.icon"></i><span v-else>#</span></span>
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-surface-2 text-ink-2"><i v-if="newCat.icon" :class="newCat.icon"></i><span v-else>#</span></span>
             <input v-model="newCat.name" :class="inp" class="flex-1" placeholder="New category name" @keyup.enter="addCategory" />
-            <input v-model="newCat.color" type="color" class="h-9 w-10 rounded border-white/10 bg-transparent" />
+            <input v-model="newCat.color" type="color" class="h-9 w-10 rounded border-line bg-transparent" />
             <button class="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="addCategory">Add</button>
           </div>
           <input v-model="newCat.icon" :class="inp" class="mt-2 w-full font-mono" placeholder="Font Awesome class — e.g. fa-solid fa-rocket" />
-          <div class="mt-1 text-[11px] text-slate-500">or pick one:</div>
+          <div class="mt-1 text-[11px] text-ink-muted">or pick one:</div>
           <div class="mt-1 flex flex-wrap gap-1">
             <button v-for="ic in faIcons" :key="ic" type="button" class="grid h-8 w-8 place-items-center rounded-lg border text-sm"
-              :class="newCat.icon === ic ? 'border-indigo-500 bg-indigo-500/20 text-white' : 'border-white/10 text-slate-400 hover:text-white'" @click="newCat.icon = ic">
+              :class="newCat.icon === ic ? 'border-indigo-500 bg-indigo-500/20 text-ink' : 'border-line text-ink-2 hover:text-ink'" @click="newCat.icon = ic">
               <i :class="ic"></i>
             </button>
           </div>
         </div>
 
         <ul class="space-y-2">
-          <li v-for="c in categories" :key="c.id" class="rounded-xl border border-white/5 p-3">
+          <li v-for="c in categories" :key="c.id" class="rounded-xl border border-line p-3">
             <template v-if="editCatId === c.id">
               <div class="flex flex-wrap items-center gap-2">
-                <span class="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-slate-300"><i v-if="catBuf.icon" :class="catBuf.icon"></i><span v-else>#</span></span>
+                <span class="grid h-9 w-9 place-items-center rounded-lg bg-surface-2 text-ink-2"><i v-if="catBuf.icon" :class="catBuf.icon"></i><span v-else>#</span></span>
                 <input v-model="catBuf.name" :class="inp" class="flex-1" />
-                <input v-model="catBuf.color" type="color" class="h-9 w-10 rounded border-white/10 bg-transparent" />
+                <input v-model="catBuf.color" type="color" class="h-9 w-10 rounded border-line bg-transparent" />
                 <button class="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white" @click="saveCat">Save</button>
-                <button class="rounded-lg px-3 py-1.5 text-sm text-slate-400 hover:text-white" @click="editCatId = null">Cancel</button>
+                <button class="rounded-lg px-3 py-1.5 text-sm text-ink-2 hover:text-ink" @click="editCatId = null">Cancel</button>
               </div>
               <input v-model="catBuf.icon" :class="inp" class="mt-2 w-full font-mono" placeholder="Font Awesome class — e.g. fa-solid fa-rocket" />
               <div class="mt-2 flex flex-wrap gap-1">
                 <button v-for="ic in faIcons" :key="ic" type="button" class="grid h-8 w-8 place-items-center rounded-lg border text-sm"
-                  :class="catBuf.icon === ic ? 'border-indigo-500 bg-indigo-500/20 text-white' : 'border-white/10 text-slate-400 hover:text-white'" @click="catBuf.icon = ic">
+                  :class="catBuf.icon === ic ? 'border-indigo-500 bg-indigo-500/20 text-ink' : 'border-line text-ink-2 hover:text-ink'" @click="catBuf.icon = ic">
                   <i :class="ic"></i>
                 </button>
               </div>
@@ -114,42 +114,42 @@ const inp = 'rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focu
                 <i v-if="c.icon && c.icon.startsWith('fa')" :class="c.icon"></i><span v-else>{{ c.icon || '#' }}</span>
               </span>
               <div class="min-w-0 flex-1">
-                <div class="font-semibold text-slate-100">{{ c.name }}</div>
-                <div class="text-xs text-slate-500">{{ c.topics }} topics · /{{ c.slug }}</div>
+                <div class="font-semibold text-ink">{{ c.name }}</div>
+                <div class="text-xs text-ink-muted">{{ c.topics }} topics · /{{ c.slug }}</div>
               </div>
-              <button class="text-slate-400 hover:text-white" @click="startCat(c)">Edit</button>
-              <button class="text-slate-400 hover:text-red-400" @click="delCat(c)">Delete</button>
+              <button class="text-ink-2 hover:text-ink" @click="startCat(c)">Edit</button>
+              <button class="text-ink-2 hover:text-red-400" @click="delCat(c)">Delete</button>
             </div>
           </li>
         </ul>
       </section>
 
       <!-- Tags -->
-      <section class="rounded-2xl border border-white/5 bg-[#14172a] p-5">
-        <h3 class="mb-3 text-sm font-bold text-white">Tags</h3>
+      <section class="rounded-2xl border border-line bg-surface p-5">
+        <h3 class="mb-3 text-sm font-bold text-ink">Tags</h3>
 
-        <div class="mb-4 flex flex-wrap items-end gap-2 rounded-xl border border-white/5 bg-[#0f1120] p-3">
+        <div class="mb-4 flex flex-wrap items-end gap-2 rounded-xl border border-line bg-appbg p-3">
           <input v-model="newTag.name" :class="inp" class="flex-1" placeholder="New tag name" @keyup.enter="addTag" />
-          <input v-model="newTag.color" type="color" class="h-9 w-10 rounded border-white/10 bg-transparent" />
+          <input v-model="newTag.color" type="color" class="h-9 w-10 rounded border-line bg-transparent" />
           <button class="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="addTag">Add</button>
         </div>
 
         <ul class="space-y-2">
-          <li v-for="t in tags" :key="t.id" class="rounded-xl border border-white/5 p-3">
+          <li v-for="t in tags" :key="t.id" class="rounded-xl border border-line p-3">
             <template v-if="editTagId === t.id">
               <div class="flex items-center gap-2">
                 <input v-model="tagBuf.name" :class="inp" class="flex-1" />
-                <input v-model="tagBuf.color" type="color" class="h-9 w-10 rounded border-white/10 bg-transparent" />
+                <input v-model="tagBuf.color" type="color" class="h-9 w-10 rounded border-line bg-transparent" />
                 <button class="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white" @click="saveTag">Save</button>
-                <button class="rounded-lg px-3 py-1.5 text-sm text-slate-400 hover:text-white" @click="editTagId = null">Cancel</button>
+                <button class="rounded-lg px-3 py-1.5 text-sm text-ink-2 hover:text-ink" @click="editTagId = null">Cancel</button>
               </div>
             </template>
             <div v-else class="flex items-center gap-3">
               <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold" :style="{ color: t.color, background: t.color + '22' }">#{{ t.name }}</span>
-              <span class="text-xs text-slate-500">{{ t.topics }} topics</span>
+              <span class="text-xs text-ink-muted">{{ t.topics }} topics</span>
               <span class="ml-auto"></span>
-              <button class="text-slate-400 hover:text-white" @click="startTag(t)">Edit</button>
-              <button class="text-slate-400 hover:text-red-400" @click="delTag(t)">Delete</button>
+              <button class="text-ink-2 hover:text-ink" @click="startTag(t)">Edit</button>
+              <button class="text-ink-2 hover:text-red-400" @click="delTag(t)">Delete</button>
             </div>
           </li>
         </ul>

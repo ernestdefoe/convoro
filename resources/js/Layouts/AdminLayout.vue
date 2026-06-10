@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import ThemeToggle from '@/Components/ThemeToggle.vue';
 
 const page = usePage();
 const current = computed(() => page.component);
@@ -51,23 +52,23 @@ function active(item: { component: string; href: string }) {
 </script>
 
 <template>
-  <div class="flex min-h-screen bg-[#0f1120] text-slate-200">
+  <div class="flex min-h-screen bg-appbg text-ink">
     <!-- Sidebar -->
-    <aside class="hidden w-[240px] shrink-0 flex-col border-r border-white/5 bg-[#14172a] p-4 md:flex">
+    <aside class="hidden w-[240px] shrink-0 flex-col border-r border-line bg-surface p-4 md:flex">
       <div class="mb-6 flex items-center gap-2 px-2">
         <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 font-extrabold text-white">C</span>
-        <span class="text-sm font-bold text-white">Convoro Admin</span>
+        <span class="text-sm font-bold text-ink">Convoro Admin</span>
       </div>
 
       <nav class="flex flex-col gap-1 overflow-y-auto">
         <template v-for="(group, gi) in groups" :key="gi">
-          <div v-if="group.label" class="px-3 pb-1 pt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">{{ group.label }}</div>
+          <div v-if="group.label" class="px-3 pb-1 pt-4 text-[10px] font-bold uppercase tracking-wider text-ink-muted">{{ group.label }}</div>
           <Link
             v-for="item in group.items"
             :key="item.href"
             :href="item.href"
             class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition"
-            :class="active(item) ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'"
+            :class="active(item) ? 'bg-surface-2 text-ink' : 'text-ink-2 hover:bg-surface-2 hover:text-ink'"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path :d="item.icon" /></svg>
             {{ item.label }}
@@ -75,7 +76,7 @@ function active(item: { component: string; href: string }) {
         </template>
       </nav>
 
-      <Link href="/" class="mt-auto flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-400 hover:bg-white/5 hover:text-white">
+      <Link href="/" class="mt-auto flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-2 hover:bg-surface-2 hover:text-ink">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
         Back to site
       </Link>
@@ -83,14 +84,17 @@ function active(item: { component: string; href: string }) {
 
     <!-- Content -->
     <div class="flex-1">
-      <header class="border-b border-white/5 bg-[#14172a]/60 px-6 py-4">
-        <h1 class="text-lg font-bold text-white"><slot name="title">Admin</slot></h1>
-        <p v-if="$slots.subtitle" class="mt-0.5 text-sm text-slate-400"><slot name="subtitle" /></p>
+      <header class="flex items-center gap-4 border-b border-line bg-surface/70 px-6 py-4">
+        <div class="min-w-0 flex-1">
+          <h1 class="text-lg font-bold text-ink"><slot name="title">Admin</slot></h1>
+          <p v-if="$slots.subtitle" class="mt-0.5 text-sm text-ink-2"><slot name="subtitle" /></p>
+        </div>
+        <ThemeToggle />
       </header>
       <main class="p-6">
         <Link v-if="banner()?.available" href="/admin/marketplace" class="mb-5 flex items-center gap-3 rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-3 text-sm">
           <span class="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500/30 text-indigo-300">↑</span>
-          <span class="text-slate-200">Convoro <strong>{{ banner().latest }}</strong> is available.</span>
+          <span class="text-ink">Convoro <strong>{{ banner().latest }}</strong> is available.</span>
           <span class="ml-auto font-semibold text-indigo-300">Update →</span>
         </Link>
         <slot />

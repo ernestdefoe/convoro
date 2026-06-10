@@ -56,6 +56,19 @@ Route::get('/manifest.webmanifest', [App\Http\Controllers\PwaController::class, 
 Route::get('/ext-asset/{id}/{surface}', [App\Http\Controllers\ExtAssetController::class, 'show'])
     ->where('id', '[A-Za-z0-9._-]+')->name('ext.asset');
 
+// One-click public demo: signs in the preset demo account (if configured) and
+// drops the visitor into the community. Disabled when CONVORO_DEMO_EMAIL is blank.
+Route::get('/demo', function () {
+    $email = (string) config('convoro.demo_email');
+    $user = $email !== '' ? \App\Models\User::where('email', $email)->where('is_admin', false)->first() : null;
+    if (! $user) {
+        return redirect('/');
+    }
+    \Illuminate\Support\Facades\Auth::login($user);
+
+    return redirect('/')->with('status', 'You\'re exploring the Convoro demo — post, react, and try the live theme editor freely.');
+})->middleware('throttle:60,1')->name('demo.login');
+
 // Community (forum)
 Route::get('/', [ForumController::class, 'index'])->name('forum.index');
 Route::get('/t/{topic}', [TopicController::class, 'show'])->name('topics.show');

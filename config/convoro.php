@@ -8,6 +8,10 @@ return [
     // used by the admin "check for updates" feature. Null = update checks disabled.
     'update_url' => env('CONVORO_UPDATE_URL'),
 
+    // One-click public demo: /demo logs in this account (read it from env so it
+    // can be disabled by leaving it blank). Pair with MAIL_MAILER=log on the demo.
+    'demo_email' => env('CONVORO_DEMO_EMAIL', ''),
+
     // The apex marketing/store domain. Marketing + store routes are scoped to
     // this host; the forum lives on its own (sub)domain. Shared login works
     // across both when SESSION_DOMAIN is set to the parent (e.g. .convoro.co).
