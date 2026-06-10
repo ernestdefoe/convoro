@@ -158,6 +158,8 @@ class AdminController extends Controller
                 'premium' => $m['premium'],
                 'enabled' => in_array($m['id'], $enabled, true),
                 'removable' => $m['_writable'] && str_starts_with($m['_path'], \App\Support\ExtensionInstaller::targetRoot()),
+                'settings' => $m['settings'],
+                'values' => \App\Support\ExtensionManager::settingValues($m['id']),
             ]);
 
         return Inertia::render('Admin/Marketplace', [
@@ -205,6 +207,35 @@ class AdminController extends Controller
         \App\Support\ExtensionInstaller::uninstall($id);
 
         return back()->with('extResult', ['ok' => true, 'message' => "Removed “{$id}”."]);
+    }
+
+    public function updateExtensionSettings(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'id' => ['required', 'string'],
+            'values' => ['present', 'array'],
+        ]);
+
+        $id = $data['id'];
+        $schema = \App\Support\ExtensionManager::settingsSchema($id);
+        abort_if(empty($schema), 404);
+
+        // Only persist keys the extension actually declares; coerce by type.
+        foreach ($schema as $field) {
+            $key = $field['key'];
+            if (! array_key_exists($key, $data['values'])) {
+                continue;
+            }
+            $value = $data['values'][$key];
+            $value = match ($field['type'] ?? 'text') {
+                'boolean' => (bool) $value,
+                'number' => is_numeric($value) ? $value + 0 : 0,
+                default => is_scalar($value) ? (string) $value : '',
+            };
+            \App\Support\Settings::set(\App\Support\ExtensionManager::settingKey($id, $key), $value);
+        }
+
+        return back()->with('extResult', ['ok' => true, 'message' => 'Settings saved.']);
     }
 
     // ---- Categories & Tags ------------------------------------------------

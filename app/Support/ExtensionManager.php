@@ -94,6 +94,7 @@ class ExtensionManager
             'provider' => $raw['provider'] ?? null,            // FQCN of a ServiceProvider
             'migrations' => $raw['migrations'] ?? null,        // dir relative to package
             'permissions' => is_array($raw['permissions'] ?? null) ? $raw['permissions'] : [],
+            'settings' => is_array($raw['settings'] ?? null) ? array_values(array_filter($raw['settings'], fn ($f) => is_array($f) && ! empty($f['key']))) : [],
             'assets' => is_array($raw['assets'] ?? null) ? $raw['assets'] : [],
             'premium' => (bool) ($raw['premium'] ?? false),
             'price' => $raw['price'] ?? 0,
@@ -244,6 +245,52 @@ class ExtensionManager
             if (is_string($file) && is_file($m['_path'].'/'.$file)) {
                 $out[] = ['id' => $m['id'], 'url' => "/ext-asset/{$m['id']}/{$surface}"];
             }
+        }
+
+        return $out;
+    }
+
+    // -- Per-extension settings -------------------------------------------
+
+    /** The declarative settings schema an extension ships in its manifest. */
+    public static function settingsSchema(string $id): array
+    {
+        return self::all()[$id]['settings'] ?? [];
+    }
+
+    /** Namespaced storage key for one extension setting. */
+    public static function settingKey(string $id, string $key): string
+    {
+        return "ext.{$id}.{$key}";
+    }
+
+    /**
+     * Read one extension setting, falling back to the manifest default. This is
+     * what extension code calls at runtime.
+     */
+    public static function setting(string $id, string $key, mixed $default = null): mixed
+    {
+        $storeKey = self::settingKey($id, $key);
+        $stored = Settings::get($storeKey, '__missing__');
+        if ($stored !== '__missing__') {
+            return $stored;
+        }
+        foreach (self::settingsSchema($id) as $field) {
+            if (($field['key'] ?? null) === $key) {
+                return $field['default'] ?? $default;
+            }
+        }
+
+        return $default;
+    }
+
+    /** Current values for every field in an extension's schema (defaults merged with stored). */
+    public static function settingValues(string $id): array
+    {
+        $out = [];
+        foreach (self::settingsSchema($id) as $field) {
+            $key = $field['key'];
+            $out[$key] = self::setting($id, $key, $field['default'] ?? null);
         }
 
         return $out;
