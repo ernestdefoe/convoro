@@ -20,6 +20,7 @@ class TopicController extends Controller
                 'id' => $topic->id,
                 'title' => $topic->title,
                 'slug' => $topic->slug,
+                'cover' => $topic->cover_image,
                 'isLive' => $topic->is_live,
                 'isLocked' => $topic->is_locked,
                 'category' => $topic->category ? [

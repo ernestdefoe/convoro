@@ -5,7 +5,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps<{
   theme: { primary: string; radius: number; mode: string; font: string; font_size: number; container: number };
-  fonts: { value: string; label: string }[];
+  fonts: { value: string; label: string; type: string }[];
 }>();
 
 const form = useForm({
@@ -17,21 +17,16 @@ const form = useForm({
   container: props.theme.container,
 });
 
-// ---- font stacks (mirror app/Support/Theme.php FONTS) ----
-const FONT_STACKS: Record<string, string> = {
-  Inter: "'Inter', ui-sans-serif, system-ui, sans-serif",
-  System: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif",
-  Poppins: "'Poppins', ui-sans-serif, system-ui, sans-serif",
-  Roboto: "'Roboto', ui-sans-serif, system-ui, sans-serif",
-  Nunito: "'Nunito Sans', ui-sans-serif, system-ui, sans-serif",
-  Lora: "'Lora', Georgia, 'Times New Roman', serif",
-};
-const FONT_GOOGLE: Record<string, string> = {
-  Poppins: 'Poppins:wght@400;500;600;700;800',
-  Roboto: 'Roboto:wght@400;500;700;900',
-  Nunito: 'Nunito+Sans:wght@400;600;700;800',
-  Lora: 'Lora:wght@400;500;600;700',
-};
+// ---- fonts (mirror app/Support/Theme.php) ----
+function fontType(family: string): string {
+  return props.fonts.find((f) => f.value === family)?.type ?? 'sans';
+}
+function fontStack(family: string): string {
+  const t = fontType(family);
+  if (t === 'system') return "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+  const fb = t === 'serif' ? "Georgia, 'Times New Roman', serif" : t === 'mono' ? "ui-monospace, Menlo, monospace" : 'ui-sans-serif, system-ui, sans-serif';
+  return `'${family}', ${fb}`;
+}
 
 const presets = [
   { name: 'Indigo', primary: '#5b5bd6', mode: 'light' },
@@ -80,12 +75,11 @@ const contrast = computed(() => {
   return { ratio: ratio.toFixed(2), level, ok: ratio >= 4.5, warn: ratio >= 3 && ratio < 4.5 };
 });
 
-function ensureFont(key: string) {
+function ensureFont(family: string) {
   const id = 'convoro-preview-font';
   const existing = document.getElementById(id) as HTMLLinkElement | null;
-  const spec = FONT_GOOGLE[key];
-  if (!spec) { existing?.remove(); return; }
-  const href = `https://fonts.googleapis.com/css2?family=${spec}&display=swap`;
+  if (family === 'System' || family === 'Inter') { existing?.remove(); return; }
+  const href = `https://fonts.googleapis.com/css2?family=${family.replace(/ /g, '+')}:wght@400;500;600;700&display=swap`;
   if (existing) { existing.href = href; return; }
   const link = document.createElement('link');
   link.id = id; link.rel = 'stylesheet'; link.href = href;
@@ -101,7 +95,7 @@ function applyLive() {
   root.setProperty('--c-primary-soft', triplet(mixWhite(p, 0.86)));
   root.setProperty('--c-radius', `${form.radius}px`);
   root.setProperty('--c-container', form.container > 0 ? `${form.container}px` : '100%');
-  root.setProperty('--c-font', FONT_STACKS[form.font] ?? FONT_STACKS.Inter);
+  root.setProperty('--c-font', fontStack(form.font));
   root.setProperty('--c-font-size', `${form.font_size}px`);
   ensureFont(form.font);
   document.documentElement.dataset.theme = form.mode;

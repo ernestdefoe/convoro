@@ -78,8 +78,7 @@ class AdminController extends Controller
                 'font_size' => (int) Settings::get('theme.font_size'),
                 'container' => (int) Settings::get('theme.container'),
             ],
-            'fonts' => collect(\App\Support\Theme::FONTS)
-                ->map(fn ($f, $key) => ['value' => $key, 'label' => $f[0]])->values(),
+            'fonts' => \App\Support\Theme::fontOptions(),
         ]);
     }
 

@@ -9,15 +9,39 @@ namespace App\Support;
  */
 class Theme
 {
-    /** Font key => [display label, CSS stack, Google Fonts family spec or null]. */
+    /**
+     * Supported fonts: family name => generic category ('sans' | 'serif' | 'system').
+     * All non-system families are loaded live from Google Fonts (css2 endpoint is
+     * lenient on weights, so no API key needed). Add families here to offer more.
+     */
     public const FONTS = [
-        'Inter' => ['Inter', "'Inter', ui-sans-serif, system-ui, sans-serif", 'Inter:wght@400;500;600;700;800'],
-        'System' => ['System UI', "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif", null],
-        'Poppins' => ['Poppins', "'Poppins', ui-sans-serif, system-ui, sans-serif", 'Poppins:wght@400;500;600;700;800'],
-        'Roboto' => ['Roboto', "'Roboto', ui-sans-serif, system-ui, sans-serif", 'Roboto:wght@400;500;700;900'],
-        'Nunito' => ['Nunito Sans', "'Nunito Sans', ui-sans-serif, system-ui, sans-serif", 'Nunito+Sans:wght@400;600;700;800'],
-        'Lora' => ['Lora (serif)', "'Lora', Georgia, 'Times New Roman', serif", 'Lora:wght@400;500;600;700'],
+        'System' => 'system',
+        // sans
+        'Inter' => 'sans', 'Roboto' => 'sans', 'Open Sans' => 'sans', 'Lato' => 'sans',
+        'Montserrat' => 'sans', 'Poppins' => 'sans', 'Nunito Sans' => 'sans', 'Work Sans' => 'sans',
+        'DM Sans' => 'sans', 'Manrope' => 'sans', 'Plus Jakarta Sans' => 'sans', 'Sora' => 'sans',
+        'Outfit' => 'sans', 'Space Grotesk' => 'sans', 'Source Sans 3' => 'sans', 'Rubik' => 'sans',
+        'Karla' => 'sans', 'Mulish' => 'sans', 'Figtree' => 'sans', 'Albert Sans' => 'sans',
+        'Raleway' => 'sans', 'Public Sans' => 'sans', 'IBM Plex Sans' => 'sans', 'Onest' => 'sans',
+        // serif
+        'Lora' => 'serif', 'Merriweather' => 'serif', 'Playfair Display' => 'serif',
+        'Source Serif 4' => 'serif', 'Bitter' => 'serif', 'PT Serif' => 'serif',
+        'Roboto Slab' => 'serif', 'Libre Baskerville' => 'serif', 'Crimson Pro' => 'serif',
+        'EB Garamond' => 'serif', 'Noto Serif' => 'serif', 'Cormorant' => 'serif',
+        // mono
+        'JetBrains Mono' => 'mono', 'IBM Plex Mono' => 'mono',
     ];
+
+    /** Options for the admin select: [{value, label, type}]. */
+    public static function fontOptions(): array
+    {
+        $out = [];
+        foreach (self::FONTS as $family => $type) {
+            $out[] = ['value' => $family, 'label' => $family === 'System' ? 'System default' : $family, 'type' => $type];
+        }
+
+        return $out;
+    }
 
     public static function css(): string
     {
@@ -49,21 +73,31 @@ class Theme
         return ":root{{$body}}";
     }
 
-    public static function fontStack(string $key): string
+    public static function fontStack(string $family): string
     {
-        return self::FONTS[$key][1] ?? self::FONTS['Inter'][1];
+        $type = self::FONTS[$family] ?? 'sans';
+        if ($type === 'system') {
+            return "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
+        }
+        $fallback = match ($type) {
+            'serif' => "Georgia, 'Times New Roman', serif",
+            'mono' => "ui-monospace, 'SF Mono', Menlo, monospace",
+            default => "ui-sans-serif, system-ui, -apple-system, sans-serif",
+        };
+
+        return "'{$family}', {$fallback}";
     }
 
-    /** Google Fonts <link> href for the active font, or null (System / Inter handled in app.css). */
+    /** Google Fonts <link> href for the active font, or null (System / Inter handled locally). */
     public static function googleFontHref(): ?string
     {
-        $key = (string) Settings::get('theme.font', 'Inter');
-        $spec = self::FONTS[$key][2] ?? null;
-        if ($spec === null || $key === 'Inter') {
-            return null; // Inter is already imported by app.css; System needs no font
+        $family = (string) Settings::get('theme.font', 'Inter');
+        if (! isset(self::FONTS[$family]) || $family === 'System' || $family === 'Inter') {
+            return null; // System needs nothing; Inter is already imported by app.css
         }
 
-        return 'https://fonts.googleapis.com/css2?family='.$spec.'&display=swap';
+        return 'https://fonts.googleapis.com/css2?family='
+            .str_replace(' ', '+', $family).':wght@400;500;600;700&display=swap';
     }
 
     /** @return array{0:int,1:int,2:int} */
