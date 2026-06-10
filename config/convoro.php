@@ -27,5 +27,8 @@ return [
         'secret' => env('STRIPE_SECRET', ''),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET', ''),
         'connect_client_id' => env('STRIPE_CONNECT_CLIENT_ID', ''),
+        // Must EXACTLY match a redirect URI registered on your Stripe Connect
+        // application. Defaults to the admin callback on the current host.
+        'connect_redirect' => env('STRIPE_CONNECT_REDIRECT', ''),
     ],
 ];

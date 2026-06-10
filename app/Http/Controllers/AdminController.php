@@ -237,7 +237,9 @@ class AdminController extends Controller
 
         $request->session()->put('stripe_connect_state', $state = \Illuminate\Support\Str::random(40));
 
-        return redirect()->away(\App\Support\StripeService::connectUrl(route('admin.store.stripe.callback'), $state));
+        $redirect = config('convoro.stripe.connect_redirect') ?: route('admin.store.stripe.callback');
+
+        return redirect()->away(\App\Support\StripeService::connectUrl($redirect, $state));
     }
 
     public function stripeCallback(Request $request): \Illuminate\Http\RedirectResponse
