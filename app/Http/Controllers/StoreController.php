@@ -81,6 +81,36 @@ class StoreController extends Controller
         ]);
     }
 
+    /** Public catalog consumed by remote installs' Marketplace. */
+    public function catalog(): JsonResponse
+    {
+        $items = Product::where('published', true)->orderByDesc('featured')->orderBy('name')->get()
+            ->map(fn (Product $p) => [
+                'slug' => $p->slug,
+                'name' => $p->name,
+                'type' => $p->type,
+                'tagline' => $p->tagline,
+                'version' => $p->version,
+                'package' => $p->package,
+                'price' => $p->priceLabel(),
+                'free' => $p->isFree(),
+                // Only free items expose a direct download; premium needs a license key.
+                'download_url' => ($p->isFree() && $p->download_path) ? route('catalog.download', $p) : null,
+            ]);
+
+        return response()->json(['items' => $items]);
+    }
+
+    /** Stream a FREE product's package (no license needed). */
+    public function freeDownload(Product $product): BinaryFileResponse
+    {
+        abort_unless($product->published && $product->isFree() && $product->download_path, 404);
+        $abs = storage_path('app/'.ltrim($product->download_path, '/'));
+        abort_unless(is_file($abs), 404);
+
+        return response()->download($abs, $product->slug.'.zip');
+    }
+
     /** The buyer's licenses + download links (auth). */
     public function account(Request $request): Response
     {

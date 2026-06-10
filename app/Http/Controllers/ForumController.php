@@ -13,7 +13,13 @@ class ForumController extends Controller
 {
     public function index(Request $request): Response
     {
-        $view = $request->query('view') === 'grid' ? 'grid' : 'feed';
+        // View preference: explicit ?view wins, else the visitor's saved choice
+        // (cookie), else the admin default. Keeps grid/feed sticky between visits.
+        $view = $request->query('view');
+        if (! in_array($view, ['feed', 'grid'], true)) {
+            $view = $request->cookie('convoro_view');
+        }
+        $view = in_array($view, ['feed', 'grid'], true) ? $view : \App\Support\Settings::get('forum.default_view', 'feed');
         $sort = in_array($request->query('sort'), ['recent', 'popular', 'title']) ? $request->query('sort') : 'recent';
         $categorySlug = $request->query('category');
 

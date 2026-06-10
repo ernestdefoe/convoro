@@ -10,7 +10,17 @@ const props = defineProps<{
   update: { current: string; latest: string; available: boolean; url: string | null; checkedAt: string | null; enabled: boolean };
   extensions: Ext[];
   composer: { available: boolean; task: { state: string; action?: string; package?: string; output?: string; finishedAt?: string | null } };
+  catalog: { slug: string; name: string; type: string; tagline: string; version: string; price: string; free: boolean; download_url: string | null }[];
 }>();
+
+const installingSlug = ref<string | null>(null);
+function installCatalog(item: { slug: string; free: boolean }) {
+  installingSlug.value = item.slug;
+  router.post('/admin/marketplace/catalog/install', { slug: item.slug }, {
+    preserveScroll: true,
+    onFinish: () => (installingSlug.value = null),
+  });
+}
 
 const composerPkg = ref('');
 function composerInstall() {
@@ -261,13 +271,43 @@ function saveSettings() {
       </div>
     </section>
 
-    <!-- Catalog placeholder (remote storefront comes with the convoro.co store) -->
-    <section class="mt-6 rounded-2xl border border-dashed border-white/10 bg-[#14172a] p-8 text-center">
-      <div class="text-2xl">🛍️</div>
-      <h3 class="mt-2 text-base font-bold text-white">Browse the catalog</h3>
-      <p class="mx-auto mt-1 max-w-md text-sm text-slate-400">
-        One-click install of free &amp; premium extensions/themes from the Convoro store (license-key unlock) lands when the storefront goes live.
-      </p>
+    <!-- Catalog from the Convoro store -->
+    <section class="mt-6 rounded-2xl border border-white/5 bg-[#14172a] p-5">
+      <h2 class="mb-1 text-sm font-bold uppercase tracking-wide text-slate-400">Browse the catalog</h2>
+      <p class="mb-4 text-xs text-slate-500">Extensions &amp; themes from the Convoro store. Free items install in one click; premium items unlock with a license key.</p>
+
+      <div v-if="!catalog.length" class="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-slate-400">
+        Nothing new in the catalog right now — everything available is already installed.
+      </div>
+
+      <div v-else class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div v-for="item in catalog" :key="item.slug" class="flex flex-col rounded-2xl border border-white/5 bg-[#0f1120] p-5">
+          <div class="flex items-start gap-3">
+            <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg"
+              :class="item.type === 'theme' ? 'bg-fuchsia-500/15 text-fuchsia-300' : 'bg-indigo-500/15 text-indigo-300'">
+              {{ item.type === 'theme' ? '🎨' : '🧩' }}
+            </div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center gap-1.5">
+                <span class="truncate font-bold text-white">{{ item.name }}</span>
+                <span class="rounded bg-white/5 px-1.5 py-0.5 text-[11px] text-slate-400">v{{ item.version }}</span>
+              </div>
+              <span class="text-[11px] font-semibold uppercase tracking-wide" :class="item.free ? 'text-emerald-300' : 'text-amber-300'">{{ item.price }}</span>
+            </div>
+          </div>
+          <p class="mt-3 line-clamp-2 flex-1 text-sm text-slate-400">{{ item.tagline }}</p>
+          <div class="mt-4 border-t border-white/5 pt-3">
+            <button v-if="item.free" type="button" :disabled="installingSlug === item.slug" @click="installCatalog(item)"
+              class="w-full rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">
+              {{ installingSlug === item.slug ? 'Installing…' : 'Download &amp; install' }}
+            </button>
+            <a v-else :href="`https://convoro.co/store/${item.slug}`" target="_blank" rel="noopener"
+              class="block rounded-lg border border-white/10 px-3 py-2 text-center text-sm font-semibold text-amber-300 hover:bg-white/5">
+              Buy on convoro.co — then redeem your key above
+            </a>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- Extension detail / settings panel -->

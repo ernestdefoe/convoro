@@ -22,6 +22,8 @@ Route::domain(config('convoro.marketing_domain'))->group(function () {
 
 // Stripe webhook + license API (any host; CSRF-excepted in bootstrap/app.php).
 Route::post('/store/webhook', [App\Http\Controllers\StoreController::class, 'webhook'])->name('store.webhook');
+Route::get('/api/catalog', [App\Http\Controllers\StoreController::class, 'catalog'])->name('catalog');
+Route::get('/api/catalog/download/{product}', [App\Http\Controllers\StoreController::class, 'freeDownload'])->name('catalog.download');
 Route::post('/api/licenses/validate', [App\Http\Controllers\LicenseController::class, 'validateKey'])->name('licenses.validate');
 Route::get('/api/licenses/download', [App\Http\Controllers\LicenseController::class, 'download'])->name('licenses.download');
 
@@ -122,6 +124,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/marketplace/uninstall', [App\Http\Controllers\AdminController::class, 'uninstallExtension'])->name('marketplace.uninstall');
     Route::post('/marketplace/settings', [App\Http\Controllers\AdminController::class, 'updateExtensionSettings'])->name('marketplace.settings');
     Route::post('/marketplace/composer', [App\Http\Controllers\AdminController::class, 'composerInstall'])->name('marketplace.composer');
+    Route::post('/marketplace/catalog/install', [App\Http\Controllers\AdminController::class, 'installCatalogItem'])->name('marketplace.catalog.install');
     Route::get('/store', [App\Http\Controllers\AdminController::class, 'store'])->name('store');
     Route::post('/store/stripe', [App\Http\Controllers\AdminController::class, 'updateStripe'])->name('store.stripe');
     Route::post('/store/products', [App\Http\Controllers\AdminController::class, 'storeProduct'])->name('products.store');

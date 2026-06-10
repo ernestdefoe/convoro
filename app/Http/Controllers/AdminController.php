@@ -254,6 +254,21 @@ class AdminController extends Controller
                 'adminUrl' => $m['admin_url'],
             ]);
 
+        // Browsable catalog from the central store (free items install directly;
+        // premium need a license key). Best-effort — never block the page.
+        $installedPackages = collect(\App\Support\ExtensionManager::all())->pluck('id')->all();
+        $catalog = [];
+        try {
+            $res = \Illuminate\Support\Facades\Http::acceptJson()->timeout(6)
+                ->get(rtrim(config('convoro.store_url'), '/').'/api/catalog');
+            if ($res->successful()) {
+                $catalog = collect($res->json('items', []))
+                    ->reject(fn ($i) => in_array($i['package'] ?? null, $installedPackages, true))
+                    ->values()->all();
+            }
+        } catch (\Throwable) {
+        }
+
         return Inertia::render('Admin/Marketplace', [
             'update' => $this->updateState(),
             'extensions' => $installed,
@@ -261,7 +276,32 @@ class AdminController extends Controller
                 'available' => \App\Support\ComposerRunner::available(),
                 'task' => \App\Jobs\ComposerTaskJob::status(),
             ],
+            'catalog' => $catalog,
         ]);
+    }
+
+    public function installCatalogItem(Request $request): RedirectResponse
+    {
+        $slug = $request->validate(['slug' => ['required', 'string']])['slug'];
+
+        try {
+            $res = \Illuminate\Support\Facades\Http::acceptJson()->timeout(6)
+                ->get(rtrim(config('convoro.store_url'), '/').'/api/catalog');
+            $item = collect($res->json('items', []))->firstWhere('slug', $slug);
+
+            if (! $item) {
+                return back()->with('extResult', ['ok' => false, 'message' => 'Item not found in the catalog.']);
+            }
+            if (! ($item['free'] ?? false) || empty($item['download_url'])) {
+                return back()->with('extResult', ['ok' => false, 'message' => "“{$item['name']}” is premium — redeem your license key below to install it."]);
+            }
+
+            $id = \App\Support\ExtensionInstaller::installFromUrl($item['download_url']);
+
+            return back()->with('extResult', ['ok' => true, 'message' => "Installed “{$id}”. Enable it to activate."]);
+        } catch (\Throwable $e) {
+            return back()->with('extResult', ['ok' => false, 'message' => $e->getMessage()]);
+        }
     }
 
     public function composerInstall(Request $request): RedirectResponse

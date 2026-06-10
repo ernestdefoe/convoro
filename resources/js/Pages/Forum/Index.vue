@@ -24,6 +24,10 @@ const props = defineProps<{
 }>();
 
 function go(params: Record<string, string | null>) {
+  // Remember the view choice so it sticks on the next visit (server reads this cookie).
+  if (params.view === 'feed' || params.view === 'grid') {
+    document.cookie = `convoro_view=${params.view};path=/;max-age=31536000;samesite=lax`;
+  }
   router.get('/', { view: props.view, sort: props.sort, category: props.activeCategory, ...params }, { preserveScroll: true, preserveState: true });
 }
 const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n));
