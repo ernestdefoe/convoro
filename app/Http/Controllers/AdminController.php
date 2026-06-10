@@ -387,6 +387,7 @@ class AdminController extends Controller
             'values' => [
                 'name' => Settings::get('site.name'),
                 'tagline' => Settings::get('site.tagline'),
+                'logo' => Settings::get('site.logo'),
                 'default_view' => Settings::get('forum.default_view'),
                 'realtime' => (bool) Settings::get('realtime.enabled'),
                 'digests' => (bool) Settings::get('digests.enabled'),
@@ -402,6 +403,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:60'],
             'tagline' => ['nullable', 'string', 'max:160'],
+            'logo' => ['nullable', 'string', 'max:2048'],
             'default_view' => ['required', 'in:feed,grid'],
             'realtime' => ['required', 'boolean'],
             'digests' => ['required', 'boolean'],
@@ -413,6 +415,7 @@ class AdminController extends Controller
         Settings::setMany([
             'site.name' => $data['name'],
             'site.tagline' => $data['tagline'] ?? '',
+            'site.logo' => $data['logo'] ?? '',
             'forum.default_view' => $data['default_view'],
             'realtime.enabled' => (bool) $data['realtime'],
             'digests.enabled' => (bool) $data['digests'],

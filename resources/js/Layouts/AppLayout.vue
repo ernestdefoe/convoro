@@ -16,6 +16,7 @@ const page = usePage();
 const user = computed(() => (page.props as any).auth?.user ?? null);
 const isAdmin = computed(() => !!(page.props as any).auth?.isAdmin);
 const dmUnread = computed(() => Number((page.props as any).dmUnread ?? 0));
+const siteLogo = computed(() => (page.props as any).site?.logo || '');
 const initials = computed(() => {
   if (!user.value) return '';
   const p = String(user.value.name).trim().split(/\s+/);
@@ -28,7 +29,10 @@ const initials = computed(() => {
     <a href="#main" class="skip-link">Skip to content</a>
     <header class="sticky top-0 z-40 border-b border-line bg-surface/85 backdrop-blur">
       <div class="mx-auto flex h-[60px] max-w-[var(--c-container)] items-center gap-5 px-6">
-        <Link href="/"><ConvoroLogo :size="34" /></Link>
+        <Link href="/" class="flex items-center">
+          <img v-if="siteLogo" :src="siteLogo" alt="Logo" class="h-8 w-auto max-w-[180px]" />
+          <ConvoroLogo v-else :size="34" />
+        </Link>
         <nav class="ml-2 hidden items-center gap-1 md:flex">
           <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Forum') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Community</Link>
           <a class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Members</a>

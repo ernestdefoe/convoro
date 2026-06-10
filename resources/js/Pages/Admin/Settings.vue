@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { Head, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { uploadImage } from '@/lib/upload';
 
 const props = defineProps<{
-  values: { name: string; tagline: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string };
+  values: { name: string; tagline: string; logo: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string };
 }>();
 
 const form = useForm({
   name: props.values.name,
   tagline: props.values.tagline,
+  logo: props.values.logo ?? '',
   default_view: props.values.default_view,
   realtime: props.values.realtime,
   digests: props.values.digests,
@@ -16,6 +19,14 @@ const form = useForm({
   pwa_short_name: props.values.pwa_short_name,
   fa_kit_url: props.values.fa_kit_url ?? '',
 });
+
+const uploadingLogo = ref(false);
+async function pickLogo(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  uploadingLogo.value = true;
+  try { const { url } = await uploadImage(file); form.logo = url; } catch { /* ignore */ } finally { uploadingLogo.value = false; }
+}
 
 function save() {
   form.post('/admin/settings', { preserveScroll: true });
@@ -37,6 +48,19 @@ function save() {
         <div>
           <label class="block text-sm font-medium text-slate-300">Tagline</label>
           <input v-model="form.tagline" type="text" class="mt-1.5 w-full rounded-lg border-white/10 bg-[#0f1120] text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-slate-300">Logo</label>
+          <p class="text-xs text-slate-500">Shown in the header. Leave empty to use the default Convoro mark.</p>
+          <div class="mt-2 flex items-center gap-3">
+            <div class="flex h-10 items-center rounded-lg bg-white/5 px-3">
+              <img v-if="form.logo" :src="form.logo" alt="logo" class="h-7" />
+              <span v-else class="text-xs text-slate-500">No logo</span>
+            </div>
+            <input type="file" accept="image/png,image/jpeg,image/webp" class="text-sm text-slate-300" @change="pickLogo" />
+            <span v-if="uploadingLogo" class="text-sm text-slate-400">Uploading…</span>
+            <button v-if="form.logo" type="button" class="text-sm text-slate-400 hover:text-red-400" @click="form.logo = ''">Remove</button>
+          </div>
         </div>
         <div>
           <label class="block text-sm font-medium text-slate-300">Default forum view</label>

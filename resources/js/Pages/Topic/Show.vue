@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
 import ReaderMode from '@/Components/forum/ReaderMode.vue';
+import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import Editor from '@/Components/Editor.vue';
 import { useAuthModal } from '@/lib/authModal';
 
@@ -104,6 +105,7 @@ function submitReply() {
 <template>
   <Head :title="topic.title" />
   <AppLayout>
+    <ReadingScrubber />
     <div class="mx-auto max-w-3xl">
       <Link href="/" class="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted hover:text-ink-2">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6" /></svg> Back to Community

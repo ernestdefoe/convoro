@@ -18,6 +18,7 @@ class Settings
     public const DEFAULTS = [
         'site.name' => 'Convoro',
         'site.tagline' => 'A modern community',
+        'site.logo' => '',                   // header logo image URL (empty = default mark)
         'forum.default_view' => 'feed',     // feed | grid
         'realtime.enabled' => false,         // off by default (shared-hosting baseline)
         'digests.enabled' => true,           // master switch for digest emails
@@ -70,6 +71,7 @@ class Settings
         return [
             'name' => self::get('site.name'),
             'tagline' => self::get('site.tagline'),
+            'logo' => self::get('site.logo'),
             'defaultView' => self::get('forum.default_view'),
             'realtime' => (bool) self::get('realtime.enabled'),
             'pwaBanner' => (bool) self::get('pwa.banner'),
