@@ -10,7 +10,7 @@ const loading = ref(false);
 
 function buy() {
   loading.value = true;
-  router.post(`/store/${props.product.slug}/checkout`, {}, { onFinish: () => (loading.value = false) });
+  router.post(`/extensions/${props.product.slug}/checkout`, {}, { onFinish: () => (loading.value = false) });
 }
 </script>
 
@@ -18,7 +18,7 @@ function buy() {
   <Head :title="product.name" />
   <MarketingLayout>
     <section class="mx-auto max-w-4xl px-6 py-16">
-      <Link href="/store" class="text-sm font-semibold text-ink-muted hover:text-ink">← Back to store</Link>
+      <Link href="/extensions" class="text-sm font-semibold text-ink-muted hover:text-ink">← Back to extensions</Link>
       <div class="mt-6 grid gap-10 md:grid-cols-[1fr_320px]">
         <div>
           <div class="flex items-center gap-4">

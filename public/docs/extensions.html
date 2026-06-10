@@ -39,6 +39,15 @@
 
     <div class="doc-body">
       <h1>Building extensions</h1>
+
+      <div class="callout" style="border-left-color:#6366f1">
+        <strong>🤖 Build it with AI.</strong> Convoro is AI-native — point your AI assistant at
+        <a href="/llms.txt"><code>convoro.co/llms.txt</code></a> (or the JSON at
+        <a href="/api/ai/spec.json"><code>/api/ai/spec.json</code></a>) and it has everything it needs —
+        manifest schema, slots, theme tokens, the <code>window.Convoro</code> API, and the publish flow —
+        to scaffold a correct, installable extension or theme on the first try.
+      </div>
+
       <p id="overview">A Convoro extension is a self-contained folder. There is <strong>no build step, no Composer requirement, and no <code>dump-autoload</code></strong> — you zip the folder and upload it in <strong>Admin&nbsp;→&nbsp;Marketplace</strong>, or drop it in the <code>extensions/</code> directory. Convoro discovers it, autoloads its PHP, runs its migrations on enable, and injects its prebuilt frontend bundle.</p>
 
       <h2 id="layout">Package layout</h2>

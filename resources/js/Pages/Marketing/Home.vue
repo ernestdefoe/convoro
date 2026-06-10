@@ -72,14 +72,39 @@ const features = [
       </div>
     </section>
 
+    <!-- Built for the AI era -->
+    <section class="mx-auto max-w-6xl px-6 py-20">
+      <div class="overflow-hidden rounded-3xl border border-primary/20 bg-primary/[0.04] p-8 sm:p-12">
+        <div class="grid items-center gap-10 lg:grid-cols-2">
+          <div>
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">🤖 AI-native</span>
+            <h2 class="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">Built for the AI era — and proud of it</h2>
+            <p class="mt-3 text-lg text-ink-2">Convoro doesn't just tolerate AI — it embraces it. Build themes and extensions <em>with</em> your favorite AI assistant. We publish a machine-readable build spec, so models like Claude can scaffold a correct, installable Convoro extension or theme on the first try.</p>
+            <div class="mt-6 flex flex-wrap gap-3">
+              <a href="/docs/extensions.html" class="rounded-xl bg-primary px-5 py-3 font-bold text-white shadow-lg shadow-primary/25 hover:bg-primary-600">Build with AI →</a>
+              <a href="/llms.txt" class="rounded-xl border border-line bg-surface px-5 py-3 font-bold text-ink-2 hover:bg-surface-2">View the AI spec</a>
+            </div>
+          </div>
+          <div class="rounded-2xl border border-line bg-ink p-5 font-mono text-sm text-slate-200 shadow-xl">
+            <div class="mb-3 flex gap-1.5"><span class="h-3 w-3 rounded-full bg-red-400"></span><span class="h-3 w-3 rounded-full bg-amber-400"></span><span class="h-3 w-3 rounded-full bg-emerald-400"></span></div>
+            <p class="text-emerald-300">$ curl convoro.co/llms.txt</p>
+            <p class="mt-1 text-slate-400"># Everything an AI needs to build a</p>
+            <p class="text-slate-400"># Convoro theme or extension —</p>
+            <p class="text-slate-400"># manifest, slots, tokens, publish flow.</p>
+            <p class="mt-2 text-slate-200">→ paste it to your model. Ship.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Featured products -->
     <section v-if="featured.length" class="mx-auto max-w-6xl px-6 py-20">
       <div class="mb-10 flex items-end justify-between">
-        <div><h2 class="text-3xl font-extrabold tracking-tight">Premium add-ons</h2><p class="mt-2 text-ink-2">Extend further with first-party extensions and themes.</p></div>
-        <Link href="/store" class="hidden font-bold text-primary hover:text-primary-600 sm:block">Browse the store →</Link>
+        <div><h2 class="text-3xl font-extrabold tracking-tight">Extensions &amp; themes</h2><p class="mt-2 text-ink-2">Extend further with first-party and community add-ons.</p></div>
+        <Link href="/extensions" class="hidden font-bold text-primary hover:text-primary-600 sm:block">Browse extensions →</Link>
       </div>
       <div class="grid gap-5 sm:grid-cols-3">
-        <Link v-for="p in featured" :key="p.slug" :href="`/store/${p.slug}`" class="group rounded-2xl border border-line bg-surface p-6 transition hover:shadow-lg">
+        <Link v-for="p in featured" :key="p.slug" :href="`/extensions/${p.slug}`" class="group rounded-2xl border border-line bg-surface p-6 transition hover:shadow-lg">
           <div class="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-2xl">{{ p.type === 'theme' ? '🎨' : '🧩' }}</div>
           <h3 class="mt-4 font-bold group-hover:text-primary">{{ p.name }}</h3>
           <p class="mt-1 line-clamp-2 text-sm text-ink-2">{{ p.tagline }}</p>

@@ -285,7 +285,7 @@ function saveSettings() {
               class="w-full rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">
               {{ installingSlug === item.slug ? 'Installing…' : 'Download &amp; install' }}
             </button>
-            <a v-else :href="`https://convoro.co/store/${item.slug}`" target="_blank" rel="noopener"
+            <a v-else :href="`https://convoro.co/extensions/${item.slug}`" target="_blank" rel="noopener"
               class="block rounded-lg border border-white/10 px-3 py-2 text-center text-sm font-semibold text-amber-300 hover:bg-white/5">
               Buy on convoro.co — then redeem your key above
             </a>

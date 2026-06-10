@@ -13,7 +13,7 @@ defineProps<{ licenses: any[] }>();
       <p class="mt-2 text-ink-2">Your purchased extensions and themes. Use a key in any Convoro site’s Marketplace to install it.</p>
 
       <div v-if="!licenses.length" class="mt-8 rounded-2xl border border-dashed border-line p-16 text-center text-ink-muted">
-        No licenses yet. <Link href="/store" class="font-semibold text-primary">Browse the store →</Link>
+        No licenses yet. <Link href="/extensions" class="font-semibold text-primary">Browse extensions →</Link>
       </div>
 
       <div v-else class="mt-8 space-y-3">

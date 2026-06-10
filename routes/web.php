@@ -14,14 +14,18 @@ use Inertia\Inertia;
 // on every other host. Shared login works via SESSION_DOMAIN=.convoro.co.
 Route::domain(config('convoro.marketing_domain'))->group(function () {
     Route::get('/', [App\Http\Controllers\MarketingController::class, 'home'])->name('marketing.home');
-    Route::get('/store', [App\Http\Controllers\StoreController::class, 'index'])->name('store.index');
-    Route::get('/store/success', [App\Http\Controllers\StoreController::class, 'success'])->name('store.success');
-    Route::get('/store/{product}', [App\Http\Controllers\StoreController::class, 'show'])->name('store.show');
-    Route::post('/store/{product}/checkout', [App\Http\Controllers\StoreController::class, 'checkout'])->name('store.checkout');
+    // Public extension directory (premium is purchased on the detail page).
+    Route::get('/extensions', [App\Http\Controllers\StoreController::class, 'index'])->name('store.index');
+    Route::get('/extensions/purchased', [App\Http\Controllers\StoreController::class, 'success'])->name('store.success');
+    Route::get('/extensions/{product}', [App\Http\Controllers\StoreController::class, 'show'])->name('store.show');
+    Route::post('/extensions/{product}/checkout', [App\Http\Controllers\StoreController::class, 'checkout'])->name('store.checkout');
 });
 
 // Stripe webhook + license API (any host; CSRF-excepted in bootstrap/app.php).
 Route::post('/store/webhook', [App\Http\Controllers\StoreController::class, 'webhook'])->name('store.webhook');
+// AI builder spec — machine-readable so AI models can scaffold themes/extensions.
+Route::get('/api/ai/spec.json', [App\Http\Controllers\AiSpecController::class, 'json'])->name('ai.spec');
+Route::get('/llms.txt', [App\Http\Controllers\AiSpecController::class, 'llms'])->name('ai.llms');
 Route::get('/api/catalog', [App\Http\Controllers\StoreController::class, 'catalog'])->name('catalog');
 Route::get('/api/catalog/download/{product}', [App\Http\Controllers\StoreController::class, 'freeDownload'])->name('catalog.download');
 Route::post('/api/licenses/validate', [App\Http\Controllers\LicenseController::class, 'validateKey'])->name('licenses.validate');

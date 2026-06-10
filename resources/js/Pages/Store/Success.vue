@@ -23,7 +23,7 @@ defineProps<{ license: { key: string; product: string } | null }>();
 
       <div class="mt-8 flex justify-center gap-3">
         <Link href="/account/licenses" class="rounded-xl bg-primary px-5 py-3 font-bold text-white hover:bg-primary-600">View my licenses</Link>
-        <Link href="/store" class="rounded-xl border border-line px-5 py-3 font-bold text-ink-2 hover:bg-surface-2">Back to store</Link>
+        <Link href="/extensions" class="rounded-xl border border-line px-5 py-3 font-bold text-ink-2 hover:bg-surface-2">Back to extensions</Link>
       </div>
     </section>
   </MarketingLayout>

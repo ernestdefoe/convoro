@@ -16,7 +16,7 @@ const forumUrl = 'https://community.convoro.co';
         <Link href="/" class="flex items-center"><ConvoroLogo :size="32" /></Link>
         <nav class="ml-2 hidden items-center gap-1 md:flex">
           <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Home</Link>
-          <Link href="/store" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Store</Link>
+          <Link href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Extensions</Link>
           <a href="/docs/install.html" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Docs</a>
           <a :href="forumUrl" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Community</a>
         </nav>
@@ -40,7 +40,7 @@ const forumUrl = 'https://community.convoro.co';
       <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-6 text-sm text-ink-muted">
         <Link href="/" class="flex items-center"><ConvoroLogo :size="24" /></Link>
         <div class="ml-auto flex items-center gap-5">
-          <Link href="/store" class="font-semibold text-ink-2 hover:text-ink">Store</Link>
+          <Link href="/extensions" class="font-semibold text-ink-2 hover:text-ink">Extensions</Link>
           <a href="/docs/install.html" class="font-semibold text-ink-2 hover:text-ink">Docs</a>
           <a :href="forumUrl" class="font-semibold text-ink-2 hover:text-ink">Community</a>
           <span>© {{ new Date().getFullYear() }} Convoro</span>
