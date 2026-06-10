@@ -1,13 +1,30 @@
 <script setup lang="ts">
-import { onBeforeUnmount } from 'vue';
+import { onBeforeUnmount, ref } from 'vue';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
+import { uploadImage, isImageFile } from '@/lib/upload';
 
 const props = withDefaults(defineProps<{ placeholder?: string }>(), { placeholder: 'Write a reply…' });
+
+const uploading = ref(false);
+const fileInput = ref<HTMLInputElement | null>(null);
+
+async function doUpload(file: File) {
+  if (!isImageFile(file)) return;
+  uploading.value = true;
+  try {
+    const { url } = await uploadImage(file);
+    editor.value?.chain().focus().setImage({ src: url }).run();
+  } catch (e) {
+    window.alert('Image upload failed.');
+  } finally {
+    uploading.value = false;
+  }
+}
 
 const editor = useEditor({
   extensions: [
@@ -18,7 +35,22 @@ const editor = useEditor({
     Placeholder.configure({ placeholder: props.placeholder }),
   ],
   content: '',
-  editorProps: { attributes: { class: 'prose-q focus:outline-none' } },
+  editorProps: {
+    attributes: { class: 'prose-q focus:outline-none' },
+    handlePaste: (_view, event) => {
+      const files = Array.from(event.clipboardData?.files ?? []).filter(isImageFile);
+      if (!files.length) return false;
+      files.forEach(doUpload);
+      return true;
+    },
+    handleDrop: (_view, event) => {
+      const files = Array.from((event as DragEvent).dataTransfer?.files ?? []).filter(isImageFile);
+      if (!files.length) return false;
+      event.preventDefault();
+      files.forEach(doUpload);
+      return true;
+    },
+  },
 });
 
 onBeforeUnmount(() => editor.value?.destroy());
@@ -37,10 +69,18 @@ function setLink() {
   if (url === '') editor.value?.chain().focus().unsetLink().run();
   else editor.value?.chain().focus().toggleLink({ href: url }).run();
 }
+function pickImage() {
+  fileInput.value?.click();
+}
+function onFile(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (file) doUpload(file);
+  (e.target as HTMLInputElement).value = '';
+}
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-q border border-line bg-surface">
+  <div class="relative overflow-hidden rounded-q border border-line bg-surface">
     <div v-if="editor" class="flex flex-wrap items-center gap-0.5 border-b border-line bg-surface-2 px-2.5 py-2">
       <button type="button" class="tb" :class="{ on: isActive('bold') }" title="Bold" @click="editor.chain().focus().toggleBold().run()"><b>B</b></button>
       <button type="button" class="tb italic" :class="{ on: isActive('italic') }" title="Italic" @click="editor.chain().focus().toggleItalic().run()">I</button>
@@ -54,11 +94,18 @@ function setLink() {
       <button type="button" class="tb" :class="{ on: isActive('orderedList') }" title="Numbered list" @click="editor.chain().focus().toggleOrderedList().run()">1.</button>
       <span class="mx-1.5 h-5 w-px bg-line"></span>
       <button type="button" class="tb" :class="{ on: isActive('link') }" title="Link" @click="setLink">🔗</button>
+      <button type="button" class="tb" title="Image" @click="pickImage">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-5-5L5 21" /></svg>
+      </button>
       <span class="mx-1.5 h-5 w-px bg-line"></span>
       <button type="button" class="tb" title="Undo" @click="editor.chain().focus().undo().run()">↶</button>
       <button type="button" class="tb" title="Redo" @click="editor.chain().focus().redo().run()">↷</button>
+      <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFile" />
     </div>
     <EditorContent :editor="editor" class="min-h-[110px] px-4 py-3 text-ink" />
+    <div v-if="uploading" class="pointer-events-none absolute bottom-2 left-3 inline-flex items-center gap-2 rounded-full bg-ink/80 px-3 py-1 text-xs font-semibold text-white">
+      <span class="h-2 w-2 animate-pulse rounded-full bg-white"></span> Uploading &amp; converting to WebP…
+    </div>
   </div>
 </template>
 
@@ -74,6 +121,7 @@ function setLink() {
 :deep(.prose-q ul) { list-style: disc; padding-left: 22px; }
 :deep(.prose-q ol) { list-style: decimal; padding-left: 22px; }
 :deep(.prose-q h2) { font-size: 1.3em; font-weight: 700; margin: 4px 0 8px; }
-:deep(.prose-q pre) { background: rgb(var(--q-surface-2)); padding: 10px 12px; border-radius: 8px; font-family: monospace; font-size: 13px; overflow:auto; }
+:deep(.prose-q pre) { background: rgb(var(--q-surface-2)); padding: 10px 12px; border-radius: 8px; font-family: monospace; font-size: 13px; overflow: auto; }
 :deep(.prose-q a) { color: rgb(var(--q-primary)); text-decoration: underline; }
+:deep(.prose-q img) { max-width: 100%; height: auto; border-radius: 10px; border: 1px solid rgb(var(--q-border)); margin: 4px 0; }
 </style>

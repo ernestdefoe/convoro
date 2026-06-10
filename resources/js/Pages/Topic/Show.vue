@@ -96,7 +96,7 @@ function submitReply() {
         <div class="mb-2.5 text-sm font-bold">Reply</div>
         <Editor ref="editor" placeholder="Share your thoughts… (rich text — no markdown needed)" />
         <div class="mt-3 flex items-center">
-          <span class="text-xs text-ink-muted">Rich text · images auto-convert to WebP (coming in P2)</span>
+          <span class="text-xs text-ink-muted">Rich text · drag, drop or paste images — auto-converted to WebP</span>
           <button @click="submitReply" :disabled="posting"
             class="ml-auto rounded-q bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600 disabled:opacity-60">
             {{ posting ? 'Posting…' : 'Post reply' }}

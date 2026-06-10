@@ -24,6 +24,7 @@ Route::get('/dashboard', function () {
 Route::middleware('auth')->group(function () {
     Route::post('/t/{topic}/posts', [PostController::class, 'store'])->name('posts.store');
     Route::post('/posts/{post}/react', [ReactionController::class, 'toggle'])->name('posts.react');
+    Route::post('/uploads/image', [App\Http\Controllers\UploadController::class, 'image'])->name('uploads.image');
 });
 
 Route::middleware('auth')->group(function () {
