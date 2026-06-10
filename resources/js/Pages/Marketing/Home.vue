@@ -39,7 +39,7 @@ const features = [
       </div>
       <div class="mx-auto max-w-5xl px-6 pb-8">
         <div class="overflow-hidden rounded-2xl border border-slate-200 shadow-2xl shadow-slate-900/10">
-          <img src="/site-assets/hero.svg" alt="Convoro interface" class="w-full" loading="lazy" />
+          <img src="/site-assets/hero.png" alt="The Convoro community interface" class="w-full" loading="lazy" />
         </div>
       </div>
     </section>
