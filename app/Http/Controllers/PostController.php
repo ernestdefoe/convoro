@@ -54,11 +54,29 @@ class PostController extends Controller
         $own = (int) $post->user_id === (int) $user->id;
         abort_unless($own ? $user->hasPermission('post.edit_own') : $user->hasPermission('post.edit_any'), 403);
 
-        $data = $request->validate(['body_html' => ['required', 'string', 'max:120000']]);
+        $data = $request->validate([
+            'body_html' => ['required', 'string', 'max:120000'],
+            'title' => ['nullable', 'string', 'max:160'],
+            'cover' => ['nullable', 'string', 'max:2048'],
+        ]);
         $html = Content::clean($data['body_html']);
         abort_if(trim(strip_tags($html)) === '', 422, 'Empty post.');
 
         $post->update(['body_html' => $html, 'edited_at' => now()]);
+
+        // The opening post owns the topic's title + cover image.
+        if ($post->is_first) {
+            $topicChanges = [];
+            if ($request->filled('title')) {
+                $topicChanges['title'] = trim($data['title']);
+            }
+            if ($request->has('cover')) {
+                $topicChanges['cover_image'] = $data['cover'] ?: null;
+            }
+            if ($topicChanges) {
+                $post->topic->update($topicChanges);
+            }
+        }
 
         return back();
     }

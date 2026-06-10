@@ -41,7 +41,10 @@ class HandleInertiaRequests extends Middleware
             'notifications' => fn () => $this->notifications($request),
             'dmUnread' => fn () => $this->dmUnread($request),
             'pushKey' => config('webpush.vapid.public_key'),
-            'flash' => ['status' => fn () => $request->session()->get('status')],
+            'flash' => [
+                'status' => fn () => $request->session()->get('status'),
+                'mailTest' => fn () => $request->session()->get('mailTest'),
+            ],
             'updateBanner' => fn () => $request->user()?->is_admin ? [
                 'available' => (bool) Settings::get('update.available', false),
                 'latest' => Settings::get('update.latest'),

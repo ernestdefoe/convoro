@@ -25,6 +25,17 @@ class Settings
         'pwa.banner' => true,                // show the "install app" banner
         'pwa.short_name' => 'Convoro',       // PWA short name
         'fa.kit_url' => '',                  // optional Font Awesome Kit script URL (Pro/custom icons)
+        // Outgoing mail. transport: 'sendmail' (server/PHP mail — works on most shared hosts,
+        // no config) or 'smtp'. When unset, falls back to the .env mailer.
+        'mail.configured' => false,          // once true, these override .env
+        'mail.transport' => 'sendmail',      // sendmail | smtp
+        'mail.from_address' => '',           // e.g. community@example.com
+        'mail.from_name' => '',              // defaults to site name when blank
+        'mail.smtp_host' => '',
+        'mail.smtp_port' => 587,
+        'mail.smtp_username' => '',
+        'mail.smtp_password' => '',
+        'mail.smtp_encryption' => 'tls',     // tls | ssl | none
         'theme.primary' => '#5b5bd6',
         'theme.radius' => 12,
         'theme.mode' => 'light',             // light | dark

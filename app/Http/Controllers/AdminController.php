@@ -427,6 +427,78 @@ class AdminController extends Controller
         return back();
     }
 
+    public function email(): Response
+    {
+        return Inertia::render('Admin/Email', [
+            'values' => [
+                'configured' => (bool) Settings::get('mail.configured'),
+                'transport' => Settings::get('mail.transport'),
+                'from_address' => Settings::get('mail.from_address'),
+                'from_name' => Settings::get('mail.from_name'),
+                'smtp_host' => Settings::get('mail.smtp_host'),
+                'smtp_port' => (int) Settings::get('mail.smtp_port'),
+                'smtp_username' => Settings::get('mail.smtp_username'),
+                // Never echo the stored password back; show only whether one is set.
+                'smtp_password_set' => trim((string) Settings::get('mail.smtp_password')) !== '',
+                'smtp_encryption' => Settings::get('mail.smtp_encryption'),
+            ],
+        ]);
+    }
+
+    public function updateEmail(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'transport' => ['required', 'in:sendmail,smtp'],
+            'from_address' => ['nullable', 'email', 'max:160'],
+            'from_name' => ['nullable', 'string', 'max:120'],
+            'smtp_host' => ['nullable', 'string', 'max:160'],
+            'smtp_port' => ['nullable', 'integer', 'min:1', 'max:65535'],
+            'smtp_username' => ['nullable', 'string', 'max:160'],
+            'smtp_password' => ['nullable', 'string', 'max:300'],
+            'smtp_encryption' => ['required', 'in:tls,ssl,none'],
+        ]);
+
+        $values = [
+            'mail.configured' => true,
+            'mail.transport' => $data['transport'],
+            'mail.from_address' => $data['from_address'] ?? '',
+            'mail.from_name' => $data['from_name'] ?? '',
+            'mail.smtp_host' => $data['smtp_host'] ?? '',
+            'mail.smtp_port' => $data['smtp_port'] ?? 587,
+            'mail.smtp_username' => $data['smtp_username'] ?? '',
+            'mail.smtp_encryption' => $data['smtp_encryption'],
+        ];
+        // Only overwrite the password when a new one was typed (blank = keep existing).
+        if ($request->filled('smtp_password')) {
+            $values['mail.smtp_password'] = $data['smtp_password'];
+        }
+
+        Settings::setMany($values);
+
+        return back();
+    }
+
+    public function sendTestEmail(Request $request): RedirectResponse
+    {
+        $to = $request->validate(['email' => ['required', 'email']])['email'];
+
+        // Re-apply settings to this request before sending.
+        \App\Support\MailConfig::apply();
+
+        try {
+            \Illuminate\Support\Facades\Mail::raw(
+                "This is a test email from your Convoro community. If you received it, outgoing mail is working.",
+                function ($m) use ($to) {
+                    $m->to($to)->subject('Convoro test email');
+                }
+            );
+
+            return back()->with('mailTest', ['ok' => true, 'message' => "Test email sent to {$to}."]);
+        } catch (\Throwable $e) {
+            return back()->with('mailTest', ['ok' => false, 'message' => $e->getMessage()]);
+        }
+    }
+
     public function theme(): Response
     {
         return Inertia::render('Admin/Theme', [

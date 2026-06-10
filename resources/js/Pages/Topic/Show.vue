@@ -7,6 +7,7 @@ import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
 import ReaderMode from '@/Components/forum/ReaderMode.vue';
 import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import Editor from '@/Components/Editor.vue';
+import { uploadImage } from '@/lib/upload';
 import { useAuthModal } from '@/lib/authModal';
 
 const auth = useAuthModal();
@@ -24,10 +25,30 @@ const posting = ref(false);
 // edit / delete posts
 const editing = ref<any>(null);
 const editEditor = ref<any>(null);
-function openEdit(post: any) { editing.value = post; }
+const editTitle = ref('');
+const editCover = ref<string | null>(null);
+const uploadingCover = ref(false);
+function openEdit(post: any) {
+  editing.value = post;
+  if (post.isFirst) {
+    editTitle.value = props.topic.title;
+    editCover.value = props.topic.cover ?? null;
+  }
+}
+async function pickCover(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  uploadingCover.value = true;
+  try { const { url } = await uploadImage(file); editCover.value = url; } catch { /* ignore */ } finally { uploadingCover.value = false; }
+}
 function saveEdit() {
   if (!editEditor.value || editEditor.value.isEmpty()) return;
-  router.put(`/posts/${editing.value.id}`, { body_html: editEditor.value.getHTML() }, { preserveScroll: true, onSuccess: () => (editing.value = null) });
+  const payload: Record<string, any> = { body_html: editEditor.value.getHTML() };
+  if (editing.value.isFirst) {
+    payload.title = editTitle.value;
+    payload.cover = editCover.value ?? '';
+  }
+  router.put(`/posts/${editing.value.id}`, payload, { preserveScroll: true, onSuccess: () => (editing.value = null) });
 }
 function removePost(post: any) {
   if (confirm(post.isFirst ? 'Delete this entire topic and all its replies?' : 'Delete this post?')) {
@@ -219,7 +240,25 @@ function submitReply() {
     <div v-if="editing" class="fixed inset-0 z-[80] flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-black/50" @click="editing = null"></div>
       <div class="relative max-h-[88vh] w-full max-w-2xl overflow-y-auto rounded-c border border-line bg-surface p-5 shadow-2xl">
-        <div class="mb-2.5 text-sm font-bold text-ink">Edit post</div>
+        <div class="mb-2.5 text-sm font-bold text-ink">{{ editing.isFirst ? 'Edit topic' : 'Edit post' }}</div>
+
+        <template v-if="editing.isFirst">
+          <label class="block text-xs font-semibold uppercase tracking-wide text-ink-muted">Title</label>
+          <input v-model="editTitle" type="text" maxlength="160"
+            class="mb-3 mt-1 w-full rounded-c border-line bg-surface-2 text-ink focus:border-primary focus:ring-primary" />
+
+          <label class="block text-xs font-semibold uppercase tracking-wide text-ink-muted">Cover image</label>
+          <div class="mb-3 mt-1.5 flex items-center gap-3">
+            <div class="grid h-16 w-28 shrink-0 place-items-center overflow-hidden rounded-lg border border-line bg-surface-2">
+              <img v-if="editCover" :src="editCover" alt="cover" class="h-full w-full object-cover" />
+              <span v-else class="text-[11px] text-ink-muted">No cover</span>
+            </div>
+            <input type="file" accept="image/png,image/jpeg,image/webp" class="text-sm text-ink-2" @change="pickCover" />
+            <span v-if="uploadingCover" class="text-sm text-ink-muted">Uploading…</span>
+            <button v-if="editCover" type="button" class="text-sm text-ink-muted hover:text-red-500" @click="editCover = null">Remove</button>
+          </div>
+        </template>
+
         <Editor ref="editEditor" :content="editing.html" />
         <div class="mt-3 flex items-center gap-2">
           <button @click="saveEdit" class="rounded-c bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600">Save</button>
