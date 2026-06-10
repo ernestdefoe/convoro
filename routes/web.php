@@ -1,22 +1,30 @@
 <?php
 
+use App\Http\Controllers\ForumController;
+use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\ReactionController;
+use App\Http\Controllers\TopicController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+// Community (forum)
+Route::get('/', [ForumController::class, 'index'])->name('forum.index');
+Route::get('/t/{topic}', [TopicController::class, 'show'])->name('topics.show');
+
+Route::get('/welcome', fn () => Inertia::render('Welcome', [
+    'canLogin' => Route::has('login'),
+    'canRegister' => Route::has('register'),
+]))->name('welcome');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::post('/t/{topic}/posts', [PostController::class, 'store'])->name('posts.store');
+    Route::post('/posts/{post}/react', [ReactionController::class, 'toggle'])->name('posts.react');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
