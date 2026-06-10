@@ -3,6 +3,10 @@ import forms from '@tailwindcss/forms';
 
 /** @type {import('tailwindcss').Config} */
 export default {
+    // `dark:` variants follow Convoro's theme (data-theme="dark"), NOT the OS,
+    // so light-theme inputs stay light even when the OS is in dark mode.
+    darkMode: ['selector', '[data-theme="dark"]'],
+
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
