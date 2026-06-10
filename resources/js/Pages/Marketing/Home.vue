@@ -24,7 +24,7 @@ const features = [
     <section class="relative overflow-hidden">
       <div class="pointer-events-none absolute inset-x-0 -top-40 h-[420px] bg-gradient-to-b from-primary/10 to-transparent"></div>
       <div class="relative mx-auto max-w-4xl px-6 pt-24 pb-16 text-center">
-        <span class="inline-block rounded-full bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary">The community platform you actually own</span>
+        <span class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-4 py-1.5 text-sm font-bold text-primary">✨ Where AI meets community innovation</span>
         <h1 class="mt-6 text-5xl font-black leading-[1.05] tracking-tight sm:text-6xl">
           Build a community that feels
           <span class="bg-gradient-to-r from-indigo-500 to-fuchsia-500 bg-clip-text text-transparent">premium</span>.
