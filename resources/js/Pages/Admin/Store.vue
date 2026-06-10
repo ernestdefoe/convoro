@@ -135,7 +135,8 @@ function uploadFile(p: any, e: Event) {
     <section class="rounded-2xl border border-white/5 bg-[#14172a] p-6">
       <div class="mb-4 flex items-center">
         <h2 class="text-sm font-bold uppercase tracking-wide text-slate-400">Products</h2>
-        <button @click="openNew" class="ml-auto rounded-lg bg-indigo-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-600">+ New product</button>
+        <button @click="router.post('/admin/store/covers', {}, { preserveScroll: true })" class="ml-auto rounded-lg border border-white/10 px-3 py-1.5 text-sm font-semibold text-slate-300 hover:bg-white/5">Generate covers</button>
+        <button @click="openNew" class="ml-3 rounded-lg bg-indigo-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-600">+ New product</button>
       </div>
 
       <div v-if="!products.length" class="rounded-xl border border-dashed border-white/10 p-8 text-center text-sm text-slate-400">No products yet.</div>

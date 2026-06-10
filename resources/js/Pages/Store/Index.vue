@@ -41,18 +41,21 @@ const loggedIn = computed(() => !!(usePage().props as any).auth?.user);
 
       <div v-else class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <Link v-for="p in products" :key="p.slug" :href="`/extensions/${p.slug}`"
-          class="group flex flex-col rounded-2xl border border-line bg-surface p-6 transition hover:-translate-y-0.5 hover:shadow-lg">
-          <div class="flex items-start gap-3">
-            <div class="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-2xl">{{ p.type === 'theme' ? '🎨' : '🧩' }}</div>
-            <div class="min-w-0">
-              <h3 class="truncate font-bold group-hover:text-primary">{{ p.name }}</h3>
-              <span class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ p.type }}</span>
+          class="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition hover:-translate-y-0.5 hover:shadow-lg">
+          <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" class="aspect-[2/1] w-full object-cover" />
+          <div class="flex flex-1 flex-col p-6">
+            <div class="flex items-start gap-3">
+              <div v-if="!p.image" class="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-2xl">{{ p.type === 'theme' ? '🎨' : '🧩' }}</div>
+              <div class="min-w-0">
+                <h3 class="truncate font-bold group-hover:text-primary">{{ p.name }}</h3>
+                <span class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ p.type }}</span>
+              </div>
             </div>
-          </div>
-          <p class="mt-3 line-clamp-2 flex-1 text-sm text-ink-2">{{ p.description }}</p>
-          <div class="mt-4 flex items-center justify-between border-t border-line pt-4">
-            <span class="font-extrabold" :class="p.free ? 'text-ink-muted' : 'text-primary'">{{ p.price }}</span>
-            <span class="text-sm font-semibold text-primary group-hover:underline">View →</span>
+            <p class="mt-3 line-clamp-2 flex-1 text-sm text-ink-2">{{ p.description }}</p>
+            <div class="mt-4 flex items-center justify-between border-t border-line pt-4">
+              <span class="font-extrabold" :class="p.free ? 'text-ink-muted' : 'text-primary'">{{ p.price }}</span>
+              <span class="text-sm font-semibold text-primary group-hover:underline">View →</span>
+            </div>
           </div>
         </Link>
       </div>

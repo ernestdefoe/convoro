@@ -92,7 +92,7 @@ class GitHubRegistry
         $m = $r['manifest'];
         $repo = self::normalizeRepo($input);
 
-        return \App\Models\Product::updateOrCreate(
+        $product = \App\Models\Product::updateOrCreate(
             ['package' => $m['id']],
             [
                 'slug' => Str::slug($m['id']),
@@ -109,5 +109,13 @@ class GitHubRegistry
                 'published' => true,
             ],
         );
+
+        // Auto-generate a branded cover from the repo metadata (best-effort).
+        try {
+            CoverImage::generate($product);
+        } catch (\Throwable) {
+        }
+
+        return $product;
     }
 }

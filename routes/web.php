@@ -156,6 +156,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/store/stripe/callback', [App\Http\Controllers\AdminController::class, 'stripeCallback'])->name('store.stripe.callback');
     Route::post('/store/stripe/disconnect', [App\Http\Controllers\AdminController::class, 'disconnectStripe'])->name('store.stripe.disconnect');
     Route::post('/store/link', [App\Http\Controllers\AdminController::class, 'linkRepo'])->name('store.link');
+    Route::post('/store/covers', [App\Http\Controllers\AdminController::class, 'generateCovers'])->name('store.covers');
     Route::post('/store/products/{product:id}/refresh', [App\Http\Controllers\AdminController::class, 'refreshRepo'])->name('products.refresh');
     Route::post('/store/products', [App\Http\Controllers\AdminController::class, 'storeProduct'])->name('products.store');
     Route::put('/store/products/{product:id}', [App\Http\Controllers\AdminController::class, 'updateProduct'])->name('products.update');

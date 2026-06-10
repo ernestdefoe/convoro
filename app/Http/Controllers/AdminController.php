@@ -337,6 +337,21 @@ class AdminController extends Controller
     }
 
     /** Link (or refresh) a product from a GitHub repository (the registry). */
+    /** (Re)generate branded cover images for every catalog product. */
+    public function generateCovers(): RedirectResponse
+    {
+        $n = 0;
+        foreach (\App\Models\Product::all() as $product) {
+            try {
+                \App\Support\CoverImage::generate($product);
+                $n++;
+            } catch (\Throwable) {
+            }
+        }
+
+        return back()->with('status', "Generated {$n} cover images.");
+    }
+
     public function linkRepo(Request $request): RedirectResponse
     {
         $repo = $request->validate(['repo' => ['required', 'string', 'max:160']])['repo'];
