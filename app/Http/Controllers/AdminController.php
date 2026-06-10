@@ -124,6 +124,13 @@ class AdminController extends Controller
         return back();
     }
 
+    public function applyUpdate(): RedirectResponse
+    {
+        $result = \App\Support\Updater::apply();
+
+        return back()->with('status', $result['message']);
+    }
+
     public function marketplace(): Response
     {
         return Inertia::render('Admin/Marketplace', [

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 defineProps<{
@@ -24,6 +24,12 @@ function run(action: string) {
 }
 function checkUpdates() {
   router.post('/admin/system/check-updates', {}, { preserveScroll: true });
+}
+const updating = ref(false);
+function applyUpdate() {
+  if (!confirm('Download and install the latest version now? The site will update its files and run migrations.')) return;
+  updating.value = true;
+  router.post('/admin/system/update', {}, { preserveScroll: true, onFinish: () => (updating.value = false) });
 }
 </script>
 
@@ -49,8 +55,11 @@ function checkUpdates() {
         </div>
         <p v-if="!update.enabled" class="mt-2 text-xs text-slate-500">Set <code>CONVORO_UPDATE_URL</code> in .env to enable update checks.</p>
         <p v-if="update.checkedAt" class="mt-2 text-xs text-slate-500">Last checked {{ update.checkedAt }}</p>
-        <div class="mt-3 flex gap-2">
-          <button class="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="checkUpdates">Check for updates</button>
+        <div class="mt-3 flex flex-wrap gap-2">
+          <button class="rounded-lg bg-white/5 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/10" @click="checkUpdates">Check for updates</button>
+          <button v-if="update.available" :disabled="updating" class="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60" @click="applyUpdate">
+            {{ updating ? 'Updating…' : `Update to ${update.latest}` }}
+          </button>
           <a v-if="update.available && update.url" :href="update.url" target="_blank" class="rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-slate-200 hover:bg-white/5">Release notes</a>
         </div>
       </section>

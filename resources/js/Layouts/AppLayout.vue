@@ -4,6 +4,7 @@ import { computed } from 'vue';
 import ConvoroLogo from '@/Components/ConvoroLogo.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import NotificationBell from '@/Components/forum/NotificationBell.vue';
+import UserMenu from '@/Components/forum/UserMenu.vue';
 import PwaBanner from '@/Components/PwaBanner.vue';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
 import AuthModal from '@/Components/AuthModal.vue';
@@ -39,11 +40,8 @@ const initials = computed(() => {
           </div>
           <ThemeToggle />
           <template v-if="user">
-            <a v-if="isAdmin" href="/admin" target="_blank" rel="noopener" class="hidden rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2 sm:block">Admin</a>
             <NotificationBell />
-            <Link :href="`/u/${user.id}`" aria-label="Your profile">
-              <Avatar :avatar="{ initials, color: (user.id % 6) + 1, avatar: user.avatar_path }" :size="34" />
-            </Link>
+            <UserMenu />
           </template>
           <template v-else>
             <button type="button" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="auth.open('login')">Log in</button>

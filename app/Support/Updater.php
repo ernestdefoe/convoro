@@ -1,0 +1,145 @@
+<?php
+
+namespace App\Support;
+
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
+use ZipArchive;
+
+/**
+ * Applies a software update from a pre-built release archive (.zip) advertised by
+ * the update feed. Downloads → extracts → copies app files over (preserving .env,
+ * storage, uploads) → migrates → rebuilds caches. Works without Composer/Node on
+ * the server (the archive bundles vendor/ + built assets) — the shared-hosting path.
+ */
+class Updater
+{
+    /** Paths (relative to base) never overwritten by an update. */
+    private const PROTECTED = ['.env', 'storage', 'public/storage', 'public/releases', 'public/update-feed.json', 'bootstrap/cache'];
+
+    /**
+     * @return array{ok:bool, message:string, version?:string}
+     */
+    public static function apply(): array
+    {
+        @set_time_limit(0);
+
+        if (! class_exists(ZipArchive::class)) {
+            return ['ok' => false, 'message' => 'The PHP zip extension is required to apply updates.'];
+        }
+
+        $feedUrl = config('convoro.update_url');
+        if (! $feedUrl) {
+            return ['ok' => false, 'message' => 'No update feed configured (CONVORO_UPDATE_URL).'];
+        }
+
+        // 1. Read the feed for the download URL + version.
+        try {
+            $feed = Http::timeout(15)->acceptJson()->get($feedUrl)->throw()->json();
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'message' => 'Could not reach the update feed.'];
+        }
+        $download = $feed['download'] ?? null;
+        $version = (string) ($feed['version'] ?? '');
+        if (! $download) {
+            return ['ok' => false, 'message' => 'The update feed has no download URL.'];
+        }
+        if ($version !== '' && ! version_compare($version, (string) config('convoro.version'), '>')) {
+            return ['ok' => false, 'message' => 'Already up to date.'];
+        }
+
+        $work = storage_path('app/updates');
+        File::ensureDirectoryExists($work);
+        $zipPath = $work.'/release.zip';
+        $extract = $work.'/extract';
+        File::deleteDirectory($extract);
+        File::ensureDirectoryExists($extract);
+
+        // 2. Download the archive to disk (streamed).
+        try {
+            Http::timeout(300)->sink($zipPath)->get($download)->throw();
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'message' => 'Failed to download the update archive.'];
+        }
+
+        // 3. Extract.
+        $zip = new ZipArchive;
+        if ($zip->open($zipPath) !== true) {
+            return ['ok' => false, 'message' => 'The downloaded archive is not a valid zip.'];
+        }
+        $zip->extractTo($extract);
+        $zip->close();
+
+        // Some archives wrap everything in a single top-level folder.
+        $root = $extract;
+        $entries = array_values(array_diff(scandir($extract) ?: [], ['.', '..']));
+        if (count($entries) === 1 && is_dir($extract.'/'.$entries[0]) && ! file_exists($extract.'/artisan')) {
+            $root = $extract.'/'.$entries[0];
+        }
+        if (! file_exists($root.'/artisan')) {
+            return ['ok' => false, 'message' => 'Archive does not look like a Convoro release (no artisan).'];
+        }
+
+        // 4. Strip protected paths from the extracted copy so they are never overwritten.
+        foreach (self::PROTECTED as $p) {
+            File::exists($root.'/'.$p) && (is_dir($root.'/'.$p) ? File::deleteDirectory($root.'/'.$p) : File::delete($root.'/'.$p));
+        }
+
+        // 5. Copy the new files over the live install.
+        if (! self::copyOver($root, base_path())) {
+            return ['ok' => false, 'message' => 'Failed to copy the new files into place.'];
+        }
+
+        // 6. Post-update: migrate + rebuild caches + bust opcache.
+        File::deleteDirectory($work);
+        try {
+            Artisan::call('migrate', ['--force' => true]);
+            Artisan::call('optimize:clear');
+            Artisan::call('config:cache');
+            Artisan::call('route:cache');
+        } catch (\Throwable $e) {
+            // non-fatal; files are in place
+        }
+        if (function_exists('opcache_reset')) {
+            @opcache_reset();
+        }
+
+        Settings::setMany([
+            'update.available' => false,
+            'update.latest' => $version ?: config('convoro.version'),
+            'update.checked_at' => now()->toDateTimeString(),
+        ]);
+
+        return ['ok' => true, 'message' => 'Updated to '.($version ?: 'the latest version').'.', 'version' => $version];
+    }
+
+    /** Copy src contents into dest. Prefer fast native copy; fall back to pure PHP. */
+    private static function copyOver(string $src, string $dest): bool
+    {
+        if (function_exists('exec') && ! in_array('exec', array_map('trim', explode(',', (string) ini_get('disable_functions'))), true)) {
+            $out = [];
+            $code = 0;
+            exec('cp -a '.escapeshellarg($src).'/. '.escapeshellarg($dest).'/ 2>&1', $out, $code);
+            if ($code === 0) {
+                return true;
+            }
+        }
+
+        // Pure-PHP recursive copy (shared-hosting fallback, no shell).
+        $iter = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($src, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::SELF_FIRST
+        );
+        foreach ($iter as $item) {
+            $target = $dest.DIRECTORY_SEPARATOR.$iter->getSubPathname();
+            if ($item->isDir()) {
+                File::ensureDirectoryExists($target);
+            } else {
+                @copy($item->getPathname(), $target);
+            }
+        }
+
+        return true;
+    }
+}
