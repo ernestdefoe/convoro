@@ -9,6 +9,11 @@ use App\Http\Controllers\TopicController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// First-run web installer (gated by EnsureInstalled — 404s once installed).
+Route::get('/install', [App\Http\Controllers\InstallController::class, 'show'])->name('install');
+Route::post('/install/test-db', [App\Http\Controllers\InstallController::class, 'testDatabase'])->name('install.testdb');
+Route::post('/install', [App\Http\Controllers\InstallController::class, 'install'])->name('install.run');
+
 // PWA
 Route::get('/manifest.webmanifest', [App\Http\Controllers\PwaController::class, 'manifest'])->name('pwa.manifest');
 
