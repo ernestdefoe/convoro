@@ -50,19 +50,57 @@ class Theme
         $container = (int) Settings::get('theme.container', 1240);
         $fontSize = (int) Settings::get('theme.font_size', 16);
 
+        $accent = self::hexToRgb((string) Settings::get('theme.accent', '#8b5cf6'));
+
         $p600 = self::darken($primary, 0.90);
         $p700 = self::darken($primary, 0.80);
         $soft = self::mixWhite($primary, 0.86);
+
+        // Button radius: blank = follow card radius.
+        $btnRadiusRaw = trim((string) Settings::get('theme.button_radius', ''));
+        $btnRadius = $btnRadiusRaw === '' ? $radius : (int) $btnRadiusRaw;
+
+        // Heading font: blank = follow body font.
+        $headingFamily = trim((string) Settings::get('theme.heading_font', ''));
+        $headingStack = $headingFamily !== '' && isset(self::FONTS[$headingFamily])
+            ? self::fontStack($headingFamily) : 'var(--c-font)';
+
+        // Header background + appropriate text color.
+        $headerMode = (string) Settings::get('theme.header_bg', 'surface');
+        $headerBg = match ($headerMode) {
+            'brand' => 'rgb('.self::triplet($primary).')',
+            'custom' => 'rgb('.self::triplet(self::hexToRgb((string) Settings::get('theme.header_color', '#5b5bd6'))).')',
+            default => 'rgb(var(--c-surface))',
+        };
+        $headerOnBrand = in_array($headerMode, ['brand', 'custom'], true);
+
+        // Density → spacing scale.
+        $density = match ((string) Settings::get('theme.density', 'comfortable')) {
+            'compact' => '0.75',
+            'spacious' => '1.25',
+            default => '1',
+        };
+
+        // Link color follows primary or accent.
+        $linkVar = Settings::get('theme.link_color', 'primary') === 'accent' ? 'var(--c-accent)' : 'var(--c-primary)';
 
         $vars = [
             '--c-primary' => self::triplet($primary),
             '--c-primary-600' => self::triplet($p600),
             '--c-primary-700' => self::triplet($p700),
             '--c-primary-soft' => self::triplet($soft),
+            '--c-accent' => self::triplet($accent),
+            '--c-accent-600' => self::triplet(self::darken($accent, 0.90)),
             '--c-radius' => $radius.'px',
+            '--c-radius-btn' => $btnRadius.'px',
             '--c-container' => $container > 0 ? $container.'px' : '100%',
             '--c-font' => self::fontStack((string) Settings::get('theme.font', 'Inter')),
+            '--c-font-heading' => $headingStack,
             '--c-font-size' => max(12, min(20, $fontSize)).'px',
+            '--c-density' => $density,
+            '--c-header-bg' => $headerBg,
+            '--c-header-text' => $headerOnBrand ? '255 255 255' : 'var(--c-text)',
+            '--c-link' => $linkVar,
             '--c-avatar-radius' => match ((string) Settings::get('theme.avatar_shape', 'circle')) {
                 'square' => '6px',
                 'rounded' => '14px',
@@ -76,6 +114,29 @@ class Theme
         }
 
         return ":root{{$body}}";
+    }
+
+    /** Admin custom CSS, sanitised so it can't break out of the <style> block. */
+    public static function customCss(): string
+    {
+        $css = (string) Settings::get('theme.custom_css', '');
+
+        return trim(str_ireplace(['</style', '<script', '</script'], '', $css));
+    }
+
+    /** Google Fonts <link> href for the heading font if it differs and needs loading. */
+    public static function headingFontHref(): ?string
+    {
+        $family = trim((string) Settings::get('theme.heading_font', ''));
+        if ($family === '' || ! isset(self::FONTS[$family]) || $family === 'System' || $family === 'Inter') {
+            return null;
+        }
+        if ($family === (string) Settings::get('theme.font', 'Inter')) {
+            return null; // already loaded as the body font
+        }
+
+        return 'https://fonts.googleapis.com/css2?family='
+            .str_replace(' ', '+', $family).':wght@600;700;800&display=swap';
     }
 
     public static function fontStack(string $family): string

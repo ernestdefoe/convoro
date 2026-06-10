@@ -6,10 +6,11 @@ const page = usePage();
 const isAdmin = computed(() => !!(page.props as any).auth?.isAdmin);
 const fonts = computed(() => ((page.props as any).themeFonts ?? []) as { value: string; label: string }[]);
 const t = computed(() => (page.props as any).site?.theme ?? {});
+const site = computed(() => (page.props as any).site ?? {});
 
 const open = ref(false);
 const saving = ref(false);
-const tab = ref<'theme' | 'a11y'>('theme');
+const tab = ref<'theme' | 'widgets' | 'a11y'>('theme');
 
 // ── Accessibility audit (live, recomputed as colors change) ──────────────
 type Pair = { label: string; fg: string; bg: string; min: number };
@@ -70,27 +71,49 @@ const a11yStatusStyle = (s: string) =>
   s === 'pass' ? 'bg-emerald-500/20 text-emerald-400' : s === 'partial' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-slate-400';
 const a11yStatusLabel = (s: string) => (s === 'pass' ? 'Pass' : s === 'partial' ? 'Partial' : 'To do');
 
+// ── Theme form ────────────────────────────────────────────────────────────
 const form = reactive({
   primary: '#5b5bd6',
+  accent: '#8b5cf6',
   radius: 12,
+  button_radius: '' as number | '',
   mode: 'light' as 'light' | 'dark',
   font: 'Inter',
+  heading_font: '',
   font_size: 16,
   container: 1240,
   avatar_shape: 'circle' as 'circle' | 'rounded' | 'square',
   post_style: 'card' as 'card' | 'bordered' | 'flat',
+  header_bg: 'surface' as 'surface' | 'brand' | 'custom',
+  header_color: '#5b5bd6',
+  density: 'comfortable' as 'compact' | 'comfortable' | 'spacious',
+  link_color: 'primary' as 'primary' | 'accent',
+  custom_css: '',
+  logo: '',
+  favicon: '',
 });
 
 function load() {
   const v = t.value;
   form.primary = v.primary ?? '#5b5bd6';
+  form.accent = v.accent ?? '#8b5cf6';
   form.radius = v.radius ?? 12;
+  form.button_radius = (v.buttonRadius ?? '') === '' ? '' : Number(v.buttonRadius);
   form.mode = v.mode ?? 'light';
   form.font = v.font ?? 'Inter';
+  form.heading_font = v.headingFont ?? '';
   form.font_size = v.fontSize ?? 16;
   form.container = v.container ?? 1240;
   form.avatar_shape = v.avatarShape ?? 'circle';
   form.post_style = v.postStyle ?? 'card';
+  form.header_bg = v.headerBg ?? 'surface';
+  form.header_color = v.headerColor ?? '#5b5bd6';
+  form.density = v.density ?? 'comfortable';
+  form.link_color = v.linkColor ?? 'primary';
+  form.custom_css = v.customCss ?? '';
+  form.logo = site.value.logo ?? '';
+  form.favicon = site.value.favicon ?? '';
+  widgets.value = JSON.parse(JSON.stringify(site.value.widgets ?? []));
 }
 
 function hexRgb(hex: string): string {
@@ -99,29 +122,112 @@ function hexRgb(hex: string): string {
   const n = parseInt(f, 16);
   return `${(n >> 16) & 255} ${(n >> 8) & 255} ${n & 255}`;
 }
+function darkenRgb(hex: string, factor: number): string {
+  return hexRgb(hex).split(' ').map((c) => Math.round(Number(c) * factor)).join(' ');
+}
 
 // Live preview — write straight to the document so it updates the real site.
 function apply() {
   const r = document.documentElement;
+  const btn = form.button_radius === '' ? form.radius : form.button_radius;
   r.style.setProperty('--c-primary', hexRgb(form.primary));
+  r.style.setProperty('--c-accent', hexRgb(form.accent));
+  r.style.setProperty('--c-accent-600', darkenRgb(form.accent, 0.9));
   r.style.setProperty('--c-radius', form.radius + 'px');
+  r.style.setProperty('--c-radius-btn', btn + 'px');
   r.style.setProperty('--c-container', form.container > 0 ? form.container + 'px' : '100%');
   r.style.setProperty('--c-font-size', form.font_size + 'px');
+  r.style.setProperty('--c-density', form.density === 'compact' ? '0.75' : form.density === 'spacious' ? '1.25' : '1');
+  r.style.setProperty('--c-link', form.link_color === 'accent' ? 'var(--c-accent)' : 'var(--c-primary)');
   r.style.setProperty('--c-avatar-radius', form.avatar_shape === 'square' ? '6px' : form.avatar_shape === 'rounded' ? '14px' : '9999px');
   if (form.font) r.style.setProperty('--c-font', `'${form.font}', ui-sans-serif, system-ui, sans-serif`);
+  r.style.setProperty('--c-font-heading', form.heading_font ? `'${form.heading_font}', var(--c-font)` : 'var(--c-font)');
+  // Header bg + contrast text
+  if (form.header_bg === 'brand') {
+    r.style.setProperty('--c-header-bg', `rgb(${hexRgb(form.primary)})`);
+    r.style.setProperty('--c-header-text', '255 255 255');
+  } else if (form.header_bg === 'custom') {
+    r.style.setProperty('--c-header-bg', `rgb(${hexRgb(form.header_color)})`);
+    r.style.setProperty('--c-header-text', '255 255 255');
+  } else {
+    r.style.setProperty('--c-header-bg', 'rgb(var(--c-surface))');
+    r.style.setProperty('--c-header-text', 'var(--c-text)');
+  }
   r.dataset.theme = form.mode;
   r.dataset.postStyle = form.post_style;
   auditA11y();
 }
 
 function toggle() {
-  if (!open.value) { load(); auditA11y(); }
+  if (!open.value) { load(); apply(); }
   open.value = !open.value;
 }
 
 function save() {
   saving.value = true;
-  router.post('/admin/theme', { ...form }, {
+  router.post('/admin/theme', { ...form, button_radius: form.button_radius === '' ? null : form.button_radius }, {
+    preserveScroll: true,
+    preserveState: true,
+    onFinish: () => (saving.value = false),
+  });
+}
+
+// ── Logo / favicon upload ───────────────────────────────────────────────
+const uploading = ref('');
+async function upload(field: 'logo' | 'favicon', e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  uploading.value = field;
+  const body = new FormData();
+  body.append('file', file);
+  try {
+    const res = await fetch('/admin/uploads/image', {
+      method: 'POST',
+      body,
+      headers: { 'X-Requested-With': 'XMLHttpRequest', Accept: 'application/json' },
+      credentials: 'same-origin',
+    });
+    const data = await res.json();
+    if (data.url) form[field] = data.url;
+  } catch { /* ignore */ } finally {
+    uploading.value = '';
+  }
+}
+
+// ── Widgets (drag & drop) ────────────────────────────────────────────────
+type Widget = { id: string; type: string; title: string; body: string };
+const widgets = ref<Widget[]>([]);
+const WIDGET_TYPES = [
+  { type: 'text', label: 'Text / HTML', defaultTitle: 'About' },
+  { type: 'stats', label: 'Community stats', defaultTitle: 'Community stats' },
+  { type: 'online_now', label: 'Online now', defaultTitle: 'Online now' },
+  { type: 'newest_members', label: 'Newest members', defaultTitle: 'Newest members' },
+  { type: 'top_posters', label: 'Top posters', defaultTitle: 'Top posters' },
+  { type: 'categories', label: 'Categories', defaultTitle: 'Categories' },
+];
+const dragFrom = ref<number | null>(null);
+
+function newId() {
+  return 'w' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
+}
+function addWidget(type: string) {
+  const meta = WIDGET_TYPES.find((w) => w.type === type);
+  widgets.value.push({ id: newId(), type, title: meta?.defaultTitle ?? '', body: '' });
+}
+function removeWidget(i: number) {
+  widgets.value.splice(i, 1);
+}
+function onDragStart(i: number) { dragFrom.value = i; }
+function onDrop(i: number) {
+  if (dragFrom.value === null || dragFrom.value === i) { dragFrom.value = null; return; }
+  const list = widgets.value;
+  const [moved] = list.splice(dragFrom.value, 1);
+  list.splice(i, 0, moved);
+  dragFrom.value = null;
+}
+function saveWidgets() {
+  saving.value = true;
+  router.post('/admin/theme/widgets', { widgets: widgets.value }, {
     preserveScroll: true,
     preserveState: true,
     onFinish: () => (saving.value = false),
@@ -138,6 +244,16 @@ const postStyles = [
   { v: 'bordered', label: 'Bordered' },
   { v: 'flat', label: 'Flat' },
 ] as const;
+const headerStyles = [
+  { v: 'surface', label: 'Default' },
+  { v: 'brand', label: 'Brand' },
+  { v: 'custom', label: 'Custom' },
+] as const;
+const densities = [
+  { v: 'compact', label: 'Compact' },
+  { v: 'comfortable', label: 'Cozy' },
+  { v: 'spacious', label: 'Spacious' },
+] as const;
 const containers = [
   { v: 1100, label: 'Narrow' },
   { v: 1240, label: 'Default' },
@@ -145,6 +261,7 @@ const containers = [
   { v: 1600, label: 'Extra wide' },
   { v: 0, label: 'Full' },
 ];
+const labelCls = 'mb-2 block text-xs font-bold uppercase tracking-wide text-ink-muted';
 </script>
 
 <template>
@@ -157,22 +274,22 @@ const containers = [
     </button>
 
     <!-- Drawer -->
-    <div v-if="open" class="fixed inset-y-0 left-0 z-[71] flex w-[320px] max-w-[88vw] flex-col border-r border-line bg-surface shadow-2xl">
+    <div v-if="open" class="fixed inset-y-0 left-0 z-[71] flex w-[340px] max-w-[90vw] flex-col border-r border-line bg-surface shadow-2xl">
       <div class="flex items-center gap-2 border-b border-line px-5 py-4">
-        <h2 class="text-base font-extrabold">Appearance</h2>
+        <h2 class="text-base font-extrabold">Customize</h2>
         <span class="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary">Live</span>
         <button type="button" class="ml-auto text-ink-muted hover:text-ink" @click="open = false" aria-label="Close">✕</button>
       </div>
 
       <!-- Tabs -->
       <div class="flex gap-1 border-b border-line px-3 pt-2">
-        <button type="button" @click="tab = 'theme'"
-          class="rounded-t-lg px-3 py-2 text-sm font-semibold"
+        <button type="button" @click="tab = 'theme'" class="rounded-t-lg px-3 py-2 text-sm font-semibold"
           :class="tab === 'theme' ? 'bg-surface-2 text-ink' : 'text-ink-muted hover:text-ink'">Theme</button>
-        <button type="button" @click="tab = 'a11y'; auditA11y()"
-          class="flex items-center gap-1.5 rounded-t-lg px-3 py-2 text-sm font-semibold"
+        <button type="button" @click="tab = 'widgets'" class="rounded-t-lg px-3 py-2 text-sm font-semibold"
+          :class="tab === 'widgets' ? 'bg-surface-2 text-ink' : 'text-ink-muted hover:text-ink'">Widgets</button>
+        <button type="button" @click="tab = 'a11y'; auditA11y()" class="flex items-center gap-1.5 rounded-t-lg px-3 py-2 text-sm font-semibold"
           :class="tab === 'a11y' ? 'bg-surface-2 text-ink' : 'text-ink-muted hover:text-ink'">
-          Accessibility
+          A11y
           <span class="rounded-full px-1.5 py-0.5 text-[10px] font-bold"
             :class="a11yScore >= 90 ? 'bg-emerald-500/20 text-emerald-400' : a11yScore >= 75 ? 'bg-amber-500/20 text-amber-400' : 'bg-red-500/20 text-red-400'">{{ a11yScore }}%</span>
         </button>
@@ -182,7 +299,7 @@ const containers = [
       <div v-show="tab === 'theme'" class="flex-1 space-y-6 overflow-y-auto px-5 py-5">
         <!-- Mode -->
         <div>
-          <label class="mb-2 block text-xs font-bold uppercase tracking-wide text-ink-muted">Appearance</label>
+          <label :class="labelCls">Appearance</label>
           <div class="flex gap-2">
             <button v-for="m in ['light','dark']" :key="m" type="button" @click="form.mode = m as any; apply()"
               class="flex-1 rounded-lg border px-3 py-2 text-sm font-semibold capitalize"
@@ -190,34 +307,80 @@ const containers = [
           </div>
         </div>
 
-        <!-- Primary color -->
+        <!-- Brand colors -->
         <div>
-          <label class="mb-2 block text-xs font-bold uppercase tracking-wide text-ink-muted">Primary color</label>
+          <label :class="labelCls">Primary color</label>
           <div class="flex items-center gap-3">
             <input type="color" v-model="form.primary" @input="apply" class="h-10 w-14 cursor-pointer rounded border border-line bg-surface p-1" />
             <input type="text" v-model="form.primary" @input="apply" class="w-full rounded-lg border-line bg-surface-2 font-mono text-sm text-ink focus:border-primary focus:ring-primary" />
           </div>
+          <label :class="labelCls" class="mt-3">Accent color</label>
+          <div class="flex items-center gap-3">
+            <input type="color" v-model="form.accent" @input="apply" class="h-10 w-14 cursor-pointer rounded border border-line bg-surface p-1" />
+            <input type="text" v-model="form.accent" @input="apply" class="w-full rounded-lg border-line bg-surface-2 font-mono text-sm text-ink focus:border-primary focus:ring-primary" />
+          </div>
+          <div class="mt-3 flex items-center gap-2">
+            <span class="text-xs font-semibold text-ink-muted">Links use</span>
+            <button v-for="l in ['primary','accent']" :key="l" type="button" @click="form.link_color = l as any; apply()"
+              class="rounded-lg border px-2.5 py-1 text-xs font-semibold capitalize"
+              :class="form.link_color === l ? 'border-primary bg-primary/10 text-primary' : 'border-line text-ink-2 hover:bg-surface-2'">{{ l }}</button>
+          </div>
         </div>
 
-        <!-- Corner radius -->
+        <!-- Header -->
         <div>
-          <label class="mb-2 block text-xs font-bold uppercase tracking-wide text-ink-muted">Corner radius — {{ form.radius }}px</label>
+          <label :class="labelCls">Header background</label>
+          <div class="flex gap-2">
+            <button v-for="h in headerStyles" :key="h.v" type="button" @click="form.header_bg = h.v; apply()"
+              class="flex-1 rounded-lg border px-2 py-2 text-xs font-semibold"
+              :class="form.header_bg === h.v ? 'border-primary bg-primary/10 text-primary' : 'border-line text-ink-2 hover:bg-surface-2'">{{ h.label }}</button>
+          </div>
+          <div v-if="form.header_bg === 'custom'" class="mt-2 flex items-center gap-3">
+            <input type="color" v-model="form.header_color" @input="apply" class="h-9 w-12 cursor-pointer rounded border border-line bg-surface p-1" />
+            <input type="text" v-model="form.header_color" @input="apply" class="w-full rounded-lg border-line bg-surface-2 font-mono text-sm text-ink focus:border-primary focus:ring-primary" />
+          </div>
+        </div>
+
+        <!-- Radii -->
+        <div>
+          <label :class="labelCls">Corner radius — {{ form.radius }}px</label>
           <input type="range" min="0" max="24" v-model.number="form.radius" @input="apply" class="w-full accent-primary" />
+          <label :class="labelCls" class="mt-3">Button radius — {{ form.button_radius === '' ? 'match' : form.button_radius + 'px' }}</label>
+          <div class="flex items-center gap-2">
+            <input type="range" min="0" max="24" :value="form.button_radius === '' ? form.radius : form.button_radius"
+              @input="(e) => { form.button_radius = Number((e.target as HTMLInputElement).value); apply(); }" class="w-full accent-primary" />
+            <button type="button" class="shrink-0 rounded-lg border border-line px-2 py-1 text-[11px] font-semibold text-ink-2 hover:bg-surface-2" @click="form.button_radius = ''; apply()">Match</button>
+          </div>
         </div>
 
-        <!-- Font -->
+        <!-- Fonts -->
         <div>
-          <label class="mb-2 block text-xs font-bold uppercase tracking-wide text-ink-muted">Font</label>
+          <label :class="labelCls">Body font</label>
           <select v-model="form.font" @change="apply" class="w-full rounded-lg border-line bg-surface-2 text-sm text-ink focus:border-primary focus:ring-primary">
             <option v-for="f in fonts" :key="f.value" :value="f.value">{{ f.label }}</option>
           </select>
-          <label class="mb-1 mt-3 block text-xs font-bold uppercase tracking-wide text-ink-muted">Text size — {{ form.font_size }}px</label>
+          <label :class="labelCls" class="mt-3">Heading font</label>
+          <select v-model="form.heading_font" @change="apply" class="w-full rounded-lg border-line bg-surface-2 text-sm text-ink focus:border-primary focus:ring-primary">
+            <option value="">Same as body</option>
+            <option v-for="f in fonts" :key="f.value" :value="f.value">{{ f.label }}</option>
+          </select>
+          <label :class="labelCls" class="mt-3">Text size — {{ form.font_size }}px</label>
           <input type="range" min="12" max="20" v-model.number="form.font_size" @input="apply" class="w-full accent-primary" />
+        </div>
+
+        <!-- Density -->
+        <div>
+          <label :class="labelCls">Density</label>
+          <div class="flex gap-2">
+            <button v-for="d in densities" :key="d.v" type="button" @click="form.density = d.v; apply()"
+              class="flex-1 rounded-lg border px-2 py-2 text-xs font-semibold"
+              :class="form.density === d.v ? 'border-primary bg-primary/10 text-primary' : 'border-line text-ink-2 hover:bg-surface-2'">{{ d.label }}</button>
+          </div>
         </div>
 
         <!-- Avatar shape -->
         <div>
-          <label class="mb-2 block text-xs font-bold uppercase tracking-wide text-ink-muted">Avatar shape</label>
+          <label :class="labelCls">Avatar shape</label>
           <div class="flex gap-2">
             <button v-for="s in avatarShapes" :key="s.v" type="button" @click="form.avatar_shape = s.v; apply()"
               class="flex flex-1 flex-col items-center gap-1.5 rounded-lg border px-2 py-2 text-xs font-semibold"
@@ -230,7 +393,7 @@ const containers = [
 
         <!-- Post container style -->
         <div>
-          <label class="mb-2 block text-xs font-bold uppercase tracking-wide text-ink-muted">Post containers</label>
+          <label :class="labelCls">Post containers</label>
           <div class="flex gap-2">
             <button v-for="s in postStyles" :key="s.v" type="button" @click="form.post_style = s.v; apply()"
               class="flex-1 rounded-lg border px-2 py-2 text-xs font-semibold"
@@ -240,10 +403,80 @@ const containers = [
 
         <!-- Width -->
         <div>
-          <label class="mb-2 block text-xs font-bold uppercase tracking-wide text-ink-muted">Content width</label>
+          <label :class="labelCls">Content width</label>
           <select v-model.number="form.container" @change="apply" class="w-full rounded-lg border-line bg-surface-2 text-sm text-ink focus:border-primary focus:ring-primary">
             <option v-for="c in containers" :key="c.v" :value="c.v">{{ c.label }}</option>
           </select>
+        </div>
+
+        <!-- Branding: logo + favicon -->
+        <div>
+          <label :class="labelCls">Logo</label>
+          <div class="flex items-center gap-3">
+            <div class="grid h-10 min-w-[40px] place-items-center rounded-lg border border-line bg-surface-2 px-2">
+              <img v-if="form.logo" :src="form.logo" class="h-7 max-w-[120px] object-contain" alt="logo" />
+              <span v-else class="text-[11px] text-ink-muted">None</span>
+            </div>
+            <label class="cursor-pointer rounded-lg border border-line px-3 py-2 text-xs font-semibold text-ink-2 hover:bg-surface-2">
+              {{ uploading === 'logo' ? 'Uploading…' : 'Upload' }}<input type="file" accept="image/*" class="hidden" @change="(e) => upload('logo', e)" />
+            </label>
+            <button v-if="form.logo" type="button" class="text-xs font-semibold text-ink-muted hover:text-red-400" @click="form.logo = ''">Clear</button>
+          </div>
+          <label :class="labelCls" class="mt-3">Favicon</label>
+          <div class="flex items-center gap-3">
+            <div class="grid h-10 w-10 place-items-center rounded-lg border border-line bg-surface-2">
+              <img v-if="form.favicon" :src="form.favicon" class="h-6 w-6 object-contain" alt="favicon" />
+              <span v-else class="text-[11px] text-ink-muted">—</span>
+            </div>
+            <label class="cursor-pointer rounded-lg border border-line px-3 py-2 text-xs font-semibold text-ink-2 hover:bg-surface-2">
+              {{ uploading === 'favicon' ? 'Uploading…' : 'Upload' }}<input type="file" accept="image/*" class="hidden" @change="(e) => upload('favicon', e)" />
+            </label>
+            <button v-if="form.favicon" type="button" class="text-xs font-semibold text-ink-muted hover:text-red-400" @click="form.favicon = ''">Clear</button>
+          </div>
+        </div>
+
+        <!-- Custom CSS -->
+        <div>
+          <label :class="labelCls">Custom CSS</label>
+          <textarea v-model="form.custom_css" rows="5" spellcheck="false" placeholder=".q-post { ... }"
+            class="w-full rounded-lg border-line bg-surface-2 font-mono text-xs text-ink focus:border-primary focus:ring-primary"></textarea>
+          <p class="mt-1 text-[11px] text-ink-muted">Applied site-wide after the theme tokens. Save to preview.</p>
+        </div>
+      </div>
+
+      <!-- WIDGETS tab -->
+      <div v-show="tab === 'widgets'" class="flex-1 space-y-5 overflow-y-auto px-5 py-5">
+        <div>
+          <label :class="labelCls">Add a widget</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button v-for="w in WIDGET_TYPES" :key="w.type" type="button" @click="addWidget(w.type)"
+              class="rounded-lg border border-line px-2.5 py-2 text-left text-xs font-semibold text-ink-2 hover:border-primary hover:bg-primary/5 hover:text-primary">
+              + {{ w.label }}
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <label :class="labelCls">Forum sidebar — drag to reorder</label>
+          <div v-if="!widgets.length" class="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-muted">
+            No widgets yet. Add some above — the default stats card shows until you do.
+          </div>
+          <div v-else class="space-y-2">
+            <div v-for="(w, i) in widgets" :key="w.id" draggable="true"
+              @dragstart="onDragStart(i)" @dragover.prevent @drop="onDrop(i)"
+              class="rounded-xl border border-line bg-surface-2 p-3">
+              <div class="flex items-center gap-2">
+                <span class="cursor-grab text-ink-muted" title="Drag to reorder">⠿</span>
+                <span class="text-sm font-semibold capitalize text-ink">{{ w.type.replace('_', ' ') }}</span>
+                <button type="button" class="ml-auto text-xs font-semibold text-ink-muted hover:text-red-400" @click="removeWidget(i)">Remove</button>
+              </div>
+              <input v-model="w.title" placeholder="Title (optional)"
+                class="mt-2 w-full rounded-lg border-line bg-surface text-sm text-ink focus:border-primary focus:ring-primary" />
+              <textarea v-if="w.type === 'text'" v-model="w.body" rows="3" placeholder="Text or HTML…"
+                class="mt-2 w-full rounded-lg border-line bg-surface text-xs text-ink focus:border-primary focus:ring-primary"></textarea>
+            </div>
+          </div>
+          <p class="mt-2 text-[11px] text-ink-muted">Renders in the right rail of the community page for every visitor.</p>
         </div>
       </div>
 
@@ -256,9 +489,8 @@ const containers = [
             <div class="text-[11px] text-ink-muted">WCAG / ADA compliance for the live theme</div>
           </div>
         </div>
-
         <div>
-          <label class="mb-2 block text-xs font-bold uppercase tracking-wide text-ink-muted">Color contrast (live)</label>
+          <label :class="labelCls">Color contrast (live)</label>
           <ul class="divide-y divide-line rounded-xl border border-line">
             <li v-for="r in a11yResults" :key="r.label" class="flex items-center justify-between gap-2 px-3 py-2 text-sm">
               <span class="text-ink-2">{{ r.label }}</span>
@@ -270,9 +502,8 @@ const containers = [
           </ul>
           <p class="mt-2 text-[11px] text-ink-muted">Tweak colors on the Theme tab — these update instantly.</p>
         </div>
-
         <div>
-          <label class="mb-2 block text-xs font-bold uppercase tracking-wide text-ink-muted">Best practices</label>
+          <label :class="labelCls">Best practices</label>
           <ul class="divide-y divide-line rounded-xl border border-line">
             <li v-for="g in guidelines" :key="g.label" class="flex items-center justify-between gap-2 px-3 py-2 text-sm">
               <span class="text-ink-2">{{ g.label }}</span>
@@ -282,8 +513,14 @@ const containers = [
         </div>
       </div>
 
+      <!-- Footer -->
       <div class="border-t border-line px-5 py-4">
-        <button type="button" :disabled="saving" @click="save" class="w-full rounded-c bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-600 disabled:opacity-60">
+        <button v-if="tab === 'widgets'" type="button" :disabled="saving" @click="saveWidgets"
+          class="w-full rounded-c bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-600 disabled:opacity-60">
+          {{ saving ? 'Saving…' : 'Save widgets' }}
+        </button>
+        <button v-else type="button" :disabled="saving" @click="save"
+          class="w-full rounded-c bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary-600 disabled:opacity-60">
           {{ saving ? 'Saving…' : 'Save theme' }}
         </button>
         <p class="mt-2 text-center text-[11px] text-ink-muted">Changes preview live. Save to publish for everyone.</p>

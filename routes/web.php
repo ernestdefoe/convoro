@@ -102,6 +102,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/email/test', [App\Http\Controllers\AdminController::class, 'sendTestEmail'])->name('email.test');
     Route::get('/theme', [App\Http\Controllers\AdminController::class, 'theme'])->name('theme');
     Route::post('/theme', [App\Http\Controllers\AdminController::class, 'updateTheme'])->name('theme.update');
+    Route::post('/theme/widgets', [App\Http\Controllers\AdminController::class, 'updateWidgets'])->name('theme.widgets');
     Route::get('/accessibility', [App\Http\Controllers\AdminController::class, 'accessibility'])->name('accessibility');
 
     Route::get('/members', [App\Http\Controllers\AdminController::class, 'members'])->name('members');

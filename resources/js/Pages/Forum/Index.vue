@@ -6,6 +6,7 @@ import TopicCard from '@/Components/forum/TopicCard.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
 import Slot from '@/Components/ext/Slot.vue';
+import WidgetArea from '@/Components/WidgetArea.vue';
 import { useAuthModal } from '@/lib/authModal';
 
 const pg = usePage();
@@ -22,6 +23,8 @@ const props = defineProps<{
   categories: any[];
   topics: { data: any[]; next: string | null };
   stats: Record<string, number>;
+  widgets?: any[];
+  widgetData?: any;
 }>();
 
 function go(params: Record<string, string | null>) {
@@ -31,7 +34,6 @@ function go(params: Record<string, string | null>) {
   }
   router.get('/', { view: props.view, sort: props.sort, category: props.activeCategory, ...params }, { preserveScroll: true, preserveState: true });
 }
-const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n));
 </script>
 
 <template>
@@ -104,20 +106,12 @@ const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, ''
         </div>
       </section>
 
-      <!-- Right rail -->
+      <!-- Right rail: admin-configurable widgets (drag & drop in the live editor) -->
       <aside class="hidden lg:block">
-        <div class="overflow-hidden rounded-c border border-line bg-surface shadow-sm">
-          <h4 class="border-b border-line px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">Community stats</h4>
-          <div class="grid grid-cols-2 gap-2.5 p-4">
-            <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats.members) }}</b><span class="text-[11px] text-ink-muted">Members</span></div>
-            <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats.topics) }}</b><span class="text-[11px] text-ink-muted">Topics</span></div>
-            <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats.posts) }}</b><span class="text-[11px] text-ink-muted">Posts</span></div>
-            <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats.reactions) }}</b><span class="text-[11px] text-ink-muted">Reactions</span></div>
-          </div>
-        </div>
+        <WidgetArea :widgets="widgets || []" :data="widgetData" :stats="stats" :categories="categories" />
 
         <!-- Widget extensions render here -->
-        <Slot name="forum:sidebar" />
+        <div class="mt-4"><Slot name="forum:sidebar" /></div>
       </aside>
     </div>
   </AppLayout>

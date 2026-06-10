@@ -24,8 +24,17 @@
     --c-text-2: 74 81 104;
     --c-muted: 138 144 166;
     --c-radius: 12px;
+    --c-radius-btn: 12px;
+    --c-accent: 139 92 246;        /* #8B5CF6 */
+    --c-accent-600: 124 58 237;
+    --c-header-bg: rgb(255 255 255);
+    --c-header-text: 27 32 48;
+    --c-link: 91 91 214;
+    --c-density: 1;
     --c-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #a855f7 100%);
   }
+
+  [data-theme='dark'] { --c-header-bg: rgb(22 25 41); --c-header-text: 233 235 243; }
 
   [data-theme='dark'] {
     --c-bg: 16 18 30;
@@ -42,6 +51,18 @@
 }
 
 .q-grad { background: var(--c-grad); }
+
+/* Live-editor tokens applied site-wide (every Convoro install gets these) */
+h1, h2, h3, h4, h5, h6 { font-family: var(--c-font-heading, var(--c-font)); }
+/* Header bar honors the chosen background + contrast text. */
+header.q-header { background: var(--c-header-bg) !important; color: rgb(var(--c-header-text)); }
+header.q-header a { color: rgb(var(--c-header-text)); }
+/* Buttons honor a distinct button radius. */
+.rounded-c, .btn { border-radius: var(--c-radius-btn, var(--c-radius)); }
+/* Content links honor the chosen link color. */
+.q-link { color: rgb(var(--c-link)); }
+/* Density scales the main content vertical rhythm. */
+main.q-main { padding-top: calc(1.5rem * var(--c-density, 1)); padding-bottom: calc(1.5rem * var(--c-density, 1)); }
 
 /* Post container style (live theme editor): card (default) | bordered | flat */
 [data-post-style='bordered'] .q-post { box-shadow: none !important; }

@@ -56,6 +56,12 @@
         @if ($href = \App\Support\Theme::googleFontHref())
             <link href="{{ $href }}" rel="stylesheet" />
         @endif
+        @if ($hfHref = \App\Support\Theme::headingFontHref())
+            <link href="{{ $hfHref }}" rel="stylesheet" />
+        @endif
+        @if ($favicon = \App\Support\Settings::get('site.favicon'))
+            <link rel="icon" href="{{ $favicon }}" />
+        @endif
 
         <!-- Scripts -->
         @routes
@@ -63,6 +69,9 @@
 
         <!-- Live theme tokens (admin theme editor) -->
         <style id="convoro-theme">{!! \App\Support\Theme::css() !!}</style>
+        @if ($customCss = \App\Support\Theme::customCss())
+            <style id="convoro-custom-css">{!! $customCss !!}</style>
+        @endif
 
         @if ($faKit = \App\Support\Settings::get('fa.kit_url'))
             <script src="{{ $faKit }}" crossorigin="anonymous"></script>

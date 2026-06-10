@@ -29,7 +29,7 @@ const initials = computed(() => {
 <template>
   <div class="min-h-screen bg-appbg text-ink">
     <a href="#main" class="skip-link">Skip to content</a>
-    <header class="sticky top-0 z-40 border-b border-line bg-surface/85 backdrop-blur">
+    <header class="q-header sticky top-0 z-40 border-b border-line backdrop-blur">
       <div class="mx-auto flex h-[60px] max-w-[var(--c-container)] items-center gap-5 px-6">
         <Link href="/" class="flex items-center">
           <img v-if="siteLogo" :src="siteLogo" alt="Logo" class="h-8 w-auto max-w-[180px]" />
@@ -64,7 +64,7 @@ const initials = computed(() => {
       </div>
     </header>
 
-    <main id="main" tabindex="-1" class="mx-auto max-w-[var(--c-container)] px-6 py-6">
+    <main id="main" tabindex="-1" class="q-main mx-auto max-w-[var(--c-container)] px-6 py-6">
       <slot />
     </main>
 

@@ -55,6 +55,23 @@ class ForumController extends Controller
                 'posts' => \App\Models\Post::count(),
                 'reactions' => \App\Models\Reaction::count(),
             ],
+            'widgets' => \App\Support\Settings::widgetLayout(),
+            'widgetData' => $this->widgetData(),
         ]);
+    }
+
+    /** Dynamic data for configurable sidebar widgets (cheap, index-only). */
+    private function widgetData(): array
+    {
+        return [
+            'onlineNow' => \App\Models\User::where('last_seen_at', '>=', now()->subMinutes(5))->count(),
+            'newestMembers' => \App\Models\User::latest()->limit(6)->get()
+                ->map(fn ($u) => Present::avatar($u))->all(),
+            'topPosters' => \Illuminate\Support\Facades\DB::table('posts')
+                ->join('users', 'users.id', '=', 'posts.user_id')
+                ->select('users.name', \Illuminate\Support\Facades\DB::raw('COUNT(*) c'))
+                ->groupBy('users.id', 'users.name')->orderByDesc('c')->limit(5)->get()
+                ->map(fn ($p) => ['name' => $p->name, 'count' => (int) $p->c])->all(),
+        ];
     }
 }

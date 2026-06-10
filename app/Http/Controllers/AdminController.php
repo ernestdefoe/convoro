@@ -921,27 +921,71 @@ class AdminController extends Controller
 
     public function updateTheme(Request $request): RedirectResponse
     {
+        $fonts = implode(',', array_keys(\App\Support\Theme::FONTS));
         $data = $request->validate([
             'primary' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'accent' => ['nullable', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'radius' => ['required', 'integer', 'min:0', 'max:28'],
+            'button_radius' => ['nullable', 'integer', 'min:0', 'max:28'],
             'mode' => ['required', 'in:light,dark'],
-            'font' => ['required', 'in:'.implode(',', array_keys(\App\Support\Theme::FONTS))],
+            'font' => ['required', 'in:'.$fonts],
+            'heading_font' => ['nullable', 'in:,'.$fonts],
             'font_size' => ['required', 'integer', 'min:12', 'max:20'],
             'container' => ['required', 'integer', 'in:0,1100,1240,1400,1600'],
             'avatar_shape' => ['nullable', 'in:circle,rounded,square'],
             'post_style' => ['nullable', 'in:card,bordered,flat'],
+            'header_bg' => ['nullable', 'in:surface,brand,custom'],
+            'header_color' => ['nullable', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'density' => ['nullable', 'in:compact,comfortable,spacious'],
+            'link_color' => ['nullable', 'in:primary,accent'],
+            'custom_css' => ['nullable', 'string', 'max:20000'],
+            'logo' => ['nullable', 'string', 'max:2048'],
+            'favicon' => ['nullable', 'string', 'max:2048'],
         ]);
 
         Settings::setMany([
             'theme.primary' => $data['primary'],
+            'theme.accent' => $data['accent'] ?? Settings::get('theme.accent', '#8b5cf6'),
             'theme.radius' => (int) $data['radius'],
+            'theme.button_radius' => isset($data['button_radius']) && $data['button_radius'] !== null ? (string) $data['button_radius'] : '',
             'theme.mode' => $data['mode'],
             'theme.font' => $data['font'],
+            'theme.heading_font' => $data['heading_font'] ?? '',
             'theme.font_size' => (int) $data['font_size'],
             'theme.container' => (int) $data['container'],
             'theme.avatar_shape' => $data['avatar_shape'] ?? Settings::get('theme.avatar_shape', 'circle'),
             'theme.post_style' => $data['post_style'] ?? Settings::get('theme.post_style', 'card'),
+            'theme.header_bg' => $data['header_bg'] ?? 'surface',
+            'theme.header_color' => $data['header_color'] ?? Settings::get('theme.header_color', '#5b5bd6'),
+            'theme.density' => $data['density'] ?? 'comfortable',
+            'theme.link_color' => $data['link_color'] ?? 'primary',
+            'theme.custom_css' => $data['custom_css'] ?? '',
+            'site.logo' => $data['logo'] ?? Settings::get('site.logo', ''),
+            'site.favicon' => $data['favicon'] ?? Settings::get('site.favicon', ''),
         ]);
+
+        return back();
+    }
+
+    /** Persist the forum sidebar widget layout from the live editor (drag & drop). */
+    public function updateWidgets(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'widgets' => ['present', 'array'],
+            'widgets.*.id' => ['required', 'string', 'max:40'],
+            'widgets.*.type' => ['required', 'string', 'in:text,stats,newest_members,online_now,top_posters,categories'],
+            'widgets.*.title' => ['nullable', 'string', 'max:80'],
+            'widgets.*.body' => ['nullable', 'string', 'max:8000'],
+        ]);
+
+        $clean = array_map(fn ($w) => [
+            'id' => $w['id'],
+            'type' => $w['type'],
+            'title' => $w['title'] ?? '',
+            'body' => $w['type'] === 'text' ? ($w['body'] ?? '') : '',
+        ], $data['widgets']);
+
+        Settings::set('widgets.sidebar', json_encode(array_values($clean)));
 
         return back();
     }

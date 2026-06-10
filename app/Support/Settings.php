@@ -52,6 +52,16 @@ class Settings
         'theme.container' => 1240,           // content max width px (0 = full width)
         'theme.avatar_shape' => 'circle',    // circle | rounded | square
         'theme.post_style' => 'card',        // card | bordered | flat
+        'theme.accent' => '#8b5cf6',         // secondary/accent color
+        'theme.heading_font' => '',          // '' = same as body font; else a Theme::FONTS family
+        'theme.header_bg' => 'surface',      // surface | brand | custom
+        'theme.header_color' => '#5b5bd6',   // used when header_bg = custom
+        'theme.button_radius' => '',         // '' = same as radius; else px int
+        'theme.density' => 'comfortable',    // compact | comfortable | spacious
+        'theme.link_color' => 'primary',     // primary | accent
+        'theme.custom_css' => '',            // raw CSS appended after tokens (admin-trusted)
+        'site.favicon' => '',                // favicon URL (empty = generated PWA icon / default)
+        'widgets.sidebar' => '[]',           // JSON: ordered forum sidebar widgets
     ];
 
     /** @return array<string, mixed> */
@@ -86,6 +96,14 @@ class Settings
         Cache::forget(self::CACHE_KEY);
     }
 
+    /** Decoded forum sidebar widget layout (always an array). */
+    public static function widgetLayout(): array
+    {
+        $raw = json_decode((string) self::get('widgets.sidebar', '[]'), true);
+
+        return is_array($raw) ? $raw : [];
+    }
+
     /** Only the public-safe subset shared to the frontend. */
     public static function public(): array
     {
@@ -93,6 +111,7 @@ class Settings
             'name' => self::get('site.name'),
             'tagline' => self::get('site.tagline'),
             'logo' => self::get('site.logo'),
+            'favicon' => self::get('site.favicon'),
             'defaultView' => self::get('forum.default_view'),
             'realtime' => (bool) self::get('realtime.enabled'),
             'pwaBanner' => (bool) self::get('pwa.banner'),
@@ -106,7 +125,16 @@ class Settings
                 'container' => (int) self::get('theme.container'),
                 'avatarShape' => self::get('theme.avatar_shape'),
                 'postStyle' => self::get('theme.post_style'),
+                'accent' => self::get('theme.accent'),
+                'headingFont' => self::get('theme.heading_font'),
+                'headerBg' => self::get('theme.header_bg'),
+                'headerColor' => self::get('theme.header_color'),
+                'buttonRadius' => self::get('theme.button_radius'),
+                'density' => self::get('theme.density'),
+                'linkColor' => self::get('theme.link_color'),
+                'customCss' => self::get('theme.custom_css'),
             ],
+            'widgets' => json_decode((string) self::get('widgets.sidebar', '[]'), true) ?: [],
         ];
     }
 }
