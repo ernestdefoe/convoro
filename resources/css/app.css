@@ -1,0 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------------------------------------------------------------------------
+   Quorum design tokens — single source of truth for the theme.
+   The live theme editor (P6) recompiles this :root block at runtime.
+   Colors are space-separated RGB channels so Tailwind can apply opacity.
+   --------------------------------------------------------------------------- */
+@layer base {
+  :root {
+    --q-primary: 91 91 214;        /* #5B5BD6 */
+    --q-primary-600: 79 79 207;
+    --q-primary-700: 66 66 181;
+    --q-primary-soft: 236 237 251;
+    --q-bg: 243 244 249;
+    --q-surface: 255 255 255;
+    --q-surface-2: 248 249 252;
+    --q-border: 230 232 240;
+    --q-text: 27 32 48;
+    --q-text-2: 74 81 104;
+    --q-muted: 138 144 166;
+    --q-radius: 12px;
+    --q-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #a855f7 100%);
+  }
+
+  [data-theme='dark'] {
+    --q-bg: 16 18 30;
+    --q-surface: 22 25 41;
+    --q-surface-2: 28 32 52;
+    --q-border: 42 47 70;
+    --q-text: 233 235 243;
+    --q-text-2: 174 180 208;
+    --q-muted: 120 127 152;
+  }
+
+  html { font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+  body { background: rgb(var(--q-bg)); color: rgb(var(--q-text)); -webkit-font-smoothing: antialiased; }
+}
+
+.q-grad { background: var(--q-grad); }

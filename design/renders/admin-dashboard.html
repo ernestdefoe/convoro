@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quorum — Admin Dashboard</title>
+<link rel="stylesheet" href="assets/app.css">
+</head>
+<body>
+<div class="adm">
+
+  <!-- Sidebar -->
+  <nav class="adm-side">
+    <div class="adm-brand"><span class="q-logo-mark" style="width:30px;height:30px;border-radius:8px;"><svg viewBox="0 0 24 24" fill="#fff" width="17" height="17"><circle cx="12" cy="6" r="2.7"/><circle cx="6.4" cy="15.6" r="2.7"/><circle cx="17.6" cy="15.6" r="2.7"/></svg></span> Quorum</div>
+    <a class="active"><span class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span> Dashboard</a>
+    <div class="sec">Manage</div>
+    <a><span class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/></svg></span> Members</a>
+    <a><span class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span> Content &amp; Forums</a>
+    <a><span class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 2 7l10 5 10-5z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></svg></span> Reactions &amp; Tags</a>
+    <a><span class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1A1.7 1.7 0 0 0 7 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 2.6 14H2a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4 8.6l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 10 4.6V4a2 2 0 1 1 4 0v.1A1.7 1.7 0 0 0 17 5.4"/></svg></span> Moderation</a>
+    <div class="sec">Customize</div>
+    <a><span class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="6.5" cy="12" r="2.5"/><circle cx="17" cy="13" r="2.5"/><path d="M12 22a10 10 0 1 1 10-10c0 2-2 3-4 3h-3a3 3 0 0 0 0 6 2 2 0 0 1-1 1z"/></svg></span> Theme Editor</a>
+    <a><span class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM17 14v6M14 17h6"/></svg></span> Extensions</a>
+    <a><span class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9h18M9 21V9"/><rect x="3" y="3" width="18" height="18" rx="2"/></svg></span> Pages &amp; Menus</a>
+    <div class="sec">System</div>
+    <a><span class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><path d="M4 22v-7"/></svg></span> Mail &amp; Digests</a>
+    <a><span class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2z"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg></span> PWA &amp; Push</a>
+    <a><span class="ico"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.2 4.2l2.8 2.8M17 17l2.8 2.8M1 12h4M19 12h4M4.2 19.8 7 17M17 7l2.8-2.8"/></svg></span> Settings</a>
+  </nav>
+
+  <!-- Main -->
+  <div class="adm-main">
+    <div class="adm-top">
+      <h2>Dashboard</h2>
+      <span class="pill-live" style="margin-left:6px;"><span class="blip"></span>1,284 online</span>
+      <div style="margin-left:auto;display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-sm"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Export</button>
+        <button class="btn btn-primary btn-sm">View site</button>
+        <div class="av av-32 av-g6">AD</div>
+      </div>
+    </div>
+
+    <div class="adm-body">
+      <!-- KPIs -->
+      <div class="kpis">
+        <div class="card kpi"><div class="lbl"><span class="kpi-ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></span>Members</div><div class="val">38,902</div><div class="chg up">▲ 6.2% this week</div></div>
+        <div class="card kpi"><div class="lbl"><span class="kpi-ico">💬</span>Posts today</div><div class="val">2,417</div><div class="chg up">▲ 11% vs avg</div></div>
+        <div class="card kpi"><div class="lbl"><span class="kpi-ico">🧩</span>Extensions</div><div class="val">24</div><div class="chg muted">3 updates available</div></div>
+        <div class="card kpi"><div class="lbl"><span class="kpi-ico">📨</span>Digest reach</div><div class="val">94%</div><div class="chg up">▲ 2.1%</div></div>
+      </div>
+
+      <div class="cols-2">
+        <!-- Chart -->
+        <div class="card panel">
+          <div class="panel-h"><h3>Activity — last 14 days</h3><span class="tag" style="margin-left:auto;">Posts</span><span class="tag">Signups</span></div>
+          <div class="chart">
+            <div class="bar" style="height:38%"></div><div class="bar" style="height:52%"></div><div class="bar" style="height:45%"></div>
+            <div class="bar" style="height:66%"></div><div class="bar" style="height:58%"></div><div class="bar" style="height:74%"></div>
+            <div class="bar" style="height:62%"></div><div class="bar" style="height:80%"></div><div class="bar" style="height:71%"></div>
+            <div class="bar" style="height:88%"></div><div class="bar" style="height:79%"></div><div class="bar" style="height:95%"></div>
+            <div class="bar" style="height:84%"></div><div class="bar" style="height:100%"></div>
+          </div>
+        </div>
+
+        <!-- Recent activity -->
+        <div class="card panel">
+          <div class="panel-h"><h3>Needs attention</h3></div>
+          <div class="rowi"><span class="kpi-ico" style="background:#fde7ef;color:#e0245e;">!</span><div><b>3 posts reported</b><div class="small muted">In #Support · awaiting review</div></div><button class="btn btn-sm" style="margin-left:auto;">Review</button></div>
+          <div class="rowi"><span class="kpi-ico" style="background:#fff4e0;color:#e8830c;">↑</span><div><b>3 extension updates</b><div class="small muted">Reactions+, Polls, SEO Kit</div></div><button class="btn btn-sm btn-primary" style="margin-left:auto;">Update all</button></div>
+          <div class="rowi"><span class="kpi-ico" style="background:#e7f6ed;color:#16a34a;">✓</span><div><b>Mail &amp; DKIM healthy</b><div class="small muted">Last digest sent to 36.5k</div></div><span class="badge-installed" style="margin-left:auto;">OK</span></div>
+          <div class="rowi"><span class="kpi-ico">👋</span><div><b>128 new members today</b><div class="small muted">12 awaiting approval</div></div><button class="btn btn-sm" style="margin-left:auto;">Approve</button></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</body>
+</html>
