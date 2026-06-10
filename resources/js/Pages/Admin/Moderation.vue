@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { reactive, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 interface Subject {
@@ -24,23 +24,41 @@ const opt = { preserveScroll: true };
 
 function resolve(r: Report) { router.post(`/admin/moderation/reports/${r.id}/resolve`, {}, opt); }
 function dismiss(r: Report) { router.post(`/admin/moderation/reports/${r.id}/dismiss`, {}, opt); }
-function deletePost(id: number) { if (confirm('Delete this post?')) router.delete(`/admin/moderation/posts/${id}`, opt); }
 
-function banUser(id: number, name?: string) {
-  const reason = prompt(`Ban “${name}”? Optional reason:`, 'Spam');
-  if (reason === null) return;
-  const banIp = confirm('Also ban their last known IP address?');
-  const deletePosts = confirm('Also delete all their replies?');
-  router.post(`/admin/moderation/users/${id}/ban`, { reason, ban_ip: banIp, delete_posts: deletePosts }, opt);
+// Generic confirm modal (destructive yes/no).
+const confirmModal = ref<{ title: string; body: string; danger?: boolean; action: () => void } | null>(null);
+function askConfirm(title: string, body: string, action: () => void, danger = true) {
+  confirmModal.value = { title, body, danger, action };
+}
+function runConfirm() { const m = confirmModal.value; confirmModal.value = null; m?.action(); }
+
+function deletePost(id: number) {
+  askConfirm('Delete post', 'This permanently removes the post. This cannot be undone.', () =>
+    router.delete(`/admin/moderation/posts/${id}`, opt));
+}
+
+// Ban-user modal (reason + options).
+const banModal = ref<{ id: number; name: string } | null>(null);
+const banForm = reactive({ reason: 'Spam', ban_ip: true, delete_posts: false });
+function openBan(id: number, name?: string) {
+  banForm.reason = 'Spam'; banForm.ban_ip = true; banForm.delete_posts = false;
+  banModal.value = { id, name: name || 'this member' };
+}
+function confirmBan() {
+  const m = banModal.value; if (!m) return;
+  router.post(`/admin/moderation/users/${m.id}/ban`, { ...banForm }, { ...opt, onSuccess: () => (banModal.value = null) });
 }
 function unbanUser(id: number) { router.post(`/admin/moderation/users/${id}/unban`, {}, opt); }
 
-function banIpDirect(ip?: string | null) {
-  if (!ip) return;
-  const reason = prompt(`Ban IP ${ip}? Optional reason:`, '');
-  if (reason === null) return;
-  router.post('/admin/moderation/ip-bans', { ip_address: ip, reason }, opt);
+// Ban-IP modal (reason; ip prefilled).
+const ipModal = ref<{ ip: string } | null>(null);
+const ipModalReason = ref('');
+function openBanIp(ip?: string | null) { if (!ip) return; ipModalReason.value = ''; ipModal.value = { ip }; }
+function confirmBanIp() {
+  const m = ipModal.value; if (!m) return;
+  router.post('/admin/moderation/ip-bans', { ip_address: m.ip, reason: ipModalReason.value }, { ...opt, onSuccess: () => (ipModal.value = null) });
 }
+
 const newIp = ref(''); const newIpReason = ref('');
 function addIpBan() {
   if (!newIp.value.trim()) return;
@@ -48,7 +66,10 @@ function addIpBan() {
     ...opt, onSuccess: () => { newIp.value = ''; newIpReason.value = ''; },
   });
 }
-function unbanIp(id: number) { router.delete(`/admin/moderation/ip-bans/${id}`, opt); }
+function unbanIp(id: number) {
+  askConfirm('Unban IP', 'Allow this IP address to access the community again?', () =>
+    router.delete(`/admin/moderation/ip-bans/${id}`, opt), false);
+}
 </script>
 
 <template>
@@ -87,8 +108,8 @@ function unbanIp(id: number) { router.delete(`/admin/moderation/ip-bans/${id}`, 
         </div>
         <div class="mt-4 flex flex-wrap items-center gap-2 border-t border-white/5 pt-3">
           <button v-if="r.type === 'post' && r.subject" @click="deletePost(r.subject.id)" class="rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-semibold text-red-300 hover:bg-red-500/25">Delete post</button>
-          <button v-if="r.subject?.authorId" @click="banUser(r.subject.authorId, r.subject.author)" class="rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-semibold text-red-300 hover:bg-red-500/25">Ban author</button>
-          <button v-if="r.subject?.ip" @click="banIpDirect(r.subject.ip)" class="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/10">Ban IP</button>
+          <button v-if="r.subject?.authorId" @click="openBan(r.subject.authorId, r.subject.author)" class="rounded-lg bg-red-500/15 px-3 py-1.5 text-xs font-semibold text-red-300 hover:bg-red-500/25">Ban author</button>
+          <button v-if="r.subject?.ip" @click="openBanIp(r.subject.ip)" class="rounded-lg bg-white/5 px-3 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/10">Ban IP</button>
           <span class="ml-auto"></span>
           <button @click="resolve(r)" class="rounded-lg bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/25">Resolve</button>
           <button @click="dismiss(r)" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400 hover:bg-white/5">Dismiss</button>
@@ -112,7 +133,7 @@ function unbanIp(id: number) { router.delete(`/admin/moderation/ip-bans/${id}`, 
             <span v-if="u.lastIp" class="ml-2 font-mono">IP {{ u.lastIp }}</span>
           </div>
         </div>
-        <button v-if="u.lastIp" @click="banIpDirect(u.lastIp)" class="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/10">Ban IP</button>
+        <button v-if="u.lastIp" @click="openBanIp(u.lastIp)" class="rounded-lg bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-slate-300 hover:bg-white/10">Ban IP</button>
         <button @click="unbanUser(u.id)" class="rounded-lg bg-emerald-500/15 px-2.5 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-500/25">Reinstate</button>
       </div>
     </div>
@@ -133,6 +154,57 @@ function unbanIp(id: number) { router.delete(`/admin/moderation/ip-bans/${id}`, 
         <span v-if="b.reason" class="text-xs text-slate-500">{{ b.reason }}</span>
         <span class="text-xs text-slate-600">· {{ b.createdAt }}</span>
         <button @click="unbanIp(b.id)" class="ml-auto rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-400 hover:bg-emerald-500/10 hover:text-emerald-300">Unban</button>
+      </div>
+    </div>
+
+    <!-- Ban-user modal -->
+    <div v-if="banModal" class="fixed inset-0 z-[80] flex items-center justify-center p-4" @keydown.esc="banModal = null">
+      <div class="absolute inset-0 bg-black/60" @click="banModal = null" />
+      <div class="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#14172a] p-6 shadow-2xl">
+        <h3 class="text-lg font-bold text-white">Ban {{ banModal.name }}</h3>
+        <p class="mt-1 text-sm text-slate-400">They'll be signed out and blocked from posting or registering.</p>
+        <label class="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-400">Reason</label>
+        <input v-model="banForm.reason" class="mt-1.5 w-full rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+        <label class="mt-3 flex items-center gap-2.5 text-sm text-slate-200">
+          <input type="checkbox" v-model="banForm.ban_ip" class="rounded border-white/10 bg-[#0f1120] text-indigo-500 focus:ring-indigo-500" />
+          Also ban their last known IP address
+        </label>
+        <label class="mt-2 flex items-center gap-2.5 text-sm text-slate-200">
+          <input type="checkbox" v-model="banForm.delete_posts" class="rounded border-white/10 bg-[#0f1120] text-indigo-500 focus:ring-indigo-500" />
+          Also delete all their replies
+        </label>
+        <div class="mt-5 flex justify-end gap-2">
+          <button @click="banModal = null" class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-400 hover:bg-white/5">Cancel</button>
+          <button @click="confirmBan" class="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600">Ban member</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Ban-IP modal -->
+    <div v-if="ipModal" class="fixed inset-0 z-[80] flex items-center justify-center p-4" @keydown.esc="ipModal = null">
+      <div class="absolute inset-0 bg-black/60" @click="ipModal = null" />
+      <div class="relative w-full max-w-md rounded-2xl border border-white/10 bg-[#14172a] p-6 shadow-2xl">
+        <h3 class="text-lg font-bold text-white">Ban IP <span class="font-mono text-indigo-300">{{ ipModal.ip }}</span></h3>
+        <p class="mt-1 text-sm text-slate-400">Requests from this address will be blocked.</p>
+        <label class="mt-4 block text-xs font-semibold uppercase tracking-wide text-slate-400">Reason (optional)</label>
+        <input v-model="ipModalReason" class="mt-1.5 w-full rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+        <div class="mt-5 flex justify-end gap-2">
+          <button @click="ipModal = null" class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-400 hover:bg-white/5">Cancel</button>
+          <button @click="confirmBanIp" class="rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white hover:bg-red-600">Ban IP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generic confirm modal -->
+    <div v-if="confirmModal" class="fixed inset-0 z-[80] flex items-center justify-center p-4" @keydown.esc="confirmModal = null">
+      <div class="absolute inset-0 bg-black/60" @click="confirmModal = null" />
+      <div class="relative w-full max-w-sm rounded-2xl border border-white/10 bg-[#14172a] p-6 shadow-2xl">
+        <h3 class="text-lg font-bold text-white">{{ confirmModal.title }}</h3>
+        <p class="mt-1.5 text-sm text-slate-400">{{ confirmModal.body }}</p>
+        <div class="mt-5 flex justify-end gap-2">
+          <button @click="confirmModal = null" class="rounded-lg px-4 py-2 text-sm font-semibold text-slate-400 hover:bg-white/5">Cancel</button>
+          <button @click="runConfirm" class="rounded-lg px-4 py-2 text-sm font-semibold text-white" :class="confirmModal.danger ? 'bg-red-500 hover:bg-red-600' : 'bg-indigo-500 hover:bg-indigo-600'">Confirm</button>
+        </div>
       </div>
     </div>
   </AdminLayout>

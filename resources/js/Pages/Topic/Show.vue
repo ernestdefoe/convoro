@@ -18,11 +18,19 @@ const page = usePage();
 const user = computed(() => (page.props as any).auth?.user ?? null);
 const loggedIn = computed(() => !!user.value);
 
+const reportModal = ref<{ id: number } | null>(null);
+const reportReason = ref('');
+const reportSent = ref(false);
 function report(post: any) {
   if (!loggedIn.value) { auth.open('login'); return; }
-  const reason = prompt('Report this post to the moderators? Optionally tell us why:');
-  if (reason === null) return;
-  router.post('/report', { type: 'post', id: post.id, reason }, { preserveScroll: true });
+  reportReason.value = ''; reportSent.value = false; reportModal.value = { id: post.id };
+}
+function submitReport() {
+  const m = reportModal.value; if (!m) return;
+  router.post('/report', { type: 'post', id: m.id, reason: reportReason.value }, {
+    preserveScroll: true,
+    onSuccess: () => { reportSent.value = true; setTimeout(() => (reportModal.value = null), 1200); },
+  });
 }
 function canReport(post: any) {
   return loggedIn.value && post.author?.id && post.author.id !== (user.value as any)?.id;
@@ -279,6 +287,29 @@ function submitReply() {
           <button @click="saveEdit" class="rounded-c bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600">Save</button>
           <button @click="editing = null" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Cancel</button>
         </div>
+      </div>
+    </div>
+
+    <!-- Report post modal -->
+    <div v-if="reportModal" class="fixed inset-0 z-[80] flex items-center justify-center p-4" @keydown.esc="reportModal = null">
+      <div class="absolute inset-0 bg-black/50" @click="reportModal = null"></div>
+      <div class="relative w-full max-w-md rounded-c border border-line bg-surface p-6 shadow-2xl">
+        <template v-if="reportSent">
+          <div class="py-4 text-center">
+            <div class="text-3xl">✅</div>
+            <p class="mt-2 font-semibold text-ink">Thanks — our moderators will take a look.</p>
+          </div>
+        </template>
+        <template v-else>
+          <h3 class="text-lg font-bold text-ink">Report this post</h3>
+          <p class="mt-1 text-sm text-ink-muted">Flag this for the moderators. Tell us what's wrong (optional).</p>
+          <textarea v-model="reportReason" rows="3" placeholder="Reason (optional)…"
+            class="mt-3 w-full rounded-c border-line bg-surface-2 text-sm text-ink focus:border-primary focus:ring-primary"></textarea>
+          <div class="mt-4 flex justify-end gap-2">
+            <button @click="reportModal = null" class="rounded-lg px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Cancel</button>
+            <button @click="submitReport" class="rounded-c bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600">Submit report</button>
+          </div>
+        </template>
       </div>
     </div>
   </AppLayout>
