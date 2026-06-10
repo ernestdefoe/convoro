@@ -47,6 +47,7 @@ class HandleInertiaRequests extends Middleware
                 'status' => fn () => $request->session()->get('status'),
                 'mailTest' => fn () => $request->session()->get('mailTest'),
                 'extResult' => fn () => $request->session()->get('extResult'),
+                'storeError' => fn () => $request->session()->get('storeError'),
             ],
             'updateBanner' => fn () => $request->user()?->is_admin ? [
                 'available' => (bool) Settings::get('update.available', false),

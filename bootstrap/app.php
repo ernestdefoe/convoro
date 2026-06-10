@@ -25,6 +25,13 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureAdmin::class,
         ]);
+
+        // Server-to-server endpoints (Stripe webhook, remote license checks)
+        // carry no CSRF token.
+        $middleware->validateCsrfTokens(except: [
+            'store/webhook',
+            'api/licenses/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Install Convoro — Documentation</title>
+  <meta name="description" content="Step-by-step guide to installing Convoro on shared hosting (no SSH) or a VPS. Upload, unzip, and finish setup in your browser.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;850&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+  <header class="nav">
+    <div class="wrap nav-inner">
+      <a class="brand" href="/"><span class="logo"><i></i></span> Convoro</a>
+      <a class="link hide-sm" href="/#features">Features</a>
+      <a class="link hide-sm" href="/docs/install.html">Docs</a>
+      <span class="spacer"></span>
+      <a class="btn btn-ghost" href="https://community.convoro.co" target="_blank" rel="noopener">Live demo</a>
+    </div>
+  </header>
+
+  <div class="wrap doc">
+    <aside>
+      <div style="font-weight:800;margin-bottom:8px">Install guide</div>
+      <a href="#requirements">Requirements</a>
+      <a href="#shared">Shared hosting (no SSH)</a>
+      <a href="#vps">VPS / Composer</a>
+      <a href="#after">After installing</a>
+      <a href="#updating">Updating</a>
+      <a href="#extensions">Extensions &amp; themes</a>
+      <a href="#troubleshooting">Troubleshooting</a>
+    </aside>
+
+    <div class="doc-body">
+      <h1>Installing Convoro</h1>
+      <p>Convoro installs entirely in your browser. The release archive ships with everything bundled — no Composer step, no Node, no command line required. If you can upload a file and create a database, you can run Convoro.</p>
+
+      <h2 id="requirements">Requirements</h2>
+      <ul>
+        <li><strong>PHP 8.3+</strong> with extensions: <code>pdo</code>, <code>mbstring</code>, <code>openssl</code>, <code>tokenizer</code>, <code>gd</code>, <code>fileinfo</code>, <code>ctype</code>, <code>json</code>, <code>zip</code></li>
+        <li>A database: <strong>MySQL 8+</strong>, <strong>MariaDB 10.4+</strong>, or <strong>PostgreSQL 13+</strong></li>
+        <li>Writable <code>storage/</code>, <code>bootstrap/cache/</code>, and project root (for <code>.env</code>)</li>
+      </ul>
+      <div class="callout">The installer checks all of this for you on the first screen and tells you exactly what (if anything) needs fixing.</div>
+
+      <h2 id="shared">Shared hosting (no SSH)</h2>
+      <div class="step"><div class="n">1</div><div><strong>Create a database.</strong> In your hosting panel (cPanel, Plesk, etc.) create an empty database and a user with full access to it. Note the name, user, and password.</div></div>
+      <div class="step"><div class="n">2</div><div><strong>Download &amp; upload.</strong> Grab the latest <code>convoro-x.y.z.zip</code> from the releases page, upload it to your web root, and extract it there.</div></div>
+      <div class="step"><div class="n">3</div><div><strong>Point your domain at the <code>public/</code> folder.</strong> Most panels let you set the document root. (If you can’t, move the contents of <code>public/</code> up — see Troubleshooting.)</div></div>
+      <div class="step"><div class="n">4</div><div><strong>Open your site.</strong> Visit your domain — Convoro sends you straight to the <code>/install</code> wizard. Confirm requirements, enter your database details, name your community, and create your admin account.</div></div>
+      <div class="step"><div class="n">5</div><div><strong>Done.</strong> The installer writes your config, runs migrations, and locks itself. You’re live. 🎉</div></div>
+
+      <h2 id="vps">VPS / Composer install</h2>
+      <p>On a server with shell access you can also install from source:</p>
+      <pre><code>git clone https://github.com/ernestdefoe/convoro.git
+cd convoro
+composer install --no-dev --optimize-autoloader
+npm ci &amp;&amp; npm run build      # only if building assets yourself
+cp .env.example .env</code></pre>
+      <p>Then open <code>/install</code> in the browser to finish, or configure <code>.env</code> and run <code>php artisan migrate --force</code> manually. For production traffic, add <strong>Redis</strong> (cache/queue/sessions), <strong>Laravel Reverb</strong> (live threads over websockets), and a queue worker.</p>
+
+      <h2 id="after">After installing</h2>
+      <ul>
+        <li>Sign in and open <strong>Admin → Settings</strong> to set your logo, theme, and SEO.</li>
+        <li>Set up outgoing mail in <strong>Admin → Email</strong> (server mail or SMTP) so notifications and digests send.</li>
+        <li>Open <strong>Admin → Theme</strong> to recolor your community live.</li>
+        <li>For background jobs (digests, updates), run a queue worker: <code>php artisan queue:work</code>.</li>
+      </ul>
+
+      <h2 id="updating">Updating</h2>
+      <p>When a new version is available you’ll see a banner in <strong>Admin → Marketplace</strong>. Click to update — Convoro downloads the release, applies it (preserving your config and uploads), and runs any new migrations. On shared hosting you can also just upload the new archive over the old files; your <code>.env</code> and <code>storage/</code> are never overwritten.</p>
+
+      <h2 id="extensions">Extensions &amp; themes</h2>
+      <p>Open <strong>Admin → Marketplace</strong> to manage add-ons. Upload an extension’s <code>.zip</code> and toggle it on — no Composer or shell needed. On Composer-capable hosts, Convoro can also install packages directly. Click any installed card to configure its settings.</p>
+
+      <h2 id="troubleshooting">Troubleshooting</h2>
+      <h3>I can’t set the document root to <code>public/</code></h3>
+      <p>Move everything inside <code>public/</code> into your web root, then edit <code>index.php</code> so the two <code>require</code> paths point up one level (<code>../</code> → your install folder).</p>
+      <h3>“No application encryption key”</h3>
+      <p>Convoro generates this automatically on first load. If it persists, make sure the project root is writable so it can save <code>.env</code>.</p>
+      <h3>A requirement shows ✕</h3>
+      <p>Enable the missing PHP extension in your hosting panel (or ask your host), then reload <code>/install</code>.</p>
+
+      <div class="callout" style="margin-top:36px">Need a hand? Try the <a href="https://community.convoro.co" target="_blank" rel="noopener">live demo community</a> to see everything in action.</div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="wrap foot-inner">
+      <a class="brand" href="/" style="font-size:16px"><span class="logo" style="width:26px;height:26px"><i></i></span> Convoro</a>
+      <span class="spacer" style="flex:1"></span>
+      <a href="/">Home</a>
+      <a href="https://community.convoro.co" target="_blank" rel="noopener">Demo</a>
+      <span>© 2026 Convoro</span>
+    </div>
+  </footer>
+</body>
+</html>

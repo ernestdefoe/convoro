@@ -9,6 +9,22 @@ use App\Http\Controllers\TopicController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// Marketing + central store, scoped to the apex domain (convoro.co). Registered
+// FIRST so its `/` wins over the forum index on that host; the forum keeps `/`
+// on every other host. Shared login works via SESSION_DOMAIN=.convoro.co.
+Route::domain(config('convoro.marketing_domain'))->group(function () {
+    Route::get('/', [App\Http\Controllers\MarketingController::class, 'home'])->name('marketing.home');
+    Route::get('/store', [App\Http\Controllers\StoreController::class, 'index'])->name('store.index');
+    Route::get('/store/success', [App\Http\Controllers\StoreController::class, 'success'])->name('store.success');
+    Route::get('/store/{product}', [App\Http\Controllers\StoreController::class, 'show'])->name('store.show');
+    Route::post('/store/{product}/checkout', [App\Http\Controllers\StoreController::class, 'checkout'])->name('store.checkout');
+});
+
+// Stripe webhook + license API (any host; CSRF-excepted in bootstrap/app.php).
+Route::post('/store/webhook', [App\Http\Controllers\StoreController::class, 'webhook'])->name('store.webhook');
+Route::post('/api/licenses/validate', [App\Http\Controllers\LicenseController::class, 'validateKey'])->name('licenses.validate');
+Route::get('/api/licenses/download', [App\Http\Controllers\LicenseController::class, 'download'])->name('licenses.download');
+
 // First-run web installer (gated by EnsureInstalled — 404s once installed).
 Route::get('/install', [App\Http\Controllers\InstallController::class, 'show'])->name('install');
 Route::post('/install/test-db', [App\Http\Controllers\InstallController::class, 'testDatabase'])->name('install.testdb');
@@ -108,6 +124,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/account/licenses', [App\Http\Controllers\StoreController::class, 'account'])->name('store.account');
     Route::get('/users/search', [App\Http\Controllers\UserProfileController::class, 'search'])->name('users.search');
     Route::post('/u/{user}/wall', [App\Http\Controllers\UserProfileController::class, 'storeWall'])->name('profiles.wall.store');
     Route::delete('/profile-posts/{profilePost}', [App\Http\Controllers\UserProfileController::class, 'destroyWall'])->name('profiles.wall.destroy');
