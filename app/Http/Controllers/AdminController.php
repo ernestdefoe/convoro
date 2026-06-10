@@ -11,6 +11,8 @@ use App\Models\User;
 use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -37,6 +39,96 @@ class AdminController extends Controller
     public function accessibility(): Response
     {
         return Inertia::render('Admin/Accessibility');
+    }
+
+    // ---- System / maintenance / updates -----------------------------------
+
+    private function updateState(): array
+    {
+        $current = (string) config('convoro.version');
+
+        return [
+            'current' => $current,
+            'latest' => Settings::get('update.latest', $current),
+            'available' => (bool) Settings::get('update.available', false),
+            'url' => Settings::get('update.url'),
+            'checkedAt' => Settings::get('update.checked_at'),
+            'enabled' => (bool) config('convoro.update_url'),
+        ];
+    }
+
+    public function system(): Response
+    {
+        return Inertia::render('Admin/System', [
+            'info' => [
+                'version' => config('convoro.version'),
+                'php' => PHP_VERSION,
+                'laravel' => app()->version(),
+                'database' => config('database.default'),
+                'cache' => config('cache.default'),
+                'queue' => config('queue.default'),
+            ],
+            'update' => $this->updateState(),
+        ]);
+    }
+
+    /** Run a maintenance task in-process (no shell needed — shared-hosting friendly). */
+    public function runMaintenance(Request $request): RedirectResponse
+    {
+        $action = (string) $request->input('action');
+        $tasks = [
+            'cache' => fn () => Artisan::call('optimize:clear'),
+            'optimize' => fn () => Artisan::call('optimize'),
+            'migrate' => fn () => Artisan::call('migrate', ['--force' => true]),
+            'storage' => fn () => Artisan::call('storage:link'),
+            'icons' => fn () => Artisan::call('convoro:icons'),
+        ];
+        abort_unless(isset($tasks[$action]), 422);
+
+        try {
+            $tasks[$action]();
+            $status = 'Done: '.$action;
+        } catch (\Throwable $e) {
+            $status = 'Failed: '.$e->getMessage();
+        }
+
+        return back()->with('status', $status);
+    }
+
+    public function checkUpdates(): RedirectResponse
+    {
+        $url = config('convoro.update_url');
+        $current = (string) config('convoro.version');
+
+        if (! $url) {
+            Settings::setMany(['update.available' => false, 'update.latest' => $current, 'update.checked_at' => now()->toDateTimeString()]);
+
+            return back()->with('status', 'Update checks are not configured.');
+        }
+
+        try {
+            $res = Http::timeout(6)->acceptJson()->get($url);
+            $latest = (string) ($res->json('version') ?? $current);
+            Settings::setMany([
+                'update.latest' => $latest,
+                'update.available' => version_compare($latest, $current, '>'),
+                'update.url' => $res->json('url'),
+                'update.checked_at' => now()->toDateTimeString(),
+            ]);
+        } catch (\Throwable $e) {
+            Settings::set('update.checked_at', now()->toDateTimeString());
+
+            return back()->with('status', 'Could not reach the update server.');
+        }
+
+        return back();
+    }
+
+    public function marketplace(): Response
+    {
+        return Inertia::render('Admin/Marketplace', [
+            'update' => $this->updateState(),
+        ]);
     }
 
     // ---- Categories & Tags ------------------------------------------------
@@ -144,6 +236,9 @@ class AdminController extends Controller
                 'tagline' => Settings::get('site.tagline'),
                 'default_view' => Settings::get('forum.default_view'),
                 'realtime' => (bool) Settings::get('realtime.enabled'),
+                'digests' => (bool) Settings::get('digests.enabled'),
+                'pwa_banner' => (bool) Settings::get('pwa.banner'),
+                'pwa_short_name' => Settings::get('pwa.short_name'),
             ],
         ]);
     }
@@ -155,6 +250,9 @@ class AdminController extends Controller
             'tagline' => ['nullable', 'string', 'max:160'],
             'default_view' => ['required', 'in:feed,grid'],
             'realtime' => ['required', 'boolean'],
+            'digests' => ['required', 'boolean'],
+            'pwa_banner' => ['required', 'boolean'],
+            'pwa_short_name' => ['required', 'string', 'max:30'],
         ]);
 
         Settings::setMany([
@@ -162,6 +260,9 @@ class AdminController extends Controller
             'site.tagline' => $data['tagline'] ?? '',
             'forum.default_view' => $data['default_view'],
             'realtime.enabled' => (bool) $data['realtime'],
+            'digests.enabled' => (bool) $data['digests'],
+            'pwa.banner' => (bool) $data['pwa_banner'],
+            'pwa.short_name' => $data['pwa_short_name'],
         ]);
 
         return back();

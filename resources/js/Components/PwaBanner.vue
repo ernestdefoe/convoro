@@ -32,6 +32,7 @@ function onBeforeInstall(e: Event) {
 
 onMounted(() => {
   if (dismissed()) return;
+  if ((page.props as any).site?.pwaBanner === false) return; // disabled in admin settings
   window.addEventListener('beforeinstallprompt', onBeforeInstall);
 
   // iOS Safari fires no install event — offer manual "Add to Home Screen".

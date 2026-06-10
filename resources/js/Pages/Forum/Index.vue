@@ -3,6 +3,7 @@ import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TopicCard from '@/Components/forum/TopicCard.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
+import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
 
 const props = defineProps<{
   view: 'feed' | 'grid';
@@ -36,7 +37,7 @@ const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, ''
             <button v-for="c in categories" :key="c.slug" @click="go({ category: c.slug })"
               class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold"
               :class="activeCategory === c.slug ? 'bg-primary-soft text-primary-700' : 'text-ink-2 hover:bg-surface-2'">
-              <span>{{ c.icon }}</span> {{ c.name }}
+              <CategoryIcon :icon="c.icon" /> {{ c.name }}
               <span class="ml-auto rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink-muted">{{ c.count }}</span>
             </button>
           </nav>
@@ -73,7 +74,7 @@ const fmt = (n: number) => (n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, ''
             </div>
             <div class="flex flex-1 flex-col p-4">
               <span v-if="t.category" class="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                :style="{ color: t.category.color, background: t.category.color + '22' }">{{ t.category.icon }} {{ t.category.name }}</span>
+                :style="{ color: t.category.color, background: t.category.color + '22' }"><CategoryIcon :icon="t.category.icon" /> {{ t.category.name }}</span>
               <h3 class="text-[15px] font-bold leading-snug">{{ t.title }}</h3>
               <div class="mt-auto flex items-center gap-2 pt-3 text-xs text-ink-muted">
                 <Avatar :avatar="t.author" :size="24" /><span>{{ t.author.name }}</span>

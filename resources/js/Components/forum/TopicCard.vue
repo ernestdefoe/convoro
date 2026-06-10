@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import Avatar from './Avatar.vue';
+import CategoryIcon from './CategoryIcon.vue';
 
 defineProps<{ topic: any }>();
 </script>
@@ -23,7 +24,7 @@ defineProps<{ topic: any }>();
       <div class="mt-2.5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[13px] text-ink-muted">
         <span v-if="topic.category" class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
           :style="{ color: topic.category.color, background: topic.category.color + '22' }">
-          <span>{{ topic.category.icon }}</span> {{ topic.category.name }}
+          <CategoryIcon :icon="topic.category.icon" /> {{ topic.category.name }}
         </span>
         <span class="font-semibold text-ink-2">{{ topic.author.name }}</span>
         <span>· {{ topic.lastActivity }}</span>

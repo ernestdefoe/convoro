@@ -31,12 +31,12 @@ class ForumSeeder extends Seeder
 
         // Categories
         $cats = collect([
-            ['name' => 'Announcements', 'icon' => '💬', 'color' => '#6366f1'],
-            ['name' => 'Development', 'icon' => '🛠️', 'color' => '#2563eb'],
-            ['name' => 'Design & Themes', 'icon' => '🎨', 'color' => '#16a34a'],
-            ['name' => 'Extensions', 'icon' => '🧩', 'color' => '#7c3aed'],
-            ['name' => 'Support', 'icon' => '❓', 'color' => '#e8830c'],
-            ['name' => 'Off-topic', 'icon' => '☕', 'color' => '#64748b'],
+            ['name' => 'Announcements', 'icon' => 'fa-solid fa-bullhorn', 'color' => '#6366f1'],
+            ['name' => 'Development', 'icon' => 'fa-solid fa-code', 'color' => '#2563eb'],
+            ['name' => 'Design & Themes', 'icon' => 'fa-solid fa-palette', 'color' => '#16a34a'],
+            ['name' => 'Extensions', 'icon' => 'fa-solid fa-puzzle-piece', 'color' => '#7c3aed'],
+            ['name' => 'Support', 'icon' => 'fa-solid fa-circle-question', 'color' => '#e8830c'],
+            ['name' => 'Off-topic', 'icon' => 'fa-solid fa-mug-hot', 'color' => '#64748b'],
         ])->map(fn ($c, $i) => Category::firstOrCreate(
             ['slug' => Str::slug($c['name'])],
             $c + ['position' => $i]

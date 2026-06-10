@@ -3,6 +3,15 @@ import { Head, router } from '@inertiajs/vue3';
 import { reactive, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
+const faIcons = [
+  'fa-solid fa-bullhorn', 'fa-solid fa-comments', 'fa-solid fa-code', 'fa-solid fa-palette',
+  'fa-solid fa-puzzle-piece', 'fa-solid fa-circle-question', 'fa-solid fa-mug-hot', 'fa-solid fa-rocket',
+  'fa-solid fa-lightbulb', 'fa-solid fa-newspaper', 'fa-solid fa-gamepad', 'fa-solid fa-music',
+  'fa-solid fa-camera', 'fa-solid fa-heart', 'fa-solid fa-star', 'fa-solid fa-fire',
+  'fa-solid fa-bolt', 'fa-solid fa-book', 'fa-solid fa-gear', 'fa-solid fa-users',
+  'fa-solid fa-trophy', 'fa-solid fa-flask', 'fa-solid fa-graduation-cap', 'fa-solid fa-briefcase',
+];
+
 defineProps<{
   categories: { id: number; name: string; slug: string; description: string | null; icon: string | null; color: string; position: number; topics: number }[];
   tags: { id: number; name: string; slug: string; color: string; topics: number }[];
@@ -64,27 +73,43 @@ const inp = 'rounded-lg border-white/10 bg-[#0f1120] text-sm text-slate-100 focu
       <section class="rounded-2xl border border-white/5 bg-[#14172a] p-5">
         <h3 class="mb-3 text-sm font-bold text-white">Categories</h3>
 
-        <div class="mb-4 flex flex-wrap items-end gap-2 rounded-xl border border-white/5 bg-[#0f1120] p-3">
-          <input v-model="newCat.icon" :class="inp" class="w-14 text-center" placeholder="🙂" maxlength="2" />
-          <input v-model="newCat.name" :class="inp" class="flex-1" placeholder="New category name" @keyup.enter="addCategory" />
-          <input v-model="newCat.color" type="color" class="h-9 w-10 rounded border-white/10 bg-transparent" />
-          <button class="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="addCategory">Add</button>
+        <div class="mb-4 rounded-xl border border-white/5 bg-[#0f1120] p-3">
+          <div class="flex items-center gap-2">
+            <span class="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-slate-300"><i v-if="newCat.icon" :class="newCat.icon"></i><span v-else>#</span></span>
+            <input v-model="newCat.name" :class="inp" class="flex-1" placeholder="New category name" @keyup.enter="addCategory" />
+            <input v-model="newCat.color" type="color" class="h-9 w-10 rounded border-white/10 bg-transparent" />
+            <button class="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="addCategory">Add</button>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1">
+            <button v-for="ic in faIcons" :key="ic" type="button" class="grid h-8 w-8 place-items-center rounded-lg border text-sm"
+              :class="newCat.icon === ic ? 'border-indigo-500 bg-indigo-500/20 text-white' : 'border-white/10 text-slate-400 hover:text-white'" @click="newCat.icon = ic">
+              <i :class="ic"></i>
+            </button>
+          </div>
         </div>
 
         <ul class="space-y-2">
           <li v-for="c in categories" :key="c.id" class="rounded-xl border border-white/5 p-3">
             <template v-if="editCatId === c.id">
               <div class="flex flex-wrap items-center gap-2">
-                <input v-model="catBuf.icon" :class="inp" class="w-12 text-center" maxlength="2" />
+                <span class="grid h-9 w-9 place-items-center rounded-lg bg-white/5 text-slate-300"><i v-if="catBuf.icon" :class="catBuf.icon"></i><span v-else>#</span></span>
                 <input v-model="catBuf.name" :class="inp" class="flex-1" />
                 <input v-model="catBuf.color" type="color" class="h-9 w-10 rounded border-white/10 bg-transparent" />
                 <button class="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white" @click="saveCat">Save</button>
                 <button class="rounded-lg px-3 py-1.5 text-sm text-slate-400 hover:text-white" @click="editCatId = null">Cancel</button>
               </div>
+              <div class="mt-2 flex flex-wrap gap-1">
+                <button v-for="ic in faIcons" :key="ic" type="button" class="grid h-8 w-8 place-items-center rounded-lg border text-sm"
+                  :class="catBuf.icon === ic ? 'border-indigo-500 bg-indigo-500/20 text-white' : 'border-white/10 text-slate-400 hover:text-white'" @click="catBuf.icon = ic">
+                  <i :class="ic"></i>
+                </button>
+              </div>
               <input v-model="catBuf.description" :class="inp" class="mt-2 w-full" placeholder="Description (optional)" />
             </template>
             <div v-else class="flex items-center gap-3">
-              <span class="flex h-8 w-8 items-center justify-center rounded-lg text-base" :style="{ background: c.color + '22' }">{{ c.icon || '#' }}</span>
+              <span class="flex h-8 w-8 items-center justify-center rounded-lg text-base" :style="{ color: c.color, background: c.color + '22' }">
+                <i v-if="c.icon && c.icon.startsWith('fa')" :class="c.icon"></i><span v-else>{{ c.icon || '#' }}</span>
+              </span>
               <div class="min-w-0 flex-1">
                 <div class="font-semibold text-slate-100">{{ c.name }}</div>
                 <div class="text-xs text-slate-500">{{ c.topics }} topics · /{{ c.slug }}</div>

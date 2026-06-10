@@ -84,24 +84,24 @@ function onFile(e: Event) {
 <template>
   <div class="relative overflow-hidden rounded-c border border-line bg-surface">
     <div v-if="editor" class="flex flex-wrap items-center gap-0.5 border-b border-line bg-surface-2 px-2.5 py-2">
-      <button type="button" class="tb" :class="{ on: isActive('bold') }" title="Bold" @click="editor.chain().focus().toggleBold().run()"><b>B</b></button>
-      <button type="button" class="tb italic" :class="{ on: isActive('italic') }" title="Italic" @click="editor.chain().focus().toggleItalic().run()">I</button>
-      <button type="button" class="tb underline" :class="{ on: isActive('underline') }" title="Underline" @click="editor.chain().focus().toggleUnderline().run()">U</button>
-      <button type="button" class="tb line-through" :class="{ on: isActive('strike') }" title="Strikethrough" @click="editor.chain().focus().toggleStrike().run()">S</button>
+      <button type="button" class="tb" :class="{ on: isActive('bold') }" title="Bold" aria-label="Bold" data-tip="Bold (Ctrl+B)" @click="editor.chain().focus().toggleBold().run()"><b>B</b></button>
+      <button type="button" class="tb italic" :class="{ on: isActive('italic') }" title="Italic" aria-label="Italic" data-tip="Italic (Ctrl+I)" @click="editor.chain().focus().toggleItalic().run()">I</button>
+      <button type="button" class="tb underline" :class="{ on: isActive('underline') }" title="Underline" aria-label="Underline" data-tip="Underline (Ctrl+U)" @click="editor.chain().focus().toggleUnderline().run()">U</button>
+      <button type="button" class="tb line-through" :class="{ on: isActive('strike') }" title="Strikethrough" aria-label="Strikethrough" data-tip="Strikethrough" @click="editor.chain().focus().toggleStrike().run()">S</button>
       <span class="mx-1.5 h-5 w-px bg-line"></span>
-      <button type="button" class="tb" :class="{ on: isActive('heading', { level: 2 }) }" title="Heading" @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"><b>H</b></button>
-      <button type="button" class="tb" :class="{ on: isActive('blockquote') }" title="Quote" @click="editor.chain().focus().toggleBlockquote().run()">”</button>
-      <button type="button" class="tb font-mono text-xs" :class="{ on: isActive('codeBlock') }" title="Code" @click="editor.chain().focus().toggleCodeBlock().run()">{}</button>
-      <button type="button" class="tb" :class="{ on: isActive('bulletList') }" title="Bullet list" @click="editor.chain().focus().toggleBulletList().run()">•</button>
-      <button type="button" class="tb" :class="{ on: isActive('orderedList') }" title="Numbered list" @click="editor.chain().focus().toggleOrderedList().run()">1.</button>
+      <button type="button" class="tb" :class="{ on: isActive('heading', { level: 2 }) }" title="Heading" aria-label="Heading" data-tip="Heading" @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"><b>H</b></button>
+      <button type="button" class="tb" :class="{ on: isActive('blockquote') }" title="Quote" aria-label="Quote" data-tip="Quote" @click="editor.chain().focus().toggleBlockquote().run()">”</button>
+      <button type="button" class="tb font-mono text-xs" :class="{ on: isActive('codeBlock') }" title="Code block" aria-label="Code block" data-tip="Code block" @click="editor.chain().focus().toggleCodeBlock().run()">{}</button>
+      <button type="button" class="tb" :class="{ on: isActive('bulletList') }" title="Bullet list" aria-label="Bullet list" data-tip="Bullet list" @click="editor.chain().focus().toggleBulletList().run()">•</button>
+      <button type="button" class="tb" :class="{ on: isActive('orderedList') }" title="Numbered list" aria-label="Numbered list" data-tip="Numbered list" @click="editor.chain().focus().toggleOrderedList().run()">1.</button>
       <span class="mx-1.5 h-5 w-px bg-line"></span>
-      <button type="button" class="tb" :class="{ on: isActive('link') }" title="Link" @click="setLink">🔗</button>
-      <button type="button" class="tb" title="Image" @click="pickImage">
+      <button type="button" class="tb" :class="{ on: isActive('link') }" title="Insert link" aria-label="Insert link" data-tip="Insert link" @click="setLink">🔗</button>
+      <button type="button" class="tb" title="Insert image" aria-label="Insert image" data-tip="Insert image" @click="pickImage">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-5-5L5 21" /></svg>
       </button>
       <span class="mx-1.5 h-5 w-px bg-line"></span>
-      <button type="button" class="tb" title="Undo" @click="editor.chain().focus().undo().run()">↶</button>
-      <button type="button" class="tb" title="Redo" @click="editor.chain().focus().redo().run()">↷</button>
+      <button type="button" class="tb" title="Undo" aria-label="Undo" data-tip="Undo (Ctrl+Z)" @click="editor.chain().focus().undo().run()">↶</button>
+      <button type="button" class="tb" title="Redo" aria-label="Redo" data-tip="Redo (Ctrl+Y)" @click="editor.chain().focus().redo().run()">↷</button>
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFile" />
     </div>
     <EditorContent :editor="editor" class="min-h-[110px] px-4 py-3 text-ink" />
@@ -112,8 +112,15 @@ function onFile(e: Event) {
 </template>
 
 <style scoped>
-.tb { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; color: rgb(var(--c-text-2)); cursor: pointer; border: 0; background: none; font-size: 14px; }
+.tb { position: relative; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; color: rgb(var(--c-text-2)); cursor: pointer; border: 0; background: none; font-size: 14px; }
 .tb:hover { background: rgb(var(--c-surface)); box-shadow: 0 0 0 1px rgb(var(--c-border)); }
+.tb[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: rgb(var(--c-text)); color: rgb(var(--c-surface));
+  font-size: 11px; font-weight: 600; line-height: 1; white-space: nowrap;
+  padding: 5px 7px; border-radius: 6px; pointer-events: none; z-index: 30;
+}
 .tb.on { background: rgb(var(--c-primary-soft)); color: rgb(var(--c-primary-700)); }
 :deep(.ProseMirror) { min-height: 90px; }
 :deep(.ProseMirror p.is-editor-empty:first-child::before) { content: attr(data-placeholder); color: rgb(var(--c-muted)); float: left; height: 0; pointer-events: none; }

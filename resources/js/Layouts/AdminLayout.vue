@@ -11,7 +11,11 @@ const nav = [
   { label: 'Settings', href: '/admin/settings', component: 'Admin/Settings', icon: 'M12 15a3 3 0 100-6 3 3 0 000 6z M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09A1.65 1.65 0 009 19.4' },
   { label: 'Theme', href: '/admin/theme', component: 'Admin/Theme', icon: 'M12 3a9 9 0 100 18h.5a2.5 2.5 0 002.5-2.5 2.5 2.5 0 012.5-2.5H21a0 0 0 000 0' },
   { label: 'Accessibility', href: '/admin/accessibility', component: 'Admin/Accessibility', icon: 'M12 2a2 2 0 110 4 2 2 0 010-4z M21 9l-6-1h-6L3 9 M9 22l3-8 3 8 M12 8v6' },
+  { label: 'Marketplace', href: '/admin/marketplace', component: 'Admin/Marketplace', icon: 'M3 9l1-5h16l1 5M4 9v10h16V9M9 9v10M15 9v10' },
+  { label: 'System', href: '/admin/system', component: 'Admin/System', icon: 'M12 15a3 3 0 100-6 3 3 0 000 6z M4 12h2M18 12h2M12 4v2M12 18v2' },
 ];
+
+const banner = () => (page.props as any).updateBanner ?? null;
 
 function active(c: string) {
   return current.value === c;
@@ -53,6 +57,11 @@ function active(c: string) {
         <p v-if="$slots.subtitle" class="mt-0.5 text-sm text-slate-400"><slot name="subtitle" /></p>
       </header>
       <main class="p-6">
+        <Link v-if="banner()?.available" href="/admin/marketplace" class="mb-5 flex items-center gap-3 rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-3 text-sm">
+          <span class="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500/30 text-indigo-300">↑</span>
+          <span class="text-slate-200">Convoro <strong>{{ banner().latest }}</strong> is available.</span>
+          <span class="ml-auto font-semibold text-indigo-300">Update →</span>
+        </Link>
         <slot />
       </main>
     </div>

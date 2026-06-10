@@ -20,6 +20,9 @@ class Settings
         'site.tagline' => 'A modern community',
         'forum.default_view' => 'feed',     // feed | grid
         'realtime.enabled' => false,         // off by default (shared-hosting baseline)
+        'digests.enabled' => true,           // master switch for digest emails
+        'pwa.banner' => true,                // show the "install app" banner
+        'pwa.short_name' => 'Convoro',       // PWA short name
         'theme.primary' => '#5b5bd6',
         'theme.radius' => 12,
         'theme.mode' => 'light',             // light | dark
@@ -68,6 +71,8 @@ class Settings
             'tagline' => self::get('site.tagline'),
             'defaultView' => self::get('forum.default_view'),
             'realtime' => (bool) self::get('realtime.enabled'),
+            'pwaBanner' => (bool) self::get('pwa.banner'),
+            'pwaShortName' => self::get('pwa.short_name'),
             'theme' => [
                 'primary' => self::get('theme.primary'),
                 'radius' => (int) self::get('theme.radius'),

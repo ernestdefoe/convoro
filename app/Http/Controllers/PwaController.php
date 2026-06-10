@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 
 class PwaController extends Controller
@@ -9,11 +10,12 @@ class PwaController extends Controller
     /** The web app manifest (installability). */
     public function manifest(): JsonResponse
     {
-        $name = (string) config('app.name', 'Convoro');
+        $name = (string) Settings::get('site.name', config('app.name', 'Convoro'));
+        $short = (string) Settings::get('pwa.short_name', $name);
 
         return response()->json([
             'name' => $name,
-            'short_name' => $name,
+            'short_name' => $short,
             'description' => $name.' community',
             'start_url' => '/',
             'scope' => '/',

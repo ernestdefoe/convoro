@@ -3,6 +3,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
+import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
 import Editor from '@/Components/Editor.vue';
 import { useAuthModal } from '@/lib/authModal';
 
@@ -99,7 +100,7 @@ function submitReply() {
         <div class="p-6 sm:p-9">
           <div class="flex flex-wrap items-center gap-2">
             <span v-if="topic.category" class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-              :style="{ color: topic.category.color, background: topic.category.color + '22' }">{{ topic.category.icon }} {{ topic.category.name }}</span>
+              :style="{ color: topic.category.color, background: topic.category.color + '22' }"><CategoryIcon :icon="topic.category.icon" /> {{ topic.category.name }}</span>
             <span v-if="hereCount > 0" class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-600">
               <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500"></span>LIVE · {{ hereCount }} here
             </span>

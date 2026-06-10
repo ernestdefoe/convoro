@@ -6,6 +6,7 @@ use App\Mail\DigestEmail;
 use App\Models\Topic;
 use App\Models\User;
 use App\Support\Present;
+use App\Support\Settings;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
 
@@ -22,6 +23,12 @@ class SendDigests extends Command
             $this->error('frequency must be "daily" or "weekly".');
 
             return self::FAILURE;
+        }
+
+        if (! Settings::get('digests.enabled', true)) {
+            $this->info('Digest emails are disabled in admin settings.');
+
+            return self::SUCCESS;
         }
 
         $fallback = $frequency === 'daily' ? now()->subDay() : now()->subWeek();
