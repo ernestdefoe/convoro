@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import AppLayout from '@/Layouts/AppLayout.vue';
+import AccessTokensForm from './Partials/AccessTokensForm.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import DigestPreferenceForm from './Partials/DigestPreferenceForm.vue';
 import ProfileDetailsForm from './Partials/ProfileDetailsForm.vue';
@@ -38,6 +39,9 @@ const card = 'rounded-c border border-line bg-surface p-6 sm:p-8';
                 </div>
                 <div :class="card">
                     <UpdatePasswordForm />
+                </div>
+                <div :class="card">
+                    <AccessTokensForm />
                 </div>
                 <div :class="card">
                     <DeleteUserForm />

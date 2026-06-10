@@ -73,6 +73,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile-posts/{profilePost}', [App\Http\Controllers\UserProfileController::class, 'destroyWall'])->name('profiles.wall.destroy');
     Route::post('/profile/details', [App\Http\Controllers\UserProfileController::class, 'updateDetails'])->name('profile.details');
 
+    Route::get('/user/tokens', [App\Http\Controllers\AccessTokenController::class, 'index'])->name('tokens.index');
+    Route::post('/user/tokens', [App\Http\Controllers\AccessTokenController::class, 'store'])->name('tokens.store');
+    Route::delete('/user/tokens/{id}', [App\Http\Controllers\AccessTokenController::class, 'destroy'])->name('tokens.destroy');
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
