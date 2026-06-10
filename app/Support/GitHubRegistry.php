@@ -97,7 +97,7 @@ class GitHubRegistry
             [
                 'slug' => Str::slug($m['id']),
                 'name' => $m['name'],
-                'type' => in_array($m['type'] ?? 'extension', ['extension', 'theme'], true) ? $m['type'] : 'extension',
+                'type' => in_array(($m['type'] ?? 'extension'), ['extension', 'theme'], true) ? ($m['type'] ?? 'extension') : 'extension',
                 'tagline' => Str::limit(strip_tags($m['description'] ?? ''), 180),
                 'description' => $m['description'] ?? '',
                 'version' => $r['version'],
