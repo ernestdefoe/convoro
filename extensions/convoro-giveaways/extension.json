@@ -1,0 +1,15 @@
+{
+  "id": "convoro-giveaways",
+  "name": "Giveaways",
+  "version": "1.0.0",
+  "description": "Run provably-fair giveaways in your community. Members enter with one click, and a verifiable seeded draw picks the winner — with a sidebar widget and a full admin manager.",
+  "author": "Convoro",
+  "convoro": ">=0.1.0",
+  "namespace": "Convoro\\Ext\\Giveaways\\",
+  "provider": "Convoro\\Ext\\Giveaways\\Extension",
+  "migrations": "migrations",
+  "admin_url": "/admin/ext/giveaways",
+  "assets": { "forum": "assets/forum.js" },
+  "premium": false,
+  "price": 0
+}
