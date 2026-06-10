@@ -54,7 +54,7 @@ class ForumSeeder extends Seeder
                 ['feature', 'guide']],
             ['Show off your theme editor creations 🎨', 'Design & Themes', 1, false, false,
                 '<p>Drop a screenshot of your customized Convoro theme. The live editor makes it ridiculously easy.</p>', ['showcase']],
-            ['How do I migrate from XenForo? Step-by-step', 'Support', 2, false, false,
+            ['How do I migrate from another forum? Step-by-step', 'Support', 2, false, false,
                 '<p>Putting together a clean import path. Users, posts, reactions and attachments all came over — attachments auto-converted to WebP which cut storage by ~60%.</p>', ['guide', 'help']],
             ['Built a Spotify now-playing extension in an afternoon', 'Extensions', 3, false, false,
                 '<p>The extension API + click-to-install made this trivial. Source is up — install it straight from the marketplace.</p>', ['showcase', 'feature']],

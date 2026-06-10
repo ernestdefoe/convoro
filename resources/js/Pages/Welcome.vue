@@ -43,7 +43,7 @@ const features = [
           The modern community platform your members will actually love.
         </h1>
         <p class="mx-auto mt-5 max-w-2xl text-lg text-ink-2">
-          The best of Flarum, Invision Community and XenForo — a polished, fast, fully-themeable
+          The proven features of leading forum software — a polished, fast, fully-themeable
           forum with realtime threads, a true WYSIWYG editor and one-click extensions.
         </p>
         <div class="mt-9 flex items-center justify-center gap-3">

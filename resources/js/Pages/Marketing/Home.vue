@@ -48,7 +48,7 @@ const features = [
     <section class="mx-auto max-w-6xl px-6 py-20">
       <div class="mx-auto mb-12 max-w-2xl text-center">
         <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">Everything a community needs — in the box</h2>
-        <p class="mt-3 text-lg text-ink-2">The best of Flarum, Invision, and XenForo, reimagined into one cohesive platform.</p>
+        <p class="mt-3 text-lg text-ink-2">The proven features of leading forum software, reimagined into one cohesive, modern platform.</p>
       </div>
       <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <div v-for="f in features" :key="f.title" class="rounded-2xl border border-line bg-surface p-7 transition hover:shadow-lg hover:shadow-black/5">

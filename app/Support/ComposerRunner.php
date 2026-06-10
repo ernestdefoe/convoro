@@ -8,7 +8,7 @@ use Symfony\Component\Process\Process;
 /**
  * Runs Composer in-process so the Marketplace can install/remove extensions on
  * hosts that have Composer but no SSH (control-panel task runners, etc.) — the
- * way Flarum's Extension Manager works. This is the companion to the
+ * way leading forum platforms' extension managers work. This is the companion to the
  * zip-upload path; neither requires a terminal.
  */
 class ComposerRunner
