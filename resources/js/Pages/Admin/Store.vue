@@ -52,7 +52,7 @@ function uploadFile(p: any, e: Event) {
     <!-- Stripe -->
     <section class="mb-6 max-w-2xl rounded-2xl border border-white/5 bg-[#14172a] p-6">
       <h2 class="text-sm font-bold uppercase tracking-wide text-slate-400">Stripe</h2>
-      <p class="mt-1 text-xs text-slate-500">Until keys are set, the store is browsable but checkout is disabled. After saving, add a webhook in Stripe pointing to <code class="text-slate-300">{{ stripe.webhookUrl ?? props.stripe.webhookUrl }}</code> (event: <code class="text-slate-300">checkout.session.completed</code>).</p>
+      <p class="mt-1 text-xs text-slate-500">Until keys are set, the store is browsable but checkout is disabled. After saving, add a webhook in Stripe pointing to <code class="text-slate-300">{{ props.stripe.webhookUrl }}</code> (event: <code class="text-slate-300">checkout.session.completed</code>).</p>
       <div class="mt-4 space-y-3">
         <div>
           <label class="block text-sm font-medium text-slate-300">Publishable key</label>
