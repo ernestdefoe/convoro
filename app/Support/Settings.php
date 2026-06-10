@@ -28,8 +28,11 @@ class Settings
         'seo.description' => '',             // default meta description (falls back to tagline)
         'seo.image' => '',                  // default social share image (falls back to logo)
         'stripe.key' => '',                  // Stripe publishable key (central store)
-        'stripe.secret' => '',               // Stripe secret key
+        'stripe.secret' => '',               // Stripe secret key (manual / platform fallback)
         'stripe.webhook_secret' => '',       // Stripe webhook signing secret
+        'stripe.account_id' => '',           // Connect: linked account id (acct_…)
+        'stripe.access_token' => '',         // Connect: linked account secret (from OAuth)
+        'stripe.connected_publishable' => '', // Connect: linked account publishable key
         // Outgoing mail. transport: 'sendmail' (server/PHP mail — works on most shared hosts,
         // no config) or 'smtp'. When unset, falls back to the .env mailer.
         'mail.configured' => false,          // once true, these override .env

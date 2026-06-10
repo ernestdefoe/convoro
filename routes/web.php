@@ -127,6 +127,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/marketplace/catalog/install', [App\Http\Controllers\AdminController::class, 'installCatalogItem'])->name('marketplace.catalog.install');
     Route::get('/store', [App\Http\Controllers\AdminController::class, 'store'])->name('store');
     Route::post('/store/stripe', [App\Http\Controllers\AdminController::class, 'updateStripe'])->name('store.stripe');
+    Route::get('/store/stripe/connect', [App\Http\Controllers\AdminController::class, 'connectStripe'])->name('store.stripe.connect');
+    Route::get('/store/stripe/callback', [App\Http\Controllers\AdminController::class, 'stripeCallback'])->name('store.stripe.callback');
+    Route::post('/store/stripe/disconnect', [App\Http\Controllers\AdminController::class, 'disconnectStripe'])->name('store.stripe.disconnect');
     Route::post('/store/link', [App\Http\Controllers\AdminController::class, 'linkRepo'])->name('store.link');
     Route::post('/store/products/{product}/refresh', [App\Http\Controllers\AdminController::class, 'refreshRepo'])->name('products.refresh');
     Route::post('/store/products', [App\Http\Controllers\AdminController::class, 'storeProduct'])->name('products.store');

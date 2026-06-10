@@ -5,8 +5,10 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 const props = defineProps<{
   products: any[];
-  stripe: { key: string; secretSet: boolean; webhookSet: boolean; webhookUrl: string };
+  stripe: { key: string; secretSet: boolean; webhookSet: boolean; webhookUrl: string; canConnect: boolean; connectedAccount: string | null };
 }>();
+
+const showAdvancedKeys = ref(false);
 
 // Stripe keys
 const stripe = useForm({ key: props.stripe.key ?? '', secret: '', webhook_secret: '' });
@@ -67,22 +69,53 @@ function uploadFile(p: any, e: Event) {
 
     <!-- Stripe -->
     <section class="mb-6 max-w-2xl rounded-2xl border border-white/5 bg-[#14172a] p-6">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-slate-400">Stripe</h2>
-      <p class="mt-1 text-xs text-slate-500">Until keys are set, the store is browsable but checkout is disabled. After saving, add a webhook in Stripe pointing to <code class="text-slate-300">{{ props.stripe.webhookUrl }}</code> (event: <code class="text-slate-300">checkout.session.completed</code>).</p>
-      <div class="mt-4 space-y-3">
-        <div>
-          <label class="block text-sm font-medium text-slate-300">Publishable key</label>
-          <input v-model="stripe.key" type="text" placeholder="pk_live_…" class="mt-1 w-full rounded-lg border-white/10 bg-[#0f1120] font-mono text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+      <h2 class="text-sm font-bold uppercase tracking-wide text-slate-400">Payments (Stripe)</h2>
+
+      <!-- Connected -->
+      <div v-if="props.stripe.connectedAccount" class="mt-3 flex flex-wrap items-center gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+        <span class="grid h-9 w-9 place-items-center rounded-full bg-emerald-500/20 text-emerald-300">✓</span>
+        <div class="min-w-0">
+          <div class="text-sm font-semibold text-emerald-200">Stripe connected</div>
+          <div class="font-mono text-xs text-emerald-400/80">{{ props.stripe.connectedAccount }}</div>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-300">Secret key <span v-if="props.stripe.secretSet" class="text-emerald-400">(set)</span></label>
-          <input v-model="stripe.secret" type="password" :placeholder="props.stripe.secretSet ? '•••• leave blank to keep' : 'sk_live_…'" class="mt-1 w-full rounded-lg border-white/10 bg-[#0f1120] font-mono text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+        <a :href="`https://dashboard.stripe.com/${props.stripe.connectedAccount}`" target="_blank" rel="noopener" class="ml-auto text-sm font-semibold text-emerald-300 hover:underline">Open dashboard</a>
+        <button type="button" @click="router.post('/admin/store/stripe/disconnect', {}, { preserveScroll: true })" class="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-400 hover:bg-red-500/10 hover:text-red-400">Disconnect</button>
+      </div>
+
+      <!-- Connect button -->
+      <template v-else>
+        <p class="mt-1 text-xs text-slate-500">Connect your Stripe account to take payments — no copy-pasting API keys.</p>
+        <a v-if="props.stripe.canConnect" href="/admin/store/stripe/connect"
+          class="mt-3 inline-flex items-center gap-2 rounded-lg bg-[#635bff] px-5 py-2.5 text-sm font-bold text-white hover:bg-[#5249e0]">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 9.6c0-.6.5-.8 1.2-.8 1.1 0 2.5.3 3.6.9V6.3c-1.2-.5-2.4-.7-3.6-.7-2.9 0-4.9 1.5-4.9 4.1 0 4 5.4 3.3 5.4 5 0 .6-.6.9-1.4.9-1.2 0-2.8-.5-4-1.2v3.4c1.4.6 2.7.8 4 .8 3 0 5-1.5 5-4.1 0-4.3-5.3-3.5-5.3-5.1z"/></svg>
+          Connect with Stripe
+        </a>
+        <p v-else class="mt-3 rounded-lg bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+          To enable “Connect with Stripe”, set <code>STRIPE_CONNECT_CLIENT_ID</code> (your Stripe Connect application id) and <code>STRIPE_SECRET</code> (platform key) in the server’s <code>.env</code>, then reload.
+        </p>
+      </template>
+
+      <!-- Webhook + advanced manual keys -->
+      <div class="mt-5 border-t border-white/5 pt-4">
+        <p class="text-xs text-slate-500">Add a webhook in Stripe → <code class="text-slate-300">{{ props.stripe.webhookUrl }}</code> (event <code class="text-slate-300">checkout.session.completed</code>).</p>
+        <button type="button" class="mt-2 text-xs font-semibold text-slate-400 hover:text-slate-200" @click="showAdvancedKeys = !showAdvancedKeys">
+          {{ showAdvancedKeys ? 'Hide' : 'Advanced: enter keys manually' }}
+        </button>
+        <div v-if="showAdvancedKeys" class="mt-3 space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-slate-300">Publishable key</label>
+            <input v-model="stripe.key" type="text" placeholder="pk_live_…" class="mt-1 w-full rounded-lg border-white/10 bg-[#0f1120] font-mono text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300">Secret key <span v-if="props.stripe.secretSet" class="text-emerald-400">(set)</span></label>
+            <input v-model="stripe.secret" type="password" :placeholder="props.stripe.secretSet ? '•••• leave blank to keep' : 'sk_live_…'" class="mt-1 w-full rounded-lg border-white/10 bg-[#0f1120] font-mono text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-300">Webhook signing secret <span v-if="props.stripe.webhookSet" class="text-emerald-400">(set)</span></label>
+            <input v-model="stripe.webhook_secret" type="password" :placeholder="props.stripe.webhookSet ? '•••• leave blank to keep' : 'whsec_…'" class="mt-1 w-full rounded-lg border-white/10 bg-[#0f1120] font-mono text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
+          </div>
+          <button @click="saveStripe" :disabled="stripe.processing" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600">Save keys</button>
         </div>
-        <div>
-          <label class="block text-sm font-medium text-slate-300">Webhook signing secret <span v-if="props.stripe.webhookSet" class="text-emerald-400">(set)</span></label>
-          <input v-model="stripe.webhook_secret" type="password" :placeholder="props.stripe.webhookSet ? '•••• leave blank to keep' : 'whsec_…'" class="mt-1 w-full rounded-lg border-white/10 bg-[#0f1120] font-mono text-sm text-slate-100 focus:border-indigo-500 focus:ring-indigo-500" />
-        </div>
-        <button @click="saveStripe" :disabled="stripe.processing" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600">Save Stripe settings</button>
       </div>
     </section>
 

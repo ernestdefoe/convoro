@@ -18,9 +18,14 @@ return [
 
     // Stripe (central store). Prefer admin Settings, fall back to env. Empty =
     // checkout disabled (store still browsable).
+    //   - secret/key      = the PLATFORM account (also used for "Connect with
+    //                       Stripe" OAuth token exchange).
+    //   - connect_client_id = your Stripe Connect application id (ca_...) — set
+    //                       this to enable the "Connect with Stripe" button.
     'stripe' => [
         'key' => env('STRIPE_KEY', ''),
         'secret' => env('STRIPE_SECRET', ''),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET', ''),
+        'connect_client_id' => env('STRIPE_CONNECT_CLIENT_ID', ''),
     ],
 ];

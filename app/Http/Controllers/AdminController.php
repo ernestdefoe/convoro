@@ -163,8 +163,44 @@ class AdminController extends Controller
                 'secretSet' => trim((string) Settings::get('stripe.secret')) !== '',
                 'webhookSet' => trim((string) Settings::get('stripe.webhook_secret')) !== '',
                 'webhookUrl' => url('/store/webhook'),
+                'canConnect' => \App\Support\StripeService::canConnect(),
+                'connectedAccount' => \App\Support\StripeService::connectedAccount(),
             ],
         ]);
+    }
+
+    public function connectStripe(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        abort_unless(\App\Support\StripeService::canConnect(), 422, 'Stripe Connect is not configured (set STRIPE_CONNECT_CLIENT_ID + STRIPE_SECRET).');
+
+        $request->session()->put('stripe_connect_state', $state = \Illuminate\Support\Str::random(40));
+
+        return redirect()->away(\App\Support\StripeService::connectUrl(route('admin.store.stripe.callback'), $state));
+    }
+
+    public function stripeCallback(Request $request): \Illuminate\Http\RedirectResponse
+    {
+        if ($request->query('state') !== $request->session()->pull('stripe_connect_state')) {
+            return redirect()->route('admin.store')->with('status', 'Stripe connection expired — please try again.');
+        }
+        if ($request->query('error')) {
+            return redirect()->route('admin.store')->with('status', 'Stripe connection cancelled.');
+        }
+
+        try {
+            \App\Support\StripeService::completeConnect((string) $request->query('code'));
+
+            return redirect()->route('admin.store')->with('status', 'Stripe account connected — checkout is live.');
+        } catch (\Throwable $e) {
+            return redirect()->route('admin.store')->with('status', $e->getMessage());
+        }
+    }
+
+    public function disconnectStripe(): RedirectResponse
+    {
+        \App\Support\StripeService::disconnect();
+
+        return back()->with('status', 'Stripe account disconnected.');
     }
 
     public function updateStripe(Request $request): RedirectResponse

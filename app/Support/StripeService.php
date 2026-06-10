@@ -13,14 +13,19 @@ use Illuminate\Support\Facades\Http;
  */
 class StripeService
 {
+    /** Secret used for charges: the Connect-linked account's token if present, else a manual/platform key. */
     public static function secret(): string
     {
-        return (string) (Settings::get('stripe.secret') ?: config('convoro.stripe.secret'));
+        return (string) (Settings::get('stripe.access_token')
+            ?: Settings::get('stripe.secret')
+            ?: config('convoro.stripe.secret'));
     }
 
     public static function publishableKey(): string
     {
-        return (string) (Settings::get('stripe.key') ?: config('convoro.stripe.key'));
+        return (string) (Settings::get('stripe.connected_publishable')
+            ?: Settings::get('stripe.key')
+            ?: config('convoro.stripe.key'));
     }
 
     public static function webhookSecret(): string
@@ -31,6 +36,75 @@ class StripeService
     public static function configured(): bool
     {
         return self::secret() !== '';
+    }
+
+    // -- "Connect with Stripe" (OAuth) ------------------------------------
+
+    /** The platform secret used for the OAuth token exchange. */
+    public static function platformSecret(): string
+    {
+        return (string) (config('convoro.stripe.secret') ?: Settings::get('stripe.secret'));
+    }
+
+    public static function connectClientId(): string
+    {
+        return (string) config('convoro.stripe.connect_client_id');
+    }
+
+    /** Is the "Connect with Stripe" button available (platform configured)? */
+    public static function canConnect(): bool
+    {
+        return self::connectClientId() !== '' && self::platformSecret() !== '';
+    }
+
+    public static function connectedAccount(): ?string
+    {
+        return Settings::get('stripe.account_id') ?: null;
+    }
+
+    /** Build the Stripe OAuth authorize URL. */
+    public static function connectUrl(string $redirectUri, string $state): string
+    {
+        return 'https://connect.stripe.com/oauth/authorize?'.http_build_query([
+            'response_type' => 'code',
+            'client_id' => self::connectClientId(),
+            'scope' => 'read_write',
+            'redirect_uri' => $redirectUri,
+            'state' => $state,
+        ]);
+    }
+
+    /**
+     * Exchange the OAuth code for the connected account's credentials and store them.
+     *
+     * @throws \RuntimeException
+     */
+    public static function completeConnect(string $code): void
+    {
+        $res = Http::asForm()->post('https://connect.stripe.com/oauth/token', [
+            'client_secret' => self::platformSecret(),
+            'code' => $code,
+            'grant_type' => 'authorization_code',
+        ]);
+
+        if (! $res->successful() || ! $res->json('access_token')) {
+            throw new \RuntimeException('Stripe connection failed: '.($res->json('error_description') ?? $res->status()));
+        }
+
+        Settings::setMany([
+            'stripe.account_id' => $res->json('stripe_user_id'),
+            'stripe.access_token' => $res->json('access_token'),
+            'stripe.connected_publishable' => $res->json('stripe_publishable_key'),
+        ]);
+    }
+
+    public static function disconnect(): void
+    {
+        Settings::setMany([
+            'stripe.account_id' => '',
+            'stripe.access_token' => '',
+            'stripe.connected_publishable' => '',
+        ]);
     }
 
     /**
