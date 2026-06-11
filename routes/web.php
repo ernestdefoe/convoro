@@ -163,18 +163,21 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/marketplace/composer', [App\Http\Controllers\AdminController::class, 'composerInstall'])->name('marketplace.composer');
     Route::post('/marketplace/catalog/install', [App\Http\Controllers\AdminController::class, 'installCatalogItem'])->name('marketplace.catalog.install');
     Route::get('/extensions/{id}', [App\Http\Controllers\AdminController::class, 'extensionSettings'])->name('extensions.settings');
-    Route::get('/store', [App\Http\Controllers\AdminController::class, 'store'])->name('store');
-    Route::post('/store/stripe', [App\Http\Controllers\AdminController::class, 'updateStripe'])->name('store.stripe');
-    Route::get('/store/stripe/connect', [App\Http\Controllers\AdminController::class, 'connectStripe'])->name('store.stripe.connect');
-    Route::get('/store/stripe/callback', [App\Http\Controllers\AdminController::class, 'stripeCallback'])->name('store.stripe.callback');
-    Route::post('/store/stripe/disconnect', [App\Http\Controllers\AdminController::class, 'disconnectStripe'])->name('store.stripe.disconnect');
-    Route::post('/store/link', [App\Http\Controllers\AdminController::class, 'linkRepo'])->name('store.link');
-    Route::post('/store/covers', [App\Http\Controllers\AdminController::class, 'generateCovers'])->name('store.covers');
-    Route::post('/store/products/{product:id}/refresh', [App\Http\Controllers\AdminController::class, 'refreshRepo'])->name('products.refresh');
-    Route::post('/store/products', [App\Http\Controllers\AdminController::class, 'storeProduct'])->name('products.store');
-    Route::put('/store/products/{product:id}', [App\Http\Controllers\AdminController::class, 'updateProduct'])->name('products.update');
-    Route::delete('/store/products/{product:id}', [App\Http\Controllers\AdminController::class, 'destroyProduct'])->name('products.destroy');
-    Route::post('/store/products/{product:id}/file', [App\Http\Controllers\AdminController::class, 'uploadProductFile'])->name('products.file');
+    // Seller/store admin — only on the central Convoro storefront (CONVORO_STORE_OWNER).
+    Route::middleware('store.owner')->group(function () {
+        Route::get('/store', [App\Http\Controllers\AdminController::class, 'store'])->name('store');
+        Route::post('/store/stripe', [App\Http\Controllers\AdminController::class, 'updateStripe'])->name('store.stripe');
+        Route::get('/store/stripe/connect', [App\Http\Controllers\AdminController::class, 'connectStripe'])->name('store.stripe.connect');
+        Route::get('/store/stripe/callback', [App\Http\Controllers\AdminController::class, 'stripeCallback'])->name('store.stripe.callback');
+        Route::post('/store/stripe/disconnect', [App\Http\Controllers\AdminController::class, 'disconnectStripe'])->name('store.stripe.disconnect');
+        Route::post('/store/link', [App\Http\Controllers\AdminController::class, 'linkRepo'])->name('store.link');
+        Route::post('/store/covers', [App\Http\Controllers\AdminController::class, 'generateCovers'])->name('store.covers');
+        Route::post('/store/products/{product:id}/refresh', [App\Http\Controllers\AdminController::class, 'refreshRepo'])->name('products.refresh');
+        Route::post('/store/products', [App\Http\Controllers\AdminController::class, 'storeProduct'])->name('products.store');
+        Route::put('/store/products/{product:id}', [App\Http\Controllers\AdminController::class, 'updateProduct'])->name('products.update');
+        Route::delete('/store/products/{product:id}', [App\Http\Controllers\AdminController::class, 'destroyProduct'])->name('products.destroy');
+        Route::post('/store/products/{product:id}/file', [App\Http\Controllers\AdminController::class, 'uploadProductFile'])->name('products.file');
+    });
     Route::get('/system', [App\Http\Controllers\AdminController::class, 'system'])->name('system');
     Route::post('/system/run', [App\Http\Controllers\AdminController::class, 'runMaintenance'])->name('system.run');
     Route::post('/system/check-updates', [App\Http\Controllers\AdminController::class, 'checkUpdates'])->name('system.check');

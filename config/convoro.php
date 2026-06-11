@@ -20,6 +20,11 @@ return [
     // The central store this install validates premium license keys against.
     'store_url' => env('CONVORO_STORE_URL', 'https://convoro.co'),
 
+    // Is THIS install the central Convoro storefront (sells extensions, runs
+    // Stripe/licenses)? Off by default so ordinary installs don't ship the
+    // seller admin — they only consume the catalog via the Marketplace.
+    'store_owner' => env('CONVORO_STORE_OWNER', false),
+
     // Stripe (central store). Prefer admin Settings, fall back to env. Empty =
     // checkout disabled (store still browsable).
     //   - secret/key      = the PLATFORM account (also used for "Connect with

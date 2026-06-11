@@ -26,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureAdmin::class,
+            'store.owner' => \App\Http\Middleware\EnsureStoreOwner::class,
         ]);
 
         // Server-to-server endpoints (Stripe webhook, remote license checks)

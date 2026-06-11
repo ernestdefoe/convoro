@@ -38,6 +38,7 @@ class HandleInertiaRequests extends Middleware
                 'isAdmin' => (bool) $request->user()?->is_admin,
             ],
             'site' => fn () => Settings::public(),
+            'storeOwner' => (bool) config('convoro.store_owner'),
             'themeFonts' => fn () => $request->user()?->is_admin ? \App\Support\Theme::fontOptions() : null,
             'adminExtNav' => fn () => $request->user()?->is_admin
                 ? collect(\App\Support\ExtensionManager::enabled())

@@ -8,6 +8,7 @@ const current = computed(() => page.component);
 const url = computed(() => (page.props as any).ziggy?.location ?? (page as any).url ?? '');
 
 const extNav = computed(() => ((page.props as any).adminExtNav ?? []) as { id: string; name: string; href: string }[]);
+const storeOwner = computed(() => !!(page.props as any).storeOwner);
 
 const I = {
   dash: 'M3 12l9-9 9 9M5 10v10h14V10',
@@ -37,7 +38,7 @@ const groups = computed(() => [
   ] },
   { label: 'Extensions', items: [
     { label: 'Marketplace', href: '/admin/marketplace', component: 'Admin/Marketplace', icon: I.market },
-    { label: 'Store', href: '/admin/store', component: 'Admin/Store', icon: I.store },
+    ...(storeOwner.value ? [{ label: 'Store', href: '/admin/store', component: 'Admin/Store', icon: I.store }] : []),
     ...extNav.value.map((e) => ({ label: e.name, href: e.href, component: '', icon: I.puzzle })),
   ] },
   { label: 'System', items: [{ label: 'System', href: '/admin/system', component: 'Admin/System', icon: I.system }] },
