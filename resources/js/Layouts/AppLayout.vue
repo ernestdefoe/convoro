@@ -17,6 +17,7 @@ const auth = useAuthModal();
 const page = usePage();
 const user = computed(() => (page.props as any).auth?.user ?? null);
 const isAdmin = computed(() => !!(page.props as any).auth?.isAdmin);
+const storeOwner = computed(() => !!(page.props as any).storeOwner);
 const dmUnread = computed(() => Number((page.props as any).dmUnread ?? 0));
 const siteLogo = computed(() => (page.props as any).site?.logo || '');
 const initials = computed(() => {
@@ -37,7 +38,7 @@ const initials = computed(() => {
         </Link>
         <nav class="ml-2 hidden items-center gap-1 md:flex">
           <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Forum') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Community</Link>
-          <Link href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Extensions') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Extensions</Link>
+          <Link v-if="storeOwner" href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Extensions') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Extensions</Link>
           <Link href="/members" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component === 'Members/Index' ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Members</Link>
           <Link href="/leaderboard" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component === 'Members/Leaderboard' ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Leaderboard</Link>
         </nav>

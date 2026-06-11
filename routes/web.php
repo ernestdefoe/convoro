@@ -73,7 +73,7 @@ Route::get('/demo', function () {
 Route::get('/', [ForumController::class, 'index'])->name('forum.index');
 Route::get('/t/{topic}', [TopicController::class, 'show'])->name('topics.show');
 Route::get('/u/{user}', [App\Http\Controllers\UserProfileController::class, 'show'])->name('profiles.show');
-Route::get('/extensions', [App\Http\Controllers\ExtensionsPageController::class, 'index'])->name('extensions.index');
+Route::get('/extensions', [App\Http\Controllers\ExtensionsPageController::class, 'index'])->middleware('store.owner')->name('extensions.index');
 Route::get('/members', [App\Http\Controllers\MembersController::class, 'index'])->name('members.index');
 Route::get('/leaderboard', [App\Http\Controllers\MembersController::class, 'leaderboard'])->name('leaderboard');
 
