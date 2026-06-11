@@ -322,9 +322,9 @@ h1{font-size:24px;margin:0 0 4px}.sub{color:#9aa0b8;margin:0 0 24px;font-size:14
 .card{background:#14172a;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:20px;margin-bottom:16px}
 .card h2{font-size:15px;margin:0 0 12px}
 label.f{display:block;font-size:13px;color:#c7cbe0;margin:12px 0 4px}
-input,textarea,select{width:100%;background:#0f1120;border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e6e8f5;padding:10px 12px;font:inherit}
-label.chk{display:flex;align-items:center;gap:8px;font-size:14px;color:#c7cbe0;margin:6px 0}
-.btn{border:0;border-radius:9px;padding:10px 18px;font-weight:700;font-size:14px;cursor:pointer;background:#5b5bd6;color:#fff}
+input:not([type=checkbox]),textarea,select{width:100%;background:#0f1120;border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e6e8f5;padding:10px 12px;font:inherit}
+.toggle{display:flex;align-items:center;gap:10px;padding:12px 14px;background:#0f1120;border:1px solid rgba(255,255,255,.1);border-radius:10px;margin-bottom:6px;cursor:pointer;font-size:14px;font-weight:600;color:#e6e8f5}
+.toggle input{width:18px;height:18px;margin:0;accent-color:#5b5bd6}
 .top{display:flex;align-items:center;gap:12px;margin-bottom:20px}.top .sp{flex:1}
 .ok{color:#34d399;font-size:13px;margin-left:10px}.hint{color:#6b7194;font-size:12px;margin:4px 0 0}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.stat b{display:block;font-size:24px;font-weight:800}.stat span{font-size:12px;color:#9aa0b8}
@@ -340,7 +340,7 @@ label.chk{display:flex;align-items:center;gap:8px;font-size:14px;color:#c7cbe0;m
 </div></div>
 
 <div class="card"><h2>Connection</h2>
-<label class="chk"><input type="checkbox" id="enabled" {$enabled}> Enable the assistant</label>
+<label class="toggle"><input type="checkbox" id="enabled" {$enabled}> <span>Enable the assistant</span></label>
 <div class="cols">
 <div><label class="f">Provider</label><select id="provider">{$provOpts}</select></div>
 <div><label class="f">Model</label><input id="model" value="{$model}"></div>
@@ -367,26 +367,35 @@ label.chk{display:flex;align-items:center;gap:8px;font-size:14px;color:#c7cbe0;m
 <p class="hint">Used only to estimate cost in the dashboard and enforce your budget cap.</p>
 </div>
 
-<div><button class="btn" id="save">Save settings</button><span class="ok" id="msg"></span></div>
+<div class="savebar"><span class="ok" id="msg">Changes save automatically</span></div>
 </div><script>
 const csrf=document.querySelector('meta[name=csrf-token]').content;
 const h={'X-CSRF-TOKEN':csrf,'Content-Type':'application/json','Accept':'application/json'};
 const val=id=>document.getElementById(id).value;
-document.getElementById('save').addEventListener('click',async()=>{
-  const body={
-    enabled:document.getElementById('enabled').checked,
-    provider:val('provider'),model:val('model'),api_key:val('api_key'),base_url:val('base_url'),
-    bot_name:val('bot_name'),trigger:val('trigger'),
-    category_id:val('category_id')?parseInt(val('category_id'),10):null,
-    system_prompt:val('system_prompt'),max_tokens:parseInt(val('max_tokens')||'600',10),
-    monthly_budget:parseFloat(val('monthly_budget')||'0'),
-    price_in:parseFloat(val('price_in')||'0'),price_out:parseFloat(val('price_out')||'0'),
-  };
-  const r=await fetch('/admin/ext/ai-helper',{method:'POST',headers:h,body:JSON.stringify(body)});
-  const m=document.getElementById('msg');
-  m.textContent=r.ok?'Saved ✓':'Error';document.getElementById('api_key').value='';
-  setTimeout(()=>m.textContent='',2500);
-});
+const ids=['enabled','provider','model','api_key','base_url','bot_name','trigger','category_id','system_prompt','max_tokens','monthly_budget','price_in','price_out'];
+function collect(){return {
+  enabled:document.getElementById('enabled').checked,
+  provider:val('provider'),model:val('model'),api_key:val('api_key'),base_url:val('base_url'),
+  bot_name:val('bot_name'),trigger:val('trigger'),
+  category_id:val('category_id')?parseInt(val('category_id'),10):null,
+  system_prompt:val('system_prompt'),max_tokens:parseInt(val('max_tokens')||'600',10),
+  monthly_budget:parseFloat(val('monthly_budget')||'0'),
+  price_in:parseFloat(val('price_in')||'0'),price_out:parseFloat(val('price_out')||'0'),
+};}
+let saving=false,queued=false;
+async function save(){
+  if(saving){queued=true;return;}
+  saving=true; const m=document.getElementById('msg'); m.textContent='Saving…'; m.style.color='#9aa0b8';
+  try{ const r=await fetch('/admin/ext/ai-helper',{method:'POST',headers:h,body:JSON.stringify(collect())});
+    m.textContent=r.ok?'Saved ✓':'Error saving'; m.style.color=r.ok?'#34d399':'#f87171';
+  }catch(e){ m.textContent='Error saving'; m.style.color='#f87171'; }
+  saving=false; if(queued){queued=false;save();}
+  setTimeout(()=>{m.textContent='Changes save automatically';m.style.color='#6b7194';},2000);
+}
+let t=null; const debounced=()=>{clearTimeout(t);t=setTimeout(save,800);};
+ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;
+  const immediate=(el.type==='checkbox'||el.tagName==='SELECT');
+  el.addEventListener(immediate?'change':'input', immediate?save:debounced);});
 </script></body></html>
 HTML;
     }

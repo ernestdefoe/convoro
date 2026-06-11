@@ -73,8 +73,9 @@ class Extension extends ServiceProvider
 .wrap{max-width:640px;margin:0 auto;padding:40px 20px}a{color:#8b8bf0}h1{font-size:24px;margin:0 0 4px}.sub{color:#9aa0b8;margin:0 0 24px;font-size:14px}
 .card{background:#14172a;border:1px solid rgba(255,255,255,.06);border-radius:14px;padding:20px}
 label.f{display:block;font-size:13px;color:#c7cbe0;margin:14px 0 4px}
-input,select{width:100%;background:#0f1120;border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e6e8f5;padding:10px 12px;font:inherit}
+input:not([type=checkbox]),select{width:100%;background:#0f1120;border:1px solid rgba(255,255,255,.1);border-radius:9px;color:#e6e8f5;padding:10px 12px;font:inherit}
 label.chk{display:flex;align-items:center;gap:8px;font-size:15px;color:#c7cbe0;margin:4px 0 6px}
+label.chk input[type=checkbox]{width:18px;height:18px;accent-color:#5b5bd6}
 .btn{border:0;border-radius:9px;padding:10px 18px;font-weight:700;font-size:14px;cursor:pointer;background:#5b5bd6;color:#fff;margin-top:18px}
 .top{display:flex;align-items:center;gap:12px;margin-bottom:20px}.sp{flex:1}.ok{color:#34d399;font-size:13px;margin-left:10px}
 .hint{color:#6b7194;font-size:12px;margin:4px 0 0}

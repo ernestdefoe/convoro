@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { ref, watch } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 
 interface SettingField { key: string; label: string; type?: string; default?: unknown; help?: string; options?: { value: string; label: string }[] }
@@ -14,15 +14,29 @@ const props = defineProps<{ ext: Ext }>();
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formValues = ref<Record<string, any>>({ ...props.ext.values });
-const saving = ref(false);
+const status = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
+let timer: ReturnType<typeof setTimeout> | null = null;
 
 function save() {
-  saving.value = true;
+  status.value = 'saving';
   router.post('/admin/marketplace/settings', { id: props.ext.id, values: formValues.value }, {
     preserveScroll: true,
-    onFinish: () => (saving.value = false),
+    preserveState: true,
+    only: [],
+    onSuccess: () => {
+      status.value = 'saved';
+      setTimeout(() => { if (status.value === 'saved') status.value = 'idle'; }, 2000);
+    },
+    onError: () => (status.value = 'error'),
   });
 }
+
+// Auto-save: debounce text edits; checkboxes/selects effectively save on next tick too.
+watch(formValues, () => {
+  if (timer) clearTimeout(timer);
+  status.value = 'saving';
+  timer = setTimeout(save, 700);
+}, { deep: true });
 </script>
 
 <template>
@@ -85,10 +99,11 @@ function save() {
           <p v-if="field.help" class="mt-1 text-xs text-ink-muted">{{ field.help }}</p>
         </div>
 
-        <div class="flex items-center gap-3 pt-1">
-          <button type="submit" :disabled="saving" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">
-            {{ saving ? 'Saving…' : 'Save settings' }}
-          </button>
+        <div class="flex items-center gap-2 pt-1 text-sm">
+          <span v-if="status === 'saving'" class="text-ink-muted">Saving…</span>
+          <span v-else-if="status === 'saved'" class="font-semibold text-emerald-500">✓ All changes saved</span>
+          <span v-else-if="status === 'error'" class="text-red-500">Couldn't save — will retry on next change</span>
+          <span v-else class="text-ink-muted">Changes save automatically</span>
         </div>
       </form>
 
