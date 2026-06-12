@@ -20,6 +20,7 @@ class Permissions
         'post.delete_any' => ['Delete any post', 'Moderation'],
         'topic.delete_any' => ['Delete any topic', 'Moderation'],
         'topic.lock' => ['Lock / unlock topics', 'Moderation'],
+        'topic.pin' => ['Pin / unpin topics', 'Moderation'],
     ];
 
     /** Granted to every authenticated user, regardless of group. */

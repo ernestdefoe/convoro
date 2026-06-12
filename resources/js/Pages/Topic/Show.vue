@@ -145,6 +145,11 @@ function removePost(post: any) {
   }
 }
 
+function togglePin() {
+  menuFor.value = null;
+  router.post(`/t/${props.topic.slug}/pin`, {}, { preserveScroll: true });
+}
+
 // Local copy so live-broadcast posts can be appended; resync when the server
 // sends fresh props (after our own post / a reaction toggle reload).
 const livePosts = ref<any[]>([...props.posts]);
@@ -384,7 +389,11 @@ function submitReply() {
             <ReaderMode v-if="firstPost" :title="topic.title" :html="firstPost.html" :byline="firstPost.author.name" :cover="topic.cover" class="ml-auto" />
           </div>
 
-          <h1 class="mt-3 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">{{ topic.title }}</h1>
+          <h1 class="mt-3 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">
+            <span v-if="topic.isPinned" class="mr-2 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-1 align-middle text-xs font-bold text-amber-600 dark:text-amber-400">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M16 3l5 5-4 1-3 3 1 5-2 2-4-4-5 5-1-1 5-5-4-4 2-2 5 1 3-3z" /></svg>{{ tr('Pinned') }}
+            </span>{{ topic.title }}
+          </h1>
 
           <div v-if="firstPost" class="mt-5 flex items-center gap-3">
             <Link :href="firstPost.author.url"><Avatar :avatar="firstPost.author" :size="56" badge /></Link>
@@ -436,11 +445,12 @@ function submitReply() {
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5 8.6 10.5"/></svg>
                 {{ tr('Share') }}
               </button>
-              <div v-if="firstPost.canEdit || firstPost.canDelete || canReport(firstPost)" class="relative">
+              <div v-if="firstPost.canEdit || firstPost.canDelete || canReport(firstPost) || topic.canPin" class="relative">
                 <button @click="menuFor = menuFor === firstPost.id ? null : firstPost.id" :title="tr('More')" class="grid h-8 w-8 place-items-center rounded-lg text-ink-muted hover:bg-surface-2">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
                 </button>
-                <div v-if="menuFor === firstPost.id" class="absolute right-0 top-9 z-50 w-40 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-xl">
+                <div v-if="menuFor === firstPost.id" class="absolute right-0 top-9 z-50 w-44 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-xl">
+                  <button v-if="topic.canPin" @click="togglePin" class="block w-full px-3 py-1.5 text-left text-sm text-ink hover:bg-surface-2">📌 {{ topic.isPinned ? tr('Unpin topic') : tr('Pin topic') }}</button>
                   <button v-if="firstPost.canEdit" @click="menuFor = null; openEdit(firstPost)" class="block w-full px-3 py-1.5 text-left text-sm text-ink hover:bg-surface-2">{{ tr('Edit') }}</button>
                   <button v-if="canReport(firstPost)" @click="menuFor = null; report(firstPost)" class="block w-full px-3 py-1.5 text-left text-sm text-ink hover:bg-surface-2">⚑ {{ tr('Report') }}</button>
                   <button v-if="firstPost.canDelete" @click="menuFor = null; removePost(firstPost)" class="block w-full px-3 py-1.5 text-left text-sm text-red-500 hover:bg-red-500/10">{{ tr('Delete') }}</button>

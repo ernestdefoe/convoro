@@ -1,13 +1,11 @@
 {
-    "version": "1.2.0",
-    "download": "https://convoro.co/releases/convoro-1.2.0.zip",
+    "version": "1.2.1",
+    "download": "https://convoro.co/releases/convoro-1.2.1.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Polls — plus smarter bot & polished uploads",
+    "title": "Pin important topics",
     "date": "2026-06-12",
-    "notes": "Polls! Attach a poll to any new topic — single or multiple choice, optional close date — with beautiful animated results. Plus: the AI assistant can be limited to topics matching trigger keywords, and every upload button is now a consistent on-brand control.",
+    "notes": "Moderators can now pin a topic so it stays at the top of the discussion list — pin/unpin from the topic's “⋯” menu. Pinned topics show a badge and sort first. Gated by a new “Pin / unpin topics” permission.",
     "changelog": [
-        {"type": "new", "text": "Polls — attach a poll to a new topic (up to 10 options, single/multiple choice, optional auto-close) with beautiful animated results, change-vote and view-results-first."},
-        {"type": "improved", "text": "AI auto-answer can be gated to topics matching trigger keywords (Admin → AI), so the assistant doesn't reply on every topic."},
-        {"type": "improved", "text": "Every upload button is now a consistent, on-brand control with an uploading state."}
+        {"type": "added", "text": "Pin topics: moderators can pin a discussion to keep it at the top of the list (topic “⋯” menu), gated by a new “Pin / unpin topics” permission."}
     ]
 }

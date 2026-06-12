@@ -95,6 +95,15 @@ class TopicController extends Controller
         return redirect()->route('topics.show', $topic);
     }
 
+    /** Pin or unpin a topic so it sorts to the top of the list (moderators). */
+    public function togglePin(Request $request, Topic $topic): \Illuminate\Http\RedirectResponse
+    {
+        abort_unless((bool) $request->user()?->hasPermission('topic.pin'), 403);
+        $topic->update(['is_pinned' => ! $topic->is_pinned]);
+
+        return back()->with('status', $topic->is_pinned ? __('Topic pinned.') : __('Topic unpinned.'));
+    }
+
     /** Heartbeat: the current member is viewing this topic right now (drives the LIVE badge). */
     public function heartbeat(Request $request, Topic $topic): \Illuminate\Http\JsonResponse
     {
@@ -130,6 +139,8 @@ class TopicController extends Controller
                 'cover' => $topic->cover_image,
                 'isLive' => $topic->is_live,
                 'isLocked' => $topic->is_locked,
+                'isPinned' => $topic->is_pinned,
+                'canPin' => (bool) $actor?->hasPermission('topic.pin'),
                 'poll' => $topic->poll ? \App\Support\Present::poll($topic->poll, $actorId) : null,
                 'category' => $topic->category ? [
                     'name' => $topic->category->name, 'slug' => $topic->category->slug,

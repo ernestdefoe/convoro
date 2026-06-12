@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.2.1',
+            'date' => '2026-06-12',
+            'title' => 'Pin important topics',
+            'items' => [
+                ['type' => 'added', 'text' => 'Moderators can now pin a topic so it stays at the top of the discussion list. Pin or unpin from the topic’s “⋯” menu; pinned topics show a “Pinned” badge and sort above the rest. Control who can pin under Members → Groups (the “Pin / unpin topics” permission).'],
+            ],
+        ],
+        [
             'tag' => '1.2.0',
             'date' => '2026-06-12',
             'title' => 'Polls — plus smarter bot & polished uploads',
