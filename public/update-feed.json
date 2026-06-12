@@ -1,11 +1,11 @@
 {
-    "version": "1.1.0",
-    "download": "https://convoro.co/releases/convoro-1.1.0.zip",
+    "version": "1.1.1",
+    "download": "https://convoro.co/releases/convoro-1.1.1.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Single sign-on (OpenID Connect)",
+    "title": "Advanced search — filters & sorting",
     "date": "2026-06-12",
-    "notes": "Built-in single sign-on with any OpenID Connect provider (Okta, Auth0, Azure AD, Google Workspace, Authentik, Keycloak…). Configure it under Admin → Single sign-on: issuer URL + client id/secret, add the shown redirect URI to your provider, and members get a “Sign in with …” button.",
+    "notes": "Search now supports filters (category, author, time window) and sorting (relevance, newest, most replies) — and you can browse with filters alone, no search term required.",
     "changelog": [
-        {"type": "new", "text": "Single sign-on via OpenID Connect — connect any OIDC provider under Admin → Single sign-on, with optional auto-create and email-domain restriction."}
+        {"type": "added", "text": "Advanced search: filter by category, author and date, and sort by relevance, newest or most replies — with filter-only browsing."}
     ]
 }

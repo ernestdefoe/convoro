@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.1.1',
+            'date' => '2026-06-12',
+            'title' => 'Advanced search — filters & sorting',
+            'items' => [
+                ['type' => 'added', 'text' => 'Search now has filters and sorting: narrow results by category, author and time window (past week / month / year), and sort by relevance, newest or most replies. You can even browse with filters alone — no search term needed.'],
+            ],
+        ],
+        [
             'tag' => '1.1.0',
             'date' => '2026-06-12',
             'title' => 'Single sign-on (OpenID Connect)',
