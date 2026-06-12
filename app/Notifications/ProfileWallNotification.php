@@ -22,7 +22,7 @@ class ProfileWallNotification extends Notification
         return [
             'type' => 'wall',
             'actor' => Present::avatar($post->author),
-            'topic' => ['title' => 'your profile', 'slug' => ''],
+            'topic' => ['title' => __('your profile'), 'slug' => ''],
             'post_id' => $post->id,
             'excerpt' => Present::excerpt($post->body_html, 100),
             'url' => '/u/'.$post->profile_user_id,

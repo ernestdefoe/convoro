@@ -113,6 +113,7 @@ class Settings
             'logo' => self::get('site.logo'),
             'favicon' => self::get('site.favicon'),
             'defaultView' => self::get('forum.default_view'),
+            'locale' => self::get('site.locale', 'en'),
             'realtime' => (bool) self::get('realtime.enabled'),
             'pwaBanner' => (bool) self::get('pwa.banner'),
             'pwaShortName' => self::get('pwa.short_name'),
@@ -133,6 +134,7 @@ class Settings
                 'density' => self::get('theme.density'),
                 'linkColor' => self::get('theme.link_color'),
                 'customCss' => self::get('theme.custom_css'),
+                'muted' => self::get('theme.muted', ''),
             ],
             'widgets' => json_decode((string) self::get('widgets.sidebar', '[]'), true) ?: [],
         ];

@@ -7,7 +7,9 @@ import ProfileDetailsForm from './Partials/ProfileDetailsForm.vue';
 import PushToggle from './Partials/PushToggle.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
+import Slot from '@/Components/ext/Slot.vue';
 import { Head } from '@inertiajs/vue3';
+import { t } from '@/lib/i18n';
 
 defineProps<{
     mustVerifyEmail?: boolean;
@@ -18,11 +20,11 @@ const card = 'rounded-c border border-line bg-surface p-6 sm:p-8';
 </script>
 
 <template>
-    <Head title="Settings" />
+    <Head :title="t('Settings')" />
 
     <AppLayout>
         <div class="mx-auto max-w-2xl">
-            <h1 class="mb-6 text-2xl font-extrabold tracking-tight text-ink">Settings</h1>
+            <h1 class="mb-6 text-2xl font-extrabold tracking-tight text-ink">{{ t('Settings') }}</h1>
 
             <div class="space-y-5">
                 <div :class="card">
@@ -40,6 +42,10 @@ const card = 'rounded-c border border-line bg-surface p-6 sm:p-8';
                 <div :class="card">
                     <UpdatePasswordForm />
                 </div>
+
+                <!-- Connected accounts — provided by the Social Login extension. -->
+                <Slot name="settings:account" />
+
                 <div :class="card">
                     <AccessTokensForm />
                 </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { t } from '@/lib/i18n';
 
 // A reading-progress scrubber. By default it tracks the whole page (e.g. a
 // discussion thread or a long profile). Pass `target` to track an inner
@@ -69,7 +70,7 @@ watch(() => props.target, () => { unbind(); bind(); });
     v-show="visible"
     ref="track"
     class="group fixed right-2 top-1/2 z-30 hidden h-[55vh] w-3 -translate-y-1/2 cursor-pointer md:block"
-    title="Reading progress — drag to jump"
+    :title="t('Reading progress — drag to jump')"
     @pointerdown="start" @pointermove="move" @pointerup="end" @pointerleave="end"
   >
     <div class="absolute left-1/2 h-full w-1 -translate-x-1/2 rounded-full bg-line"></div>

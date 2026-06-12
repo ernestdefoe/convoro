@@ -12,9 +12,10 @@ use Inertia\Inertia;
 // Marketing + central store, scoped to the apex domain (convoro.co). Registered
 // FIRST so its `/` wins over the forum index on that host; the forum keeps `/`
 // on every other host. Shared login works via SESSION_DOMAIN=.convoro.co.
-Route::domain(config('convoro.marketing_domain'))->group(function () {
-    Route::get('/', [App\Http\Controllers\MarketingController::class, 'home'])->name('marketing.home');
-    // Public extension directory (premium is purchased on the detail page).
+// The public extension directory + store console. Defined once and mirrored on
+// BOTH the apex (convoro.co) and the community host (community.convoro.co) so
+// members can browse/buy without leaving the forum.
+$convoroStoreRoutes = function () {
     Route::get('/extensions', [App\Http\Controllers\StoreController::class, 'index'])->name('store.index');
     Route::get('/extensions/submit', [App\Http\Controllers\StoreController::class, 'submitForm'])->name('store.submit');
     Route::post('/extensions/submit', [App\Http\Controllers\StoreController::class, 'submit'])->name('store.submit.post');
@@ -22,14 +23,71 @@ Route::domain(config('convoro.marketing_domain'))->group(function () {
     Route::get('/extensions/manage', [App\Http\Controllers\StoreController::class, 'manage'])->middleware('auth')->name('store.manage');
     Route::post('/extensions/{product}/manage', [App\Http\Controllers\StoreController::class, 'updateListing'])->middleware('auth')->name('store.manage.update');
     Route::get('/extensions/purchased', [App\Http\Controllers\StoreController::class, 'success'])->name('store.success');
+
+    // Store-OWNER console actions (front-facing; operator only — the old
+    // /admin/store section now lives here). admin + store.owner gated.
+    Route::middleware(['auth', 'admin', 'store.owner'])->group(function () {
+        Route::post('/extensions/manage/stripe', [App\Http\Controllers\AdminController::class, 'updateStripe'])->name('store.manage.stripe');
+        Route::get('/extensions/manage/stripe/connect', [App\Http\Controllers\AdminController::class, 'connectStripe'])->name('store.manage.stripe.connect');
+        Route::post('/extensions/manage/stripe/disconnect', [App\Http\Controllers\AdminController::class, 'disconnectStripe'])->name('store.manage.stripe.disconnect');
+        Route::post('/extensions/manage/covers', [App\Http\Controllers\AdminController::class, 'generateCovers'])->name('store.manage.covers');
+        Route::post('/extensions/manage/link', [App\Http\Controllers\AdminController::class, 'linkRepo'])->name('store.manage.link');
+        Route::post('/extensions/manage/products', [App\Http\Controllers\AdminController::class, 'storeProduct'])->name('store.manage.products.store');
+        Route::put('/extensions/manage/products/{product:id}', [App\Http\Controllers\AdminController::class, 'updateProduct'])->name('store.manage.products.update');
+        Route::delete('/extensions/manage/products/{product:id}', [App\Http\Controllers\AdminController::class, 'destroyProduct'])->name('store.manage.products.destroy');
+        Route::post('/extensions/manage/products/{product:id}/refresh', [App\Http\Controllers\AdminController::class, 'refreshRepo'])->name('store.manage.products.refresh');
+        Route::post('/extensions/manage/products/{product:id}/file', [App\Http\Controllers\AdminController::class, 'uploadProductFile'])->name('store.manage.products.file');
+        Route::post('/extensions/manage/products/{product:id}/review', [App\Http\Controllers\AdminController::class, 'reviewProduct'])->name('store.manage.products.review');
+        Route::post('/extensions/manage/review-settings', [App\Http\Controllers\AdminController::class, 'updateReviewAi'])->name('store.manage.review');
+    });
+
     Route::get('/extensions/{product}', [App\Http\Controllers\StoreController::class, 'show'])->name('store.show');
     Route::post('/extensions/{product}/checkout', [App\Http\Controllers\StoreController::class, 'checkout'])->name('store.checkout');
+};
+
+// Apex marketing host: home + the full store. Registered FIRST so `/` wins.
+Route::domain(config('convoro.marketing_domain'))->group(function () use ($convoroStoreRoutes) {
+    Route::get('/', [App\Http\Controllers\MarketingController::class, 'home'])->name('marketing.home');
+    // Trust pages — signals of an actively-maintained product.
+    Route::get('/changelog', [App\Http\Controllers\TrustController::class, 'changelog'])->name('changelog');
+    Route::get('/roadmap', [App\Http\Controllers\TrustController::class, 'roadmap'])->name('roadmap');
+    Route::get('/status', [App\Http\Controllers\TrustController::class, 'status'])->name('status');
+    Route::get('/about', [App\Http\Controllers\TrustController::class, 'about'])->name('about');
+    Route::get('/security', [App\Http\Controllers\TrustController::class, 'security'])->name('security');
+    // Documentation hub + guides.
+    Route::get('/docs', [App\Http\Controllers\DocsController::class, 'index'])->name('docs');
+    Route::get('/docs/{guide}', [App\Http\Controllers\DocsController::class, 'show'])->name('docs.show');
+    $convoroStoreRoutes();
 });
+
+// Community/forum host: mirror the same directory + console (own route names so
+// they don't override the apex ones; the frontend uses host-relative links).
+Route::domain(config('convoro.community_domain'))->name('community.')->group($convoroStoreRoutes);
 
 // Stripe webhook + license API (any host; CSRF-excepted in bootstrap/app.php).
 Route::post('/store/webhook', [App\Http\Controllers\StoreController::class, 'webhook'])->name('store.webhook');
+// GitHub registry webhook — instant refresh on new releases (Packagist-style).
+Route::post('/api/registry/github', [App\Http\Controllers\StoreController::class, 'githubWebhook'])->name('registry.github');
+
 // AI builder spec — machine-readable so AI models can scaffold themes/extensions.
 Route::get('/api/ai/spec.json', [App\Http\Controllers\AiSpecController::class, 'json'])->name('ai.spec');
+
+// Switch UI language (public — guests use the session).
+Route::post('/locale', [App\Http\Controllers\LocaleController::class, 'store'])->name('locale.store');
+Route::post('/preferences/auto-translate', [App\Http\Controllers\LocaleController::class, 'autoTranslate'])->middleware('auth')->name('locale.auto');
+
+// "Ask Convoro" — public, throttled AI answer endpoint (the flagship AI feature).
+Route::post('/api/ask', [App\Http\Controllers\AiController::class, 'ask'])->middleware('throttle:30,1')->name('ask');
+// "Asked before?" — related existing threads while composing (auth, retrieval only).
+Route::post('/api/related', [App\Http\Controllers\AiController::class, 'related'])->middleware(['auth', 'throttle:90,1'])->name('ask.related');
+// "Catch me up" — on-demand cached AI summary of a topic.
+Route::get('/api/topics/{topic}/summary', [App\Http\Controllers\AiController::class, 'summarize'])->middleware('throttle:60,1')->name('topics.summary');
+// Per-reader post translation — translate one post into the viewer's language (cached).
+Route::post('/api/posts/{post}/translate', [App\Http\Controllers\AiController::class, 'translatePost'])->middleware('throttle:120,1')->name('posts.translate');
+// Writing assistant — transform a draft, suggest titles/tags (auth, throttled).
+Route::post('/api/ai/assist', [App\Http\Controllers\AiController::class, 'assist'])->middleware(['auth', 'throttle:40,1'])->name('ai.assist');
+Route::post('/api/ai/suggest-title', [App\Http\Controllers\AiController::class, 'suggestTitle'])->middleware(['auth', 'throttle:30,1'])->name('ai.suggest.title');
+Route::post('/api/ai/suggest-tags', [App\Http\Controllers\AiController::class, 'suggestTags'])->middleware(['auth', 'throttle:30,1'])->name('ai.suggest.tags');
 Route::get('/llms.txt', [App\Http\Controllers\AiSpecController::class, 'llms'])->name('ai.llms');
 Route::get('/api/catalog', [App\Http\Controllers\StoreController::class, 'catalog'])->name('catalog');
 Route::get('/api/catalog/download/{product}', [App\Http\Controllers\StoreController::class, 'freeDownload'])->name('catalog.download');
@@ -71,6 +129,7 @@ Route::get('/demo', function () {
 
 // Community (forum)
 Route::get('/', [ForumController::class, 'index'])->name('forum.index');
+Route::get('/search', [App\Http\Controllers\SearchController::class, 'index'])->name('search');
 Route::get('/t/{topic}', [TopicController::class, 'show'])->name('topics.show');
 Route::get('/u/{user}', [App\Http\Controllers\UserProfileController::class, 'show'])->name('profiles.show');
 Route::get('/extensions', [App\Http\Controllers\ExtensionsPageController::class, 'index'])->middleware('store.owner')->name('extensions.index');
@@ -118,6 +177,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/moderation/reports/{report}/resolve', [App\Http\Controllers\ModerationController::class, 'resolveReport'])->name('moderation.reports.resolve');
     Route::post('/moderation/reports/{report}/dismiss', [App\Http\Controllers\ModerationController::class, 'dismissReport'])->name('moderation.reports.dismiss');
     Route::delete('/moderation/posts/{post}', [App\Http\Controllers\ModerationController::class, 'deletePost'])->name('moderation.posts.delete');
+    Route::post('/moderation/posts/{post}/approve', [App\Http\Controllers\ModerationController::class, 'approvePost'])->name('moderation.posts.approve');
+    Route::get('/moderation/topics/search', [App\Http\Controllers\ModerationController::class, 'topicSearch'])->name('moderation.topics.search');
     Route::post('/moderation/posts/{post}/move', [App\Http\Controllers\ModerationController::class, 'movePost'])->name('moderation.posts.move');
     Route::post('/moderation/topics/{topic}/move', [App\Http\Controllers\ModerationController::class, 'moveTopic'])->name('moderation.topics.move');
     Route::post('/moderation/users/{user}/ban', [App\Http\Controllers\ModerationController::class, 'banUser'])->name('moderation.users.ban');
@@ -163,22 +224,43 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/marketplace/composer', [App\Http\Controllers\AdminController::class, 'composerInstall'])->name('marketplace.composer');
     Route::post('/marketplace/catalog/install', [App\Http\Controllers\AdminController::class, 'installCatalogItem'])->name('marketplace.catalog.install');
     Route::get('/extensions/{id}', [App\Http\Controllers\AdminController::class, 'extensionSettings'])->name('extensions.settings');
-    // Seller/store admin — only on the central Convoro storefront (CONVORO_STORE_OWNER).
+    // The store console moved front-facing to /extensions/manage. Keep the
+    // Stripe Connect OAuth callback at its ORIGINAL URL (it's the registered
+    // redirect URI), and redirect the old /admin/store to the new home.
     Route::middleware('store.owner')->group(function () {
-        Route::get('/store', [App\Http\Controllers\AdminController::class, 'store'])->name('store');
-        Route::post('/store/stripe', [App\Http\Controllers\AdminController::class, 'updateStripe'])->name('store.stripe');
-        Route::get('/store/stripe/connect', [App\Http\Controllers\AdminController::class, 'connectStripe'])->name('store.stripe.connect');
         Route::get('/store/stripe/callback', [App\Http\Controllers\AdminController::class, 'stripeCallback'])->name('store.stripe.callback');
-        Route::post('/store/stripe/disconnect', [App\Http\Controllers\AdminController::class, 'disconnectStripe'])->name('store.stripe.disconnect');
-        Route::post('/store/link', [App\Http\Controllers\AdminController::class, 'linkRepo'])->name('store.link');
-        Route::post('/store/covers', [App\Http\Controllers\AdminController::class, 'generateCovers'])->name('store.covers');
-        Route::post('/store/products/{product:id}/refresh', [App\Http\Controllers\AdminController::class, 'refreshRepo'])->name('products.refresh');
-        Route::post('/store/products', [App\Http\Controllers\AdminController::class, 'storeProduct'])->name('products.store');
-        Route::put('/store/products/{product:id}', [App\Http\Controllers\AdminController::class, 'updateProduct'])->name('products.update');
-        Route::delete('/store/products/{product:id}', [App\Http\Controllers\AdminController::class, 'destroyProduct'])->name('products.destroy');
-        Route::post('/store/products/{product:id}/file', [App\Http\Controllers\AdminController::class, 'uploadProductFile'])->name('products.file');
+        Route::get('/store', fn () => redirect('/extensions/manage'))->name('store');
     });
-    Route::get('/system', [App\Http\Controllers\AdminController::class, 'system'])->name('system');
+    // Core AI configuration (powers "Ask Convoro").
+    Route::get('/ai', [App\Http\Controllers\AiController::class, 'settings'])->name('ai');
+    Route::post('/ai', [App\Http\Controllers\AiController::class, 'updateSettings'])->name('ai.update');
+    Route::post('/ai/index/build', [App\Http\Controllers\AiController::class, 'buildIndex'])->name('ai.index.build');
+    Route::get('/ai/index/status', [App\Http\Controllers\AiController::class, 'indexStatus'])->name('ai.index.status');
+
+    // Invites — invite codes + invite-only registration.
+    Route::get('/invites', [App\Http\Controllers\InviteController::class, 'index'])->name('invites');
+    Route::post('/invites', [App\Http\Controllers\InviteController::class, 'store'])->name('invites.store');
+    Route::delete('/invites/{invite}', [App\Http\Controllers\InviteController::class, 'destroy'])->name('invites.destroy');
+    Route::post('/invites/only', [App\Http\Controllers\InviteController::class, 'setOnly'])->name('invites.only');
+
+    // Import wizard — migrate from other forum software (Flarum in v1).
+    Route::get('/import', [App\Http\Controllers\ImportController::class, 'index'])->name('import');
+    Route::post('/import/test', [App\Http\Controllers\ImportController::class, 'test'])->name('import.test');
+    Route::post('/import/start', [App\Http\Controllers\ImportController::class, 'start'])->name('import.start');
+    Route::get('/import/progress', [App\Http\Controllers\ImportController::class, 'progress'])->name('import.progress');
+
+    // Languages — UI translation management (coverage, AI auto-translate, editing).
+    Route::get('/languages', [App\Http\Controllers\Admin\LanguagesController::class, 'index'])->name('languages');
+    Route::get('/languages/status', [App\Http\Controllers\Admin\LanguagesController::class, 'status'])->name('languages.status');
+    Route::get('/languages/strings', [App\Http\Controllers\Admin\LanguagesController::class, 'strings'])->name('languages.strings');
+    Route::post('/languages/translate', [App\Http\Controllers\Admin\LanguagesController::class, 'translate'])->name('languages.translate');
+    Route::post('/languages/add', [App\Http\Controllers\Admin\LanguagesController::class, 'add'])->name('languages.add');
+    Route::post('/languages/string', [App\Http\Controllers\Admin\LanguagesController::class, 'updateString'])->name('languages.string');
+    Route::post('/languages/default', [App\Http\Controllers\Admin\LanguagesController::class, 'setDefault'])->name('languages.default');
+    Route::delete('/languages', [App\Http\Controllers\Admin\LanguagesController::class, 'destroy'])->name('languages.destroy');
+
+    // System moved into the Dashboard; keep the URL working as a redirect.
+    Route::get('/system', fn () => redirect('/admin'))->name('system');
     Route::post('/system/run', [App\Http\Controllers\AdminController::class, 'runMaintenance'])->name('system.run');
     Route::post('/system/check-updates', [App\Http\Controllers\AdminController::class, 'checkUpdates'])->name('system.check');
     Route::post('/system/update', [App\Http\Controllers\AdminController::class, 'applyUpdate'])->name('system.update');

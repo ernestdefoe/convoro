@@ -2,8 +2,12 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
+import Toast from '@/Components/Toast.vue';
+import CommandPalette from '@/Components/CommandPalette.vue';
+import { useCommandPalette } from '@/lib/commandPalette';
 
 const page = usePage();
+const palette = useCommandPalette();
 const current = computed(() => page.component);
 const url = computed(() => (page.props as any).ziggy?.location ?? (page as any).url ?? '');
 
@@ -22,6 +26,10 @@ const I = {
   system: 'M12 15a3 3 0 100-6 3 3 0 000 6z M4 12h2M18 12h2M12 4v2M12 18v2',
   puzzle: 'M4 7h3a2 2 0 002-2 2 2 0 114 0 2 2 0 002 2h3v3a2 2 0 002 2 2 2 0 110 4 2 2 0 00-2 2v3h-3',
   shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  import: 'M12 3v12M8 11l4 4 4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2',
+  invite: 'M4 4h16v16H4zM4 7l8 6 8-6',
+  ai: 'M12 2a2 2 0 012 2v1h2a2 2 0 012 2v2h1a2 2 0 010 4h-1v2a2 2 0 01-2 2h-2v1a2 2 0 01-4 0v-1H6a2 2 0 01-2-2v-2H3a2 2 0 010-4h1V7a2 2 0 012-2h2V4a2 2 0 012-2zM9 10h.01M15 10h.01M9 15h6',
+  globe: 'M12 2a10 10 0 100 20 10 10 0 000-20M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20',
 };
 
 const groups = computed(() => [
@@ -30,18 +38,24 @@ const groups = computed(() => [
     { label: 'Members', href: '/admin/members', component: 'Admin/Members', icon: I.members },
     { label: 'Categories & Tags', href: '/admin/content', component: 'Admin/Content', icon: I.tags },
     { label: 'Moderation', href: '/admin/moderation', component: 'Admin/Moderation', icon: I.shield },
+    { label: 'Invites', href: '/admin/invites', component: 'Admin/Invites', icon: I.invite },
   ] },
   { label: 'Configuration', items: [
     { label: 'Settings', href: '/admin/settings', component: 'Admin/Settings', icon: I.cog },
     { label: 'Email', href: '/admin/email', component: 'Admin/Email', icon: I.mail },
+    { label: 'Languages', href: '/admin/languages', component: 'Admin/Languages', icon: I.globe },
     { label: 'PWA', href: '/admin/pwa', component: 'Admin/Pwa', icon: I.pwa },
   ] },
   { label: 'Extensions', items: [
     { label: 'Marketplace', href: '/admin/marketplace', component: 'Admin/Marketplace', icon: I.market },
-    ...(storeOwner.value ? [{ label: 'Store', href: '/admin/store', component: 'Admin/Store', icon: I.store }] : []),
+    // The seller/store console lives front-facing now (convoro.co/extensions/manage),
+    // reached from the forum's "Extensions" nav — no admin Store section.
     ...extNav.value.map((e) => ({ label: e.name, href: e.href, component: '', icon: I.puzzle })),
   ] },
-  { label: 'System', items: [{ label: 'System', href: '/admin/system', component: 'Admin/System', icon: I.system }] },
+  { label: 'System', items: [
+    { label: 'AI', href: '/admin/ai', component: 'Admin/Ai', icon: I.ai },
+    { label: 'Import', href: '/admin/import', component: 'Admin/Import', icon: I.import },
+  ] },
 ]);
 
 const banner = () => (page.props as any).updateBanner ?? null;
@@ -90,6 +104,13 @@ function active(item: { component: string; href: string }) {
           <h1 class="text-lg font-bold text-ink"><slot name="title">Admin</slot></h1>
           <p v-if="$slots.subtitle" class="mt-0.5 text-sm text-ink-2"><slot name="subtitle" /></p>
         </div>
+        <button type="button" @click="palette.open()"
+          class="hidden items-center gap-2 rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm text-ink-muted hover:text-ink sm:flex"
+          aria-label="Open command palette">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+          <span>Search</span>
+          <kbd class="rounded border border-line bg-surface px-1.5 text-[10px] font-semibold">⌘K</kbd>
+        </button>
         <ThemeToggle />
       </header>
       <main class="p-6">
@@ -101,5 +122,7 @@ function active(item: { component: string; href: string }) {
         <slot />
       </main>
     </div>
+    <Toast />
+    <CommandPalette />
   </div>
 </template>

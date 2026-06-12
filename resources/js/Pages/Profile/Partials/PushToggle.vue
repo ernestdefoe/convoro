@@ -4,6 +4,7 @@ import SecondaryButton from '@/Components/SecondaryButton.vue';
 import { currentSubscription, pushSupported, subscribeToPush, unsubscribeFromPush } from '@/lib/push';
 import { usePage } from '@inertiajs/vue3';
 import { onMounted, ref } from 'vue';
+import { t } from '@/lib/i18n';
 
 const page = usePage();
 const vapidKey = (): string => (page.props as any).pushKey ?? '';
@@ -25,9 +26,9 @@ async function enable() {
   try {
     const ok = await subscribeToPush(vapidKey());
     if (ok) subscribed.value = true;
-    else error.value = 'Permission was denied or push is unavailable.';
+    else error.value = t('Permission was denied or push is unavailable.');
   } catch (e: any) {
-    error.value = e?.message ?? 'Could not enable push.';
+    error.value = e?.message ?? t('Could not enable push.');
   } finally {
     busy.value = false;
   }
@@ -39,7 +40,7 @@ async function disable() {
     await unsubscribeFromPush();
     subscribed.value = false;
   } catch (e: any) {
-    error.value = e?.message ?? 'Could not disable push.';
+    error.value = e?.message ?? t('Could not disable push.');
   } finally {
     busy.value = false;
   }
@@ -49,26 +50,26 @@ async function disable() {
 <template>
   <section>
     <header>
-      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">Push notifications</h2>
+      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ t('Push notifications') }}</h2>
       <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-        Get browser notifications for replies, mentions and reactions — even when Convoro isn't open.
+        {{ t("Get browser notifications for replies, mentions and reactions — even when {app} isn't open.", { app: 'Convoro' }) }}
       </p>
     </header>
 
     <div class="mt-6">
       <p v-if="!supported" class="text-sm text-gray-500 dark:text-gray-400">
-        Push isn't available in this browser (or the site isn't served over HTTPS).
+        {{ t("Push isn't available in this browser (or the site isn't served over HTTPS).") }}
       </p>
 
       <template v-else>
         <PrimaryButton v-if="!subscribed" :disabled="busy" @click="enable">
-          {{ busy ? 'Enabling…' : 'Enable push notifications' }}
+          {{ busy ? t('Enabling…') : t('Enable push notifications') }}
         </PrimaryButton>
         <SecondaryButton v-else :disabled="busy" @click="disable">
-          {{ busy ? 'Disabling…' : 'Disable push notifications' }}
+          {{ busy ? t('Disabling…') : t('Disable push notifications') }}
         </SecondaryButton>
 
-        <p v-if="subscribed" class="mt-2 text-sm text-green-600 dark:text-green-400">Push is enabled on this device.</p>
+        <p v-if="subscribed" class="mt-2 text-sm text-green-600 dark:text-green-400">{{ t('Push is enabled on this device.') }}</p>
         <p v-if="error" class="mt-2 text-sm text-red-600 dark:text-red-400">{{ error }}</p>
       </template>
     </div>

@@ -5,6 +5,7 @@ import Editor from '@/Components/Editor.vue';
 import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { t } from '@/lib/i18n';
 
 const props = defineProps<{ conversation: any; messages: any[] }>();
 
@@ -80,7 +81,7 @@ onBeforeUnmount(() => { if (Echo()) Echo().leave(`conversation.${props.conversat
     <ReadingScrubber :target="thread" />
     <div class="mx-auto flex h-[calc(100vh-140px)] max-w-[760px] flex-col">
       <div class="mb-3 flex items-center gap-3">
-        <Link href="/messages" class="text-ink-muted hover:text-ink" aria-label="Back to messages">
+        <Link href="/messages" class="text-ink-muted hover:text-ink" :aria-label="t('Back to messages')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6" /></svg>
         </Link>
         <!-- Group: stacked avatars; 1:1: partner avatar -->
@@ -90,22 +91,22 @@ onBeforeUnmount(() => { if (Echo()) Echo().leave(`conversation.${props.conversat
         <Avatar v-else :avatar="conversation.partner" :size="38" />
         <div class="min-w-0">
           <h1 class="truncate text-lg font-bold">{{ conversation.title }}</h1>
-          <p v-if="conversation.isGroup" class="text-xs text-ink-muted">{{ conversation.participants.length }} people</p>
+          <p v-if="conversation.isGroup" class="text-xs text-ink-muted">{{ t('{n} people', { n: conversation.participants.length }) }}</p>
         </div>
         <button type="button" class="ml-auto inline-flex items-center gap-1.5 rounded-c border border-line bg-surface px-3 py-1.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="adding = !adding">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
-          Add people
+          {{ t('Add people') }}
         </button>
       </div>
 
       <!-- Add-people search -->
       <div v-if="adding" class="mb-3 rounded-c border border-line bg-surface p-3">
-        <input v-model="addQuery" type="text" placeholder="Search people to add…" class="w-full rounded-lg border-line bg-surface-2 text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary" />
+        <input v-model="addQuery" type="text" :placeholder="t('Search people to add…')" class="w-full rounded-lg border-line bg-surface-2 text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary" />
         <div v-if="addResults.length" class="mt-2 divide-y divide-line/60">
           <button v-for="u in addResults" :key="u.uid" type="button" class="flex w-full items-center gap-2.5 px-1 py-2 text-left hover:bg-surface-2" @click="addPerson(u)">
             <Avatar :avatar="u" :size="28" />
             <span class="text-sm font-semibold text-ink">{{ u.name }}</span>
-            <span class="ml-auto text-xs font-semibold text-primary">Add</span>
+            <span class="ml-auto text-xs font-semibold text-primary">{{ t('Add') }}</span>
           </button>
         </div>
       </div>
@@ -120,14 +121,14 @@ onBeforeUnmount(() => { if (Echo()) Echo().leave(`conversation.${props.conversat
             <div class="mt-0.5 text-[11px] text-ink-muted" :class="mine(m) ? 'text-right' : ''">{{ m.createdAt }}</div>
           </div>
         </div>
-        <p v-if="!live.length" class="py-10 text-center text-sm text-ink-muted">Say hello 👋</p>
+        <p v-if="!live.length" class="py-10 text-center text-sm text-ink-muted">{{ t('Say hello 👋') }}</p>
       </div>
 
       <div class="mt-3">
-        <Editor ref="editor" placeholder="Write a message…" />
+        <Editor ref="editor" :placeholder="t('Write a message…')" />
         <div class="mt-2 flex justify-end">
           <button type="button" :disabled="posting" class="rounded-c bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-60" @click="send">
-            {{ posting ? 'Sending…' : 'Send' }}
+            {{ posting ? t('Sending…') : t('Send') }}
           </button>
         </div>
       </div>

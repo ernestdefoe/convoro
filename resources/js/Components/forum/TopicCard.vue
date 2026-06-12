@@ -2,6 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import Avatar from './Avatar.vue';
 import CategoryIcon from './CategoryIcon.vue';
+import { t } from '@/lib/i18n';
 
 defineProps<{ topic: any }>();
 </script>
@@ -17,7 +18,7 @@ defineProps<{ topic: any }>();
         <svg v-if="topic.isPinned" width="14" height="14" viewBox="0 0 24 24" fill="#e8830c"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z" /></svg>
         <h3 class="truncate text-base font-bold tracking-tight">{{ topic.title }}</h3>
         <span v-if="topic.isLive" class="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-600">
-          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500"></span>LIVE
+          <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500"></span>{{ t('LIVE') }}
         </span>
       </div>
       <p class="mt-1.5 line-clamp-2 text-sm text-ink-2">{{ topic.excerpt }}</p>
@@ -35,7 +36,7 @@ defineProps<{ topic: any }>();
       </div>
     </div>
     <div class="hidden shrink-0 flex-col items-end justify-center gap-2 sm:flex">
-      <div class="text-center"><b class="block text-[15px]">{{ topic.replyCount }}</b><span class="text-[11px] uppercase tracking-wide text-ink-muted">replies</span></div>
+      <div class="text-center"><b class="block text-[15px]">{{ topic.replyCount }}</b><span class="text-[11px] uppercase tracking-wide text-ink-muted">{{ t('replies') }}</span></div>
     </div>
   </Link>
 </template>

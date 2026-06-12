@@ -97,7 +97,13 @@ class Updater
             Artisan::call('migrate', ['--force' => true]);
             Artisan::call('optimize:clear');
             Artisan::call('config:cache');
-            Artisan::call('route:cache');
+            // NOTE: intentionally NOT route:cache — enabled extensions register
+            // closure-based routes, which can't be safely route-cached
+            // (serializable-closure errors at render time). Routes stay uncached.
+
+            // Tell long-running queue workers to reload — otherwise they keep
+            // executing the OLD code (including this updater) until restarted.
+            Artisan::call('queue:restart');
         } catch (\Throwable $e) {
             // non-fatal; files are in place
         }
@@ -136,11 +142,31 @@ class Updater
             $target = $dest.DIRECTORY_SEPARATOR.$iter->getSubPathname();
             if ($item->isDir()) {
                 File::ensureDirectoryExists($target);
-            } elseif (! @copy($item->getPathname(), $target)) {
+            } elseif (! self::put($item->getPathname(), $target)) {
                 $ok = false;
             }
         }
 
         return $ok;
+    }
+
+    /**
+     * Copy one file, recovering from an existing dest that isn't writable
+     * (e.g. left with foreign ownership/permissions) by chmod-ing then
+     * removing it before the final attempt. Prevents one stubborn file from
+     * aborting the whole update.
+     */
+    private static function put(string $src, string $target): bool
+    {
+        if (@copy($src, $target)) {
+            return true;
+        }
+        @chmod($target, 0664);
+        if (@copy($src, $target)) {
+            return true;
+        }
+        @unlink($target);
+
+        return @copy($src, $target);
     }
 }

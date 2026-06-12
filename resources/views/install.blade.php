@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>Install Convoro</title>
+  <title>{{ __('Install Convoro') }}</title>
   <style>
     :root { --c: #5b5bd6; --ink: #1f2430; --muted: #6b7280; --line: #e6e8f0; --bg: #f3f4f9; --card: #fff; }
     * { box-sizing: border-box; }
@@ -29,7 +29,10 @@
     .check { display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 14px; border-bottom: 1px solid var(--line); }
     .check:last-child { border-bottom: 0; }
     .badge { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 12px; flex-shrink: 0; }
-    .ok { background: #16a34a; } .bad { background: #dc2626; }
+    .ok { background: #16a34a; } .bad { background: #dc2626; } .warn { background: #d97706; }
+    .advisories { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .advisories h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 8px; }
+    .check .hint { color: var(--muted); font-size: 12px; }
     .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; border-radius: 10px; border: 0; font-size: 14px; font-weight: 700; cursor: pointer; background: var(--c); color: #fff; }
     .btn:disabled { opacity: .55; cursor: not-allowed; }
     .btn.ghost { background: transparent; color: var(--muted); }
@@ -46,7 +49,7 @@
 <body>
   <div class="wrap">
     <div class="brand"><span class="logo"><i></i></span><h1>Convoro</h1></div>
-    <p class="sub">Let's get your community online. This takes about a minute.</p>
+    <p class="sub">{{ __("Let's get your community online. This takes about a minute.") }}</p>
 
     <div class="card">
       <div class="steps">
@@ -57,8 +60,8 @@
 
       {{-- Step 1: Requirements --}}
       <section data-step="0">
-        <h2>Server requirements</h2>
-        <p class="step-sub">Convoro needs a few things to run.</p>
+        <h2>{{ __('Server requirements') }}</h2>
+        <p class="step-sub">{{ __('Convoro needs a few things to run.') }}</p>
         <div>
           @foreach ($requirements['checks'] as $c)
             <div class="check">
@@ -67,60 +70,71 @@
             </div>
           @endforeach
         </div>
+        @if (!empty($advisories))
+          <div class="advisories">
+            <h3>{{ __('Recommended for production') }}</h3>
+            @foreach ($advisories as $a)
+              <div class="check">
+                <span class="badge {{ $a['pass'] ? 'ok' : 'warn' }}">{{ $a['pass'] ? '✓' : '!' }}</span>
+                <span>{{ $a['label'] }}@if (!$a['pass'] && !empty($a['hint'])) <span class="hint">— {{ $a['hint'] }}</span>@endif</span>
+              </div>
+            @endforeach
+          </div>
+        @endif
         <div class="actions">
           <div class="spacer"></div>
-          <button class="btn" id="toDb" {{ $requirements['ok'] ? '' : 'disabled' }}>Continue</button>
+          <button class="btn" id="toDb" {{ $requirements['ok'] ? '' : 'disabled' }}>{{ __('Continue') }}</button>
         </div>
         @unless ($requirements['ok'])
-          <div class="msg err">Please resolve the items marked ✕, then reload this page.</div>
+          <div class="msg err">{{ __('Please resolve the items marked ✕, then reload this page.') }}</div>
         @endunless
       </section>
 
       {{-- Step 2: Database --}}
       <section data-step="1" class="hidden">
-        <h2>Database</h2>
-        <p class="step-sub">Create an empty database, then enter its details.</p>
-        <label>Engine</label>
+        <h2>{{ __('Database') }}</h2>
+        <p class="step-sub">{{ __('Create an empty database, then enter its details.') }}</p>
+        <label>{{ __('Engine') }}</label>
         <select id="db_driver">
           @foreach ($drivers as $d)
             <option value="{{ $d['value'] }}" data-port="{{ $d['port'] }}">{{ $d['label'] }}</option>
           @endforeach
         </select>
         <div class="row">
-          <div><label>Host</label><input id="db_host" value="127.0.0.1"></div>
-          <div style="max-width:120px"><label>Port</label><input id="db_port" value="3306"></div>
+          <div><label>{{ __('Host') }}</label><input id="db_host" value="127.0.0.1"></div>
+          <div style="max-width:120px"><label>{{ __('Port') }}</label><input id="db_port" value="3306"></div>
         </div>
-        <label>Database name</label><input id="db_database" placeholder="convoro">
+        <label>{{ __('Database name') }}</label><input id="db_database" placeholder="convoro">
         <div class="row">
-          <div><label>Username</label><input id="db_username"></div>
-          <div><label>Password</label><input id="db_password" type="password"></div>
+          <div><label>{{ __('Username') }}</label><input id="db_username"></div>
+          <div><label>{{ __('Password') }}</label><input id="db_password" type="password"></div>
         </div>
         <div class="msg" id="dbMsg"></div>
         <div class="actions">
-          <button class="btn ghost" data-back="0">Back</button>
+          <button class="btn ghost" data-back="0">{{ __('Back') }}</button>
           <div class="spacer"></div>
-          <button class="btn" id="testDb">Test connection</button>
-          <button class="btn hidden" id="toSite">Continue</button>
+          <button class="btn" id="testDb">{{ __('Test connection') }}</button>
+          <button class="btn hidden" id="toSite">{{ __('Continue') }}</button>
         </div>
       </section>
 
       {{-- Step 3: Site + admin --}}
       <section data-step="2" class="hidden">
-        <h2>Your community &amp; admin account</h2>
-        <p class="step-sub">Final step — name your site and create the owner account.</p>
-        <label>Community name</label><input id="site_name" placeholder="My Community">
-        <label>Site URL</label><input id="site_url" value="{{ $appUrl }}">
+        <h2>{{ __('Your community & admin account') }}</h2>
+        <p class="step-sub">{{ __('Final step — name your site and create the owner account.') }}</p>
+        <label>{{ __('Community name') }}</label><input id="site_name" placeholder="{{ __('My Community') }}">
+        <label>{{ __('Site URL') }}</label><input id="site_url" value="{{ $appUrl }}">
         <div class="row">
-          <div><label>Admin name</label><input id="admin_name"></div>
-          <div><label>Admin email</label><input id="admin_email" type="email"></div>
+          <div><label>{{ __('Admin name') }}</label><input id="admin_name"></div>
+          <div><label>{{ __('Admin email') }}</label><input id="admin_email" type="email"></div>
         </div>
-        <label>Admin password <span style="color:var(--muted);font-weight:400">(min 8 characters)</span></label>
+        <label>{{ __('Admin password') }} <span style="color:var(--muted);font-weight:400">{{ __('(min 8 characters)') }}</span></label>
         <input id="admin_password" type="password">
         <div class="msg" id="runMsg"></div>
         <div class="actions">
-          <button class="btn ghost" data-back="1">Back</button>
+          <button class="btn ghost" data-back="1">{{ __('Back') }}</button>
           <div class="spacer"></div>
-          <button class="btn" id="run">Install Convoro</button>
+          <button class="btn" id="run">{{ __('Install Convoro') }}</button>
         </div>
       </section>
 
@@ -128,8 +142,8 @@
       <section data-step="3" class="hidden">
         <div class="done">
           <div class="big">🎉</div>
-          <h2>You're all set!</h2>
-          <p class="step-sub">Convoro is installed. Redirecting you to your new community…</p>
+          <h2>{{ __("You're all set!") }}</h2>
+          <p class="step-sub">{{ __('Convoro is installed. Redirecting you to your new community…') }}</p>
         </div>
       </section>
     </div>
@@ -174,16 +188,16 @@
     }
 
     $('#testDb').addEventListener('click', async () => {
-      const btn = $('#testDb'); btn.disabled = true; btn.textContent = 'Testing…';
+      const btn = $('#testDb'); btn.disabled = true; btn.textContent = @json(__('Testing…'));
       const { ok, data } = await post('{{ route('install.testdb') }}', dbPayload());
-      btn.disabled = false; btn.textContent = 'Test connection';
-      showMsg($('#dbMsg'), data.message || (ok ? 'OK' : 'Failed'), ok);
+      btn.disabled = false; btn.textContent = @json(__('Test connection'));
+      showMsg($('#dbMsg'), data.message || (ok ? @json(__('OK')) : @json(__('Failed'))), ok);
       $('#toSite').classList.toggle('hidden', !ok);
     });
     $('#toSite').addEventListener('click', () => go(2));
 
     $('#run').addEventListener('click', async () => {
-      const btn = $('#run'); btn.disabled = true; btn.textContent = 'Installing…';
+      const btn = $('#run'); btn.disabled = true; btn.textContent = @json(__('Installing…'));
       const payload = {
         site: { name: $('#site_name').value.trim(), url: $('#site_url').value.trim() },
         db: dbPayload(),
@@ -194,8 +208,8 @@
         go(3);
         setTimeout(() => (window.location = data.redirect || '/'), 1500);
       } else {
-        btn.disabled = false; btn.textContent = 'Install Convoro';
-        showMsg($('#runMsg'), data.message || 'Installation failed. Please check your details.', false);
+        btn.disabled = false; btn.textContent = @json(__('Install Convoro'));
+        showMsg($('#runMsg'), data.message || @json(__('Installation failed. Please check your details.')), false);
       }
     });
   </script>

@@ -24,6 +24,8 @@ class ModerationController extends Controller
                 'type' => $r->reportable_type,
                 'reason' => $r->reason,
                 'reporter' => $r->reporter?->name,
+                'source' => $r->source ?? 'user',
+                'ai' => $r->ai_meta,
                 'createdAt' => optional($r->created_at)->diffForHumans(),
                 'subject' => $this->subjectSummary($r),
             ]);
@@ -78,14 +80,14 @@ class ModerationController extends Controller
     {
         $report->update(['status' => 'resolved', 'resolved_by' => request()->user()->id, 'resolved_at' => now()]);
 
-        return back()->with('status', 'Report resolved.');
+        return back()->with('status', __('Report resolved.'));
     }
 
     public function dismissReport(Report $report): RedirectResponse
     {
         $report->update(['status' => 'dismissed', 'resolved_by' => request()->user()->id, 'resolved_at' => now()]);
 
-        return back()->with('status', 'Report dismissed.');
+        return back()->with('status', __('Report dismissed.'));
     }
 
     /** Delete a post (and decrement its topic's reply count). */
@@ -99,13 +101,24 @@ class ModerationController extends Controller
         Report::where('reportable_type', 'post')->where('reportable_id', $post->id)
             ->update(['status' => 'resolved', 'resolved_at' => now()]);
 
-        return back()->with('status', 'Post deleted.');
+        return back()->with('status', __('Post deleted.'));
+    }
+
+    /** Approve a held post: restore it publicly and clear its open reports. */
+    public function approvePost(Post $post): RedirectResponse
+    {
+        $post->forceFill(['hidden' => false])->saveQuietly();
+        Report::where('reportable_type', 'post')->where('reportable_id', $post->id)
+            ->where('status', 'open')
+            ->update(['status' => 'resolved', 'resolved_by' => request()->user()->id, 'resolved_at' => now()]);
+
+        return back()->with('status', __('Post approved.'));
     }
 
     /** Ban a user (spammer). Optionally ban their last IP and wipe their posts. */
     public function banUser(Request $request, User $user): RedirectResponse
     {
-        abort_if($user->is_admin, 403, 'You cannot ban an administrator.');
+        abort_if($user->is_admin, 403, __('You cannot ban an administrator.'));
 
         $data = $request->validate([
             'reason' => ['nullable', 'string', 'max:255'],
@@ -116,7 +129,7 @@ class ModerationController extends Controller
         $user->forceFill(['banned_at' => now(), 'ban_reason' => $data['reason'] ?? null])->save();
 
         if (($data['ban_ip'] ?? false) && $user->last_ip) {
-            $this->addIpBan($user->last_ip, 'Spammer: '.$user->name, $request->user()->id);
+            $this->addIpBan($user->last_ip, __('Spammer: :name', ['name' => $user->name]), $request->user()->id);
         }
 
         if ($data['delete_posts'] ?? false) {
@@ -126,14 +139,14 @@ class ModerationController extends Controller
         Report::where('reportable_type', 'user')->where('reportable_id', $user->id)
             ->update(['status' => 'resolved', 'resolved_at' => now()]);
 
-        return back()->with('status', "“{$user->name}” has been banned.");
+        return back()->with('status', __('“:name” has been banned.', ['name' => $user->name]));
     }
 
     public function unbanUser(User $user): RedirectResponse
     {
         $user->forceFill(['banned_at' => null, 'ban_reason' => null])->save();
 
-        return back()->with('status', "“{$user->name}” has been reinstated.");
+        return back()->with('status', __('“:name” has been reinstated.', ['name' => $user->name]));
     }
 
     public function banIp(Request $request): RedirectResponse
@@ -144,7 +157,7 @@ class ModerationController extends Controller
         ]);
         $this->addIpBan($data['ip_address'], $data['reason'] ?? null, $request->user()->id);
 
-        return back()->with('status', "Banned {$data['ip_address']}.");
+        return back()->with('status', __('Banned :ip.', ['ip' => $data['ip_address']]));
     }
 
     public function unbanIp(IpBan $ipBan): RedirectResponse
@@ -153,7 +166,7 @@ class ModerationController extends Controller
         $ipBan->delete();
         IpBan::flush($ip);
 
-        return back()->with('status', "Unbanned {$ip}.");
+        return back()->with('status', __('Unbanned :ip.', ['ip' => $ip]));
     }
 
     /** Move a topic into a different category. */
@@ -162,14 +175,27 @@ class ModerationController extends Controller
         $data = $request->validate(['category_id' => ['nullable', 'integer', 'exists:categories,id']]);
         $topic->update(['category_id' => $data['category_id'] ?? null]);
 
-        return back()->with('status', 'Topic moved.');
+        return back()->with('status', __('Topic moved.'));
+    }
+
+    /** Search topics (for the move-post picker). */
+    public function topicSearch(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $q = trim((string) $request->query('q', ''));
+        $topics = Topic::query()
+            ->when($q !== '', fn ($query) => $query->where('title', 'like', '%'.addcslashes($q, '%_\\').'%'))
+            ->latest('last_post_at')->limit(10)
+            ->get(['id', 'title', 'slug'])
+            ->map(fn ($t) => ['id' => $t->id, 'title' => $t->title, 'slug' => $t->slug]);
+
+        return response()->json(['topics' => $topics]);
     }
 
     /** Move a single post to a different existing topic. */
     public function movePost(Request $request, Post $post): RedirectResponse
     {
         $data = $request->validate(['topic_id' => ['required', 'integer', 'exists:topics,id']]);
-        abort_if($post->is_first, 422, 'The opening post cannot be moved on its own.');
+        abort_if($post->is_first, 422, __('The opening post cannot be moved on its own.'));
 
         $from = $post->topic;
         $post->update(['topic_id' => $data['topic_id']]);
@@ -179,7 +205,7 @@ class ModerationController extends Controller
         }
         Topic::where('id', $data['topic_id'])->increment('reply_count');
 
-        return back()->with('status', 'Post moved.');
+        return back()->with('status', __('Post moved.'));
     }
 
     private function addIpBan(string $ip, ?string $reason, int $by): void

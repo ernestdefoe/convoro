@@ -8,6 +8,7 @@ import { useAuthModal } from '@/lib/authModal';
 
 const page = usePage();
 const user = computed(() => (page.props as any).auth?.user ?? null);
+const version = computed(() => (page.props as any).appVersion ?? null);
 const forumUrl = 'https://community.convoro.co';
 const auth = useAuthModal();
 </script>
@@ -20,7 +21,7 @@ const auth = useAuthModal();
         <nav class="ml-2 hidden items-center gap-1 md:flex">
           <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Home</Link>
           <Link href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Extensions</Link>
-          <a href="/docs/install.html" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Docs</a>
+          <a href="/docs" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Docs</a>
           <a :href="forumUrl" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Community</a>
         </nav>
         <div class="ml-auto flex items-center gap-2.5">
@@ -40,13 +41,23 @@ const auth = useAuthModal();
     <main><slot /></main>
 
     <footer class="border-t border-line py-10">
-      <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-4 px-6 text-sm text-ink-muted">
-        <Link href="/" class="flex items-center"><ConvoroLogo :size="24" /></Link>
-        <div class="ml-auto flex items-center gap-5">
+      <div class="mx-auto max-w-6xl px-6">
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-ink-muted">
+          <Link href="/" class="flex items-center"><ConvoroLogo :size="24" /></Link>
           <Link href="/extensions" class="font-semibold text-ink-2 hover:text-ink">Extensions</Link>
-          <a href="/docs/install.html" class="font-semibold text-ink-2 hover:text-ink">Docs</a>
+          <a href="/docs" class="font-semibold text-ink-2 hover:text-ink">Docs</a>
+          <Link href="/changelog" class="font-semibold text-ink-2 hover:text-ink">Changelog</Link>
+          <Link href="/roadmap" class="font-semibold text-ink-2 hover:text-ink">Roadmap</Link>
+          <Link href="/about" class="font-semibold text-ink-2 hover:text-ink">About</Link>
+          <Link href="/security" class="font-semibold text-ink-2 hover:text-ink">Security</Link>
           <a :href="forumUrl" class="font-semibold text-ink-2 hover:text-ink">Community</a>
+          <Link href="/status" class="ml-auto inline-flex items-center gap-1.5 font-semibold text-ink-2 hover:text-ink">
+            <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Status
+          </Link>
+        </div>
+        <div class="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-6 text-xs text-ink-muted">
           <span>© {{ new Date().getFullYear() }} Convoro</span>
+          <Link v-if="version" href="/changelog" class="rounded-full bg-surface-2 px-2 py-0.5 font-mono font-semibold text-ink-2 hover:text-ink">v{{ version }}</Link>
         </div>
       </div>
     </footer>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
+import { t as tr } from '@/lib/i18n';
 
 const props = defineProps<{ title: string; html: string; byline?: string; cover?: string | null }>();
 
@@ -57,11 +58,11 @@ onBeforeUnmount(() => { document.body.style.overflow = ''; document.removeEventL
   <button
     type="button"
     class="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm font-semibold text-ink-2 hover:text-ink"
-    title="Reader mode"
+    :title="tr('Reader mode')"
     @click="open = true"
   >
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" /><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" /></svg>
-    Reader
+    {{ tr('Reader') }}
   </button>
 
   <Teleport to="body">
@@ -73,7 +74,7 @@ onBeforeUnmount(() => { document.body.style.overflow = ''; document.removeEventL
         </div>
 
         <!-- close -->
-        <button type="button" class="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink-2 hover:text-ink" aria-label="Close reader" @click="open = false">
+        <button type="button" class="absolute right-4 top-4 z-20 flex h-9 w-9 items-center justify-center rounded-full border border-line bg-surface text-ink-2 hover:text-ink" :aria-label="tr('Close reader')" @click="open = false">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
 
@@ -93,7 +94,7 @@ onBeforeUnmount(() => { document.body.style.overflow = ''; document.removeEventL
             <img v-if="cover" :src="cover" alt="" class="mb-8 max-h-[40vh] w-full rounded-xl object-cover" />
             <h1 class="text-3xl font-extrabold leading-tight tracking-tight text-ink sm:text-4xl">{{ title }}</h1>
             <div class="mt-3 text-sm text-ink-muted">
-              <span v-if="byline">{{ byline }} · </span>{{ readingTime }} min read
+              <span v-if="byline">{{ byline }} · </span>{{ tr('{n} min read', { n: readingTime }) }}
             </div>
             <div class="prose-q reader-body mt-8 text-ink" v-html="html"></div>
             <div class="h-24"></div>

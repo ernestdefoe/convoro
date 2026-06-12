@@ -2,6 +2,7 @@
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
+import { t } from '@/lib/i18n';
 
 defineProps<{ members: any[] }>();
 
@@ -9,16 +10,16 @@ const medal = (i: number) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '�
 </script>
 
 <template>
-  <Head title="Leaderboard" />
+  <Head :title="t('Leaderboard')" />
   <AppLayout>
     <div class="mx-auto max-w-3xl">
       <div class="mb-5">
-        <h1 class="text-2xl font-extrabold tracking-tight">Leaderboard</h1>
-        <p class="text-sm text-ink-muted">Top members by reputation — posts, topics started, and reactions received.</p>
+        <h1 class="text-2xl font-extrabold tracking-tight">{{ t('Leaderboard') }}</h1>
+        <p class="text-sm text-ink-muted">{{ t('Top members by reputation — posts, topics started, and reactions received.') }}</p>
       </div>
 
       <div v-if="!members.length" class="rounded-c border border-dashed border-line bg-surface p-12 text-center text-ink-muted">
-        No activity yet.
+        {{ t('No activity yet.') }}
       </div>
 
       <div v-else class="overflow-hidden rounded-c border border-line bg-surface shadow-sm">
@@ -33,13 +34,13 @@ const medal = (i: number) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '�
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-1.5">
               <span class="truncate font-bold">{{ m.name }}</span>
-              <span v-if="m.isAdmin" class="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">Admin</span>
+              <span v-if="m.isAdmin" class="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">{{ t('Admin') }}</span>
             </div>
-            <div class="text-xs text-ink-muted">{{ m.posts }} posts · {{ m.topics }} topics · {{ m.reactionsReceived }} reactions</div>
+            <div class="text-xs text-ink-muted">{{ t('{posts} posts · {topics} topics · {reactions} reactions', { posts: m.posts, topics: m.topics, reactions: m.reactionsReceived }) }}</div>
           </div>
           <div class="shrink-0 text-right">
             <div class="text-lg font-extrabold tracking-tight text-primary">{{ m.score }}</div>
-            <div class="text-[11px] uppercase tracking-wide text-ink-muted">points</div>
+            <div class="text-[11px] uppercase tracking-wide text-ink-muted">{{ t('points') }}</div>
           </div>
         </Link>
       </div>

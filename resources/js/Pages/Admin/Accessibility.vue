@@ -2,28 +2,29 @@
 import { Head } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { t } from '@/lib/i18n';
 
 type Pair = { label: string; fg: string; bg: string; min: number };
 
 // Token pairs audited against the LIVE theme (read from computed CSS vars).
 const PAIRS: Pair[] = [
-  { label: 'Body text on background', fg: '--c-text', bg: '--c-bg', min: 4.5 },
-  { label: 'Body text on cards', fg: '--c-text', bg: '--c-surface', min: 4.5 },
-  { label: 'Secondary text on cards', fg: '--c-text-2', bg: '--c-surface', min: 4.5 },
-  { label: 'Muted text on background', fg: '--c-muted', bg: '--c-bg', min: 3 },
-  { label: 'White text on brand buttons', fg: '#fff', bg: '--c-primary', min: 4.5 },
-  { label: 'Links/badges (brand on soft)', fg: '--c-primary-700', bg: '--c-primary-soft', min: 4.5 },
+  { label: t('Body text on background'), fg: '--c-text', bg: '--c-bg', min: 4.5 },
+  { label: t('Body text on cards'), fg: '--c-text', bg: '--c-surface', min: 4.5 },
+  { label: t('Secondary text on cards'), fg: '--c-text-2', bg: '--c-surface', min: 4.5 },
+  { label: t('Muted text on background'), fg: '--c-muted', bg: '--c-bg', min: 3 },
+  { label: t('White text on brand buttons'), fg: '#fff', bg: '--c-primary', min: 4.5 },
+  { label: t('Links/badges (brand on soft)'), fg: '--c-primary-700', bg: '--c-primary-soft', min: 4.5 },
 ];
 
 const guidelines = [
-  { label: 'Keyboard navigation with visible focus rings', status: 'pass' },
-  { label: 'Semantic landmarks (header, nav, main)', status: 'pass' },
-  { label: 'Skip-to-content link', status: 'pass' },
-  { label: 'All form fields have labels', status: 'pass' },
-  { label: 'Light and dark themes available', status: 'pass' },
-  { label: 'Respects “reduce motion” preference', status: 'pass' },
-  { label: 'Alt text captured on uploaded images', status: 'todo' },
-  { label: 'Full screen-reader audit (ARIA roles)', status: 'partial' },
+  { label: t('Keyboard navigation with visible focus rings'), status: 'pass' },
+  { label: t('Semantic landmarks (header, nav, main)'), status: 'pass' },
+  { label: t('Skip-to-content link'), status: 'pass' },
+  { label: t('All form fields have labels'), status: 'pass' },
+  { label: t('Light and dark themes available'), status: 'pass' },
+  { label: t('Respects “reduce motion” preference'), status: 'pass' },
+  { label: t('Alt text captured on uploaded images'), status: 'todo' },
+  { label: t('Full screen-reader audit (ARIA roles)'), status: 'partial' },
 ];
 
 const results = ref<{ label: string; ratio: number; min: number; ok: boolean }[]>([]);
@@ -65,19 +66,19 @@ const score = computed(() => {
   return Math.round((passed / total) * 100);
 });
 
-const grade = computed(() => (score.value >= 90 ? 'Excellent' : score.value >= 75 ? 'Good' : score.value >= 50 ? 'Fair' : 'Needs work'));
+const grade = computed(() => (score.value >= 90 ? t('Excellent') : score.value >= 75 ? t('Good') : score.value >= 50 ? t('Fair') : t('Needs work')));
 const ring = computed(() => `conic-gradient(rgb(16 185 129) ${score.value * 3.6}deg, rgba(255,255,255,0.08) 0deg)`);
 
 const statusStyle = (s: string) =>
   s === 'pass' ? 'bg-emerald-500/20 text-emerald-400' : s === 'partial' ? 'bg-amber-500/20 text-amber-400' : 'bg-slate-500/20 text-ink-2';
-const statusLabel = (s: string) => (s === 'pass' ? 'Pass' : s === 'partial' ? 'Partial' : 'To do');
+const statusLabel = (s: string) => (s === 'pass' ? t('Pass') : s === 'partial' ? t('Partial') : t('To do'));
 </script>
 
 <template>
-  <Head title="Admin · Accessibility" />
+  <Head :title="t('Admin · Accessibility')" />
   <AdminLayout>
-    <template #title>Accessibility</template>
-    <template #subtitle>WCAG / ADA compliance for your live theme</template>
+    <template #title>{{ t('Accessibility') }}</template>
+    <template #subtitle>{{ t('WCAG / ADA compliance for your live theme') }}</template>
 
     <div class="grid gap-6 lg:grid-cols-[300px_1fr]">
       <!-- Score -->
@@ -89,20 +90,20 @@ const statusLabel = (s: string) => (s === 'pass' ? 'Pass' : s === 'partial' ? 'P
             <span class="text-sm text-ink-2">{{ grade }}</span>
           </div>
         </div>
-        <p class="mt-4 text-sm text-ink-2">Compliance score across contrast + best practices. Adjust theme colors to improve contrast.</p>
+        <p class="mt-4 text-sm text-ink-2">{{ t('Compliance score across contrast + best practices. Adjust theme colors to improve contrast.') }}</p>
       </div>
 
       <div class="space-y-6">
         <!-- Contrast audit -->
         <section class="rounded-2xl border border-line bg-surface p-5">
-          <h3 class="mb-3 text-sm font-bold text-ink">Color contrast (live theme)</h3>
+          <h3 class="mb-3 text-sm font-bold text-ink">{{ t('Color contrast (live theme)') }}</h3>
           <ul class="divide-y divide-line">
             <li v-for="r in results" :key="r.label" class="flex items-center justify-between py-2.5 text-sm">
               <span class="text-ink-2">{{ r.label }}</span>
               <span class="flex items-center gap-3">
                 <span class="font-mono text-ink-2">{{ r.ratio }}:1</span>
                 <span class="rounded-full px-2 py-0.5 text-xs font-semibold" :class="r.ok ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'">
-                  {{ r.ok ? 'AA' : 'Fail' }}
+                  {{ r.ok ? t('AA') : t('Fail') }}
                 </span>
               </span>
             </li>
@@ -111,7 +112,7 @@ const statusLabel = (s: string) => (s === 'pass' ? 'Pass' : s === 'partial' ? 'P
 
         <!-- Best practices -->
         <section class="rounded-2xl border border-line bg-surface p-5">
-          <h3 class="mb-3 text-sm font-bold text-ink">Best practices</h3>
+          <h3 class="mb-3 text-sm font-bold text-ink">{{ t('Best practices') }}</h3>
           <ul class="divide-y divide-line">
             <li v-for="g in guidelines" :key="g.label" class="flex items-center justify-between py-2.5 text-sm">
               <span class="text-ink-2">{{ g.label }}</span>

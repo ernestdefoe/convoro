@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import Avatar from '@/Components/forum/Avatar.vue';
+import { t } from '@/lib/i18n';
 
 export interface Widget { id: string; type: string; title?: string; body?: string }
 interface WidgetData {
@@ -20,7 +21,7 @@ const props = defineProps<{
 
 // Fall back to a sensible default rail when nothing is configured yet.
 const list = computed<Widget[]>(() =>
-  props.widgets?.length ? props.widgets : [{ id: 'default-stats', type: 'stats', title: 'Community stats' }],
+  props.widgets?.length ? props.widgets : [{ id: 'default-stats', type: 'stats', title: t('Community stats') }],
 );
 
 const fmt = (n = 0) => (n >= 1000 ? (n / 1000).toFixed(1).replace('.0', '') + 'k' : String(n));
@@ -36,17 +37,17 @@ const fmt = (n = 0) => (n >= 1000 ? (n / 1000).toFixed(1).replace('.0', '') + 'k
 
       <!-- Community stats -->
       <div v-else-if="w.type === 'stats'" class="grid grid-cols-2 gap-2.5 p-4">
-        <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats?.members) }}</b><span class="text-[11px] text-ink-muted">Members</span></div>
-        <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats?.topics) }}</b><span class="text-[11px] text-ink-muted">Topics</span></div>
-        <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats?.posts) }}</b><span class="text-[11px] text-ink-muted">Posts</span></div>
-        <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats?.reactions) }}</b><span class="text-[11px] text-ink-muted">Reactions</span></div>
+        <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats?.members) }}</b><span class="text-[11px] text-ink-muted">{{ t('Members') }}</span></div>
+        <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats?.topics) }}</b><span class="text-[11px] text-ink-muted">{{ t('Topics') }}</span></div>
+        <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats?.posts) }}</b><span class="text-[11px] text-ink-muted">{{ t('Posts') }}</span></div>
+        <div class="rounded-[10px] border border-line bg-surface-2 p-3"><b class="block text-lg tracking-tight">{{ fmt(stats?.reactions) }}</b><span class="text-[11px] text-ink-muted">{{ t('Reactions') }}</span></div>
       </div>
 
       <!-- Online now -->
       <div v-else-if="w.type === 'online_now'" class="flex items-center gap-3 p-4">
         <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
         <span class="text-2xl font-extrabold tracking-tight">{{ fmt(data?.onlineNow) }}</span>
-        <span class="text-sm text-ink-muted">online now</span>
+        <span class="text-sm text-ink-muted">{{ t('online now') }}</span>
       </div>
 
       <!-- Newest members -->
@@ -54,7 +55,7 @@ const fmt = (n = 0) => (n >= 1000 ? (n / 1000).toFixed(1).replace('.0', '') + 'k
         <Link v-for="(m, i) in data?.newestMembers || []" :key="i" :href="m.url || '#'" :title="m.name">
           <Avatar :avatar="m" :size="36" />
         </Link>
-        <p v-if="!(data?.newestMembers || []).length" class="text-sm text-ink-muted">No members yet.</p>
+        <p v-if="!(data?.newestMembers || []).length" class="text-sm text-ink-muted">{{ t('No members yet.') }}</p>
       </div>
 
       <!-- Top posters -->
@@ -62,7 +63,7 @@ const fmt = (n = 0) => (n >= 1000 ? (n / 1000).toFixed(1).replace('.0', '') + 'k
         <li v-for="(p, i) in data?.topPosters || []" :key="i" class="flex items-center justify-between rounded-lg px-2 py-1.5 text-sm">
           <span class="text-ink-2">{{ p.name }}</span><span class="font-semibold text-ink-muted">{{ p.count }}</span>
         </li>
-        <li v-if="!(data?.topPosters || []).length" class="px-2 py-1.5 text-sm text-ink-muted">No posts yet.</li>
+        <li v-if="!(data?.topPosters || []).length" class="px-2 py-1.5 text-sm text-ink-muted">{{ t('No posts yet.') }}</li>
       </ul>
 
       <!-- Categories -->

@@ -39,6 +39,15 @@ class HandleInertiaRequests extends Middleware
             ],
             'site' => fn () => Settings::public(),
             'storeOwner' => (bool) config('convoro.store_owner'),
+            'appVersion' => config('convoro.version'),
+            'ask' => fn () => ['enabled' => \App\Support\Ask::enabled(), 'suggestions' => \App\Support\Ask::suggestions()],
+            'inviteOnly' => fn () => (bool) Settings::get('invites.only', false),
+            'i18n' => fn () => [
+                'locale' => app()->getLocale(),
+                'rtl' => \App\Support\I18n::isRtl(app()->getLocale()),
+                'locales' => \App\Support\I18n::available(),
+                'messages' => \App\Support\I18n::messages(app()->getLocale()),
+            ],
             'themeFonts' => fn () => $request->user()?->is_admin ? \App\Support\Theme::fontOptions() : null,
             'adminExtNav' => fn () => $request->user()?->is_admin
                 ? collect(\App\Support\ExtensionManager::enabled())
@@ -46,7 +55,10 @@ class HandleInertiaRequests extends Middleware
                     ->map(fn ($m) => [
                         'id' => $m['id'],
                         'name' => $m['name'],
-                        'href' => $m['admin_url'] ?: '/admin/extensions/'.$m['id'],
+                        // Always route through the in-shell settings page so the
+                        // extension UI loads in the admin content pane instead of
+                        // navigating away to a standalone page.
+                        'href' => '/admin/extensions/'.$m['id'],
                     ])->values()->all()
                 : null,
             'seo' => fn () => \App\Support\Seo::make(),

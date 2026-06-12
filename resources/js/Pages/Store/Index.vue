@@ -2,15 +2,24 @@
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import MarketingLayout from '@/Layouts/MarketingLayout.vue';
+import { t } from '@/lib/i18n';
 
 defineProps<{ products: any[] }>();
 
 const status = computed(() => (usePage().props as any).flash?.status as string | undefined);
 const loggedIn = computed(() => !!(usePage().props as any).auth?.user);
+
+// AI security-review badge for a card.
+function reviewBadge(r: any): { t: string; c: string } | null {
+  if (r?.rating === 'safe') return { t: t('✓ Reviewed safe'), c: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' };
+  if (r?.rating === 'caution') return { t: t('⚠ Review: caution'), c: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' };
+  if (r?.rating === 'unsafe') return { t: t('⛔ Review: unsafe'), c: 'bg-red-500/15 text-red-600 dark:text-red-400' };
+  return null;
+}
 </script>
 
 <template>
-  <Head title="Extensions & themes — Convoro" />
+  <Head :title="t('Extensions & themes — {brand}', { brand: 'Convoro' })" />
   <MarketingLayout>
     <section class="mx-auto max-w-6xl px-6 py-16">
       <div v-if="status" class="mb-8 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm font-medium text-emerald-700 dark:text-emerald-300">
@@ -19,42 +28,43 @@ const loggedIn = computed(() => !!(usePage().props as any).auth?.user);
 
       <div class="mb-10 flex flex-wrap items-end justify-between gap-4">
         <div class="max-w-2xl">
-          <h1 class="text-4xl font-black tracking-tight">Extensions &amp; themes</h1>
-          <p class="mt-3 text-lg text-ink-2">Browse the directory of Convoro extensions and themes. Free add-ons install in one click; premium ones are purchased on their detail page — you get a license key to install on any of your sites.</p>
+          <h1 class="text-4xl font-black tracking-tight">{{ t('Extensions & themes') }}</h1>
+          <p class="mt-3 text-lg text-ink-2">{{ t('Browse the directory of Convoro extensions and themes. Free add-ons install in one click; premium ones are purchased on their detail page — you get a license key to install on any of your sites.') }}</p>
         </div>
         <div class="flex shrink-0 items-center gap-2">
           <Link v-if="loggedIn" href="/extensions/manage"
             class="inline-flex items-center gap-2 rounded-c border border-line px-4 py-2.5 text-sm font-bold text-ink-2 hover:bg-surface-2">
-            Manage yours
+            {{ t('Manage yours') }}
           </Link>
           <Link href="/extensions/submit"
             class="inline-flex items-center gap-2 rounded-c bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-600">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14" /></svg>
-            Submit your extension
+            {{ t('Submit your extension') }}
           </Link>
         </div>
       </div>
 
       <div v-if="!products.length" class="rounded-2xl border border-dashed border-line p-16 text-center text-ink-muted">
-        New premium add-ons are on the way. Check back soon.
+        {{ t('New premium add-ons are on the way. Check back soon.') }}
       </div>
 
       <div v-else class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <Link v-for="p in products" :key="p.slug" :href="`/extensions/${p.slug}`"
           class="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition hover:-translate-y-0.5 hover:shadow-lg">
           <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" class="aspect-[2/1] w-full object-cover" />
+          <div v-else class="grid aspect-[2/1] w-full place-items-center bg-primary/10 text-4xl">{{ p.type === 'theme' ? '🎨' : '🧩' }}</div>
           <div class="flex flex-1 flex-col p-6">
-            <div class="flex items-start gap-3">
-              <div v-if="!p.image" class="grid h-12 w-12 place-items-center rounded-xl bg-primary/10 text-2xl">{{ p.type === 'theme' ? '🎨' : '🧩' }}</div>
-              <div class="min-w-0">
-                <h3 class="truncate font-bold group-hover:text-primary">{{ p.name }}</h3>
-                <span class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ p.type }}</span>
-              </div>
+            <div class="flex items-center gap-2">
+              <h3 class="truncate font-bold group-hover:text-primary">{{ p.name }}</h3>
+              <span class="ml-auto shrink-0 text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ p.type }}</span>
             </div>
-            <p class="mt-3 line-clamp-2 flex-1 text-sm text-ink-2">{{ p.description }}</p>
-            <div class="mt-4 flex items-center justify-between border-t border-line pt-4">
+            <p class="mt-3 line-clamp-2 text-sm text-ink-2">{{ p.description }}</p>
+            <div v-if="reviewBadge(p.review)" class="mt-3">
+              <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold" :class="reviewBadge(p.review)!.c">{{ reviewBadge(p.review)!.t }}</span>
+            </div>
+            <div class="mt-4 flex flex-1 items-end justify-between border-t border-line pt-4">
               <span class="font-extrabold" :class="p.free ? 'text-ink-muted' : 'text-primary'">{{ p.price }}</span>
-              <span class="text-sm font-semibold text-primary group-hover:underline">View →</span>
+              <span class="text-sm font-semibold text-primary group-hover:underline">{{ t('View →') }}</span>
             </div>
           </div>
         </Link>

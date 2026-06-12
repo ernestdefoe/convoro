@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { ref, watch, onBeforeUnmount } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { toast } from '@/lib/toast';
+import { t } from '@/lib/i18n';
 
 interface SettingField { key: string; label: string; type?: string; default?: unknown; help?: string; options?: { value: string; label: string }[] }
 interface Ext {
@@ -25,9 +27,13 @@ function save() {
     only: [],
     onSuccess: () => {
       status.value = 'saved';
+      toast(t('Settings saved'));
       setTimeout(() => { if (status.value === 'saved') status.value = 'idle'; }, 2000);
     },
-    onError: () => (status.value = 'error'),
+    onError: () => {
+      status.value = 'error';
+      toast(t("Couldn't save — will retry"), 'error');
+    },
   });
 }
 
@@ -37,22 +43,103 @@ watch(formValues, () => {
   status.value = 'saving';
   timer = setTimeout(save, 700);
 }, { deep: true });
+
+// --- In-shell embed of the extension's own admin page -----------------------
+// The extension admin pages are same-origin, so we render them in a borderless
+// auto-height iframe inside the admin content pane (instead of navigating away)
+// and inject a small stylesheet that strips the page's own header/back-link so
+// it reads as a native admin panel.
+const frame = ref<HTMLIFrameElement | null>(null);
+let ro: ResizeObserver | null = null;
+
+function onFrameLoad() {
+  const f = frame.value;
+  if (!f) return;
+  try {
+    const doc = f.contentDocument;
+    if (!doc) return;
+
+    // Mirror the admin's resolved theme tokens into the iframe, then remap the
+    // extension page's hardcoded dark palette onto them so it adopts the
+    // settings-page colors instead of rendering as a detached dark box.
+    const cs = getComputedStyle(document.documentElement);
+    const tok = (n: string) => cs.getPropertyValue(n).trim();
+    const isDark = (document.documentElement.dataset.theme || document.body.dataset.theme) === 'dark';
+    const style = doc.createElement('style');
+    style.textContent = `
+      :root{
+        --c-bg:${tok('--c-bg')};--c-surface:${tok('--c-surface')};--c-surface-2:${tok('--c-surface-2')};
+        --c-border:${tok('--c-border')};--c-text:${tok('--c-text')};--c-text-2:${tok('--c-text-2')};
+        --c-muted:${tok('--c-muted')};--c-primary:${tok('--c-primary')};
+        color-scheme:${isDark ? 'dark' : 'light'};
+      }
+      .top{display:none!important}
+      a[href="/admin/marketplace"]{display:none!important}
+      .wrap,.container{max-width:none!important;margin:0!important;padding:18px 20px!important}
+      html,body{background:transparent!important;color:rgb(var(--c-text))!important;min-height:0!important}
+      h1,h2,h3,h4{color:rgb(var(--c-text))!important}
+      .card,.panel,.box,.stat,.tile,.well{background:rgb(var(--c-surface))!important;border-color:rgb(var(--c-border))!important;color:rgb(var(--c-text))!important}
+      .sub,.hint,.muted,.meta,.note{color:rgb(var(--c-muted))!important}
+      label,.f,.chk,.lbl,legend,th{color:rgb(var(--c-text-2))!important}
+      input:not([type=checkbox]):not([type=radio]),textarea,select{background:rgb(var(--c-surface-2))!important;border-color:rgb(var(--c-border))!important;color:rgb(var(--c-text))!important}
+      .toggle,.switch,.option-row,.field-row,.input-row{background:rgb(var(--c-surface-2))!important;border-color:rgb(var(--c-border))!important;color:rgb(var(--c-text))!important}
+      a:not(.btn){color:rgb(var(--c-primary))!important}
+      .btn.ghost{border-color:rgb(var(--c-border))!important;color:rgb(var(--c-text-2))!important}
+      table,th,td,hr,.row,.item,.divider{border-color:rgb(var(--c-border))!important}
+      ::-webkit-scrollbar{width:0;height:0}
+    `;
+    doc.head.appendChild(style);
+
+    const isCustomPage = !!doc.querySelector('.top, .wrap, .container');
+    const resize = () => {
+      try { f.style.height = (doc.documentElement.scrollHeight || doc.body.scrollHeight) + 'px'; } catch { /* noop */ }
+    };
+
+    if (isCustomPage) {
+      // Our own pages: size exactly to content, no inner scrollbar.
+      f.style.minHeight = '0';
+      resize();
+      if (doc.body) { ro = new ResizeObserver(resize); ro.observe(doc.body); }
+    } else {
+      // Third-party SPA (e.g. Horizon): give it a tall fixed canvas.
+      f.style.minHeight = '78vh';
+    }
+  } catch {
+    // Cross-origin or sandboxed — fall back to a tall fixed canvas.
+    f.style.minHeight = '78vh';
+  }
+}
+
+onBeforeUnmount(() => { ro?.disconnect(); ro = null; });
 </script>
 
 <template>
   <AdminLayout>
-    <Head :title="`${ext.name} settings`" />
+    <Head :title="`${ext.name}`" />
     <template #title>{{ ext.name }}</template>
-    <template #subtitle>Settings · {{ ext.type }} · v{{ ext.version }}<span v-if="ext.author"> · by {{ ext.author }}</span></template>
+    <template #subtitle>{{ ext.type === 'theme' ? t('Theme') : t('Extension') }} · v{{ ext.version }}<span v-if="ext.author"> · {{ t('by {author}', { author: ext.author }) }}</span></template>
 
     <div class="mb-4">
       <Link href="/admin/marketplace" class="inline-flex items-center gap-1.5 text-sm font-semibold text-ink-2 hover:text-ink">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-        Marketplace
+        {{ t('Marketplace') }}
       </Link>
     </div>
 
-    <div class="max-w-2xl space-y-5">
+    <!-- Extension ships its own admin page → embed it seamlessly in the pane. -->
+    <div v-if="ext.adminUrl" class="overflow-hidden rounded-2xl border border-line bg-appbg">
+      <iframe
+        ref="frame"
+        :src="ext.adminUrl + (ext.adminUrl.includes('?') ? '&' : '?') + 'embed=1'"
+        :title="t('Extension settings')"
+        class="block w-full border-0"
+        style="min-height: 60vh"
+        @load="onFrameLoad"
+      />
+    </div>
+
+    <!-- Otherwise render the declarative settings form. -->
+    <div v-else class="max-w-2xl space-y-5">
       <div class="rounded-2xl border border-line bg-surface p-5">
         <div class="flex items-start gap-3">
           <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg"
@@ -64,17 +151,12 @@ watch(formValues, () => {
             <div class="mt-2 flex items-center gap-2">
               <span class="rounded px-1.5 py-0.5 text-[11px] font-semibold"
                 :class="ext.enabled ? 'bg-emerald-500/15 text-emerald-300' : 'bg-surface-2 text-ink-2'">
-                {{ ext.enabled ? 'Enabled' : 'Disabled' }}
+                {{ ext.enabled ? t('Enabled') : t('Disabled') }}
               </span>
               <span class="text-[11px] text-ink-muted">{{ ext.id }}</span>
             </div>
           </div>
         </div>
-        <a v-if="ext.adminUrl" :href="ext.adminUrl"
-          class="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-500/15 px-3 py-2 text-sm font-semibold text-indigo-300 hover:bg-indigo-500/25">
-          Open management page
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 17 17 7M7 7h10v10" /></svg>
-        </a>
       </div>
 
       <form v-if="ext.settings.length" class="rounded-2xl border border-line bg-surface p-5 space-y-4" @submit.prevent="save">
@@ -100,15 +182,15 @@ watch(formValues, () => {
         </div>
 
         <div class="flex items-center gap-2 pt-1 text-sm">
-          <span v-if="status === 'saving'" class="text-ink-muted">Saving…</span>
-          <span v-else-if="status === 'saved'" class="font-semibold text-emerald-500">✓ All changes saved</span>
-          <span v-else-if="status === 'error'" class="text-red-500">Couldn't save — will retry on next change</span>
-          <span v-else class="text-ink-muted">Changes save automatically</span>
+          <span v-if="status === 'saving'" class="text-ink-muted">{{ t('Saving…') }}</span>
+          <span v-else-if="status === 'saved'" class="font-semibold text-emerald-500">{{ t('✓ All changes saved') }}</span>
+          <span v-else-if="status === 'error'" class="text-red-500">{{ t("Couldn't save — will retry on next change") }}</span>
+          <span v-else class="text-ink-muted">{{ t('Changes save automatically') }}</span>
         </div>
       </form>
 
       <p v-else class="rounded-2xl border border-dashed border-line p-8 text-center text-sm text-ink-muted">
-        This {{ ext.type }} has no configurable settings.
+        {{ t('This {type} has no configurable settings.', { type: ext.type }) }}
       </p>
     </div>
   </AdminLayout>

@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import ConvoroLogo from '@/Components/ConvoroLogo.vue';
+import Slot from '@/Components/ext/Slot.vue';
 import { useAuthModal } from '@/lib/authModal';
-import { useForm } from '@inertiajs/vue3';
+import { t } from '@/lib/i18n';
+import { useForm, usePage } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
 
 const { state, close, toggleMode } = useAuthModal();
 const mode = computed(() => state.value.mode);
 
+const inviteOnly = computed(() => !!(usePage().props as any).inviteOnly);
+const urlInvite = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('invite') ?? '' : '';
+
 const login = useForm({ email: '', password: '', remember: false });
-const register = useForm({ name: '', email: '', password: '', password_confirmation: '' });
+const register = useForm({ name: '', email: '', password: '', password_confirmation: '', invite: urlInvite });
 
 // Reset fields/errors whenever the modal closes.
 watch(() => state.value.open, (open) => {
@@ -42,59 +47,67 @@ const field = 'mt-1 w-full rounded-lg border-line bg-surface-2 text-ink placehol
           <div class="mb-5 flex flex-col items-center text-center">
             <ConvoroLogo :size="40" />
             <h2 class="mt-3 text-xl font-extrabold tracking-tight text-ink">
-              {{ mode === 'login' ? 'Welcome back' : 'Join the community' }}
+              {{ t(mode === 'login' ? 'Welcome back' : 'Join the community') }}
             </h2>
           </div>
+
+          <!-- Social login — provided by the Social Login extension via this slot. -->
+          <Slot name="auth:providers" />
 
           <!-- Login -->
           <form v-if="mode === 'login'" class="space-y-4" @submit.prevent="submitLogin">
             <div>
-              <label class="text-sm font-semibold text-ink-2">Email</label>
+              <label class="text-sm font-semibold text-ink-2">{{ t('Email') }}</label>
               <input v-model="login.email" type="email" autocomplete="email" :class="field" />
               <p v-if="login.errors.email" class="mt-1 text-sm text-red-500">{{ login.errors.email }}</p>
             </div>
             <div>
-              <label class="text-sm font-semibold text-ink-2">Password</label>
+              <label class="text-sm font-semibold text-ink-2">{{ t('Password') }}</label>
               <input v-model="login.password" type="password" autocomplete="current-password" :class="field" />
               <p v-if="login.errors.password" class="mt-1 text-sm text-red-500">{{ login.errors.password }}</p>
             </div>
             <label class="flex items-center gap-2 text-sm text-ink-2">
-              <input v-model="login.remember" type="checkbox" class="rounded border-line text-primary focus:ring-primary" /> Remember me
+              <input v-model="login.remember" type="checkbox" class="rounded border-line text-primary focus:ring-primary" /> {{ t('Remember me') }}
             </label>
             <button type="submit" :disabled="login.processing" class="w-full rounded-c bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-60">
-              {{ login.processing ? 'Signing in…' : 'Sign in' }}
+              {{ login.processing ? t('Signing in…') : t('Sign in') }}
             </button>
           </form>
 
           <!-- Register -->
           <form v-else class="space-y-4" @submit.prevent="submitRegister">
             <div>
-              <label class="text-sm font-semibold text-ink-2">Name</label>
+              <label class="text-sm font-semibold text-ink-2">{{ t('Name') }}</label>
               <input v-model="register.name" type="text" autocomplete="name" :class="field" />
               <p v-if="register.errors.name" class="mt-1 text-sm text-red-500">{{ register.errors.name }}</p>
             </div>
             <div>
-              <label class="text-sm font-semibold text-ink-2">Email</label>
+              <label class="text-sm font-semibold text-ink-2">{{ t('Email') }}</label>
               <input v-model="register.email" type="email" autocomplete="email" :class="field" />
               <p v-if="register.errors.email" class="mt-1 text-sm text-red-500">{{ register.errors.email }}</p>
             </div>
             <div>
-              <label class="text-sm font-semibold text-ink-2">Password</label>
+              <label class="text-sm font-semibold text-ink-2">{{ t('Password') }}</label>
               <input v-model="register.password" type="password" autocomplete="new-password" :class="field" />
               <p v-if="register.errors.password" class="mt-1 text-sm text-red-500">{{ register.errors.password }}</p>
             </div>
             <div>
-              <label class="text-sm font-semibold text-ink-2">Confirm password</label>
+              <label class="text-sm font-semibold text-ink-2">{{ t('Confirm password') }}</label>
               <input v-model="register.password_confirmation" type="password" autocomplete="new-password" :class="field" />
             </div>
+            <div v-if="inviteOnly">
+              <label class="text-sm font-semibold text-ink-2">{{ t('Invite code') }}</label>
+              <input v-model="register.invite" type="text" :placeholder="t('Required to join')" :class="field" />
+              <p v-if="register.errors.invite" class="mt-1 text-sm text-red-500">{{ register.errors.invite }}</p>
+            </div>
             <button type="submit" :disabled="register.processing" class="w-full rounded-c bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-60">
-              {{ register.processing ? 'Creating account…' : 'Create account' }}
+              {{ register.processing ? t('Creating account…') : t('Create account') }}
             </button>
           </form>
 
           <p class="mt-5 text-center text-sm text-ink-muted">
-            <template v-if="mode === 'login'">New here? <button type="button" class="font-semibold text-primary-700 hover:underline" @click="toggleMode">Create an account</button></template>
-            <template v-else>Already a member? <button type="button" class="font-semibold text-primary-700 hover:underline" @click="toggleMode">Sign in</button></template>
+            <template v-if="mode === 'login'">{{ t('New here?') }} <button type="button" class="font-semibold text-primary-700 hover:underline" @click="toggleMode">{{ t('Create an account') }}</button></template>
+            <template v-else>{{ t('Already a member?') }} <button type="button" class="font-semibold text-primary-700 hover:underline" @click="toggleMode">{{ t('Sign in') }}</button></template>
           </p>
         </div>
       </div>

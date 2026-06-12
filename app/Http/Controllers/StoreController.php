@@ -21,7 +21,7 @@ class StoreController extends Controller
         return Inertia::render('Store/Index', [
             'products' => Product::where('published', true)->orderByDesc('featured')->orderBy('name')->get()
                 ->map(fn (Product $p) => MarketingController::card($p) + ['description' => $p->tagline]),
-            'seo' => Seo::make(['title' => 'Store — premium extensions & themes', 'description' => 'Premium Convoro extensions and themes. Buy once, get a license key and download.']),
+            'seo' => Seo::make(['title' => __('Store — premium extensions & themes'), 'description' => __('Premium Convoro extensions and themes. Buy once, get a license key and download.')]),
         ]);
     }
 
@@ -31,8 +31,8 @@ class StoreController extends Controller
         return Inertia::render('Store/Submit', [
             'checkoutEnabled' => StripeService::configured(),
             'seo' => Seo::make([
-                'title' => 'Submit your extension or theme',
-                'description' => 'Publish your Convoro extension or theme to the directory. Link a public GitHub repo — free listings are instant; premium items sell through the Convoro store.',
+                'title' => __('Submit your extension or theme'),
+                'description' => __('Publish your Convoro extension or theme to the directory. Link a public GitHub repo — free listings are instant; premium items sell through the Convoro store.'),
             ]),
         ]);
     }
@@ -52,7 +52,7 @@ class StoreController extends Controller
 
         $repo = \App\Support\GitHubRegistry::normalizeRepo($data['repo']);
         if (! $repo) {
-            return back()->with('storeError', 'That does not look like a GitHub repository. Use the owner/name or full URL.');
+            return back()->with('storeError', __('That does not look like a GitHub repository. Use the owner/name or full URL.'));
         }
 
         try {
@@ -64,12 +64,12 @@ class StoreController extends Controller
         $m = $r['manifest'];
         $priceCents = $data['pricing'] === 'premium' ? (int) round(((float) ($data['price'] ?? 0)) * 100) : 0;
         if ($data['pricing'] === 'premium' && $priceCents < 100) {
-            return back()->with('storeError', 'Set a price of at least $1 for a premium listing.');
+            return back()->with('storeError', __('Set a price of at least $1 for a premium listing.'));
         }
 
         $existing = Product::where('package', $m['id'])->first();
         if ($existing && $existing->published) {
-            return back()->with('storeError', "“{$m['name']}” is already listed in the directory.");
+            return back()->with('storeError', __('“:name” is already listed in the directory.', ['name' => $m['name']]));
         }
 
         Product::updateOrCreate(
@@ -94,28 +94,66 @@ class StoreController extends Controller
         );
 
         return redirect()->route('store.index')->with('status',
-            "Thanks! “{$m['name']}” was submitted for review. We'll email {$data['email']} once it's approved.");
+            __('Thanks! “:name” was submitted for review. We\'ll email :email once it\'s approved.', ['name' => $m['name'], 'email' => $data['email']]));
     }
 
     /** Author dashboard: the listings this member owns (price etc. editable here). */
     public function manage(Request $request): Response
     {
         $user = $request->user();
-        $mine = Product::query()
-            ->where('owner_id', $user->id)
-            ->orWhere(fn ($q) => $q->whereNull('owner_id')->where('submitter_email', $user->email))
-            ->orderBy('name')->get()
-            ->map(fn (Product $p) => [
-                'slug' => $p->slug, 'name' => $p->name, 'type' => $p->type,
-                'tagline' => $p->tagline, 'description' => $p->description,
-                'free' => $p->isFree(), 'price' => round($p->price_cents / 100, 2),
-                'published' => (bool) $p->published, 'status' => $p->status,
-            ]);
+        // The convoro.co operator (admin on the store-owner deployment) gets the
+        // full store console here; everyone else manages only their own listings.
+        $isOwner = (bool) config('convoro.store_owner') && (bool) $user->is_admin;
+
+        if ($isOwner) {
+            $products = Product::orderByDesc('featured')->orderBy('name')->withCount('licenses')->get()
+                ->map(fn (Product $p) => [
+                    'id' => $p->id, 'slug' => $p->slug, 'name' => $p->name, 'type' => $p->type,
+                    'tagline' => $p->tagline, 'description' => $p->description, 'package' => $p->package,
+                    'version' => $p->version, 'price_cents' => $p->price_cents, 'image' => $p->image,
+                    'published' => (bool) $p->published, 'featured' => (bool) $p->featured,
+                    'status' => $p->status, 'submitter' => $p->submitter_email,
+                    'source' => $p->source, 'repo' => $p->repo,
+                    'pinnedVersion' => $p->pinned_version,
+                    'synced' => $p->last_synced_at?->diffForHumans(),
+                    'review' => $p->reviewPayload(),
+                    'hasDownload' => $p->source === 'github' ? (bool) $p->download_url : (bool) $p->download_path,
+                    'sales' => $p->licenses_count,
+                ]);
+        } else {
+            $products = Product::query()
+                ->where('owner_id', $user->id)
+                ->orWhere(fn ($q) => $q->whereNull('owner_id')->where('submitter_email', $user->email))
+                ->orderBy('name')->get()
+                ->map(fn (Product $p) => [
+                    'slug' => $p->slug, 'name' => $p->name, 'type' => $p->type,
+                    'tagline' => $p->tagline, 'description' => $p->description,
+                    'free' => $p->isFree(), 'price' => round($p->price_cents / 100, 2),
+                    'published' => (bool) $p->published, 'status' => $p->status,
+                ]);
+        }
 
         return Inertia::render('Store/Manage', [
-            'products' => $mine,
+            'products' => $products,
+            'isOwner' => $isOwner,
+            'registryWebhookUrl' => $isOwner ? url('/api/registry/github') : null,
+            'reviewAi' => $isOwner ? [
+                'enabled' => (bool) \App\Support\Settings::get('review.enabled', true),
+                'configured' => \App\Support\Llm::configured(),
+                'provider' => \App\Support\Settings::get('ai.provider', 'anthropic'),
+                'model' => \App\Support\Settings::get('ai.model', ''),
+                'base_url' => \App\Support\Settings::get('ai.base_url', ''),
+            ] : null,
             'checkoutEnabled' => StripeService::configured(),
-            'seo' => Seo::make(['title' => 'Manage your extensions']),
+            'stripe' => $isOwner ? [
+                'key' => \App\Support\Settings::get('stripe.key'),
+                'secretSet' => trim((string) \App\Support\Settings::get('stripe.secret')) !== '',
+                'webhookSet' => trim((string) \App\Support\Settings::get('stripe.webhook_secret')) !== '',
+                'webhookUrl' => url('/store/webhook'),
+                'canConnect' => StripeService::canConnect(),
+                'connectedAccount' => StripeService::connectedAccount(),
+            ] : null,
+            'seo' => Seo::make(['title' => $isOwner ? __('Store console') : __('Manage your extensions')]),
         ]);
     }
 
@@ -138,7 +176,7 @@ class StoreController extends Controller
 
         $cents = $data['pricing'] === 'premium' ? (int) round(((float) ($data['price'] ?? 0)) * 100) : 0;
         if ($data['pricing'] === 'premium' && $cents < 100) {
-            return back()->with('storeError', 'Set a price of at least $1 for a premium listing.');
+            return back()->with('storeError', __('Set a price of at least $1 for a premium listing.'));
         }
 
         // Claim ownership on first edit if it was matched by email.
@@ -150,7 +188,7 @@ class StoreController extends Controller
         $product->price_cents = $cents;
         $product->save();
 
-        return back()->with('status', "Updated “{$product->name}”.");
+        return back()->with('status', __('Updated “:name”.', ['name' => $product->name]));
     }
 
     public function show(Product $product): Response
@@ -168,6 +206,9 @@ class StoreController extends Controller
                 'version' => $product->version,
                 'price' => $product->priceLabel(),
                 'free' => $product->isFree(),
+                'source' => $product->source,
+                'repo' => $product->repo,
+                'review' => $product->reviewPayload(),
             ],
             'checkoutEnabled' => StripeService::configured(),
             'seo' => Seo::make(['title' => $product->name, 'description' => $product->tagline, 'image' => $product->image, 'type' => 'product']),
@@ -206,7 +247,7 @@ class StoreController extends Controller
                 'key' => $license->key,
                 'product' => $license->product->name,
             ] : null,
-            'seo' => Seo::make(['title' => 'Thank you', 'noindex' => true]),
+            'seo' => Seo::make(['title' => __('Thank you'), 'noindex' => true]),
         ]);
     }
 
@@ -264,7 +305,7 @@ class StoreController extends Controller
 
         return Inertia::render('Store/Account', [
             'licenses' => $licenses,
-            'seo' => Seo::make(['title' => 'My licenses', 'noindex' => true]),
+            'seo' => Seo::make(['title' => __('My licenses'), 'noindex' => true]),
         ]);
     }
 
@@ -292,5 +333,57 @@ class StoreController extends Controller
         }
 
         return response()->json(['received' => true]);
+    }
+
+    /**
+     * GitHub registry webhook — instant Packagist-style refresh. Point a repo's
+     * webhook (or org/GitHub-App) at this URL for the `release` (and `push`)
+     * events; a newly published release re-syncs the matching product at once.
+     */
+    public function githubWebhook(Request $request): JsonResponse
+    {
+        $payload = $request->getContent();
+
+        // Optional shared secret (Settings 'github.webhook_secret') → HMAC verify.
+        $secret = (string) \App\Support\Settings::get('github.webhook_secret', '');
+        if ($secret !== '') {
+            $sig = (string) $request->header('X-Hub-Signature-256', '');
+            $expected = 'sha256='.hash_hmac('sha256', $payload, $secret);
+            if (! hash_equals($expected, $sig)) {
+                return response()->json(['error' => 'invalid signature'], 400);
+            }
+        }
+
+        $event = (string) $request->header('X-GitHub-Event', '');
+        if ($event === 'ping') {
+            return response()->json(['ok' => true, 'pong' => true]);
+        }
+        // Only act on events that mean "new code is available".
+        if (! in_array($event, ['release', 'push', 'create'], true)) {
+            return response()->json(['ok' => true, 'ignored' => $event]);
+        }
+
+        $data = json_decode($payload, true) ?: [];
+        $repo = $data['repository']['full_name'] ?? null;
+        if (! $repo) {
+            return response()->json(['error' => 'no repository'], 422);
+        }
+
+        // Match by repo; pinned products stay frozen (manual bump only).
+        $product = Product::where('source', 'github')
+            ->whereRaw('LOWER(repo) = ?', [strtolower($repo)])
+            ->whereNull('pinned_version')
+            ->first();
+        if (! $product) {
+            return response()->json(['ok' => true, 'matched' => false]);
+        }
+
+        try {
+            $changed = \App\Support\GitHubRegistry::syncProduct($product);
+
+            return response()->json(['ok' => true, 'matched' => true, 'updated' => $changed, 'version' => $product->version]);
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'error' => $e->getMessage()], 200);
+        }
     }
 }

@@ -45,12 +45,16 @@ rsync -az --delete \
   ./ "$HOST:$REMOTE/"
 
 echo "▶ Running post-deploy on $HOST …"
+# Zero-500 deploy: a brief, branded maintenance window instead of the old
+# `optimize:clear` gap (which left routes-v7.php missing → random 500s). `up`
+# ALWAYS runs (separated with ';') so a failed migrate can never strand the
+# site in maintenance mode. `optimize` rebuilds every cache atomically.
 ssh "$HOST" "cd $REMOTE \
   && chown -R www-data:www-data . \
-  && php artisan migrate --force \
-  && php artisan optimize:clear \
-  && php artisan config:cache && php artisan route:cache \
-  && (systemctl reload php8.5-fpm 2>/dev/null || true) \
-  && systemctl restart convoro-worker convoro-reverb"
+  && (php artisan down --retry=10 || true); \
+  php artisan migrate --force && php artisan optimize && rm -f bootstrap/cache/convoro-extensions.php; \
+  (systemctl reload php8.5-fpm 2>/dev/null || true); \
+  php artisan up || true; \
+  systemctl restart convoro-worker convoro-reverb || true"
 
 echo "✓ Deployed."

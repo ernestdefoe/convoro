@@ -2,6 +2,7 @@
 import InputLabel from '@/Components/InputLabel.vue';
 import PrimaryButton from '@/Components/PrimaryButton.vue';
 import { onMounted, ref } from 'vue';
+import { t as tr } from '@/lib/i18n';
 
 type Token = { id: number; name: string; lastUsed: string; created: string };
 
@@ -43,14 +44,14 @@ async function create() {
     tokens.value.unshift(res.token);
     name.value = '';
   } catch {
-    error.value = 'Could not create the token.';
+    error.value = tr('Could not create the token.');
   } finally {
     busy.value = false;
   }
 }
 
 async function revoke(t: Token) {
-  if (!confirm(`Revoke “${t.name}”? Apps using it will stop working.`)) return;
+  if (!confirm(tr('Revoke “{name}”? Apps using it will stop working.', { name: t.name }))) return;
   try {
     await api('DELETE', `/user/tokens/${t.id}`);
     tokens.value = tokens.value.filter((x) => x.id !== t.id);
@@ -66,29 +67,29 @@ async function copy() {
 <template>
   <section>
     <header>
-      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">API access tokens</h2>
+      <h2 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ tr('API access tokens') }}</h2>
       <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">
-        Personal tokens let external apps or scripts access the API as you. Treat them like passwords.
+        {{ tr('Personal tokens let external apps or scripts access the API as you. Treat them like passwords.') }}
       </p>
     </header>
 
     <!-- newly created token (shown once) -->
     <div v-if="justCreated" class="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-700 dark:bg-amber-900/20">
-      <p class="text-sm font-medium text-amber-800 dark:text-amber-300">Copy your new token now — it won’t be shown again.</p>
+      <p class="text-sm font-medium text-amber-800 dark:text-amber-300">{{ tr('Copy your new token now — it won’t be shown again.') }}</p>
       <div class="mt-2 flex items-center gap-2">
         <code class="flex-1 truncate rounded bg-white px-2 py-1.5 font-mono text-xs text-gray-800 dark:bg-gray-900 dark:text-gray-200">{{ justCreated }}</code>
-        <button type="button" class="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-700" @click="copy">{{ copied ? 'Copied!' : 'Copy' }}</button>
+        <button type="button" class="rounded-md bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-700" @click="copy">{{ copied ? tr('Copied!') : tr('Copy') }}</button>
       </div>
     </div>
 
     <!-- create form -->
     <form class="mt-6 flex items-end gap-3" @submit.prevent="create">
       <div class="flex-1">
-        <InputLabel for="token_name" value="Token name" />
-        <input id="token_name" v-model="name" type="text" maxlength="60" placeholder="e.g. My script"
+        <InputLabel for="token_name" :value="tr('Token name')" />
+        <input id="token_name" v-model="name" type="text" maxlength="60" :placeholder="tr('e.g. My script')"
           class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300" />
       </div>
-      <PrimaryButton :disabled="busy">Create</PrimaryButton>
+      <PrimaryButton :disabled="busy">{{ tr('Create') }}</PrimaryButton>
     </form>
     <p v-if="error" class="mt-2 text-sm text-red-600">{{ error }}</p>
 
@@ -97,11 +98,11 @@ async function copy() {
       <li v-for="t in tokens" :key="t.id" class="flex items-center justify-between py-3">
         <div>
           <div class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ t.name }}</div>
-          <div class="text-xs text-gray-500 dark:text-gray-400">Created {{ t.created }} · last used {{ t.lastUsed }}</div>
+          <div class="text-xs text-gray-500 dark:text-gray-400">{{ tr('Created {created} · last used {lastUsed}', { created: t.created, lastUsed: t.lastUsed }) }}</div>
         </div>
-        <button type="button" class="text-sm font-semibold text-red-600 hover:text-red-700" @click="revoke(t)">Revoke</button>
+        <button type="button" class="text-sm font-semibold text-red-600 hover:text-red-700" @click="revoke(t)">{{ tr('Revoke') }}</button>
       </li>
-      <li v-if="!tokens.length" class="py-3 text-sm text-gray-500 dark:text-gray-400">No tokens yet.</li>
+      <li v-if="!tokens.length" class="py-3 text-sm text-gray-500 dark:text-gray-400">{{ tr('No tokens yet.') }}</li>
     </ul>
   </section>
 </template>

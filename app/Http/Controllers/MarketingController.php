@@ -13,11 +13,13 @@ class MarketingController extends Controller
     public function home(): Response
     {
         return Inertia::render('Marketing/Home', [
-            'featured' => Product::where('published', true)->where('featured', true)->latest()->take(3)->get()
+            // Whole published catalog — the homepage scrolls through all of them.
+            'catalog' => Product::where('published', true)
+                ->orderByDesc('featured')->orderBy('name')->get()
                 ->map(fn (Product $p) => self::card($p)),
             'seo' => Seo::make([
-                'title' => 'Convoro — modern community forum software',
-                'description' => 'Batteries-included community forum software: live theme editor, WYSIWYG posting, reactions, DMs, PWA push, a built-in marketplace, and a one-click installer. Runs on shared hosting.',
+                'title' => __('Convoro — the AI-native community platform'),
+                'description' => __('The forum that answers itself. Convoro puts AI at the core of community: members ask a question and get an instant answer drawn from your forum’s own threads, with citations. Batteries-included, beautiful, and runnable on shared hosting.'),
                 'type' => 'website',
             ]),
         ]);
@@ -33,6 +35,7 @@ class MarketingController extends Controller
             'image' => $p->image,
             'price' => $p->priceLabel(),
             'free' => $p->isFree(),
+            'review' => ['rating' => $p->review_rating, 'score' => $p->review_score],
         ];
     }
 }

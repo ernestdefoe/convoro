@@ -3,6 +3,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { uploadImage } from '@/lib/upload';
+import { t } from '@/lib/i18n';
 
 const props = defineProps<{
   values: { name: string; tagline: string; logo: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string };
@@ -44,99 +45,99 @@ function save() {
 </script>
 
 <template>
-  <Head title="Admin · Settings" />
+  <Head :title="t('Admin · Settings')" />
   <AdminLayout>
-    <template #title>Settings</template>
-    <template #subtitle>General community configuration</template>
+    <template #title>{{ t('Settings') }}</template>
+    <template #subtitle>{{ t('General community configuration') }}</template>
 
     <form class="max-w-2xl space-y-6" @submit.prevent="save">
       <div class="rounded-2xl border border-line bg-surface p-6 space-y-5">
         <div>
-          <label class="block text-sm font-medium text-ink-2">Community name</label>
+          <label class="block text-sm font-medium text-ink-2">{{ t('Community name') }}</label>
           <input v-model="form.name" type="text" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-ink-2">Tagline</label>
+          <label class="block text-sm font-medium text-ink-2">{{ t('Tagline') }}</label>
           <input v-model="form.tagline" type="text" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-ink-2">Logo</label>
-          <p class="text-xs text-ink-muted">Shown in the header. Leave empty to use the default Convoro mark.</p>
+          <label class="block text-sm font-medium text-ink-2">{{ t('Logo') }}</label>
+          <p class="text-xs text-ink-muted">{{ t('Shown in the header. Leave empty to use the default Convoro mark.') }}</p>
           <div class="mt-2 flex items-center gap-3">
             <div class="flex h-10 items-center rounded-lg bg-surface-2 px-3">
-              <img v-if="form.logo" :src="form.logo" alt="logo" class="h-7" />
-              <span v-else class="text-xs text-ink-muted">No logo</span>
+              <img v-if="form.logo" :src="form.logo" :alt="t('logo')" class="h-7" />
+              <span v-else class="text-xs text-ink-muted">{{ t('No logo') }}</span>
             </div>
             <input type="file" accept="image/png,image/jpeg,image/webp" class="text-sm text-ink-2" @change="pickLogo" />
-            <span v-if="uploadingLogo" class="text-sm text-ink-2">Uploading…</span>
-            <button v-if="form.logo" type="button" class="text-sm text-ink-2 hover:text-red-400" @click="form.logo = ''">Remove</button>
+            <span v-if="uploadingLogo" class="text-sm text-ink-2">{{ t('Uploading…') }}</span>
+            <button v-if="form.logo" type="button" class="text-sm text-ink-2 hover:text-red-400" @click="form.logo = ''">{{ t('Remove') }}</button>
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-ink-2">Default forum view</label>
+          <label class="block text-sm font-medium text-ink-2">{{ t('Default forum view') }}</label>
           <select v-model="form.default_view" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500">
-            <option value="feed">Feed</option>
-            <option value="grid">Grid</option>
+            <option value="feed">{{ t('Feed') }}</option>
+            <option value="grid">{{ t('Grid') }}</option>
           </select>
         </div>
         <label class="flex items-center gap-3">
           <input v-model="form.realtime" type="checkbox" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />
-          <span class="text-sm text-ink-2">Enable live threads (realtime) — requires a WebSocket server; leave off on shared hosting</span>
+          <span class="text-sm text-ink-2">{{ t('Enable live threads (realtime) — requires a WebSocket server; leave off on shared hosting') }}</span>
         </label>
       </div>
 
       <div class="rounded-2xl border border-line bg-surface p-6 space-y-5">
-        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">Email digests</h2>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('Email digests') }}</h2>
         <label class="flex items-center gap-3">
           <input v-model="form.digests" type="checkbox" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />
-          <span class="text-sm text-ink-2">Send digest emails (members choose their frequency in their profile)</span>
+          <span class="text-sm text-ink-2">{{ t('Send digest emails (members choose their frequency in their profile)') }}</span>
         </label>
       </div>
 
       <div class="rounded-2xl border border-line bg-surface p-6 space-y-5">
-        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">Progressive Web App</h2>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('Progressive Web App') }}</h2>
         <div>
-          <label class="block text-sm font-medium text-ink-2">App short name (home-screen label)</label>
+          <label class="block text-sm font-medium text-ink-2">{{ t('App short name (home-screen label)') }}</label>
           <input v-model="form.pwa_short_name" type="text" maxlength="30" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500" />
         </div>
         <label class="flex items-center gap-3">
           <input v-model="form.pwa_banner" type="checkbox" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />
-          <span class="text-sm text-ink-2">Show the “install app” banner to visitors on supported devices</span>
+          <span class="text-sm text-ink-2">{{ t('Show the “install app” banner to visitors on supported devices') }}</span>
         </label>
       </div>
 
       <div class="rounded-2xl border border-line bg-surface p-6 space-y-3">
-        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">Icons</h2>
-        <p class="text-sm text-ink-muted">Convoro bundles Font Awesome Free. To use a Pro or custom <a href="https://fontawesome.com/kits" target="_blank" class="text-indigo-400 underline">Font Awesome Kit</a>, paste its script URL here.</p>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('Icons') }}</h2>
+        <p class="text-sm text-ink-muted">{{ t('Convoro bundles Font Awesome Free. To use a Pro or custom') }} <a href="https://fontawesome.com/kits" target="_blank" class="text-indigo-400 underline">{{ t('Font Awesome Kit') }}</a>{{ t(', paste its script URL here.') }}</p>
         <input v-model="form.fa_kit_url" type="url" placeholder="https://kit.fontawesome.com/xxxxxxxx.js"
           class="w-full rounded-lg border-line bg-appbg font-mono text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500" />
       </div>
 
       <div class="rounded-2xl border border-line bg-surface p-6 space-y-5">
-        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">SEO &amp; sharing</h2>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('SEO & sharing') }}</h2>
         <div>
-          <label class="block text-sm font-medium text-ink-2">Default meta description</label>
-          <p class="text-xs text-ink-muted">Shown in search results and link previews. Falls back to your tagline.</p>
+          <label class="block text-sm font-medium text-ink-2">{{ t('Default meta description') }}</label>
+          <p class="text-xs text-ink-muted">{{ t('Shown in search results and link previews. Falls back to your tagline.') }}</p>
           <textarea v-model="form.seo_description" rows="2" maxlength="300" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500"></textarea>
         </div>
         <div>
-          <label class="block text-sm font-medium text-ink-2">Social share image</label>
-          <p class="text-xs text-ink-muted">Used for link previews (Open Graph / Twitter). 1200×630 works best. Falls back to your logo.</p>
+          <label class="block text-sm font-medium text-ink-2">{{ t('Social share image') }}</label>
+          <p class="text-xs text-ink-muted">{{ t('Used for link previews (Open Graph / Twitter). 1200×630 works best. Falls back to your logo.') }}</p>
           <div class="mt-2 flex items-center gap-3">
             <div class="flex h-14 w-24 items-center justify-center overflow-hidden rounded-lg bg-surface-2">
-              <img v-if="form.seo_image" :src="form.seo_image" alt="share image" class="h-full w-full object-cover" />
-              <span v-else class="text-xs text-ink-muted">None</span>
+              <img v-if="form.seo_image" :src="form.seo_image" :alt="t('share image')" class="h-full w-full object-cover" />
+              <span v-else class="text-xs text-ink-muted">{{ t('None') }}</span>
             </div>
             <input type="file" accept="image/png,image/jpeg,image/webp" class="text-sm text-ink-2" @change="pickShare" />
-            <span v-if="uploadingShare" class="text-sm text-ink-2">Uploading…</span>
-            <button v-if="form.seo_image" type="button" class="text-sm text-ink-2 hover:text-red-400" @click="form.seo_image = ''">Remove</button>
+            <span v-if="uploadingShare" class="text-sm text-ink-2">{{ t('Uploading…') }}</span>
+            <button v-if="form.seo_image" type="button" class="text-sm text-ink-2 hover:text-red-400" @click="form.seo_image = ''">{{ t('Remove') }}</button>
           </div>
         </div>
       </div>
 
       <div class="flex items-center gap-3">
-        <button type="submit" :disabled="form.processing" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">Save changes</button>
-        <span v-if="form.recentlySuccessful" class="text-sm text-emerald-400">Saved.</span>
+        <button type="submit" :disabled="form.processing" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">{{ t('Save changes') }}</button>
+        <span v-if="form.recentlySuccessful" class="text-sm text-emerald-400">{{ t('Saved.') }}</span>
       </div>
     </form>
   </AdminLayout>

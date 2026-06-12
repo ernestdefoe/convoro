@@ -87,16 +87,23 @@ label.chk input[type=checkbox]{width:18px;height:18px;accent-color:#5b5bd6}
 <label class="f">Stream ID</label><input id="stream_id" value="{$sid}" placeholder="YouTube video ID or Twitch channel name">
 <p class="hint">YouTube: the video ID from the watch URL (…/watch?v=<b>ID</b>). Twitch: your channel name.</p>
 <label class="f">Title</label><input id="title" value="{$title}" placeholder="Live now">
-<button class="btn" id="save">Save</button><span class="ok" id="msg"></span>
+<span class="ok" id="msg" style="margin-left:0;color:#9aa0b8">Changes save automatically</span>
 </div></div><script>
 const csrf=document.querySelector('meta[name=csrf-token]').content;
 const h={'X-CSRF-TOKEN':csrf,'Content-Type':'application/json','Accept':'application/json'};
-document.getElementById('save').addEventListener('click',async()=>{
-  const body={live:document.getElementById('live').checked,platform:document.getElementById('platform').value,
-    stream_id:document.getElementById('stream_id').value,title:document.getElementById('title').value};
-  const r=await fetch('/admin/ext/onair',{method:'POST',headers:h,body:JSON.stringify(body)});
-  const m=document.getElementById('msg');m.textContent=r.ok?'Saved ✓':'Error';setTimeout(()=>m.textContent='',2000);
-});
+const msg=document.getElementById('msg'),IDLE='Changes save automatically';let t=null;
+const notifyParent=(message,kind='success')=>{try{if(window.parent!==window)window.parent.postMessage({type:'convoro:toast',message,kind},location.origin);}catch(e){}};
+function collect(){return{live:document.getElementById('live').checked,platform:document.getElementById('platform').value,
+  stream_id:document.getElementById('stream_id').value,title:document.getElementById('title').value};}
+async function save(){msg.style.color='#9aa0b8';msg.textContent='Saving…';
+  try{const r=await fetch('/admin/ext/onair',{method:'POST',headers:h,body:JSON.stringify(collect())});
+    msg.style.color=r.ok?'#34d399':'#f87171';msg.textContent=r.ok?'Saved ✓':'Error — will retry';
+    notifyParent(r.ok?'Settings saved':"Couldn't save",r.ok?'success':'error');}
+  catch(e){msg.style.color='#f87171';msg.textContent='Error — will retry';notifyParent("Couldn't save",'error');}
+  setTimeout(()=>{if(msg.textContent==='Saved ✓'){msg.style.color='#9aa0b8';msg.textContent=IDLE;}},1800);}
+function debounced(){if(t)clearTimeout(t);t=setTimeout(save,700);}
+['stream_id','title'].forEach(id=>document.getElementById(id).addEventListener('input',debounced));
+['live','platform'].forEach(id=>document.getElementById(id).addEventListener('change',save));
 </script></body></html>
 HTML;
     }

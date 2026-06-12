@@ -25,7 +25,7 @@ class DownloadController extends Controller
     {
         $dir = storage_path('app/downloads');
         $files = glob($dir.'/convoro-*.'.$ext) ?: [];
-        abort_if(! $files, 404, 'No release is available for download yet.');
+        abort_if(! $files, 404, __('No release is available for download yet.'));
 
         usort($files, fn ($a, $b) => filemtime($b) <=> filemtime($a));
         $path = $files[0];

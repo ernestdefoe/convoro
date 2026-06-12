@@ -21,13 +21,18 @@
 
 ## What is Convoro?
 
-Convoro is a self-hosted community/forum platform that brings together the best ideas from
-modern discussion software into one cohesive, contemporary package. It pairs a polished
-discussion experience with a **live theme editor**, a **built-in extension directory**, and a
-first-class **AI build pipeline** so anyone — human or AI assistant — can extend it quickly.
+Convoro is a self-hosted, **AI-native** community/forum platform. It puts AI at the core of the
+community experience — members ask a question and get an instant answer drawn from the forum's own
+threads, with citations — and pairs that with a polished discussion experience, a **live theme
+editor**, a **built-in extension directory**, and a first-class **AI build pipeline** so anyone —
+human or AI assistant — can extend it quickly.
 
 ### Highlights
 
+- **✦ Ask Convoro** — an AI answer bar on the community home. Members ask in plain language and get
+  an instant answer synthesized from your forum's own threads, **with citations**. Semantic search
+  (Voyage AI embeddings) means it understands meaning, not just keywords — so an empty community is
+  useful on day one, and your content becomes a compounding, instantly-answerable knowledge base.
 - **🎨 Live theme editor** — a front-facing drawer to restyle your whole community in real time
   (colors, radius, fonts, layout, avatars, post style) with a built-in accessibility/contrast
   auditor. Save to publish for everyone. Every install gets the exact same experience.
@@ -90,6 +95,14 @@ admin account) — no command line needed.
 Tagged releases — including ready-to-deploy archives with vendored dependencies and prebuilt
 assets — are published on the [**Releases**](https://github.com/ernestdefoe/convoro/releases) page.
 Grab the latest `convoro-x.y.z.zip`, unzip on your server, and run the install wizard.
+
+## Deploying for production
+
+See [**`deploy/DEPLOYMENT.md`**](deploy/DEPLOYMENT.md) for the reliability checklist and a
+ready-to-edit [`deploy/nginx.conf.example`](deploy/nginx.conf.example). Two settings matter most
+for uptime: the `sw.js` / `/build/` cache headers (prevent a stale service worker from breaking
+returning visitors) and `vm.overcommit_memory=1` plus auto-restart for Redis/Valkey. The install
+wizard also surfaces these under **Recommended for production**.
 
 ## Building extensions
 

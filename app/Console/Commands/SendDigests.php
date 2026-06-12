@@ -67,7 +67,8 @@ class SendDigests extends Command
                 continue;
             }
 
-            Mail::to($user)->queue(new DigestEmail($user, $label, $topics, $unread));
+            Mail::to($user)->locale($user->locale ?: (\App\Support\Settings::get('site.locale') ?: config('app.locale', 'en')))
+                ->queue(new DigestEmail($user, $label, $topics, $unread));
             $user->forceFill(['last_digest_at' => now()])->save();
         }
 

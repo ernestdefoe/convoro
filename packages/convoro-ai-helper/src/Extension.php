@@ -372,6 +372,7 @@ input:not([type=checkbox]),textarea,select{width:100%;background:#0f1120;border:
 const csrf=document.querySelector('meta[name=csrf-token]').content;
 const h={'X-CSRF-TOKEN':csrf,'Content-Type':'application/json','Accept':'application/json'};
 const val=id=>document.getElementById(id).value;
+const notifyParent=(message,kind='success')=>{try{if(window.parent!==window)window.parent.postMessage({type:'convoro:toast',message,kind},location.origin);}catch(e){}};
 const ids=['enabled','provider','model','api_key','base_url','bot_name','trigger','category_id','system_prompt','max_tokens','monthly_budget','price_in','price_out'];
 function collect(){return {
   enabled:document.getElementById('enabled').checked,
@@ -388,7 +389,8 @@ async function save(){
   saving=true; const m=document.getElementById('msg'); m.textContent='Saving…'; m.style.color='#9aa0b8';
   try{ const r=await fetch('/admin/ext/ai-helper',{method:'POST',headers:h,body:JSON.stringify(collect())});
     m.textContent=r.ok?'Saved ✓':'Error saving'; m.style.color=r.ok?'#34d399':'#f87171';
-  }catch(e){ m.textContent='Error saving'; m.style.color='#f87171'; }
+    notifyParent(r.ok?'Settings saved':"Couldn't save",r.ok?'success':'error');
+  }catch(e){ m.textContent='Error saving'; m.style.color='#f87171'; notifyParent("Couldn't save",'error'); }
   saving=false; if(queued){queued=false;save();}
   setTimeout(()=>{m.textContent='Changes save automatically';m.style.color='#6b7194';},2000);
 }
