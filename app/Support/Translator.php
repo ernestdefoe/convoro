@@ -18,7 +18,10 @@ class Translator
     /** How many strings to translate per LLM request. Kept small so each batch
      *  completes fast and well within the HTTP timeout even on slow models
      *  (e.g. opus) — large batches were timing out and leaving locales stuck. */
-    public const BATCH = 15;
+    public const BATCH = 10;
+
+    /** Max per-string retries per call — bounds run length on slow models. */
+    private const RETRY_CAP = 4;
 
     /** Read a locale's current dictionary. @return array<string,string> */
     public static function dictionary(string $locale): array
@@ -121,13 +124,30 @@ class Translator
 
         foreach (array_chunk($missing, self::BATCH) as $chunk) {
             $translations = self::translateBatch($locale, $chunk);
+            $unfilled = [];
             foreach ($chunk as $key) {
                 $value = $translations[$key] ?? null;
                 if (is_string($value) && trim($value) !== '') {
                     $dict[$key] = $value;
                     $filled++;
+                } else {
+                    $unfilled[] = $key;
                 }
             }
+
+            // A placeholder-heavy string (e.g. "{n} results for "{q}"") can break a
+            // whole batch's JSON, leaving the locale stuck near 100%. Retry those
+            // one at a time — a single-item request has trivial, reliable JSON.
+            // Bounded per call so a queued run stays well under its timeout.
+            foreach (array_slice($unfilled, 0, self::RETRY_CAP) as $key) {
+                $one = self::translateBatch($locale, [$key]);
+                $value = $one[$key] ?? null;
+                if (is_string($value) && trim($value) !== '') {
+                    $dict[$key] = $value;
+                    $filled++;
+                }
+            }
+
             // Persist after each batch so a long run is crash-safe / resumable.
             self::write($locale, $dict);
         }
