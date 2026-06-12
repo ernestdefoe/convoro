@@ -626,17 +626,16 @@ return [
             'MyBB & SMF importers; XenForo & phpBB schema-verified',
             'vBulletin 5 & 6 (node) import + Discourse verified live',
             'Vanilla Forums & NodeBB (Redis) importers',
+            'Advanced analytics & search',
+            'Importers polished — every source schema-verified, Discourse & NodeBB tested live',
         ],
         'now' => [
-            'Importer polish from real-world migrations',
-            'Advanced analytics & search',
+            'Native mobile apps — iOS & Android',
+            'Federation — follow & cross-post across communities',
         ],
         'next' => [
             'bbPress / WordPress importer',
         ],
-        'later' => [
-            'Native mobile wrapper',
-            'Federation / cross-community follow',
-        ],
+        'later' => [],
     ],
 ];
