@@ -249,6 +249,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/pwa', [App\Http\Controllers\AdminController::class, 'pwa'])->name('pwa');
     Route::post('/pwa', [App\Http\Controllers\AdminController::class, 'updatePwa'])->name('pwa.update');
     Route::post('/pwa/icon', [App\Http\Controllers\AdminController::class, 'uploadIcon'])->name('pwa.icon');
+    Route::post('/pwa/vapid', [App\Http\Controllers\AdminController::class, 'regenerateVapid'])->name('pwa.vapid');
 
     // Single sign-on (generic OpenID Connect).
     Route::get('/sso', [App\Http\Controllers\AdminController::class, 'sso'])->name('sso');

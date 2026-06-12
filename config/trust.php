@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.9.1',
+            'date' => '2026-06-12',
+            'title' => 'Regenerate push keys from the admin',
+            'items' => [
+                ['type' => 'added', 'text' => 'Admin → PWA now has a “Push notification keys (VAPID)” panel showing whether push keys are set and how many devices are subscribed, with a one-click button to generate or regenerate the keys — handy if browser push ever stops working. (Regenerating asks members to re-enable push.)'],
+            ],
+        ],
+        [
             'tag' => '1.9.0',
             'date' => '2026-06-12',
             'title' => 'Finer notification controls',

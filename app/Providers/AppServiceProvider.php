@@ -25,6 +25,9 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
+        // Admin-rotated VAPID keys (if any) override the .env defaults.
+        \App\Support\WebPush::apply();
+
         // Keep the "Ask Convoro" semantic index fresh as posts change.
         Post::observe(PostObserver::class);
 

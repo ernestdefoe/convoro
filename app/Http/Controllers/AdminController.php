@@ -915,13 +915,32 @@ class AdminController extends Controller
 
     public function pwa(): Response
     {
+        $pub = \App\Support\WebPush::publicKey();
+
         return Inertia::render('Admin/Pwa', [
             'values' => [
                 'short_name' => Settings::get('pwa.short_name'),
                 'banner' => (bool) Settings::get('pwa.banner'),
             ],
             'icons' => array_map(fn ($n) => '/icons/'.$n.'?v='.now()->timestamp, array_keys(IconGenerator::SIZES)),
+            'push' => [
+                'configured' => \App\Support\WebPush::configured(),
+                'publicKey' => $pub !== '' ? substr($pub, 0, 12).'…'.substr($pub, -6) : '',
+                'subscriptions' => (int) \Illuminate\Support\Facades\DB::table('push_subscriptions')->count(),
+            ],
         ]);
+    }
+
+    /** Generate a fresh VAPID keypair (rotates push keys; clears all subscriptions). */
+    public function regenerateVapid(): RedirectResponse
+    {
+        try {
+            $cleared = \App\Support\WebPush::regenerate();
+        } catch (\Throwable $e) {
+            return back()->withErrors(['vapid' => __('Could not generate push keys — your server is missing OpenSSL elliptic-curve support. Set VAPID keys in your .env instead.')]);
+        }
+
+        return back()->with('status', __('New push keys generated. :n device subscription(s) were cleared — members will be asked to re-enable push.', ['n' => $cleared]));
     }
 
     public function updatePwa(Request $request): RedirectResponse

@@ -1,13 +1,11 @@
 {
-    "version": "1.9.0",
-    "download": "https://convoro.co/releases/convoro-1.9.0.zip",
+    "version": "1.9.1",
+    "download": "https://convoro.co/releases/convoro-1.9.1.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Finer notification controls",
+    "title": "Regenerate push keys from the admin",
     "date": "2026-06-12",
-    "notes": "Per-type notification preferences — for replies, mentions, direct messages, reactions, profile posts and badges, choose email, browser push, both or neither (the in-app bell is always on). Plus a “Send a test notification” button to confirm push works on your device, and the mobile tab bar's centre button now shows your community's logo.",
+    "notes": "Admin → PWA gains a “Push notification keys (VAPID)” panel — see whether push keys are configured and how many devices are subscribed, and generate or regenerate the keys in one click if browser push ever breaks.",
     "changelog": [
-        {"type": "added", "text": "Notification preferences — per type (replies, mentions, DMs, reactions, profile posts, badges), pick email and/or browser push."},
-        {"type": "added", "text": "“Send a test notification” button in push settings to verify browser push on your device."},
-        {"type": "improved", "text": "Mobile tab bar centre button shows your community's logo/icon."}
+        {"type": "added", "text": "Admin → PWA: generate/regenerate VAPID push keys, with subscription count and status."}
     ]
 }

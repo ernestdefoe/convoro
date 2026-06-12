@@ -8,6 +8,7 @@ import { t } from '@/lib/i18n';
 const props = defineProps<{
   values: { short_name: string; banner: boolean };
   icons: string[];
+  push: { configured: boolean; publicKey: string; subscriptions: number };
 }>();
 
 const page = usePage();
@@ -20,6 +21,14 @@ const iconForm = useForm<{ icon: File | null }>({ icon: null });
 function onIcon(f: File) {
   iconForm.icon = f;
   iconForm.post('/admin/pwa/icon', { preserveScroll: true, forceFormData: true });
+}
+
+const vapidForm = useForm({});
+function regenerateVapid() {
+  const msg = props.push.configured
+    ? t('Generate new push keys? Every member with push enabled will need to turn it back on. Use this only if push is broken.')
+    : t('Generate push notification keys now?');
+  if (confirm(msg)) vapidForm.post('/admin/pwa/vapid', { preserveScroll: true });
 }
 </script>
 
@@ -46,7 +55,7 @@ function onIcon(f: File) {
           </label>
           <button type="submit" :disabled="form.processing" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">{{ t('Save') }}</button>
         </form>
-        <p class="mt-4 text-xs text-ink-muted">{{ t('The theme color comes from the brand color in') }} <strong>{{ t('Theme') }}</strong>. {{ t('Push notifications use VAPID (configured server-side).') }}</p>
+        <p class="mt-4 text-xs text-ink-muted">{{ t('The theme color comes from the brand color in') }} <strong>{{ t('Theme') }}</strong>.</p>
       </section>
 
       <!-- Icons -->
@@ -61,5 +70,27 @@ function onIcon(f: File) {
         </div>
       </section>
     </div>
+
+    <!-- Push notification keys (VAPID) -->
+    <section class="mt-6 rounded-2xl border border-line bg-surface p-6">
+      <h3 class="text-sm font-bold text-ink">{{ t('Push notification keys (VAPID)') }}</h3>
+      <p class="mt-1 text-xs text-ink-muted">{{ t('VAPID keys sign browser push notifications. They normally come from your server config — regenerate them here only if push has stopped working (e.g. corrupted keys).') }}</p>
+
+      <div class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
+        <span class="flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full" :class="push.configured ? 'bg-emerald-500' : 'bg-amber-500'"></span>
+          <span class="text-ink-2">{{ push.configured ? t('Push keys are configured') : t('No push keys yet') }}</span>
+        </span>
+        <span v-if="push.publicKey" class="font-mono text-xs text-ink-muted">{{ t('Public key') }}: {{ push.publicKey }}</span>
+        <span class="text-ink-muted">{{ t('{n} device(s) subscribed', { n: push.subscriptions }) }}</span>
+      </div>
+
+      <div class="mt-4">
+        <button type="button" :disabled="vapidForm.processing" class="rounded-lg border border-line bg-surface-2 px-4 py-2 text-sm font-semibold text-ink hover:bg-appbg disabled:opacity-60" @click="regenerateVapid">
+          {{ vapidForm.processing ? t('Generating…') : (push.configured ? t('Regenerate push keys') : t('Generate push keys')) }}
+        </button>
+        <p class="mt-2 text-xs text-amber-500">{{ t('Heads up: regenerating invalidates every existing subscription — members will have to re-enable push on their devices.') }}</p>
+      </div>
+    </section>
   </AdminLayout>
 </template>
