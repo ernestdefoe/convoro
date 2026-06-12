@@ -1,12 +1,13 @@
 {
-    "version": "1.0.1",
-    "download": "https://convoro.co/releases/convoro-1.0.1.zip",
+    "version": "1.0.2",
+    "download": "https://convoro.co/releases/convoro-1.0.2.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Built-on showcase + a forum comparison page",
+    "title": "GDPR: anonymize or fully delete a member",
     "date": "2026-06-12",
-    "notes": "The homepage now showcases the open-source stack Convoro is built on (with logos), and a new Compare page shows how Convoro stacks up against Flarum, Discourse, XenForo, phpBB and Invision Community — feature by feature.",
+    "notes": "Admins can now honour a “delete my account” request two ways from Admin → Members: Anonymize erases a member's personal data (name, email, avatar, bio, IPs) while keeping their posts as “Deleted user”, or Delete account & content removes the member and everything they authored.",
     "changelog": [
-        {"type": "added", "text": "Homepage “Built on” section with the logos of Laravel, Vue, Inertia, Tailwind, TypeScript and Vite."},
-        {"type": "added", "text": "New Compare page (linked from the homepage and nav) comparing Convoro to Flarum, Discourse, XenForo, phpBB and Invision Community."}
+        {"type": "added", "text": "Anonymize a member — erase their personal data but keep their posts & topics (shown as “Deleted user”). The recommended way to honour a GDPR deletion request."},
+        {"type": "added", "text": "Delete account & content — fully remove a member and everything they authored."},
+        {"type": "fixed", "text": "Member deletion is now explicit and correct (the old single “Delete” silently kept orphaned posts)."}
     ]
 }

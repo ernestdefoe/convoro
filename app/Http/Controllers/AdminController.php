@@ -838,12 +838,22 @@ class AdminController extends Controller
         return back()->with('status', __('Member updated.'));
     }
 
+    /** GDPR: erase personal data but keep the member's posts & topics. */
+    public function anonymizeMember(Request $request, User $user): RedirectResponse
+    {
+        abort_if($user->id === $request->user()->id, 422, __('You can’t anonymize your own account here.'));
+        $c = \App\Support\Gdpr::anonymize($user);
+
+        return back()->with('status', __('Member anonymized — personal data erased; :posts posts and :topics topics kept.', ['posts' => $c['posts'], 'topics' => $c['topics']]));
+    }
+
+    /** GDPR: full erasure — delete the account and everything they authored. */
     public function destroyMember(Request $request, User $user): RedirectResponse
     {
         abort_if($user->id === $request->user()->id, 422, __('You cannot delete your own account here.'));
-        $user->delete();
+        $c = \App\Support\Gdpr::erase($user);
 
-        return back()->with('status', __('Member deleted.'));
+        return back()->with('status', __('Member deleted along with their content (:posts posts, :topics topics).', ['posts' => $c['posts'], 'topics' => $c['topics']]));
     }
 
     private function groupRules(): array

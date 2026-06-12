@@ -37,8 +37,12 @@ function toggleGroup(id: number) {
 function saveMember() {
   router.put(`/admin/members/${editing.value.id}`, { ...buf }, { ...opts, onSuccess: () => (editing.value = null) });
 }
+function anonymizeMember() {
+  if (!confirm(tr('Anonymize {name}? This permanently erases their name, email, avatar, bio and stored IP addresses, but keeps their posts and topics (shown as “Deleted user”). This cannot be undone.', { name: editing.value.name }))) return;
+  router.post(`/admin/members/${editing.value.id}/anonymize`, {}, { ...opts, onSuccess: () => (editing.value = null) });
+}
 function deleteMember() {
-  if (!confirm(tr('Delete {name}? This removes their account and content.', { name: editing.value.name }))) return;
+  if (!confirm(tr('Permanently delete {name} AND all of their content? Their topics — including every reply inside them — plus their posts, reactions and messages will be removed. This cannot be undone. To keep discussions intact, use Anonymize instead.', { name: editing.value.name }))) return;
   router.delete(`/admin/members/${editing.value.id}`, { ...opts, onSuccess: () => (editing.value = null) });
 }
 
@@ -160,7 +164,19 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
         <div class="mt-6 flex items-center gap-2">
           <button class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="saveMember">{{ tr('Save') }}</button>
           <button class="rounded-lg px-3 py-2 text-sm text-ink-2 hover:text-ink" @click="editing = null">{{ tr('Cancel') }}</button>
-          <button class="ml-auto rounded-lg px-3 py-2 text-sm font-semibold text-red-400 hover:text-red-300" @click="deleteMember">{{ tr('Delete') }}</button>
+        </div>
+
+        <!-- GDPR / account deletion -->
+        <div class="mt-6 rounded-xl border border-line bg-appbg/60 p-4">
+          <div class="flex items-center gap-2 text-sm font-bold text-ink">
+            <svg viewBox="0 0 20 20" class="h-4 w-4 text-ink-2" fill="currentColor"><path d="M10 1l7 3v5c0 4.4-3 8.3-7 10-4-1.7-7-5.6-7-10V4l7-3z"/></svg>
+            {{ tr('Data & privacy (GDPR)') }}
+          </div>
+          <p class="mt-1.5 text-xs text-ink-muted">{{ tr('Honour a “delete my account” request. Anonymizing erases personal data but keeps the community’s discussions readable — the recommended option.') }}</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            <button class="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm font-semibold text-amber-600 hover:bg-amber-500/20 dark:text-amber-400" @click="anonymizeMember">{{ tr('Anonymize account') }}</button>
+            <button class="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm font-semibold text-red-500 hover:bg-red-500/20 dark:text-red-400" @click="deleteMember">{{ tr('Delete account & content') }}</button>
+          </div>
         </div>
       </div>
     </div>

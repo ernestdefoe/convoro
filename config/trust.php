@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.0.2',
+            'date' => '2026-06-12',
+            'title' => 'GDPR: anonymize or fully delete a member',
+            'items' => [
+                ['type' => 'added', 'text' => 'New “Data & privacy (GDPR)” tools on each member (Admin → Members → edit a member): Anonymize erases their personal data — name, email, avatar, bio and stored IP addresses — while keeping their posts and topics readable as “Deleted user”. This is the recommended way to honour a deletion request without breaking discussions.'],
+                ['type' => 'added', 'text' => 'Delete account & content fully removes the member and everything they authored — their topics (and the replies inside them), posts, reactions and messages.'],
+                ['type' => 'fixed', 'text' => 'The old member “Delete” actually kept their posts (orphaned) despite saying otherwise — deletion behaviour is now explicit and correct, with a clear choice between anonymize and full delete.'],
+            ],
+        ],
+        [
             'tag' => '1.0.1',
             'date' => '2026-06-12',
             'title' => 'Built-on showcase + a forum comparison page',
