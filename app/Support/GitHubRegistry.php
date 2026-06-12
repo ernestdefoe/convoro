@@ -141,6 +141,9 @@ class GitHubRegistry
         if ($isNew) {
             $product->price_cents = 0;
             $product->published = true;
+            // Operator-linked (store owner) listings are trusted/first-party —
+            // approve them directly rather than leaving them in submission review.
+            $product->status = 'approved';
         }
         $product->save();
 
