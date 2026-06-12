@@ -10,6 +10,18 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '0.36.0',
+            'date' => '2026-06-11',
+            'title' => 'Mentions, DM translation, Horizon & translation fixes',
+            'items' => [
+                ['type' => 'fixed', 'text' => '@mentions now render as styled links to the person’s profile (e.g. “@Riley West”) instead of showing raw text like “@riley.west”.'],
+                ['type' => 'added', 'text' => 'Direct messages now auto-translate into your language, just like posts — with a “Show original” toggle. Turn on auto-translate in your preferences.'],
+                ['type' => 'fixed', 'text' => 'AI language translation no longer gets stuck near 100% or hangs — it runs in short, resumable batches and retries stubborn strings individually.'],
+                ['type' => 'fixed', 'text' => 'The Horizon queue dashboard now follows the forum’s light/dark theme and no longer has its own mismatched theme switcher.'],
+                ['type' => 'improved', 'text' => 'Mobile: a floating “Start a topic” button now appears on phones and tablets, so you don’t have to hunt for it.'],
+            ],
+        ],
+        [
             'tag' => '0.35.0',
             'date' => '2026-06-11',
             'title' => 'Favicon refresh fix',
