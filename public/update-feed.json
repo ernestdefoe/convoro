@@ -1,13 +1,12 @@
 {
-    "version": "1.0.2",
-    "download": "https://convoro.co/releases/convoro-1.0.2.zip",
+    "version": "1.0.3",
+    "download": "https://convoro.co/releases/convoro-1.0.3.zip",
     "url": "https://convoro.co/changelog",
-    "title": "GDPR: anonymize or fully delete a member",
+    "title": "Importers, verified end-to-end",
     "date": "2026-06-12",
-    "notes": "Admins can now honour a “delete my account” request two ways from Admin → Members: Anonymize erases a member's personal data (name, email, avatar, bio, IPs) while keeping their posts as “Deleted user”, or Delete account & content removes the member and everything they authored.",
+    "notes": "The XenForo, phpBB, Discourse and vBulletin importers now have automated end-to-end tests that run each one against a sample database of that platform, verifying members, categories, topics, posts and formatting all map across correctly.",
     "changelog": [
-        {"type": "added", "text": "Anonymize a member — erase their personal data but keep their posts & topics (shown as “Deleted user”). The recommended way to honour a GDPR deletion request."},
-        {"type": "added", "text": "Delete account & content — fully remove a member and everything they authored."},
-        {"type": "fixed", "text": "Member deletion is now explicit and correct (the old single “Delete” silently kept orphaned posts)."}
+        {"type": "improved", "text": "XenForo, phpBB, Discourse & vBulletin importers are now covered by automated end-to-end mapping tests."},
+        {"type": "fixed", "text": "Tightened importer handling of deleted/hidden threads, private messages, bot accounts and table prefixes."}
     ]
 }

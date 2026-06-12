@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.0.3',
+            'date' => '2026-06-12',
+            'title' => 'Importers, verified end-to-end',
+            'items' => [
+                ['type' => 'improved', 'text' => 'The XenForo, phpBB, Discourse and vBulletin importers are now covered by automated end-to-end tests that run each one against a sample database of that platform — verifying members, categories, topics, posts, first-post detection, reply counts and formatting conversion all map across correctly.'],
+                ['type' => 'fixed', 'text' => 'Tightened importer handling of deleted/hidden threads, private messages, bot accounts and table prefixes uncovered while building those tests.'],
+            ],
+        ],
+        [
             'tag' => '1.0.2',
             'date' => '2026-06-12',
             'title' => 'GDPR: anonymize or fully delete a member',
@@ -450,9 +459,10 @@ return [
             'Importers — Flarum, XenForo, phpBB, Discourse & vBulletin',
             'Email digests + one-click unsubscribe & notification preferences',
             'Earnable badges & richer member profiles', 'RSS feeds',
+            'Automated importer mapping tests (XenForo · phpBB · Discourse · vBulletin)',
         ],
         'now' => [
-            'Hardening the 1.x importers against real-world databases',
+            'Importer polish from real-world migrations',
             'Full documentation site',
         ],
         'next' => [

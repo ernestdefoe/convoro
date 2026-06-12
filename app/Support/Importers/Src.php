@@ -11,10 +11,26 @@ class Src
 {
     public const CONN = 'import_src';
 
-    /** Build a runtime read connection to the source database (MySQL or, for Discourse, PostgreSQL). */
+    /** Build a runtime read connection to the source database (MySQL, PostgreSQL for Discourse, or SQLite for fixtures/tests). */
     public static function connect(array $cfg)
     {
-        $driver = ($cfg['driver'] ?? 'mysql') === 'pgsql' ? 'pgsql' : 'mysql';
+        $driver = $cfg['driver'] ?? 'mysql';
+
+        // SQLite path — used by the importer test fixtures (and the rare
+        // SQLite-backed source). Just point at the file.
+        if ($driver === 'sqlite') {
+            config(['database.connections.'.self::CONN => [
+                'driver' => 'sqlite',
+                'database' => $cfg['database'] ?? '',
+                'prefix' => '',
+                'foreign_key_constraints' => false,
+            ]]);
+            DB::purge(self::CONN);
+
+            return DB::connection(self::CONN);
+        }
+
+        $driver = $driver === 'pgsql' ? 'pgsql' : 'mysql';
         $conf = [
             'driver' => $driver,
             'host' => $cfg['host'] ?: '127.0.0.1',

@@ -121,7 +121,7 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
         </div>
 
         <p v-if="!current.tested" class="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
-          {{ t('{name} import is new — built to its database schema but not yet verified end-to-end. Back up your Convoro database first and review the result.', { name: current.name }) }}
+          {{ t('{name} import is newer — its mapping is automatically tested against the {name} schema, but real forums vary. Back up your Convoro database first and review the result.', { name: current.name }) }}
         </p>
 
         <div class="mt-4 grid grid-cols-2 gap-3">

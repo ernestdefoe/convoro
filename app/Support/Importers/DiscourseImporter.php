@@ -18,7 +18,7 @@ class DiscourseImporter
 {
     public static function test(array $cfg): array
     {
-        $cfg['driver'] = 'pgsql';
+        $cfg['driver'] = ($cfg['driver'] ?? '') ?: 'pgsql';
         $conn = Src::connect($cfg);
         $sb = $conn->getSchemaBuilder();
         foreach (['users', 'topics', 'posts', 'categories'] as $req) {
@@ -38,7 +38,7 @@ class DiscourseImporter
     public static function run(array $cfg, array $opts, callable $progress): array
     {
         @set_time_limit(0);
-        $cfg['driver'] = 'pgsql';
+        $cfg['driver'] = ($cfg['driver'] ?? '') ?: 'pgsql';
         $conn = Src::connect($cfg);
         $sb = $conn->getSchemaBuilder();
         $now = now();
