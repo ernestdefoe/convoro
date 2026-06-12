@@ -15,8 +15,10 @@ use Illuminate\Support\Facades\Log;
  */
 class Translator
 {
-    /** How many strings to translate per LLM request. */
-    private const BATCH = 40;
+    /** How many strings to translate per LLM request. Kept small so each batch
+     *  completes fast and well within the HTTP timeout even on slow models
+     *  (e.g. opus) — large batches were timing out and leaving locales stuck. */
+    public const BATCH = 15;
 
     /** Read a locale's current dictionary. @return array<string,string> */
     public static function dictionary(string $locale): array

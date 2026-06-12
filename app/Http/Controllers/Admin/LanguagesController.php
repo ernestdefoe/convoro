@@ -71,6 +71,11 @@ class LanguagesController extends Controller
         abort_unless(array_key_exists($locale, I18n::available()) && $locale !== 'en', 422);
         abort_unless(Llm::configured(), 422, __('No AI provider is configured.'));
 
+        // Don't stack a second self-chaining run on top of one already going.
+        if (Settings::get('i18n.translating.'.$locale, false)) {
+            return back()->with('flash', ['type' => 'info', 'message' => __(':language: translation already in progress.', ['language' => I18n::label($locale)])]);
+        }
+
         TranslateLocaleJob::dispatch($locale);
 
         return back()->with('flash', ['type' => 'success', 'message' => __(':language: translation started.', ['language' => I18n::label($locale)])]);
