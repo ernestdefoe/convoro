@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.8.0',
+            'date' => '2026-06-12',
+            'title' => 'A mobile bottom tab bar',
+            'items' => [
+                ['type' => 'new', 'text' => 'Phones now get a bottom navigation tab bar — quick access to Home, Search, posting, notifications and your account, with a raised “Post” button in the centre and unread badges. Configure it under Admin → Settings → “Mobile tab bar”: turn it on or off, pick which tabs appear, and reorder them.'],
+            ],
+        ],
+        [
             'tag' => '1.7.0',
             'date' => '2026-06-12',
             'title' => 'Import from Vanilla Forums & NodeBB',
@@ -628,6 +636,7 @@ return [
             'Vanilla Forums & NodeBB (Redis) importers',
             'Advanced analytics & search',
             'Importers polished — every source schema-verified, Discourse & NodeBB tested live',
+            'Configurable mobile bottom tab bar',
         ],
         'now' => [
             'Native mobile apps — iOS & Android',

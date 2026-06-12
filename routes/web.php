@@ -226,6 +226,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::get('/settings', [App\Http\Controllers\AdminController::class, 'settings'])->name('settings');
     Route::post('/settings', [App\Http\Controllers\AdminController::class, 'updateSettings'])->name('settings.update');
+    Route::post('/settings/mobile-nav', [App\Http\Controllers\AdminController::class, 'updateMobileNav'])->name('settings.mobile-nav');
     Route::get('/email', [App\Http\Controllers\AdminController::class, 'email'])->name('email');
     Route::post('/email', [App\Http\Controllers\AdminController::class, 'updateEmail'])->name('email.update');
     Route::post('/email/test', [App\Http\Controllers\AdminController::class, 'sendTestEmail'])->name('email.test');

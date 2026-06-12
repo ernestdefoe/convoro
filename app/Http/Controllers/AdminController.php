@@ -961,6 +961,7 @@ class AdminController extends Controller
                 'seo_description' => Settings::get('seo.description'),
                 'seo_image' => Settings::get('seo.image'),
             ],
+            'mobileNav' => \App\Support\MobileNav::share(),
         ]);
     }
 
@@ -994,6 +995,23 @@ class AdminController extends Controller
             'fa.kit_url' => $data['fa_kit_url'] ?? '',
             'seo.description' => $data['seo_description'] ?? '',
             'seo.image' => $data['seo_image'] ?? '',
+        ]);
+
+        return back();
+    }
+
+    /** Save the mobile bottom tab bar config (enabled + ordered tab keys). */
+    public function updateMobileNav(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+            'tabs' => ['array'],
+            'tabs.*' => ['string', \Illuminate\Validation\Rule::in(\App\Support\MobileNav::CATALOG)],
+        ]);
+
+        Settings::setMany([
+            'mobile.nav_enabled' => (bool) $data['enabled'],
+            'mobile.tabs' => json_encode(array_values(array_unique($data['tabs'] ?? []))),
         ]);
 
         return back();

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, router, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { uploadImage } from '@/lib/upload';
@@ -8,7 +8,40 @@ import { t } from '@/lib/i18n';
 
 const props = defineProps<{
   values: { name: string; tagline: string; logo: string; favicon: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string };
+  mobileNav: { enabled: boolean; tabs: string[]; catalog: string[] };
 }>();
+
+// ---- Mobile bottom tab bar ----
+const TAB_LABELS: Record<string, string> = {
+  home: t('Home'), search: t('Search'), compose: t('Post (compose)'), notifications: t('Notifications'),
+  messages: t('Messages'), members: t('Members'), leaderboard: t('Leaderboard'), account: t('Account / You'),
+};
+const mEnabled = ref(props.mobileNav.enabled);
+// Rows in display order: enabled tabs first (in saved order), then the rest (off).
+const mRows = ref<{ key: string; on: boolean }[]>([
+  ...props.mobileNav.tabs.map((k) => ({ key: k, on: true })),
+  ...props.mobileNav.catalog.filter((k) => !props.mobileNav.tabs.includes(k)).map((k) => ({ key: k, on: false })),
+]);
+function moveRow(i: number, dir: -1 | 1) {
+  const j = i + dir;
+  if (j < 0 || j >= mRows.value.length) return;
+  const a = mRows.value.slice();
+  [a[i], a[j]] = [a[j], a[i]];
+  mRows.value = a;
+}
+const mobileSaving = ref(false);
+const mobileSaved = ref(false);
+function saveMobile() {
+  mobileSaving.value = true;
+  router.post('/admin/settings/mobile-nav', {
+    enabled: mEnabled.value,
+    tabs: mRows.value.filter((r) => r.on).map((r) => r.key),
+  }, {
+    preserveScroll: true,
+    onSuccess: () => { mobileSaved.value = true; setTimeout(() => (mobileSaved.value = false), 2500); },
+    onFinish: () => { mobileSaving.value = false; },
+  });
+}
 
 const form = useForm({
   name: props.values.name,
@@ -154,5 +187,41 @@ function save() {
         <span v-if="form.recentlySuccessful" class="text-sm text-emerald-400">{{ t('Saved.') }}</span>
       </div>
     </form>
+
+    <!-- Mobile bottom tab bar -->
+    <div class="mt-6 max-w-2xl rounded-2xl border border-line bg-surface p-6 space-y-4">
+      <div>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('Mobile tab bar') }}</h2>
+        <p class="mt-1 text-sm text-ink-muted">{{ t('The bottom navigation bar shown on phones. Turn it on or off, choose which tabs appear, and drag the order with the arrows.') }}</p>
+      </div>
+      <label class="flex items-center gap-3">
+        <input v-model="mEnabled" type="checkbox" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />
+        <span class="text-sm text-ink-2">{{ t('Show the mobile tab bar') }}</span>
+      </label>
+
+      <ul class="divide-y divide-line rounded-lg border border-line" :class="mEnabled ? '' : 'pointer-events-none opacity-50'">
+        <li v-for="(row, i) in mRows" :key="row.key" class="flex items-center gap-3 px-3 py-2.5">
+          <div class="flex flex-col">
+            <button type="button" class="text-ink-muted hover:text-ink disabled:opacity-30" :disabled="i === 0" :aria-label="t('Move up')" @click="moveRow(i, -1)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 15l6-6 6 6" /></svg>
+            </button>
+            <button type="button" class="text-ink-muted hover:text-ink disabled:opacity-30" :disabled="i === mRows.length - 1" :aria-label="t('Move down')" @click="moveRow(i, 1)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M6 9l6 6 6-6" /></svg>
+            </button>
+          </div>
+          <span class="flex-1 text-sm font-medium text-ink">{{ TAB_LABELS[row.key] || row.key }}</span>
+          <label class="relative inline-flex cursor-pointer items-center">
+            <input v-model="row.on" type="checkbox" class="peer sr-only" />
+            <div class="h-5 w-9 rounded-full bg-surface-2 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:bg-indigo-500 peer-checked:after:translate-x-4"></div>
+          </label>
+        </li>
+      </ul>
+      <p class="text-xs text-ink-muted">{{ t('Tip: the “Post” tab appears as a raised button in the centre. Two or more tabs are needed for the bar to show.') }}</p>
+
+      <div class="flex items-center gap-3">
+        <button type="button" :disabled="mobileSaving" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60" @click="saveMobile">{{ t('Save tab bar') }}</button>
+        <span v-if="mobileSaved" class="text-sm text-emerald-400">{{ t('Saved.') }}</span>
+      </div>
+    </div>
   </AdminLayout>
 </template>

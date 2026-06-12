@@ -5,6 +5,7 @@ import ConvoroLogo from '@/Components/ConvoroLogo.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import NotificationBell from '@/Components/forum/NotificationBell.vue';
 import UserMenu from '@/Components/forum/UserMenu.vue';
+import MobileTabBar from '@/Components/forum/MobileTabBar.vue';
 import PwaBanner from '@/Components/PwaBanner.vue';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
 import AuthModal from '@/Components/AuthModal.vue';
@@ -25,6 +26,7 @@ const user = computed(() => (page.props as any).auth?.user ?? null);
 const isAdmin = computed(() => !!(page.props as any).auth?.isAdmin);
 const storeOwner = computed(() => !!(page.props as any).storeOwner);
 const dmUnread = computed(() => Number((page.props as any).dmUnread ?? 0));
+const mobileBar = computed(() => !!(page.props as any).mobileNav?.enabled && ((page.props as any).mobileNav?.tabs?.length ?? 0) >= 2);
 const siteLogo = computed(() => (page.props as any).site?.logo || '');
 const initials = computed(() => {
   if (!user.value) return '';
@@ -141,6 +143,8 @@ function goMobile(href: string) {
 
     <main id="main" tabindex="-1" class="q-main mx-auto max-w-[var(--c-container)] px-6 py-6">
       <slot />
+      <!-- Clear the fixed mobile tab bar so it never covers content. -->
+      <div v-if="mobileBar" class="h-16 md:hidden" aria-hidden="true"></div>
     </main>
 
     <footer v-show="hasFooter" class="mt-10 border-t border-line">
@@ -149,6 +153,7 @@ function goMobile(href: string) {
       </div>
     </footer>
 
+    <MobileTabBar />
     <PwaBanner />
     <AuthModal />
     <ThemeEditor />

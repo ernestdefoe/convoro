@@ -39,6 +39,7 @@ class HandleInertiaRequests extends Middleware
                 'canInvite' => (bool) $request->user() && (bool) Settings::get('invites.members_enabled', true),
             ],
             'site' => fn () => Settings::public(),
+            'mobileNav' => fn () => \App\Support\MobileNav::share(),
             'storeOwner' => (bool) config('convoro.store_owner'),
             'appVersion' => config('convoro.version'),
             'ask' => fn () => ['enabled' => \App\Support\Ask::enabled(), 'suggestions' => \App\Support\Ask::suggestions()],

@@ -16,6 +16,12 @@ const pg = usePage();
 const auth = useAuthModal();
 const loggedIn = computed(() => !!(pg.props as any).auth?.user);
 const askEnabled = computed(() => !!(pg.props as any).ask?.enabled);
+// The mobile tab bar (phones) carries a compose button, so on phones the FAB is
+// redundant — keep it only on tablets (md–lg), where the bar is hidden.
+const barHasCompose = computed(() => {
+  const m = (pg.props as any).mobileNav;
+  return !!m?.enabled && (m?.tabs ?? []).includes('compose');
+});
 function startTopic() {
   loggedIn.value ? router.visit('/new') : auth.open('register');
 }
@@ -189,6 +195,7 @@ function go(params: Record<string, string | null>) {
         type="button"
         @click="startTopic"
         class="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-white shadow-xl shadow-primary/40 hover:bg-primary-600 lg:hidden"
+        :class="barHasCompose ? 'max-md:hidden' : ''"
         :aria-label="tr('Start a topic')"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14" /></svg>

@@ -1,12 +1,11 @@
 {
-    "version": "1.7.0",
-    "download": "https://convoro.co/releases/convoro-1.7.0.zip",
+    "version": "1.8.0",
+    "download": "https://convoro.co/releases/convoro-1.8.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Import from Vanilla Forums & NodeBB",
+    "title": "A mobile bottom tab bar",
     "date": "2026-06-12",
-    "notes": "Two more sources in the Import wizard. Vanilla Forums brings across categories, members, discussions and comments, converting each post from its stored format (HTML / Markdown / BBCode / Rich). NodeBB stores its data in Redis rather than SQL, so you connect its Redis host/port and Convoro reads it directly, converting Markdown to formatting. Members reset their password on first login.",
+    "notes": "Phones now get a bottom navigation tab bar — Home, Search, a centre “Post” button, notifications and your account, with unread badges. Admins configure it under Settings → “Mobile tab bar”: toggle it, choose which tabs appear, and reorder them.",
     "changelog": [
-        {"type": "added", "text": "Vanilla Forums importer (MySQL) — handles per-post formats: HTML, Markdown, BBCode and Rich (Quill)."},
-        {"type": "added", "text": "NodeBB importer — reads NodeBB's Redis store directly (connect by Redis host/port/db), converting Markdown posts to formatting."}
+        {"type": "added", "text": "Configurable mobile bottom tab bar — quick nav on phones with a raised compose button and unread badges; admins pick and reorder the tabs in Settings."}
     ]
 }
