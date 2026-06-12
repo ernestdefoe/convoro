@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.12.2',
+            'date' => '2026-06-12',
+            'title' => 'Fix: federation handshake with Mastodon',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'Outgoing federation messages (like the follow acknowledgement) were being rejected by Mastodon because the request signature covered the content-type header, which Mastodon validates differently. Signatures now match what Mastodon expects, so follows complete and posts deliver.'],
+            ],
+        ],
+        [
             'tag' => '1.12.1',
             'date' => '2026-06-12',
             'title' => 'Fix: federation follows from the fediverse',

@@ -1,11 +1,11 @@
 {
-    "version": "1.12.1",
-    "download": "https://convoro.co/releases/convoro-1.12.1.zip",
+    "version": "1.12.2",
+    "download": "https://convoro.co/releases/convoro-1.12.2.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Fix: federation follows from the fediverse",
+    "title": "Fix: federation handshake with Mastodon",
     "date": "2026-06-12",
-    "notes": "Follows from Mastodon and other fediverse servers were being rejected because the ActivityPub inbox was subject to CSRF protection. The inbox is now exempt, so remote follows complete and new topics reach followers.",
+    "notes": "Outgoing federation requests signed the content-type header, which Mastodon validates differently — so Mastodon rejected our follow acknowledgements and deliveries. The signature no longer covers content-type, so follows complete and topics/replies reach the fediverse.",
     "changelog": [
-        {"type": "fixed", "text": "ActivityPub inbox is now exempt from CSRF, so follows from Mastodon/Lemmy actually go through."}
+        {"type": "fixed", "text": "Federation HTTP signatures no longer sign content-type, fixing follow acceptance and delivery to Mastodon."}
     ]
 }

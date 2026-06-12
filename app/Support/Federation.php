@@ -315,11 +315,11 @@ class Federation
         if ($body !== null) {
             $digest = 'SHA-256='.base64_encode(hash('sha256', $body, true));
             $headers['Digest'] = $digest;
-            $headers['Content-Type'] = self::CTYPE;
+            $headers['Content-Type'] = self::CTYPE; // sent, but NOT signed
             $signedHeaders[] = 'digest';
-            $signedHeaders[] = 'content-type';
             $lines[] = 'digest: '.$digest;
-            $lines[] = 'content-type: '.self::CTYPE;
+            // NB: don't sign content-type — Mastodon reconstructs that value
+            // differently, which makes signature verification fail.
         }
 
         openssl_sign(implode("\n", $lines), $sig, self::keys()['private'], OPENSSL_ALGO_SHA256);
