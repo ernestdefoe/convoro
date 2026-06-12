@@ -633,9 +633,7 @@ return [
             'Native mobile apps — iOS & Android',
             'Federation — follow & cross-post across communities',
         ],
-        'next' => [
-            'bbPress / WordPress importer',
-        ],
+        'next' => [],
         'later' => [],
     ],
 ];
