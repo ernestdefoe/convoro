@@ -686,12 +686,8 @@ return [
             'Translate forum content (titles, excerpts, categories) + pull-to-refresh',
             'Federation (ActivityPub) — followable from Mastodon, Lemmy & the fediverse',
         ],
-        'now' => [
-            'Mobile & PWA experience — tab bar, push notifications & finer notification controls',
-        ],
+        'now' => [],
         'next' => [],
-        'later' => [
-            'Federation Phase 2 — remote replies & cross-posting',
-        ],
+        'later' => [],
     ],
 ];
