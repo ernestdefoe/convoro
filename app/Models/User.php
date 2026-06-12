@@ -13,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
-#[Fillable(['name', 'email', 'password', 'digest_frequency', 'is_admin', 'bio', 'avatar_path', 'cover_path', 'registration_ip', 'last_ip', 'banned_at', 'ban_reason'])]
+#[Fillable(['name', 'email', 'password', 'digest_frequency', 'notification_prefs', 'is_admin', 'bio', 'avatar_path', 'cover_path', 'registration_ip', 'last_ip', 'banned_at', 'ban_reason', 'invited_by'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -63,6 +63,30 @@ class User extends Authenticatable
         return $this->groups->contains(fn ($g) => in_array($key, (array) $g->permissions, true));
     }
 
+    /**
+     * Whether this user wants notifications of the given type.
+     * Opt-out model: a type is enabled unless explicitly set false in
+     * notification_prefs, so new types default to on for existing users.
+     */
+    public function wantsNotification(string $type): bool
+    {
+        $prefs = (array) ($this->notification_prefs ?? []);
+
+        return ($prefs[$type] ?? true) !== false;
+    }
+
+    /** Invites this user has sent. */
+    public function invites(): HasMany
+    {
+        return $this->hasMany(Invite::class, 'inviter_id');
+    }
+
+    /** The member who invited this user (if any). */
+    public function inviter(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'invited_by');
+    }
+
     /** Direct-message conversations this user is part of. */
     public function conversations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
@@ -82,6 +106,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_digest_at' => 'datetime',
+            'notification_prefs' => 'array',
             'is_admin' => 'boolean',
         ];
     }

@@ -28,8 +28,8 @@ class HorizonServiceProvider extends HorizonApplicationServiceProvider
     protected function gate(): void
     {
         Gate::define('viewHorizon', function ($user = null) {
-            // Convoro admins can view the Horizon dashboard (VPS/Redis deployments).
-            return (bool) optional($user)->is_admin;
+            // Local dev always allowed; in production, Convoro admins only.
+            return app()->environment('local') || (bool) optional($user)->is_admin;
         });
     }
 }

@@ -3,12 +3,18 @@
 namespace App\Notifications;
 
 use App\Models\ProfilePost;
+use App\Notifications\Contracts\TypedNotification;
 use App\Support\Present;
 use Illuminate\Notifications\Notification;
 
-class ProfileWallNotification extends Notification
+class ProfileWallNotification extends Notification implements TypedNotification
 {
     public function __construct(public ProfilePost $post) {}
+
+    public function type(): string
+    {
+        return 'wall';
+    }
 
     public function via(object $notifiable): array
     {

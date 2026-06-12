@@ -114,5 +114,24 @@ function go(params: Record<string, string | null>) {
         <div class="mt-4"><Slot name="forum:sidebar" /></div>
       </aside>
     </div>
+
+    <!--
+      Mobile / tablet: the left sidebar (which holds "Start a topic") is hidden
+      below lg, so surface the action as a floating button. Hidden at lg+ where
+      the sidebar button is already visible. Teleported to <body> so its
+      position:fixed is viewport-relative (an ancestor's transform would
+      otherwise become the containing block and push it off-screen).
+    -->
+    <Teleport to="body">
+      <button
+        type="button"
+        @click="startTopic"
+        class="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full bg-primary px-5 py-3.5 text-sm font-semibold text-white shadow-xl shadow-primary/40 hover:bg-primary-600 lg:hidden"
+        aria-label="Start a topic"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14" /></svg>
+        <span>Start a topic</span>
+      </button>
+    </Teleport>
   </AppLayout>
 </template>

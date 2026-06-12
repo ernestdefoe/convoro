@@ -41,7 +41,10 @@
 
         <p style="text-align:center; color:#9499ad; font-size:12px; margin-top:20px;">
             You're receiving this because your digest is set to {{ $user->digest_frequency }}.
-            <br>Change it anytime in your <a href="{{ config('app.url') }}/profile" style="color:#6b6f86;">profile settings</a>.
+            <br>Change it anytime in your <a href="{{ config('app.url') }}/notifications" style="color:#6b6f86;">notification settings</a>.
+            @isset($unsubscribeUrl)
+                <br><a href="{{ $unsubscribeUrl }}" style="color:#6b6f86;">Unsubscribe from digest emails</a>.
+            @endisset
         </p>
     </div>
 </body>

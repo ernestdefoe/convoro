@@ -34,6 +34,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'store/webhook',
             'api/licenses/*',
+            // RFC 8058 one-click List-Unsubscribe POST carries no CSRF token;
+            // it's protected instead by the signed-URL signature.
+            'digest/unsubscribe/*',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

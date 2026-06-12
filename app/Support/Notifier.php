@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Events\NotificationCreated;
 use App\Models\User;
+use App\Notifications\Contracts\TypedNotification;
 use App\Notifications\WebPushAlert;
 use Illuminate\Notifications\Notification;
 
@@ -16,6 +17,13 @@ class Notifier
 {
     public static function send(User $user, Notification $notification): void
     {
+        // Respect the recipient's per-type mute preferences. Untyped
+        // notifications are always delivered.
+        if ($notification instanceof TypedNotification
+            && ! $user->wantsNotification($notification->type())) {
+            return;
+        }
+
         $user->notify($notification);
 
         // notifications() is ordered newest-first, so first() is the row we just wrote.
@@ -48,6 +56,7 @@ class Notifier
             'reaction' => "{$actor} reacted ".($data['emoji'] ?? '')." to your post",
             'wall' => "{$actor} posted on your profile",
             'message' => "{$actor} sent you a message",
+            'invite' => "{$actor} joined from your invite",
             default => "{$actor} replied in {$topic}",
         };
     }

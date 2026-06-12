@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ForumController;
+use App\Http\Controllers\InviteController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\ProfileController;
@@ -69,6 +70,14 @@ Route::get('/demo', function () {
     return redirect('/')->with('status', 'You\'re exploring the Convoro demo — post, react, and try the live theme editor freely.');
 })->middleware('throttle:60,1')->name('demo.login');
 
+// One-click digest unsubscribe from the email footer. Signed URL so it works
+// without a login session and can't be forged; turns digest_frequency off.
+Route::match(['get', 'post'], '/digest/unsubscribe/{user}', [NotificationController::class, 'unsubscribe'])
+    ->middleware('signed')->name('digest.unsubscribe');
+
+// Public invite landing — validates the code and tees up registration.
+Route::get('/join/{code}', [InviteController::class, 'show'])->name('invite.join');
+
 // Community (forum)
 Route::get('/', [ForumController::class, 'index'])->name('forum.index');
 Route::get('/t/{topic}', [TopicController::class, 'show'])->name('topics.show');
@@ -103,6 +112,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/messages/{conversation}', [App\Http\Controllers\MessageController::class, 'show'])->name('messages.show');
     Route::post('/messages/{conversation}', [App\Http\Controllers\MessageController::class, 'message'])->name('messages.send');
     Route::post('/messages/{conversation}/participants', [App\Http\Controllers\MessageController::class, 'addParticipants'])->name('messages.participants');
+
+    Route::get('/invites', [InviteController::class, 'index'])->name('invites.index');
+    Route::post('/invites/email', [InviteController::class, 'email'])->name('invites.email');
+    Route::post('/invites/link', [InviteController::class, 'link'])->name('invites.link');
+    Route::delete('/invites/{invite}', [InviteController::class, 'destroy'])->name('invites.destroy');
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read', [NotificationController::class, 'readAll'])->name('notifications.readAll');

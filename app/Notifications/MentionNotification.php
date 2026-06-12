@@ -3,12 +3,18 @@
 namespace App\Notifications;
 
 use App\Models\Post;
+use App\Notifications\Contracts\TypedNotification;
 use App\Support\Present;
 use Illuminate\Notifications\Notification;
 
-class MentionNotification extends Notification
+class MentionNotification extends Notification implements TypedNotification
 {
     public function __construct(public Post $post) {}
+
+    public function type(): string
+    {
+        return 'mention';
+    }
 
     public function via(object $notifiable): array
     {

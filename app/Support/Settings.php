@@ -22,6 +22,10 @@ class Settings
         'forum.default_view' => 'feed',     // feed | grid
         'realtime.enabled' => false,         // off by default (shared-hosting baseline)
         'digests.enabled' => true,           // master switch for digest emails
+        'invites.enabled' => true,           // members can invite people
+        'invites.max_per_user' => 20,        // cap on a member's total invites
+        'invites.link_max_uses' => 25,       // redemptions allowed on a shareable link
+        'invites.expiry_days' => 30,         // invite lifetime in days (0 = never)
         'pwa.banner' => true,                // show the "install app" banner
         'pwa.short_name' => 'Convoro',       // PWA short name
         'fa.kit_url' => '',                  // optional Font Awesome Kit script URL (Pro/custom icons)

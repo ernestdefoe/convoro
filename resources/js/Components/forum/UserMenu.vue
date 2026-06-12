@@ -41,6 +41,7 @@ function logout() {
       </div>
 
       <Link :href="`/u/${user.id}`" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink" @click="open = false">Your profile</Link>
+      <Link href="/invites" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink" @click="open = false">Invite people</Link>
       <Link href="/profile" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink" @click="open = false">Settings</Link>
       <a v-if="isAdmin" href="/admin" target="_blank" rel="noopener" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink">Admin <span class="text-ink-muted">↗</span></a>
 

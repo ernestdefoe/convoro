@@ -39,18 +39,46 @@ class RegisteredUserController extends Controller
 
         abort_if(\App\Models\IpBan::isBanned($request->ip()), 403, 'Registration is not available.');
 
+        // Resolve an invite (from the Join page field or the stashed session code).
+        $invite = $this->resolveInvite($request);
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'registration_ip' => $request->ip(),
             'last_ip' => $request->ip(),
+            'invited_by' => $invite?->inviter_id,
         ]);
+
+        if ($invite) {
+            $invite->redeem();
+            $request->session()->forget('invite_code');
+            \App\Support\Notifier::send(
+                $invite->inviter,
+                new \App\Notifications\InviteAcceptedNotification($user)
+            );
+        }
 
         event(new Registered($user));
 
         Auth::login($user);
 
         return redirect(route('forum.index', absolute: false));
+    }
+
+    /** A still-valid invite that accepts this email, or null. */
+    private function resolveInvite(Request $request): ?\App\Models\Invite
+    {
+        $code = $request->input('invite') ?: $request->session()->get('invite_code');
+        if (! $code) {
+            return null;
+        }
+
+        $invite = \App\Models\Invite::with('inviter')->where('code', $code)->first();
+
+        return $invite && $invite->isValid() && $invite->acceptsEmail($request->input('email', ''))
+            ? $invite
+            : null;
     }
 }

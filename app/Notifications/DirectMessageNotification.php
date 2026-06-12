@@ -3,12 +3,18 @@
 namespace App\Notifications;
 
 use App\Models\Message;
+use App\Notifications\Contracts\TypedNotification;
 use App\Support\Present;
 use Illuminate\Notifications\Notification;
 
-class DirectMessageNotification extends Notification
+class DirectMessageNotification extends Notification implements TypedNotification
 {
     public function __construct(public Message $message) {}
+
+    public function type(): string
+    {
+        return 'message';
+    }
 
     public function via(object $notifiable): array
     {
