@@ -170,6 +170,7 @@ class Settings
             'tagline' => self::get('site.tagline'),
             'logo' => self::get('site.logo'),
             'favicon' => self::get('site.favicon'),
+            'icon' => '/icons/icon-192.png?v='.self::get('icons.rev', '1'),
             'defaultView' => self::get('forum.default_view'),
             'locale' => self::get('site.locale', 'en'),
             'realtime' => (bool) self::get('realtime.enabled'),

@@ -10,6 +10,17 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.10.0',
+            'date' => '2026-06-12',
+            'title' => 'Translate the whole forum + pull-to-refresh',
+            'items' => [
+                ['type' => 'new', 'text' => 'With Auto-translate on, the forum list now translates too — discussion titles, post excerpts and category names appear in your language, not just the post bodies inside a topic. (Translations are cached, so it only costs an AI call the first time.)'],
+                ['type' => 'new', 'text' => 'Pull to refresh: on phones and the installed app, pull down from the top to reload the page.'],
+                ['type' => 'improved', 'text' => 'The mobile menu now includes the language picker and the auto-translate toggle, which were previously only on desktop.'],
+                ['type' => 'fixed', 'text' => 'The mobile tab bar’s centre button now shows your community’s app icon (it was falling back to a plain plus when no separate logo/favicon was set).'],
+            ],
+        ],
+        [
             'tag' => '1.9.1',
             'date' => '2026-06-12',
             'title' => 'Regenerate push keys from the admin',
@@ -656,6 +667,7 @@ return [
             'Importers polished — every source schema-verified, Discourse & NodeBB tested live',
             'Configurable mobile bottom tab bar',
             'Per-type notification controls (email & push)',
+            'Translate forum content (titles, excerpts, categories) + pull-to-refresh',
         ],
         'now' => [
             'Mobile & PWA experience — tab bar, push notifications & finer notification controls',

@@ -1,11 +1,13 @@
 {
-    "version": "1.9.1",
-    "download": "https://convoro.co/releases/convoro-1.9.1.zip",
+    "version": "1.10.0",
+    "download": "https://convoro.co/releases/convoro-1.10.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Regenerate push keys from the admin",
+    "title": "Translate the whole forum + pull-to-refresh",
     "date": "2026-06-12",
-    "notes": "Admin → PWA gains a “Push notification keys (VAPID)” panel — see whether push keys are configured and how many devices are subscribed, and generate or regenerate the keys in one click if browser push ever breaks.",
+    "notes": "With Auto-translate on, the forum list now translates too — discussion titles, excerpts and category names in your language (cached, so it's a one-time AI cost). Plus pull-to-refresh on phones/PWA, the language picker and auto-translate toggle in the mobile menu, and the tab bar's centre button now shows your app icon.",
     "changelog": [
-        {"type": "added", "text": "Admin → PWA: generate/regenerate VAPID push keys, with subscription count and status."}
+        {"type": "added", "text": "Auto-translate now covers the forum list — discussion titles, excerpts and category names, not just post bodies (cached per language)."},
+        {"type": "added", "text": "Pull-to-refresh on phones and the installed PWA."},
+        {"type": "improved", "text": "Mobile menu gains the language picker + auto-translate toggle; tab bar centre button shows your app icon."}
     ]
 }

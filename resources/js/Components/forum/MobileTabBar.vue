@@ -13,7 +13,7 @@ const cfg = computed(() => (page.props as any).mobileNav ?? { enabled: true, tab
 // square so it fits the circle best; fall back to the logo, then the + icon).
 const brandImg = computed(() => {
   const s = (page.props as any).site ?? {};
-  return s.favicon || s.logo || '';
+  return s.favicon || s.logo || s.icon || '';
 });
 const dmUnread = computed(() => Number((page.props as any).dmUnread ?? 0));
 const notifUnread = computed(() => Number((page.props as any).notifications?.unread ?? 0));

@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\Post;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -125,6 +126,86 @@ class ContentTranslator
         );
 
         return ['locale' => $targetLocale, 'html' => $clean, 'translated' => true, 'source' => $source];
+    }
+
+    /**
+     * Translate a batch of short plain-text strings (topic titles, category
+     * names, excerpts) into $targetLocale, cached forever per (text, locale) so
+     * the AI is only hit on the first miss. Returns the array in the same order;
+     * any string that can't be translated stays as-is. One LLM call per page of
+     * misses keeps this cheap. Used to translate the forum LIST for readers with
+     * auto-translate on (post bodies are handled by translatePost on topic pages).
+     *
+     * @param  string[]  $texts
+     * @return string[]
+     */
+    public static function translateTexts(array $texts, string $targetLocale): array
+    {
+        $out = array_map(fn ($t) => (string) $t, $texts);
+        if (! self::enabled()) {
+            return $out;
+        }
+
+        $missIdx = [];
+        $missTexts = [];
+        foreach ($out as $i => $t) {
+            if (trim($t) === '') {
+                continue;
+            }
+            $hit = Cache::get(self::textKey($t, $targetLocale));
+            if (is_string($hit)) {
+                $out[$i] = $hit;
+            } else {
+                $missIdx[] = $i;
+                $missTexts[] = $t;
+            }
+        }
+
+        if ($missTexts) {
+            $translated = self::llmTranslateBatch($missTexts, $targetLocale);
+            if (is_array($translated)) {
+                foreach ($missIdx as $k => $i) {
+                    $tr = $translated[$k] ?? null;
+                    if (is_string($tr) && trim($tr) !== '') {
+                        Cache::forever(self::textKey($out[$i], $targetLocale), $tr);
+                        $out[$i] = $tr;
+                    }
+                }
+            }
+        }
+
+        return $out;
+    }
+
+    private static function textKey(string $text, string $locale): string
+    {
+        return 'ctt:'.$locale.':'.sha1($text);
+    }
+
+    /** @param string[] $texts @return string[]|null */
+    private static function llmTranslateBatch(array $texts, string $targetLocale): ?array
+    {
+        if (! Llm::configured() || ! $texts) {
+            return null;
+        }
+        $language = I18n::languageName($targetLocale);
+        $system = "Translate each string in the given JSON array into {$language}. "
+            .'Return ONLY a JSON array of the same length and order, each element the translated string — no keys, no notes, no code fences. '
+            .'Keep it natural and concise. Do NOT translate URLs, @mentions, #hashtags, code, or the word "Convoro". Keep emoji as-is.';
+        $input = json_encode(array_values($texts), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+
+        try {
+            $raw = Llm::chat($system, (string) $input, min(3000, max(400, (int) (mb_strlen((string) $input) / 1.5))), 'translate');
+        } catch (\Throwable $e) {
+            Log::warning('Batch text translation failed: '.$e->getMessage());
+
+            return null;
+        }
+
+        $raw = trim(preg_replace('/^```(?:json)?|```$/m', '', trim($raw)) ?? $raw);
+        $arr = json_decode($raw, true);
+
+        return is_array($arr) ? array_map(fn ($x) => is_string($x) ? $x : '', $arr) : null;
     }
 
     /**

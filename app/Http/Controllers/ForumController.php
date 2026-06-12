@@ -48,19 +48,45 @@ class ForumController extends Controller
         $topics = $query->paginate(20)->withQueryString();
         $unread = Present::unreadTopicIds($topics->items(), $request->user());
         $live = LiveTopics::liveIds(collect($topics->items())->pluck('id')->all());
-        $actorId = $request->user()?->id;
+        $reader = $request->user();
+        $actorId = $reader?->id;
+
+        $categories = Category::orderBy('position')->withCount('topics')->get()
+            ->map(fn (Category $c) => [
+                'name' => $c->name, 'slug' => $c->slug, 'icon' => $c->icon,
+                'color' => $c->color, 'count' => $c->topics_count,
+            ])->all();
+
+        $cards = collect($topics->items())
+            ->map(fn (Topic $t) => Present::topicCard($t, $actorId, in_array($t->id, $unread, true), $t->is_live || in_array($t->id, $live, true)))
+            ->all();
+
+        // For readers with auto-translate on, translate the list's content
+        // (category names, topic titles, excerpts) into their language too —
+        // post bodies are already translated on the topic page.
+        if ($reader?->auto_translate && \App\Support\ContentTranslator::enabled()) {
+            $locale = $reader->locale ?: app()->getLocale();
+            $catNames = \App\Support\ContentTranslator::translateTexts(array_map(fn ($c) => $c['name'], $categories), $locale);
+            foreach ($categories as $i => &$c) {
+                $c['name'] = $catNames[$i];
+            }
+            unset($c);
+            $titles = \App\Support\ContentTranslator::translateTexts(array_map(fn ($c) => $c['title'] ?? '', $cards), $locale);
+            $excerpts = \App\Support\ContentTranslator::translateTexts(array_map(fn ($c) => $c['excerpt'] ?? '', $cards), $locale);
+            foreach ($cards as $i => &$c) {
+                $c['title'] = $titles[$i] ?? ($c['title'] ?? '');
+                $c['excerpt'] = $excerpts[$i] ?? ($c['excerpt'] ?? '');
+            }
+            unset($c);
+        }
 
         return Inertia::render('Forum/Index', [
             'view' => $view,
             'sort' => $sort,
             'activeCategory' => $categorySlug,
-            'categories' => Category::orderBy('position')->withCount('topics')->get()
-                ->map(fn (Category $c) => [
-                    'name' => $c->name, 'slug' => $c->slug, 'icon' => $c->icon,
-                    'color' => $c->color, 'count' => $c->topics_count,
-                ]),
+            'categories' => $categories,
             'topics' => [
-                'data' => collect($topics->items())->map(fn (Topic $t) => Present::topicCard($t, $actorId, in_array($t->id, $unread, true), $t->is_live || in_array($t->id, $live, true))),
+                'data' => $cards,
                 'next' => $topics->nextPageUrl(),
             ],
             'stats' => [

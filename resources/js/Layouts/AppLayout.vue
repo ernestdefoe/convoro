@@ -6,6 +6,7 @@ import Avatar from '@/Components/forum/Avatar.vue';
 import NotificationBell from '@/Components/forum/NotificationBell.vue';
 import UserMenu from '@/Components/forum/UserMenu.vue';
 import MobileTabBar from '@/Components/forum/MobileTabBar.vue';
+import PullToRefresh from '@/Components/PullToRefresh.vue';
 import PwaBanner from '@/Components/PwaBanner.vue';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
 import AuthModal from '@/Components/AuthModal.vue';
@@ -130,6 +131,20 @@ function goMobile(href: string) {
             <button v-if="storeOwner" type="button" @click="goMobile('/extensions')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Extensions') }}</button>
             <button type="button" @click="goMobile('/members')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Members') }}</button>
             <button type="button" @click="goMobile('/leaderboard')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Leaderboard') }}</button>
+
+            <!-- Language + content auto-translate (the header controls are desktop-only). -->
+            <div v-if="Object.keys(locales).length > 1 || user" class="!mt-3 space-y-2.5 border-t border-line pt-3">
+              <label v-if="Object.keys(locales).length > 1" class="block">
+                <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ t('Language') }}</span>
+                <select :value="currentLocale" @change="setLocale" class="w-full rounded-lg border-line bg-surface-2 py-2 text-sm font-medium text-ink-2 focus:border-primary focus:ring-primary">
+                  <option v-for="(label, code) in locales" :key="code" :value="code">{{ label }}</option>
+                </select>
+              </label>
+              <label v-if="user" class="flex cursor-pointer items-center gap-2.5 rounded-lg bg-surface-2 px-3 py-2.5">
+                <input type="checkbox" :checked="autoTranslate" @change="toggleAutoTranslate" class="h-4 w-4 rounded border-line text-primary focus:ring-primary" />
+                <span class="text-sm font-medium text-ink-2">{{ t('Auto-translate posts into my language') }}</span>
+              </label>
+            </div>
             <template v-if="!user">
               <div class="!mt-3 flex gap-2 border-t border-line pt-3">
                 <button type="button" class="flex-1 rounded-lg border border-line px-3 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="mobileOpen = false; auth.open('login')">{{ t('Log in') }}</button>
@@ -154,6 +169,7 @@ function goMobile(href: string) {
     </footer>
 
     <MobileTabBar />
+    <PullToRefresh />
     <PwaBanner />
     <AuthModal />
     <ThemeEditor />
