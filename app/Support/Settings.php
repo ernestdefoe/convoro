@@ -19,6 +19,7 @@ class Settings
         'site.name' => 'Convoro',
         'site.tagline' => 'A modern community',
         'site.logo' => '',                   // header logo image URL (empty = default mark)
+        'site.logo_dark' => '',              // header logo for dark mode (empty = use site.logo)
         'forum.default_view' => 'feed',     // feed | grid
         'realtime.enabled' => false,         // off by default (shared-hosting baseline)
         'digests.enabled' => true,           // master switch for digest emails
@@ -169,6 +170,7 @@ class Settings
             'name' => self::get('site.name'),
             'tagline' => self::get('site.tagline'),
             'logo' => self::get('site.logo'),
+            'logoDark' => self::get('site.logo_dark'),
             'favicon' => self::get('site.favicon'),
             'icon' => '/icons/icon-192.png?v='.self::get('icons.rev', '1'),
             'defaultView' => self::get('forum.default_view'),

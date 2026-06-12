@@ -7,7 +7,7 @@ import UploadButton from '@/Components/UploadButton.vue';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
-  values: { name: string; tagline: string; logo: string; favicon: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string };
+  values: { name: string; tagline: string; logo: string; logo_dark: string; favicon: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string };
   mobileNav: { enabled: boolean; tabs: string[]; catalog: string[] };
 }>();
 
@@ -47,6 +47,7 @@ const form = useForm({
   name: props.values.name,
   tagline: props.values.tagline,
   logo: props.values.logo ?? '',
+  logo_dark: props.values.logo_dark ?? '',
   favicon: props.values.favicon ?? '',
   default_view: props.values.default_view,
   realtime: props.values.realtime,
@@ -62,6 +63,12 @@ const uploadingLogo = ref(false);
 async function pickLogo(file: File) {
   uploadingLogo.value = true;
   try { const { url } = await uploadImage(file); form.logo = url; } catch { /* ignore */ } finally { uploadingLogo.value = false; }
+}
+
+const uploadingLogoDark = ref(false);
+async function pickLogoDark(file: File) {
+  uploadingLogoDark.value = true;
+  try { const { url } = await uploadImage(file); form.logo_dark = url; } catch { /* ignore */ } finally { uploadingLogoDark.value = false; }
 }
 
 const uploadingFavicon = ref(false);
@@ -98,15 +105,27 @@ function save() {
           <input v-model="form.tagline" type="text" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-ink-2">{{ t('Logo') }}</label>
-          <p class="text-xs text-ink-muted">{{ t('Shown in the header. Leave empty to use the default Convoro mark.') }}</p>
+          <label class="block text-sm font-medium text-ink-2">{{ t('Logo (light mode)') }}</label>
+          <p class="text-xs text-ink-muted">{{ t('Shown in the header on light backgrounds. Leave empty to use the default Convoro mark.') }}</p>
           <div class="mt-2 flex items-center gap-3">
-            <div class="flex h-10 items-center rounded-lg bg-surface-2 px-3">
+            <div class="flex h-10 items-center rounded-lg bg-white px-3 ring-1 ring-line">
               <img v-if="form.logo" :src="form.logo" :alt="t('logo')" class="h-7" />
-              <span v-else class="text-xs text-ink-muted">{{ t('No logo') }}</span>
+              <span v-else class="text-xs text-gray-400">{{ t('No logo') }}</span>
             </div>
-            <UploadButton :uploading="uploadingLogo" accept="image/png,image/jpeg,image/webp" :label="t('Choose logo')" @file="pickLogo" />
+            <UploadButton :uploading="uploadingLogo" accept="image/png,image/jpeg,image/webp,image/svg+xml" :label="t('Choose logo')" @file="pickLogo" />
             <button v-if="form.logo" type="button" class="text-sm text-ink-2 hover:text-red-400" @click="form.logo = ''">{{ t('Remove') }}</button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-ink-2">{{ t('Logo (dark mode)') }}</label>
+          <p class="text-xs text-ink-muted">{{ t('Optional. Shown when the theme is dark. Leave empty to use the light-mode logo in both modes.') }}</p>
+          <div class="mt-2 flex items-center gap-3">
+            <div class="flex h-10 items-center rounded-lg bg-slate-900 px-3 ring-1 ring-line">
+              <img v-if="form.logo_dark" :src="form.logo_dark" :alt="t('logo')" class="h-7" />
+              <span v-else class="text-xs text-slate-400">{{ t('No dark logo') }}</span>
+            </div>
+            <UploadButton :uploading="uploadingLogoDark" accept="image/png,image/jpeg,image/webp,image/svg+xml" :label="t('Choose dark logo')" @file="pickLogoDark" />
+            <button v-if="form.logo_dark" type="button" class="text-sm text-ink-2 hover:text-red-400" @click="form.logo_dark = ''">{{ t('Remove') }}</button>
           </div>
         </div>
         <div>

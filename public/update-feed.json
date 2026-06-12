@@ -1,13 +1,11 @@
 {
-    "version": "1.10.0",
-    "download": "https://convoro.co/releases/convoro-1.10.0.zip",
+    "version": "1.10.1",
+    "download": "https://convoro.co/releases/convoro-1.10.1.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Translate the whole forum + pull-to-refresh",
+    "title": "Separate light & dark logos",
     "date": "2026-06-12",
-    "notes": "With Auto-translate on, the forum list now translates too — discussion titles, excerpts and category names in your language (cached, so it's a one-time AI cost). Plus pull-to-refresh on phones/PWA, the language picker and auto-translate toggle in the mobile menu, and the tab bar's centre button now shows your app icon.",
+    "notes": "Upload a separate dark-mode logo under Admin → Settings — the header shows your light logo on light themes and your dark logo on dark themes (set one and it's used in both).",
     "changelog": [
-        {"type": "added", "text": "Auto-translate now covers the forum list — discussion titles, excerpts and category names, not just post bodies (cached per language)."},
-        {"type": "added", "text": "Pull-to-refresh on phones and the installed PWA."},
-        {"type": "improved", "text": "Mobile menu gains the language picker + auto-translate toggle; tab bar centre button shows your app icon."}
+        {"type": "added", "text": "Separate light-mode and dark-mode header logos in Admin → Settings."}
     ]
 }

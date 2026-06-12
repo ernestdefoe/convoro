@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.10.1',
+            'date' => '2026-06-12',
+            'title' => 'Separate light & dark logos',
+            'items' => [
+                ['type' => 'added', 'text' => 'You can now upload a separate dark-mode logo under Admin → Settings. The header shows your light logo on light themes and your dark logo on dark themes; set just one and it’s used in both.'],
+            ],
+        ],
+        [
             'tag' => '1.10.0',
             'date' => '2026-06-12',
             'title' => 'Translate the whole forum + pull-to-refresh',

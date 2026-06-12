@@ -29,6 +29,7 @@ const storeOwner = computed(() => !!(page.props as any).storeOwner);
 const dmUnread = computed(() => Number((page.props as any).dmUnread ?? 0));
 const mobileBar = computed(() => !!(page.props as any).mobileNav?.enabled && ((page.props as any).mobileNav?.tabs?.length ?? 0) >= 2);
 const siteLogo = computed(() => (page.props as any).site?.logo || '');
+const siteLogoDark = computed(() => (page.props as any).site?.logoDark || '');
 const initials = computed(() => {
   if (!user.value) return '';
   const p = String(user.value.name).trim().split(/\s+/);
@@ -74,7 +75,10 @@ function goMobile(href: string) {
     <header class="q-header sticky top-0 z-40 border-b border-line backdrop-blur">
       <div class="mx-auto flex h-[60px] max-w-[var(--c-container)] items-center gap-5 px-6">
         <Link href="/" class="flex items-center">
-          <img v-if="siteLogo" :src="siteLogo" alt="Logo" class="h-8 w-auto max-w-[180px]" />
+          <template v-if="siteLogo || siteLogoDark">
+            <img :src="siteLogo || siteLogoDark" alt="Logo" class="block h-8 w-auto max-w-[180px] dark:hidden" />
+            <img :src="siteLogoDark || siteLogo" alt="Logo" class="hidden h-8 w-auto max-w-[180px] dark:block" />
+          </template>
           <ConvoroLogo v-else :size="34" />
         </Link>
         <nav class="ml-2 hidden items-center gap-1 md:flex">
