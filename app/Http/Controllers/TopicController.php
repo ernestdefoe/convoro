@@ -104,6 +104,15 @@ class TopicController extends Controller
         return back()->with('status', $topic->is_pinned ? __('Topic pinned.') : __('Topic unpinned.'));
     }
 
+    /** Lock or unlock a topic (locked topics can't receive new replies). */
+    public function toggleLock(Request $request, Topic $topic): \Illuminate\Http\RedirectResponse
+    {
+        abort_unless((bool) $request->user()?->hasPermission('topic.lock'), 403);
+        $topic->update(['is_locked' => ! $topic->is_locked]);
+
+        return back()->with('status', $topic->is_locked ? __('Topic locked.') : __('Topic unlocked.'));
+    }
+
     /** Heartbeat: the current member is viewing this topic right now (drives the LIVE badge). */
     public function heartbeat(Request $request, Topic $topic): \Illuminate\Http\JsonResponse
     {
@@ -141,6 +150,7 @@ class TopicController extends Controller
                 'isLocked' => $topic->is_locked,
                 'isPinned' => $topic->is_pinned,
                 'canPin' => (bool) $actor?->hasPermission('topic.pin'),
+                'canLock' => (bool) $actor?->hasPermission('topic.lock'),
                 'poll' => $topic->poll ? \App\Support\Present::poll($topic->poll, $actorId) : null,
                 'category' => $topic->category ? [
                     'name' => $topic->category->name, 'slug' => $topic->category->slug,

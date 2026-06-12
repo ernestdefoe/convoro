@@ -179,6 +179,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/t/{topic}/posts', [PostController::class, 'store'])->name('posts.store');
     Route::post('/polls/{poll}/vote', [App\Http\Controllers\PollController::class, 'vote'])->middleware('throttle:30,1')->name('polls.vote');
     Route::post('/t/{topic}/pin', [TopicController::class, 'togglePin'])->name('topics.pin');
+    Route::post('/t/{topic}/lock', [TopicController::class, 'toggleLock'])->name('topics.lock');
     Route::put('/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/posts/{post}/react', [ReactionController::class, 'toggle'])->name('posts.react');

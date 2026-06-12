@@ -1,11 +1,11 @@
 {
-    "version": "1.2.1",
-    "download": "https://convoro.co/releases/convoro-1.2.1.zip",
+    "version": "1.2.2",
+    "download": "https://convoro.co/releases/convoro-1.2.2.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Pin important topics",
+    "title": "Lock topics",
     "date": "2026-06-12",
-    "notes": "Moderators can now pin a topic so it stays at the top of the discussion list — pin/unpin from the topic's “⋯” menu. Pinned topics show a badge and sort first. Gated by a new “Pin / unpin topics” permission.",
+    "notes": "Moderators can now lock a topic to stop new replies — lock/unlock from the topic's “⋯” menu. Locked topics show a badge and a notice in place of the reply box. Gated by the “Lock / unlock topics” permission.",
     "changelog": [
-        {"type": "added", "text": "Pin topics: moderators can pin a discussion to keep it at the top of the list (topic “⋯” menu), gated by a new “Pin / unpin topics” permission."}
+        {"type": "added", "text": "Lock topics: moderators can lock a discussion to stop new replies (topic “⋯” menu), gated by the “Lock / unlock topics” permission."}
     ]
 }
