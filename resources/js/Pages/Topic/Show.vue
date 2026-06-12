@@ -358,7 +358,7 @@ function submitReply() {
       </Link>
 
       <!-- Blog-style opening post -->
-      <article :id="firstPost ? 'post-' + firstPost.id : undefined" class="q-post scroll-mt-24 overflow-hidden rounded-c border border-line bg-surface shadow-sm">
+      <article :id="firstPost ? 'post-' + firstPost.id : undefined" class="q-post scroll-mt-24 rounded-c border border-line bg-surface shadow-sm" :class="menuFor === (firstPost?.id ?? -1) ? 'relative z-30' : 'overflow-hidden'">
         <img v-if="topic.cover" :src="topic.cover" alt="" class="h-56 w-full object-cover sm:h-72" />
         <div class="p-6 sm:p-9">
           <div class="flex flex-wrap items-center gap-2">
@@ -426,7 +426,7 @@ function submitReply() {
                 <button @click="menuFor = menuFor === firstPost.id ? null : firstPost.id" :title="tr('More')" class="grid h-8 w-8 place-items-center rounded-lg text-ink-muted hover:bg-surface-2">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
                 </button>
-                <div v-if="menuFor === firstPost.id" class="absolute right-0 top-9 z-20 w-40 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-xl">
+                <div v-if="menuFor === firstPost.id" class="absolute right-0 top-9 z-50 w-40 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-xl">
                   <button v-if="firstPost.canEdit" @click="menuFor = null; openEdit(firstPost)" class="block w-full px-3 py-1.5 text-left text-sm text-ink hover:bg-surface-2">{{ tr('Edit') }}</button>
                   <button v-if="canReport(firstPost)" @click="menuFor = null; report(firstPost)" class="block w-full px-3 py-1.5 text-left text-sm text-ink hover:bg-surface-2">⚑ {{ tr('Report') }}</button>
                   <button v-if="firstPost.canDelete" @click="menuFor = null; removePost(firstPost)" class="block w-full px-3 py-1.5 text-left text-sm text-red-500 hover:bg-red-500/10">{{ tr('Delete') }}</button>
@@ -466,7 +466,7 @@ function submitReply() {
           <div class="whitespace-pre-wrap text-sm leading-relaxed text-ink-2">{{ summary }}</div>
         </div>
         <div class="space-y-3">
-          <article v-for="post in replies" :key="post.id" :id="'post-' + post.id" class="q-post flex scroll-mt-24 gap-4 rounded-c border border-line bg-surface p-6 shadow-sm">
+          <article v-for="post in replies" :key="post.id" :id="'post-' + post.id" class="q-post flex scroll-mt-24 gap-4 rounded-c border border-line bg-surface p-6 shadow-sm" :class="menuFor === post.id ? 'relative z-30' : ''">
             <div class="w-24 shrink-0 text-center">
               <Link :href="post.author.url"><Avatar :avatar="post.author" :size="44" class="mx-auto" /></Link>
               <div class="mt-2 text-sm font-bold">{{ post.author.name }}</div>
@@ -516,7 +516,7 @@ function submitReply() {
                     <button @click="menuFor = menuFor === post.id ? null : post.id" :title="tr('More')" class="grid h-8 w-8 place-items-center rounded-lg text-ink-muted hover:bg-surface-2">
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
                     </button>
-                    <div v-if="menuFor === post.id" class="absolute right-0 top-9 z-20 w-40 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-xl">
+                    <div v-if="menuFor === post.id" class="absolute right-0 top-9 z-50 w-40 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-xl">
                       <button v-if="post.canEdit" @click="menuFor = null; openEdit(post)" class="block w-full px-3 py-1.5 text-left text-sm text-ink hover:bg-surface-2">{{ tr('Edit') }}</button>
                       <button v-if="post.canMove" @click="menuFor = null; openMove(post)" class="block w-full px-3 py-1.5 text-left text-sm text-ink hover:bg-surface-2">{{ tr('Move') }}</button>
                       <button v-if="canReport(post)" @click="menuFor = null; report(post)" class="block w-full px-3 py-1.5 text-left text-sm text-ink hover:bg-surface-2">⚑ {{ tr('Report') }}</button>
