@@ -9,6 +9,7 @@ import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
 import { uploadImage, isImageFile } from '@/lib/upload';
 import { MentionText } from '@/lib/mentionSuggestion';
+import Slot from '@/Components/ext/Slot.vue';
 import { t } from '@/lib/i18n';
 
 const props = withDefaults(defineProps<{ placeholder?: string; content?: string }>(), { placeholder: 'Write a reply…', content: '' });
@@ -162,6 +163,11 @@ function setLink() {
 function pickImage() {
   fileInput.value?.click();
 }
+// Exposed to composer-toolbar extensions (e.g. the emoji picker) so they can
+// insert content at the cursor without depending on the editor internals.
+function insertText(text: string) {
+  editor.value?.chain().focus().insertContent(text).run();
+}
 function onFile(e: Event) {
   const file = (e.target as HTMLInputElement).files?.[0];
   if (file) doUpload(file);
@@ -204,6 +210,8 @@ function onFile(e: Event) {
       <span class="mx-1.5 h-5 w-px bg-line"></span>
       <button type="button" class="tb" :title="t('Undo')" :aria-label="t('Undo')" :data-tip="t('Undo (Ctrl+Z)')" @click="editor.chain().focus().undo().run()">↶</button>
       <button type="button" class="tb" :title="t('Redo')" :aria-label="t('Redo')" :data-tip="t('Redo (Ctrl+Y)')" @click="editor.chain().focus().redo().run()">↷</button>
+      <!-- Extension point: composer-toolbar add-ons (e.g. the emoji picker) -->
+      <Slot name="composer:toolbar" :ctx="{ insertText }" />
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFile" />
     </div>
     <EditorContent :editor="editor" class="min-h-[110px] px-4 py-3 text-ink" />
