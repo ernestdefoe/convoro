@@ -118,6 +118,40 @@ async function runAi(action: string) {
   }
 }
 
+// ---- Generate a post from a brief ----
+const composeOpen = ref(false);
+const brief = ref('');
+const composing = ref(false);
+function openCompose() {
+  aiMenuOpen.value = false;
+  composeOpen.value = true;
+}
+async function compose() {
+  const text = brief.value.trim();
+  if (!text || composing.value) return;
+  composing.value = true;
+  try {
+    const csrf = (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '';
+    const r = await fetch('/api/ai/compose', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': csrf },
+      body: JSON.stringify({ brief: text }),
+    });
+    const data = await r.json();
+    if (data.html) {
+      editor.value?.chain().focus().insertContent(data.html).run();
+      composeOpen.value = false;
+      brief.value = '';
+    } else {
+      window.alert(data.error || t('AI request failed.'));
+    }
+  } catch {
+    window.alert(t('AI request failed.'));
+  } finally {
+    composing.value = false;
+  }
+}
+
 const isActive = (name: string, attrs?: Record<string, unknown>) => editor.value?.isActive(name, attrs) ?? false;
 function setLink() {
   const url = window.prompt(t('Link URL'));
@@ -161,6 +195,8 @@ function onFile(e: Event) {
             <span class="text-xs">{{ aiBusy ? t('Thinking…') : 'AI' }}</span>
           </button>
           <div v-if="aiMenuOpen" class="absolute left-0 top-full z-30 mt-1 w-52 overflow-hidden rounded-xl border border-line bg-surface py-1 shadow-xl">
+            <button type="button" class="block w-full px-3 py-1.5 text-left text-sm font-semibold text-primary hover:bg-surface-2" @click="openCompose">{{ t('Write from a brief…') }}</button>
+            <div class="my-1 border-t border-line"></div>
             <button v-for="a in AI_ACTIONS" :key="a.action" type="button" class="block w-full px-3 py-1.5 text-left text-sm text-ink hover:bg-surface-2" @click="runAi(a.action)">{{ a.label }}</button>
           </div>
         </div>
@@ -174,6 +210,25 @@ function onFile(e: Event) {
     <div v-if="uploading" class="pointer-events-none absolute bottom-2 left-3 inline-flex items-center gap-2 rounded-full bg-ink/80 px-3 py-1 text-xs font-semibold text-white">
       <span class="h-2 w-2 animate-pulse rounded-full bg-white"></span> {{ t('Uploading & converting to WebP…') }}
     </div>
+
+    <!-- Generate-from-a-brief modal -->
+    <Teleport to="body">
+      <div v-if="composeOpen" class="fixed inset-0 z-[80] flex items-center justify-center bg-black/40 p-4" @click.self="composeOpen = false">
+        <div class="w-full max-w-md rounded-c border border-line bg-surface p-5 shadow-2xl">
+          <h3 class="text-base font-bold text-ink">{{ t('Write with AI') }}</h3>
+          <p class="mt-1 text-sm text-ink-muted">{{ t('Describe what you want to say — I’ll draft the post for you.') }}</p>
+          <textarea v-model="brief" rows="4" :placeholder="t('e.g. Ask if anyone has tips for migrating ~5k posts from another forum')"
+            class="mt-3 w-full rounded-lg border-line bg-surface-2 text-sm text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary"
+            @keydown.ctrl.enter="compose" @keydown.meta.enter="compose"></textarea>
+          <div class="mt-3 flex items-center justify-end gap-2">
+            <button type="button" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="composeOpen = false">{{ t('Cancel') }}</button>
+            <button type="button" :disabled="composing || !brief.trim()" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-60" @click="compose">
+              {{ composing ? t('Writing…') : t('Generate') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 

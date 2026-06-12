@@ -19,6 +19,9 @@ return [
                 ['type' => 'fixed', 'text' => 'AI language translation no longer gets stuck near 100% or hangs — it runs in short, resumable batches and retries stubborn strings individually.'],
                 ['type' => 'fixed', 'text' => 'The Horizon queue dashboard now follows the forum’s light/dark theme and no longer has its own mismatched theme switcher.'],
                 ['type' => 'improved', 'text' => 'Mobile: a floating “Start a topic” button now appears on phones and tablets, so you don’t have to hunt for it.'],
+                ['type' => 'added', 'text' => 'Write a post with AI — describe what you want to say and it drafts the full post for you (the “Write from a brief…” option in the composer’s AI menu).'],
+                ['type' => 'fixed', 'text' => 'The “Suggest a title” and “Suggest tags” buttons now give feedback instead of doing nothing when there’s not enough to work from yet.'],
+                ['type' => 'improved', 'text' => 'The live theme-editor button is now hidden on mobile, where it isn’t useful.'],
             ],
         ],
         [

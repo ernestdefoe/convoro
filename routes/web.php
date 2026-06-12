@@ -88,6 +88,7 @@ Route::post('/api/posts/{post}/translate', [App\Http\Controllers\AiController::c
 Route::post('/api/messages/{message}/translate', [App\Http\Controllers\AiController::class, 'translateMessage'])->middleware(['auth', 'throttle:120,1'])->name('messages.translate');
 // Writing assistant — transform a draft, suggest titles/tags (auth, throttled).
 Route::post('/api/ai/assist', [App\Http\Controllers\AiController::class, 'assist'])->middleware(['auth', 'throttle:40,1'])->name('ai.assist');
+Route::post('/api/ai/compose', [App\Http\Controllers\AiController::class, 'compose'])->middleware(['auth', 'throttle:30,1'])->name('ai.compose');
 Route::post('/api/ai/suggest-title', [App\Http\Controllers\AiController::class, 'suggestTitle'])->middleware(['auth', 'throttle:30,1'])->name('ai.suggest.title');
 Route::post('/api/ai/suggest-tags', [App\Http\Controllers\AiController::class, 'suggestTags'])->middleware(['auth', 'throttle:30,1'])->name('ai.suggest.tags');
 Route::get('/llms.txt', [App\Http\Controllers\AiSpecController::class, 'llms'])->name('ai.llms');

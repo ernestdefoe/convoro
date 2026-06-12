@@ -5,6 +5,7 @@ import { uploadImage } from '@/lib/upload';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { ref, watch, computed } from 'vue';
 import { t as tr } from '@/lib/i18n';
+import { toast } from '@/lib/toast';
 
 const props = defineProps<{
   categories: { id: number; name: string; icon: string | null; color: string }[];
@@ -57,8 +58,9 @@ const draftText = () => (editor.value?.getHTML() ?? '').replace(/<[^>]+>/g, ' ')
 const titleSuggestions = ref<string[]>([]);
 const suggestingTitle = ref(false);
 async function suggestTitle() {
+  if (suggestingTitle.value) return;
   const text = draftText();
-  if (text.length < 10 || suggestingTitle.value) return;
+  if (text.length < 10) { toast(tr('Write a bit of your post first — I’ll suggest a title from it.'), 'info'); return; }
   suggestingTitle.value = true; titleSuggestions.value = [];
   try {
     const r = await fetch('/api/ai/suggest-title', {
@@ -71,8 +73,9 @@ async function suggestTitle() {
 }
 const suggestingTags = ref(false);
 async function suggestTags() {
+  if (suggestingTags.value) return;
   const text = draftText();
-  if (text.length < 10 || suggestingTags.value) return;
+  if (text.length < 10) { toast(tr('Write a bit of your post first — I’ll suggest tags from it.'), 'info'); return; }
   suggestingTags.value = true;
   try {
     const r = await fetch('/api/ai/suggest-tags', {

@@ -78,6 +78,36 @@ class AiController extends Controller
         return response()->json(['result' => $result]);
     }
 
+    /** Generate a full post (HTML) from a short brief the member describes. */
+    public function compose(Request $request): JsonResponse
+    {
+        if (! Llm::configured()) {
+            return response()->json(['html' => null, 'error' => __('AI is not available.')]);
+        }
+
+        $data = $request->validate(['brief' => ['required', 'string', 'min:3', 'max:2000']]);
+
+        $system = 'You are helping a member write a forum post. Expand their brief into a clear, '
+            .'friendly, well-structured post. Output valid HTML using only <p>, <strong>, <em>, <ul>, '
+            .'<ol>, <li>, <blockquote> tags — no headings, no markdown, no code fences, no preamble or '
+            .'sign-off. Keep it natural and concise, and write in the same language as the brief.';
+
+        try {
+            $raw = Llm::chat($system, $data['brief'], 1500, 'assist');
+        } catch (\Throwable $e) {
+            return response()->json(['html' => null, 'error' => __('AI request failed.')]);
+        }
+
+        $raw = trim(preg_replace('/^```(?:html)?|```$/m', '', trim($raw)) ?? $raw);
+        $html = \App\Support\Content::clean($raw);
+
+        if (trim(strip_tags($html)) === '') {
+            return response()->json(['html' => null, 'error' => __('AI request failed.')]);
+        }
+
+        return response()->json(['html' => $html]);
+    }
+
     /** Suggest topic titles for a draft body. */
     public function suggestTitle(Request $request): JsonResponse
     {
