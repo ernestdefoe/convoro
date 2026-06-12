@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.11.0',
+            'date' => '2026-06-12',
+            'title' => 'Federation — join the fediverse',
+            'items' => [
+                ['type' => 'new', 'text' => 'Convoro now speaks ActivityPub. Turn on Federation under Admin → Settings and your community becomes a followable account on the fediverse — people on Mastodon, Lemmy and elsewhere can follow @your-community and every new discussion shows up in their feed, linking back to your forum. Discoverable via WebFinger; follows are accepted automatically and new topics are delivered to followers’ inboxes, signed.'],
+            ],
+        ],
+        [
             'tag' => '1.10.1',
             'date' => '2026-06-12',
             'title' => 'Separate light & dark logos',
@@ -676,12 +684,14 @@ return [
             'Configurable mobile bottom tab bar',
             'Per-type notification controls (email & push)',
             'Translate forum content (titles, excerpts, categories) + pull-to-refresh',
+            'Federation (ActivityPub) — followable from Mastodon, Lemmy & the fediverse',
         ],
         'now' => [
             'Mobile & PWA experience — tab bar, push notifications & finer notification controls',
-            'Federation — follow & cross-post across communities',
         ],
         'next' => [],
-        'later' => [],
+        'later' => [
+            'Federation Phase 2 — remote replies & cross-posting',
+        ],
     ],
 ];

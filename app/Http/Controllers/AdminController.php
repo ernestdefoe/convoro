@@ -982,7 +982,37 @@ class AdminController extends Controller
                 'seo_image' => Settings::get('seo.image'),
             ],
             'mobileNav' => \App\Support\MobileNav::share(),
+            'federation' => [
+                'enabled' => \App\Support\Federation::enabled(),
+                'username' => \App\Support\Federation::username(),
+                'handle' => \App\Support\Federation::handle(),
+                'followers' => \Illuminate\Support\Facades\Schema::hasTable('federation_followers')
+                    ? (int) \Illuminate\Support\Facades\DB::table('federation_followers')->count() : 0,
+            ],
         ]);
+    }
+
+    /** Enable/disable ActivityPub federation + set the public handle. */
+    public function updateFederation(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+            'username' => ['nullable', 'string', 'max:40', 'regex:/^[a-z0-9_]+$/i'],
+        ]);
+        Settings::setMany([
+            'federation.enabled' => (bool) $data['enabled'],
+            'federation.username' => strtolower((string) ($data['username'] ?? '')),
+        ]);
+        // Make sure a keypair exists once it's switched on.
+        if ($data['enabled']) {
+            try {
+                \App\Support\Federation::keys();
+            } catch (\Throwable $e) {
+                return back()->withErrors(['federation' => __('Could not generate federation keys — your server is missing OpenSSL support.')]);
+            }
+        }
+
+        return back()->with('status', __('Federation settings saved.'));
     }
 
     public function updateSettings(Request $request): RedirectResponse

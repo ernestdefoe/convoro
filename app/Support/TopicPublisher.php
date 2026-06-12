@@ -61,6 +61,9 @@ class TopicPublisher
             AutoAnswerTopicJob::dispatch($topic->id)->delay(now()->addMinutes($delay))->afterCommit();
         }
 
+        // Broadcast to the fediverse (no-op unless federation is enabled + has followers).
+        \App\Support\Federation::announceTopic($topic);
+
         return $topic;
     }
 }

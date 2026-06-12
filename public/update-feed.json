@@ -1,11 +1,11 @@
 {
-    "version": "1.10.1",
-    "download": "https://convoro.co/releases/convoro-1.10.1.zip",
+    "version": "1.11.0",
+    "download": "https://convoro.co/releases/convoro-1.11.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Separate light & dark logos",
+    "title": "Federation — join the fediverse",
     "date": "2026-06-12",
-    "notes": "Upload a separate dark-mode logo under Admin → Settings — the header shows your light logo on light themes and your dark logo on dark themes (set one and it's used in both).",
+    "notes": "Convoro now speaks ActivityPub. Enable Federation under Admin → Settings and your community becomes a followable fediverse account — people on Mastodon, Lemmy and beyond can follow @your-community and see every new discussion in their feed. Discoverable via WebFinger; follows auto-accepted; new topics delivered to followers, signed.",
     "changelog": [
-        {"type": "added", "text": "Separate light-mode and dark-mode header logos in Admin → Settings."}
+        {"type": "added", "text": "Federation (ActivityPub): your community is a followable fediverse actor — WebFinger discovery, auto-accepted follows, and signed delivery of new topics to followers. Enable it under Admin → Settings."}
     ]
 }

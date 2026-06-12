@@ -9,6 +9,16 @@ use App\Http\Controllers\TopicController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// ActivityPub federation (off unless enabled in admin). Not host-scoped — these
+// live on the community domain. WebFinger/NodeInfo must be at the well-known root.
+Route::get('/.well-known/webfinger', [App\Http\Controllers\FederationController::class, 'webfinger']);
+Route::get('/.well-known/nodeinfo', [App\Http\Controllers\FederationController::class, 'nodeinfo']);
+Route::get('/nodeinfo/2.0', [App\Http\Controllers\FederationController::class, 'nodeinfoData']);
+Route::get('/federation/actor', [App\Http\Controllers\FederationController::class, 'actor'])->name('federation.actor');
+Route::get('/federation/outbox', [App\Http\Controllers\FederationController::class, 'outbox']);
+Route::get('/federation/followers', [App\Http\Controllers\FederationController::class, 'followers']);
+Route::post('/federation/inbox', [App\Http\Controllers\FederationController::class, 'inbox']);
+
 // One-click digest unsubscribe — a permanent signed link from the digest email,
 // no login required. Sets the member's digest to off and shows a confirmation.
 Route::get('/digest/unsubscribe/{user}', function (\App\Models\User $user) {
@@ -229,6 +239,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/settings', [App\Http\Controllers\AdminController::class, 'settings'])->name('settings');
     Route::post('/settings', [App\Http\Controllers\AdminController::class, 'updateSettings'])->name('settings.update');
     Route::post('/settings/mobile-nav', [App\Http\Controllers\AdminController::class, 'updateMobileNav'])->name('settings.mobile-nav');
+    Route::post('/settings/federation', [App\Http\Controllers\AdminController::class, 'updateFederation'])->name('settings.federation');
     Route::get('/email', [App\Http\Controllers\AdminController::class, 'email'])->name('email');
     Route::post('/email', [App\Http\Controllers\AdminController::class, 'updateEmail'])->name('email.update');
     Route::post('/email/test', [App\Http\Controllers\AdminController::class, 'sendTestEmail'])->name('email.test');

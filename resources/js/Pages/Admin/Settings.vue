@@ -9,7 +9,18 @@ import { t } from '@/lib/i18n';
 const props = defineProps<{
   values: { name: string; tagline: string; logo: string; logo_dark: string; favicon: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string };
   mobileNav: { enabled: boolean; tabs: string[]; catalog: string[] };
+  federation: { enabled: boolean; username: string; handle: string; followers: number };
 }>();
+
+// ---- Federation (ActivityPub) ----
+const fed = useForm({ enabled: props.federation.enabled, username: props.federation.username });
+const fedSaved = ref(false);
+function saveFederation() {
+  fed.post('/admin/settings/federation', {
+    preserveScroll: true,
+    onSuccess: () => { fedSaved.value = true; setTimeout(() => (fedSaved.value = false), 2500); },
+  });
+}
 
 // ---- Mobile bottom tab bar ----
 const TAB_LABELS: Record<string, string> = {
@@ -240,6 +251,32 @@ function save() {
       <div class="flex items-center gap-3">
         <button type="button" :disabled="mobileSaving" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60" @click="saveMobile">{{ t('Save tab bar') }}</button>
         <span v-if="mobileSaved" class="text-sm text-emerald-400">{{ t('Saved.') }}</span>
+      </div>
+    </div>
+
+    <!-- Federation (ActivityPub) -->
+    <div class="mt-6 max-w-2xl rounded-2xl border border-line bg-surface p-6 space-y-4">
+      <div>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('Federation (ActivityPub)') }}</h2>
+        <p class="mt-1 text-sm text-ink-muted">{{ t('Let people on Mastodon, Lemmy and the wider fediverse follow your community and see each new discussion in their feed.') }}</p>
+      </div>
+      <label class="flex items-center gap-3">
+        <input v-model="fed.enabled" type="checkbox" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />
+        <span class="text-sm text-ink-2">{{ t('Enable federation') }}</span>
+      </label>
+      <div>
+        <label class="block text-sm font-medium text-ink-2">{{ t('Handle username') }}</label>
+        <p class="text-xs text-ink-muted">{{ t('The part before the @ in your community’s fediverse address.') }}</p>
+        <input v-model="fed.username" type="text" maxlength="40" placeholder="community" class="mt-1.5 w-full max-w-xs rounded-lg border-line bg-appbg font-mono text-ink focus:border-indigo-500 focus:ring-indigo-500" />
+      </div>
+      <div class="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-lg bg-surface-2 px-3 py-2.5 text-sm">
+        <span class="text-ink-muted">{{ t('Your address') }}: <span class="font-mono text-ink">{{ fed.username || 'community' }}@{{ federation.handle.split('@').pop() }}</span></span>
+        <span class="text-ink-muted">{{ t('{n} follower(s)', { n: federation.followers }) }}</span>
+      </div>
+      <p v-if="(fed.errors as any).federation" class="text-sm text-red-400">{{ (fed.errors as any).federation }}</p>
+      <div class="flex items-center gap-3">
+        <button type="button" :disabled="fed.processing" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60" @click="saveFederation">{{ t('Save federation') }}</button>
+        <span v-if="fedSaved" class="text-sm text-emerald-400">{{ t('Saved.') }}</span>
       </div>
     </div>
   </AdminLayout>
