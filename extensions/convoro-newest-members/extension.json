@@ -1,0 +1,13 @@
+{
+  "id": "convoro-newest-members",
+  "name": "Newest Members",
+  "version": "1.0.0",
+  "description": "Sidebar widget showing avatars of the most recently joined members.",
+  "author": "Convoro",
+  "convoro": ">=0.37.0",
+  "core": true,
+  "assets": { "forum": "assets/forum.js" },
+  "icon": "icon.svg",
+  "premium": false,
+  "price": 0
+}

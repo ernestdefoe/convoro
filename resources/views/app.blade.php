@@ -5,8 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        {{-- Apply the visitor's saved light/dark choice before paint (no flash) --}}
-        <script>(function(){try{var t=localStorage.getItem('convoro_theme');if(t){document.documentElement.dataset.theme=t;}}catch(e){}})();</script>
+        {{-- Apply the visitor's saved light/dark choice before paint (no flash).
+             Reads a domain-scoped cookie so the choice carries across
+             convoro.co and community.convoro.co; falls back to localStorage. --}}
+        <script>(function(){try{var m=document.cookie.split('; ').find(function(c){return c.indexOf('convoro_theme=')===0;});var t=m?decodeURIComponent(m.split('=')[1]):localStorage.getItem('convoro_theme');if(t==='dark'||t==='light'){document.documentElement.dataset.theme=t;}}catch(e){}})();</script>
 
         @php($seo = $page['props']['seo'] ?? [])
         <title inertia>{{ $seo['title'] ?? config('app.name', 'Convoro') }}</title>

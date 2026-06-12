@@ -150,3 +150,9 @@ main.q-main { padding-top: calc(1.5rem * var(--c-density, 1)); padding-bottom: c
 }
 .prose-q .mention:hover,
 .mention:hover { background: rgb(var(--c-primary) / 0.18); }
+
+/* Media embeds (YouTube/Vimeo/Spotify/X/Facebook/Instagram) */
+.embed-video { position: relative; width: 100%; max-width: 680px; aspect-ratio: 16 / 9; margin: 14px 0; border-radius: 12px; overflow: hidden; background: #000; }
+.embed-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.embed-spotify { margin: 14px 0; max-width: 680px; }
+.twitter-tweet, .instagram-media, .fb-post, .fb-video { margin: 14px 0 !important; }

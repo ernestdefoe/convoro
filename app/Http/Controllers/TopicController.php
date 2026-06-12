@@ -79,7 +79,7 @@ class TopicController extends Controller
     public function show(Topic $topic): Response
     {
         $topic->increment('view_count');
-        $topic->load(['user', 'category', 'tags', 'posts.user', 'posts.reactions']);
+        $topic->load(['user', 'category', 'tags', 'posts.user.groups', 'posts.reactions']);
         $actor = auth()->user();
         $actor?->loadMissing('groups');
         $actorId = $actor?->id;

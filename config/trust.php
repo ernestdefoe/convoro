@@ -10,6 +10,74 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.0.0',
+            'date' => '2026-06-12',
+            'title' => 'Convoro 1.0 — the first stable release',
+            'items' => [
+                ['type' => 'new', 'text' => 'Convoro is 1.0. After a fast run of releases, the platform is feature-complete and stable: a realtime, AI-native community with a WYSIWYG composer, live theme editor, built-in marketplace, full multi-language support, moderation and GDPR tooling, PWA + push, and a self-updater — ready to run a real community.'],
+                ['type' => 'new', 'text' => 'Rich media embeds — paste a YouTube, Vimeo, Spotify, X, Facebook or Instagram link on its own line in a post and it renders inline automatically, no shortcodes needed.'],
+                ['type' => 'new', 'text' => 'RSS feeds — a new RSS add-on publishes site-wide, per-category and per-topic feeds with auto-discovery links, so members can follow your community in any reader.'],
+                ['type' => 'new', 'text' => 'Move from almost any forum — the Import wizard now migrates from XenForo, phpBB, Discourse and vBulletin in addition to Flarum, bringing across members, categories, topics, posts and formatting (older forum software is marked beta — back up first).'],
+                ['type' => 'improved', 'text' => 'Email digests now include a one-click unsubscribe link that turns digests off without signing in, meeting bulk-email requirements.'],
+                ['type' => 'improved', 'text' => 'Worldwide privacy compliance — the cookie-consent add-on now honors Global Privacy Control / Do Not Track signals, adds a CCPA “Do Not Sell or Share” notice, keeps a persistent “Privacy choices” link, and remembers prior choices.'],
+            ],
+        ],
+        [
+            'tag' => '0.41.0',
+            'date' => '2026-06-12',
+            'title' => 'Member Badges',
+            'items' => [
+                ['type' => 'added', 'text' => 'New Member Badges add-on — members automatically earn badges (Founding Member, First Post, milestones, reactions received and more) as they take part, shown right on their profile. Install it from the extensions directory.'],
+                ['type' => 'improved', 'text' => 'Profiles can now display add-on content, and the notifications system supports badge awards.'],
+            ],
+        ],
+        [
+            'tag' => '0.40.0',
+            'date' => '2026-06-12',
+            'title' => 'Bigger, bolder avatars',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Member avatars are now a bit larger across topic cards, posts, profiles, member lists, and the sidebar widgets — for a more prominent, modern look.'],
+            ],
+        ],
+        [
+            'tag' => '0.39.0',
+            'date' => '2026-06-12',
+            'title' => 'Avatar alignment, category colors save, widgets refresh cleanly',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'Member avatars now line up consistently — non-staff members’ avatars were getting nudged out of alignment next to their names.'],
+                ['type' => 'fixed', 'text' => 'Changing a category’s color now saves correctly even when the category has a Font Awesome icon (the icon field was rejecting longer icon names).'],
+                ['type' => 'improved', 'text' => 'Sidebar widget updates now take effect immediately instead of being held back by a stale browser cache.'],
+            ],
+        ],
+        [
+            'tag' => '0.38.0',
+            'date' => '2026-06-12',
+            'title' => 'Theme carries across the site, auto-refresh on update, richer Online & Trending',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'Your light/dark choice now carries between the homepage and the forum — it’s saved to a site-wide cookie instead of per-page storage.'],
+                ['type' => 'added', 'text' => 'After an update finishes installing, the admin page now refreshes itself automatically so you can see the new version without manually reloading.'],
+                ['type' => 'improved', 'text' => 'The Online now widget shows who’s actually online (avatars), not just a count — the way it used to.'],
+                ['type' => 'improved', 'text' => 'The Trending widget is more reliable: it falls back to the most-viewed topics when nothing has replies yet.'],
+                ['type' => 'improved', 'text' => 'The bundled sidebar widgets now have proper cover art in the extensions directory, like every other add-on.'],
+            ],
+        ],
+        [
+            'tag' => '0.37.0',
+            'date' => '2026-06-11',
+            'title' => 'Sidebar widgets are now drag-and-drop extensions',
+            'items' => [
+                ['type' => 'added', 'text' => 'Every sidebar widget — Community stats, Online now, Newest members, Top posters, Categories, Trending and a new About / Custom HTML card — is now a first-party extension you can drag to reorder and toggle on or off in the live theme editor.'],
+                ['type' => 'added', 'text' => 'A “Trending” widget highlights your most active topics, and an “About / Custom HTML” widget lets you add a free-form welcome card to the rail.'],
+                ['type' => 'improved', 'text' => 'The live theme editor’s Widgets tab now shows one unified, draggable list with on/off switches, and previews changes instantly. Newly-installed widget add-ons appear in the list automatically.'],
+                ['type' => 'improved', 'text' => 'Your existing sidebar layout (including any custom text card) is carried over automatically on upgrade.'],
+                ['type' => 'fixed', 'text' => 'Display names can no longer show as a blank “diamond”: a name must contain a real letter or number, invisible/control characters are stripped on save, and any older broken name safely falls back to “Member #”.'],
+                ['type' => 'added', 'text' => 'Staff badges: admins and staff-group members now show a small colored badge beneath their avatar that matches their group’s color.'],
+                ['type' => 'added', 'text' => 'Editable Admin & Moderator groups — pick their color under Members → Groups (the Admin color drives the staff badge). These system groups can be recolored or renamed but not deleted.'],
+                ['type' => 'improved', 'text' => 'Category colors now reach the left sidebar — each category’s icon and name are tinted with its chosen color, matching the topic cards.'],
+                ['type' => 'added', 'text' => 'A “Clear queue” button under Admin → Dashboard → Maintenance drops stuck pending and failed jobs and restarts the workers, so a hung-up queue can be cleared and retried.'],
+            ],
+        ],
+        [
             'tag' => '0.36.0',
             'date' => '2026-06-11',
             'title' => 'Mentions, DM translation, Horizon & translation fixes',
@@ -354,23 +422,29 @@ return [
     // Roadmap buckets. Move items between buckets as they progress.
     'roadmap' => [
         'shipped' => [
+            'Convoro 1.0 — first stable release',
             'Live theme editor + widgets', 'Built-in marketplace & GitHub registry',
             'AI security review', 'Realtime threads, DMs & notifications',
             'PWA + web push', 'Moderation & GDPR tools', 'One-click installer',
+            'Multi-language UI (45+ languages, AI-assisted)',
+            'Rich media embeds (YouTube, Vimeo, Spotify, X, Facebook, Instagram)',
+            'Importers — Flarum, XenForo, phpBB, Discourse & vBulletin',
+            'Email digests + one-click unsubscribe & notification preferences',
+            'Earnable badges & richer member profiles', 'RSS feeds',
         ],
         'now' => [
-            'Public trust pages (changelog, roadmap, status)',
-            'Product-wide UI polish (skeletons, empty states, ⌘K palette)',
+            'Hardening the 1.x importers against real-world databases',
+            'Full documentation site',
         ],
         'next' => [
-            'Importers — migrate your community from Flarum, XenForo, Invision Community, phpBB & Discourse',
-            'Email digests v2 + notification preferences',
-            'Full documentation site',
             'Onboarding wizard for new admins',
+            'Single sign-on (OAuth/SAML)',
+            'Advanced analytics & search',
         ],
         'later' => [
-            'Native mobile wrapper', 'Single sign-on (OAuth/SAML)',
-            'Advanced analytics & search', 'Multi-language UI',
+            'Native mobile wrapper',
+            'Invision Community importer',
+            'Federation / cross-community follow',
         ],
     ],
 ];

@@ -12,7 +12,7 @@ defineProps<{ topic: any }>();
     :href="`/t/${topic.slug}`"
     class="q-post flex gap-4 rounded-c border border-line bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md"
   >
-    <Avatar :avatar="topic.author" :size="44" />
+    <Avatar :avatar="topic.author" :size="52" badge />
     <div class="min-w-0 flex-1">
       <div class="flex items-center gap-2">
         <svg v-if="topic.isPinned" width="14" height="14" viewBox="0 0 24 24" fill="#e8830c"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z" /></svg>

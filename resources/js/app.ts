@@ -6,6 +6,7 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createApp, DefineComponent, h } from 'vue';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import { bootExtensions } from './lib/convoro-ext';
+import { initEmbeds } from './lib/embeds';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Convoro';
 
@@ -21,6 +22,7 @@ createInertiaApp({
         // (shared as the `extAssets` Inertia prop) before mounting.
         const shared = (props.initialPage.props as Record<string, unknown>) ?? {};
         bootExtensions((shared.extAssets as { id: string; url: string }[]) ?? []);
+        initEmbeds();
 
         createApp({ render: () => h(App, props) })
             .use(plugin)

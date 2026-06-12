@@ -1,8 +1,8 @@
 {
   "id": "convoro-gdpr",
   "name": "GDPR & Privacy",
-  "version": "1.0.0",
-  "description": "GDPR / privacy compliance for communities worldwide: a granular cookie-consent banner with proof-of-consent logging, member self-service data export and account erasure, and configurable IP-log retention.",
+  "version": "1.1.0",
+  "description": "Privacy compliance for communities worldwide (GDPR + CCPA): a granular cookie-consent banner that honors Global Privacy Control / Do-Not-Track, a re-openable “Privacy choices / Do Not Sell or Share” control, proof-of-consent logging, member self-service data export and account erasure, and configurable IP-log retention.",
   "author": "Convoro",
   "convoro": ">=0.1.0",
   "namespace": "Convoro\\Ext\\Gdpr\\",

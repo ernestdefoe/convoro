@@ -50,7 +50,7 @@ function setSort(e: Event) {
       <div v-else class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         <Link v-for="m in members.data" :key="m.id" :href="m.url"
           class="flex flex-col items-center rounded-c border border-line bg-surface p-6 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-          <Avatar :avatar="m" :size="72" />
+          <Avatar :avatar="m" :size="88" />
           <div class="mt-3 flex items-center gap-1.5">
             <span class="font-bold">{{ m.name }}</span>
             <span v-if="m.isAdmin" class="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">{{ tr('Admin') }}</span>

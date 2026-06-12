@@ -32,15 +32,36 @@ function checkUpdates() { router.post('/admin/system/check-updates', {}, { prese
 function applyUpdate() {
   if (!confirm(tr('Download and install the latest version now?'))) return;
   updating.value = true;
-  router.post('/admin/system/update', {}, { preserveScroll: true, onFinish: () => (updating.value = false) });
+  router.post('/admin/system/update', {}, { preserveScroll: true, onSuccess: () => pollUntilDone() });
 }
-const maintenance = [
+// Poll the update status and auto-refresh the page once it finishes, so you
+// don't have to manually reload to see whether the update took.
+function pollUntilDone() {
+  const started = Date.now();
+  const tick = async () => {
+    try {
+      const r = await fetch('/admin/system/update-status', { headers: { Accept: 'application/json' } });
+      if (r.ok) {
+        const s = await r.json();
+        if (!s.running) { window.location.reload(); return; }
+      }
+    } catch { /* mid-update blips are expected — keep polling */ }
+    if (Date.now() - started < 180000) setTimeout(tick, 2500);
+    else updating.value = false; // give up after 3 minutes
+  };
+  setTimeout(tick, 2500);
+}
+const maintenance: { action: string; label: string; confirm?: string }[] = [
   { action: 'cache', label: tr('Clear caches') },
   { action: 'optimize', label: tr('Optimize') },
   { action: 'migrate', label: tr('Run migrations') },
   { action: 'storage', label: tr('Link storage') },
+  { action: 'queue', label: tr('Clear queue'), confirm: tr('Clear all pending and failed jobs and restart the queue workers? In-progress work will be dropped so it can be retried.') },
 ];
-function runTask(action: string) { router.post('/admin/system/run', { action }, { preserveScroll: true }); }
+function runTask(action: string, confirmMsg?: string) {
+  if (confirmMsg && !window.confirm(confirmMsg)) return;
+  router.post('/admin/system/run', { action }, { preserveScroll: true });
+}
 const stateColor = (s: string) => s === 'ok' ? 'bg-emerald-400' : s === 'degraded' ? 'bg-amber-400' : 'bg-red-400';
 
 const cards = computed(() => [
@@ -215,7 +236,7 @@ const maxSignup = computed(() => Math.max(1, ...(props.analytics?.signups.map((s
       <section class="rounded-2xl border border-line bg-surface p-5">
         <h2 class="mb-3 text-sm font-bold text-ink">{{ tr('Maintenance') }}</h2>
         <div class="flex flex-wrap gap-2">
-          <button v-for="t in maintenance" :key="t.action" class="rounded-lg bg-surface-2 px-3 py-2 text-sm font-semibold text-ink hover:bg-appbg" @click="runTask(t.action)">{{ t.label }}</button>
+          <button v-for="t in maintenance" :key="t.action" class="rounded-lg bg-surface-2 px-3 py-2 text-sm font-semibold text-ink hover:bg-appbg" @click="runTask(t.action, t.confirm)">{{ t.label }}</button>
         </div>
       </section>
 

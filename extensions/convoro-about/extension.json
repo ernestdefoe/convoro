@@ -1,0 +1,13 @@
+{
+  "id": "convoro-about",
+  "name": "About / Custom HTML",
+  "version": "1.0.0",
+  "description": "Sidebar widget rendering custom HTML — set the heading and content in the live theme editor.",
+  "author": "Convoro",
+  "convoro": ">=0.37.0",
+  "core": true,
+  "assets": { "forum": "assets/forum.js" },
+  "icon": "icon.svg",
+  "premium": false,
+  "price": 0
+}

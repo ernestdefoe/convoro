@@ -6,6 +6,7 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -24,6 +25,17 @@ class User extends Authenticatable
     public function isBanned(): bool
     {
         return $this->banned_at !== null;
+    }
+
+    /**
+     * Sanitize the display name on every write (strip control/invisible chars,
+     * NFC-normalize, collapse whitespace) so broken names never reach storage.
+     */
+    protected function name(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => \App\Support\Username::sanitize($value),
+        );
     }
 
     /** Topics started by this user. */

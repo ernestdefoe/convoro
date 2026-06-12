@@ -1,0 +1,13 @@
+{
+  "id": "convoro-top-posters",
+  "name": "Top Posters",
+  "version": "1.0.0",
+  "description": "Sidebar widget listing the most active members by post count.",
+  "author": "Convoro",
+  "convoro": ">=0.37.0",
+  "core": true,
+  "assets": { "forum": "assets/forum.js" },
+  "icon": "icon.svg",
+  "premium": false,
+  "price": 0
+}

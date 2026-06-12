@@ -3,6 +3,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, reactive, ref, watch } from 'vue';
 import { toast } from '@/lib/toast';
 import { t as tr } from '@/lib/i18n';
+import { convoro } from '@/lib/convoro-ext';
 
 const page = usePage();
 const isAdmin = computed(() => !!(page.props as any).auth?.isAdmin);
@@ -136,7 +137,16 @@ function load() {
   form.custom_css = v.customCss ?? '';
   form.logo = site.value.logo ?? '';
   form.favicon = site.value.favicon ?? '';
-  widgets.value = JSON.parse(JSON.stringify(site.value.widgets ?? []));
+
+  // Sidebar widgets: order + visibility come from the saved layout; the live
+  // registry (window.Convoro) supplies labels and surfaces newly-installed
+  // widget extensions automatically.
+  const layout = (site.value.widgets ?? []) as { key: string; enabled?: boolean }[];
+  wOrder.value = layout.map((w) => w.key);
+  wDisabled.value = layout.filter((w) => w.enabled === false).map((w) => w.key);
+  reconcileWidgets();
+  aboutTitle.value = site.value.widgetAbout?.title ?? '';
+  aboutHtml.value = site.value.widgetAbout?.html ?? '';
 }
 
 function hexRgb(hex: string): string {
@@ -240,29 +250,49 @@ async function upload(field: 'logo' | 'favicon', e: Event) {
   }
 }
 
-// ── Widgets (drag & drop) ────────────────────────────────────────────────
-type Widget = { id: string; type: string; title: string; body: string };
-const widgets = ref<Widget[]>([]);
-const WIDGET_TYPES = [
-  { type: 'text', label: tr('Text / HTML'), defaultTitle: tr('About') },
-  { type: 'stats', label: tr('Community stats'), defaultTitle: tr('Community stats') },
-  { type: 'online_now', label: tr('Online now'), defaultTitle: tr('Online now') },
-  { type: 'newest_members', label: tr('Newest members'), defaultTitle: tr('Newest members') },
-  { type: 'top_posters', label: tr('Top posters'), defaultTitle: tr('Top posters') },
-  { type: 'categories', label: tr('Categories'), defaultTitle: tr('Categories') },
-];
+// ── Sidebar widgets (extension-driven) ───────────────────────────────────
+// Every sidebar widget — built-in or add-on — registers into the
+// `forum:sidebar` slot of window.Convoro. The editor manages an ordered list
+// of keys (wOrder) plus a hidden set (wDisabled); labels come from the live
+// registry so newly-installed widgets appear here without code changes.
+const SIDEBAR_SLOT = 'forum:sidebar';
+const wOrder = ref<string[]>([]);
+const wDisabled = ref<string[]>([]);
+const aboutHtml = ref('');
+const aboutTitle = ref('');
 const dragFrom = ref<number | null>(null);
 const dragOver = ref<number | null>(null);
 
-function newId() {
-  return 'w' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
+// Append any registered widget not yet in the saved order (e.g. just installed).
+function reconcileWidgets() {
+  convoro.registeredWidgets(SIDEBAR_SLOT).forEach((r) => {
+    if (!wOrder.value.includes(r.key)) wOrder.value.push(r.key);
+  });
 }
-function addWidget(type: string) {
-  const meta = WIDGET_TYPES.find((w) => w.type === type);
-  widgets.value.push({ id: newId(), type, title: meta?.defaultTitle ?? '', body: '' });
-}
-function removeWidget(i: number) {
-  widgets.value.splice(i, 1);
+
+// The list rendered in the tab: saved order, with labels + on/off resolved.
+const displayWidgets = computed(() => {
+  const reg = new Map(convoro.registeredWidgets(SIDEBAR_SLOT).map((r) => [r.key, r]));
+  return wOrder.value.map((key) => {
+    const r = reg.get(key);
+    return { key, label: r ? tr(r.label) : key, enabled: !wDisabled.value.includes(key), known: !!r };
+  });
+});
+
+// Pull newly-loaded widget extensions into the list while the panel is open.
+watch(
+  () => convoro.registeredWidgets(SIDEBAR_SLOT).length,
+  () => { if (open.value) reconcileWidgets(); },
+);
+
+const currentLayout = computed(() =>
+  wOrder.value.map((key) => ({ key, enabled: !wDisabled.value.includes(key) })),
+);
+
+function toggleWidget(key: string) {
+  const i = wDisabled.value.indexOf(key);
+  if (i === -1) wDisabled.value.push(key);
+  else wDisabled.value.splice(i, 1);
 }
 function onDragStart(i: number, e: DragEvent) {
   dragFrom.value = i;
@@ -271,16 +301,27 @@ function onDragStart(i: number, e: DragEvent) {
 function onDragOver(i: number) { if (dragFrom.value !== null) dragOver.value = i; }
 function onDrop(i: number) {
   if (dragFrom.value === null || dragFrom.value === i) { dragFrom.value = null; dragOver.value = null; return; }
-  const list = widgets.value;
+  const list = wOrder.value;
   const [moved] = list.splice(dragFrom.value, 1);
   list.splice(i, 0, moved);
   dragFrom.value = null;
   dragOver.value = null;
 }
 function onDragEnd() { dragFrom.value = null; dragOver.value = null; }
+
+// Push the current layout + About content into the runtime for live preview.
+function previewWidgets() {
+  convoro.setLayout(SIDEBAR_SLOT, { order: wOrder.value.slice(), disabled: wDisabled.value.slice() });
+  convoro.setData({ aboutHtml: aboutHtml.value, aboutTitle: aboutTitle.value });
+  convoro.emit('convoro:data');
+}
 function saveWidgets() {
   saving.value = true;
-  router.post('/admin/theme/widgets', { widgets: widgets.value }, {
+  router.post('/admin/theme/widgets', {
+    widgets: currentLayout.value,
+    about_html: aboutHtml.value,
+    about_title: aboutTitle.value,
+  }, {
     preserveScroll: true,
     preserveState: true,
     onSuccess: () => toast(tr('Widgets saved')),
@@ -301,8 +342,9 @@ watch(form, () => {
   themeTimer = setTimeout(save, 700);
 }, { deep: true });
 
-watch(widgets, () => {
+watch([wOrder, wDisabled, aboutHtml, aboutTitle], () => {
   if (!ready.value || !open.value) return;
+  previewWidgets(); // live preview is immediate; persistence is debounced
   if (widgetTimer) clearTimeout(widgetTimer);
   widgetTimer = setTimeout(saveWidgets, 700);
 }, { deep: true });
@@ -541,39 +583,39 @@ const labelCls = 'mb-2 block text-xs font-bold uppercase tracking-wide text-ink-
       <!-- WIDGETS tab -->
       <div v-show="tab === 'widgets'" class="flex-1 space-y-5 overflow-y-auto px-5 py-5">
         <div>
-          <label :class="labelCls">{{ tr('Add a widget') }}</label>
-          <div class="grid grid-cols-2 gap-2">
-            <button v-for="w in WIDGET_TYPES" :key="w.type" type="button" @click="addWidget(w.type)"
-              class="rounded-lg border border-line px-2.5 py-2 text-left text-xs font-semibold text-ink-2 hover:border-primary hover:bg-primary/5 hover:text-primary">
-              + {{ w.label }}
-            </button>
-          </div>
-        </div>
+          <label :class="labelCls">{{ tr('Sidebar widgets') }}</label>
+          <p class="mb-3 text-[11px] text-ink-muted">{{ tr('Drag to reorder, toggle to show or hide. Changes preview live.') }}</p>
 
-        <div>
-          <label :class="labelCls">{{ tr('Forum sidebar — drag to reorder') }}</label>
-          <div v-if="!widgets.length" class="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-muted">
-            {{ tr('No widgets yet. Add some above — the default stats card shows until you do.') }}
+          <div v-if="!displayWidgets.length" class="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-muted">
+            {{ tr('No widgets installed yet.') }}
           </div>
           <div v-else class="space-y-2">
-            <div v-for="(w, i) in widgets" :key="w.id"
+            <div v-for="(w, i) in displayWidgets" :key="w.key"
               @dragover.prevent="onDragOver(i)" @drop="onDrop(i)"
               class="rounded-xl border bg-surface-2 p-3 transition"
               :class="[
                 dragFrom === i ? 'opacity-40' : '',
                 dragOver === i && dragFrom !== i ? 'border-primary ring-2 ring-primary/50' : 'border-line',
               ]">
-              <div draggable="true" @dragstart="onDragStart(i, $event)" @dragend="onDragEnd"
-                class="-m-1 flex cursor-grab items-center gap-2 rounded-lg p-1 select-none active:cursor-grabbing">
-                <span class="text-ink-muted">⠿</span>
-                <span class="text-sm font-semibold capitalize text-ink">{{ w.type.replace('_', ' ') }}</span>
-                <span class="text-[10px] font-medium text-ink-muted">{{ tr('drag to reorder') }}</span>
-                <button type="button" draggable="false" class="ml-auto text-xs font-semibold text-ink-muted hover:text-red-400" @click.stop="removeWidget(i)">{{ tr('Remove') }}</button>
+              <div class="flex items-center gap-2">
+                <span draggable="true" @dragstart="onDragStart(i, $event)" @dragend="onDragEnd"
+                  class="cursor-grab select-none text-ink-muted active:cursor-grabbing" :title="tr('drag to reorder')">⠿</span>
+                <span class="text-sm font-semibold text-ink" :class="!w.enabled ? 'opacity-50' : ''">{{ w.label }}</span>
+                <button type="button" role="switch" :aria-checked="w.enabled" @click.stop="toggleWidget(w.key)"
+                  class="relative ml-auto h-5 w-9 shrink-0 rounded-full transition-colors"
+                  :class="w.enabled ? 'bg-primary' : 'bg-line'">
+                  <span class="absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-all"
+                    :class="w.enabled ? 'left-[18px]' : 'left-0.5'"></span>
+                </button>
               </div>
-              <input v-model="w.title" :placeholder="tr('Title (optional)')"
-                class="mt-2 w-full rounded-lg border-line bg-surface text-sm text-ink focus:border-primary focus:ring-primary" />
-              <textarea v-if="w.type === 'text'" v-model="w.body" rows="3" :placeholder="tr('Text or HTML…')"
-                class="mt-2 w-full rounded-lg border-line bg-surface text-xs text-ink focus:border-primary focus:ring-primary"></textarea>
+
+              <!-- "About / Custom HTML" widget edits its content inline -->
+              <div v-if="w.key === 'convoro-about' && w.enabled" class="mt-3 space-y-2">
+                <input v-model="aboutTitle" :placeholder="tr('Heading (optional)')"
+                  class="w-full rounded-lg border-line bg-surface text-sm text-ink focus:border-primary focus:ring-primary" />
+                <textarea v-model="aboutHtml" rows="4" :placeholder="tr('Text or HTML…')"
+                  class="w-full rounded-lg border-line bg-surface text-xs text-ink focus:border-primary focus:ring-primary"></textarea>
+              </div>
             </div>
           </div>
           <p class="mt-2 text-[11px] text-ink-muted">{{ tr('Renders in the right rail of the community page for every visitor.') }}</p>

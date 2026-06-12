@@ -96,12 +96,70 @@ class Settings
         Cache::forget(self::CACHE_KEY);
     }
 
-    /** Decoded forum sidebar widget layout (always an array). */
+    /**
+     * Forum sidebar layout as an ordered list of [key, enabled] entries, where
+     * key is a widget-extension id. Falls back to a sensible default when
+     * unset, and transparently upgrades the legacy [{type,title,body}] shape.
+     */
     public static function widgetLayout(): array
     {
-        $raw = json_decode((string) self::get('widgets.sidebar', '[]'), true);
+        $raw = json_decode((string) self::get('widgets.sidebar', ''), true);
+        if (! is_array($raw) || $raw === []) {
+            return self::defaultWidgetLayout();
+        }
 
-        return is_array($raw) ? $raw : [];
+        return self::normalizeWidgetLayout($raw);
+    }
+
+    /** Default rail for a fresh forum: the built-in widgets, About off until set. */
+    public static function defaultWidgetLayout(): array
+    {
+        return [
+            ['key' => 'convoro-about', 'enabled' => false],
+            ['key' => 'convoro-stats', 'enabled' => true],
+            ['key' => 'convoro-trending', 'enabled' => true],
+            ['key' => 'convoro-categories', 'enabled' => true],
+            ['key' => 'convoro-online-now', 'enabled' => true],
+            ['key' => 'convoro-newest-members', 'enabled' => true],
+            ['key' => 'convoro-top-posters', 'enabled' => true],
+        ];
+    }
+
+    /** Map the legacy built-in widget `type` to its extension id. */
+    public const WIDGET_LEGACY_MAP = [
+        'text' => 'convoro-about',
+        'stats' => 'convoro-stats',
+        'online_now' => 'convoro-online-now',
+        'newest_members' => 'convoro-newest-members',
+        'top_posters' => 'convoro-top-posters',
+        'categories' => 'convoro-categories',
+    ];
+
+    /** Coerce any stored layout (new or legacy) into the [key, enabled] shape. */
+    public static function normalizeWidgetLayout(array $raw): array
+    {
+        $out = [];
+        $seen = [];
+        foreach ($raw as $w) {
+            if (! is_array($w)) {
+                continue;
+            }
+            $key = null;
+            $enabled = true;
+            if (isset($w['key']) && is_string($w['key'])) {
+                $key = $w['key'];
+                $enabled = ! (array_key_exists('enabled', $w) && $w['enabled'] === false);
+            } elseif (isset($w['type']) && is_string($w['type'])) {
+                $key = self::WIDGET_LEGACY_MAP[$w['type']] ?? null;
+            }
+            if ($key === null || isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $out[] = ['key' => $key, 'enabled' => $enabled];
+        }
+
+        return $out;
     }
 
     /** Only the public-safe subset shared to the frontend. */
@@ -136,7 +194,11 @@ class Settings
                 'customCss' => self::get('theme.custom_css'),
                 'muted' => self::get('theme.muted', ''),
             ],
-            'widgets' => json_decode((string) self::get('widgets.sidebar', '[]'), true) ?: [],
+            'widgets' => self::widgetLayout(),
+            'widgetAbout' => [
+                'html' => (string) self::get('widgets.about_html', ''),
+                'title' => (string) self::get('widgets.about_title', ''),
+            ],
         ];
     }
 }

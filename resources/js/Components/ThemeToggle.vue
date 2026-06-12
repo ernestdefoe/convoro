@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { t } from '@/lib/i18n';
+import { setTheme } from '@/lib/theme';
 
 const mode = ref<'light' | 'dark'>('light');
 
@@ -10,8 +11,7 @@ onMounted(() => {
 
 function toggle() {
   mode.value = mode.value === 'dark' ? 'light' : 'dark';
-  document.documentElement.dataset.theme = mode.value;
-  try { localStorage.setItem('convoro_theme', mode.value); } catch (e) { /* ignore */ }
+  setTheme(mode.value);
 }
 </script>
 

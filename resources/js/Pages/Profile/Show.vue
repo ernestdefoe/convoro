@@ -3,12 +3,13 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
+import Slot from '@/Components/ext/Slot.vue';
 import Editor from '@/Components/Editor.vue';
 import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import { t as tr } from '@/lib/i18n';
 
 const props = defineProps<{
-  profile: { id: number; name: string; bio: string | null; avatar: string | null; cover: string | null; initials: string; color: number; joined: string; isAdmin: boolean; isSelf: boolean };
+  profile: { id: number; name: string; bio: string | null; avatar: string | null; cover: string | null; initials: string; color: number; staff: { name: string; color: string } | null; joined: string; isAdmin: boolean; isSelf: boolean };
   stats: { topics: number; posts: number };
   recentTopics: { title: string; url: string; when: string }[];
   wall: { id: number; html: string; author: any; createdAt: string; canDelete: boolean }[];
@@ -52,7 +53,7 @@ function message() {
         <div class="px-6 pb-5">
           <div class="-mt-12 flex items-end justify-between">
             <div class="rounded-full ring-4 ring-surface">
-              <Avatar :avatar="{ initials: profile.initials, color: profile.color, avatar: profile.avatar }" :size="96" />
+              <Avatar :avatar="{ initials: profile.initials, color: profile.color, avatar: profile.avatar, staff: profile.staff }" :size="112" badge />
             </div>
             <Link v-if="profile.isSelf" href="/profile" class="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ tr('Edit profile') }}</Link>
             <button v-else-if="loggedIn" type="button" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600" @click="message">{{ tr('Message') }}</button>
@@ -69,6 +70,9 @@ function message() {
           </div>
         </div>
       </div>
+
+      <!-- Extension slot (e.g. Member Badges) -->
+      <Slot name="profile:below" :ctx="{ userId: profile.id }" />
 
       <div class="mt-6 grid gap-6 md:grid-cols-[1fr_280px]">
         <!-- Wall -->

@@ -4,23 +4,39 @@ import { computed, onBeforeUnmount, reactive, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { t } from '@/lib/i18n';
 
+type Source = { id: string; name: string; db: string; prefix: string; tested: boolean };
+
 const props = defineProps<{
   state: { running: boolean; percent: number; status: string | null; summary: Record<string, number>; lastStatus: string | null };
+  sources: Source[];
 }>();
 
 const page = usePage();
 const flash = computed(() => (page.props as any).flash?.status as string | undefined);
 
 const form = reactive({
+  source: 'flarum',
   host: '127.0.0.1',
   port: 3306,
   database: '',
   username: '',
   password: '',
   prefix: '',
-  flarum_url: '',
+  source_url: '',
   import_tags: true,
 });
+
+const current = computed<Source>(() => props.sources.find((s) => s.id === form.source) || props.sources[0]);
+
+function selectSource(id: string) {
+  const s = props.sources.find((x) => x.id === id);
+  if (!s) return;
+  form.source = id;
+  form.prefix = s.prefix;
+  form.port = s.db === 'PostgreSQL' ? 5432 : 3306;
+  counts.value = null;
+  testError.value = null;
+}
 
 const testing = ref(false);
 const testError = ref<string | null>(null);
@@ -44,11 +60,8 @@ async function testConnection() {
       body: JSON.stringify(form),
     });
     const d = await r.json();
-    if (!r.ok || !d.ok) {
-      testError.value = d.message || t('Could not connect.');
-    } else {
-      counts.value = d.counts;
-    }
+    if (!r.ok || !d.ok) testError.value = d.message || t('Could not connect.');
+    else counts.value = d.counts;
   } catch (e: any) {
     testError.value = t('Could not reach the server.');
   } finally {
@@ -57,7 +70,7 @@ async function testConnection() {
 }
 
 function startImport() {
-  if (!confirm(t('Start importing from this Flarum database into Convoro? This adds content to your community.'))) return;
+  if (!confirm(t('Start importing from {name} into Convoro? This adds content to your community. Back up your database first.', { name: current.value.name }))) return;
   router.post('/admin/import/start', { ...form }, {
     preserveScroll: true,
     onSuccess: () => { live.running = true; poll(); },
@@ -71,7 +84,7 @@ async function poll() {
       const r = await fetch('/admin/import/progress', { headers: { Accept: 'application/json' } });
       const d = await r.json();
       Object.assign(live, d);
-      if (!d.running) { stop(); }
+      if (!d.running) stop();
     } catch { /* ignore */ }
   };
   await tick();
@@ -79,10 +92,10 @@ async function poll() {
 }
 function stop() { if (timer) { clearInterval(timer); timer = null; } }
 onBeforeUnmount(stop);
-
 if (props.state.running) poll();
 
 const summaryRows = computed(() => Object.entries(live.summary || {}));
+const countRows = computed(() => Object.entries(counts.value || {}));
 const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary text-sm';
 </script>
 
@@ -97,25 +110,31 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
     <div class="grid gap-6 lg:grid-cols-2">
       <!-- Source -->
       <section class="rounded-2xl border border-line bg-surface p-5">
-        <div class="flex items-center gap-2">
-          <span class="grid h-8 w-8 place-items-center rounded-lg bg-primary/15 text-primary font-bold">F</span>
-          <div>
-            <h3 class="text-sm font-bold text-ink">{{ t('Import from Flarum') }}</h3>
-            <p class="text-xs text-ink-muted">{{ t('Connect to your Flarum database (read-only). More platforms coming soon.') }}</p>
-          </div>
+        <h3 class="text-sm font-bold text-ink">{{ t('Choose your current platform') }}</h3>
+        <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <button v-for="s in sources" :key="s.id" type="button" @click="selectSource(s.id)"
+            class="rounded-xl border px-3 py-2.5 text-left transition"
+            :class="form.source === s.id ? 'border-primary bg-primary/10 text-primary' : 'border-line text-ink-2 hover:border-primary/50'">
+            <div class="text-sm font-bold">{{ s.name }}</div>
+            <div class="text-[11px] opacity-70">{{ s.db }}<template v-if="!s.tested"> · beta</template></div>
+          </button>
         </div>
+
+        <p v-if="!current.tested" class="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-300">
+          {{ t('{name} import is new — built to its database schema but not yet verified end-to-end. Back up your Convoro database first and review the result.', { name: current.name }) }}
+        </p>
 
         <div class="mt-4 grid grid-cols-2 gap-3">
           <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('DB host') }}</label><input v-model="form.host" :class="field" /></div>
           <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('Port') }}</label><input v-model.number="form.port" type="number" :class="field" /></div>
-          <div class="col-span-2"><label class="text-xs font-semibold text-ink-2">{{ t('Database name') }}</label><input v-model="form.database" :class="field" placeholder="flarum" /></div>
+          <div class="col-span-2"><label class="text-xs font-semibold text-ink-2">{{ t('Database name') }}</label><input v-model="form.database" :class="field" /></div>
           <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('DB username') }}</label><input v-model="form.username" :class="field" /></div>
           <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('DB password') }}</label><input v-model="form.password" type="password" :class="field" /></div>
-          <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('Table prefix') }} <span class="font-normal text-ink-muted">{{ t('(optional)') }}</span></label><input v-model="form.prefix" :class="field" placeholder="" /></div>
-          <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('Flarum URL') }} <span class="font-normal text-ink-muted">{{ t('(avatars & images)') }}</span></label><input v-model="form.flarum_url" :class="field" placeholder="https://old.forum" /></div>
+          <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('Table prefix') }} <span class="font-normal text-ink-muted">{{ t('(optional)') }}</span></label><input v-model="form.prefix" :class="field" /></div>
+          <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('Old forum URL') }} <span class="font-normal text-ink-muted">{{ t('(avatars & images)') }}</span></label><input v-model="form.source_url" :class="field" placeholder="https://old.forum" /></div>
         </div>
 
-        <label class="mt-4 flex items-center gap-2 text-sm text-ink-2">
+        <label v-if="form.source === 'flarum'" class="mt-4 flex items-center gap-2 text-sm text-ink-2">
           <input v-model="form.import_tags" type="checkbox" class="rounded border-line text-primary focus:ring-primary" />
           {{ t('Import tags as categories') }}
         </label>
@@ -133,10 +152,7 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
         <div v-if="counts" class="mt-3 rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-3 text-sm">
           <div class="mb-1 font-bold text-emerald-300">{{ t('Connected ✓ Ready to import:') }}</div>
           <div class="flex flex-wrap gap-x-5 gap-y-1 text-ink-2">
-            <span><b class="text-ink">{{ counts.users }}</b> {{ t('members') }}</span>
-            <span><b class="text-ink">{{ counts.tags }}</b> {{ t('tags') }}</span>
-            <span><b class="text-ink">{{ counts.discussions }}</b> {{ t('discussions') }}</span>
-            <span><b class="text-ink">{{ counts.posts }}</b> {{ t('posts') }}</span>
+            <span v-for="[k, v] in countRows" :key="k"><b class="text-ink">{{ v }}</b> {{ k }}</span>
           </div>
         </div>
       </section>
@@ -172,7 +188,7 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
     </div>
 
     <p class="mt-6 max-w-2xl text-xs text-ink-muted">
-      {{ t("The importer reads your Flarum database directly and maps primary tags → categories, secondary tags → tags, discussions → topics, posts → posts (converting Flarum's formatting to Convoro), and likes → reactions. Members keep their passwords; set the Flarum URL to bring across avatars and embedded images. It's safe to re-run — existing members, categories and topics are skipped rather than duplicated.") }}
+      {{ t("The importer reads your old forum's database directly (read-only) and maps forums/tags → categories, users → members, threads/discussions → topics and posts → posts, converting the old formatting to Convoro. Members keep their passwords where the old hashes are portable (Flarum, XenForo, phpBB 3.1+) — otherwise they reset on first login. Set the old forum URL to bring across avatars and embedded images. It's safe to re-run: existing members, categories and topics are skipped rather than duplicated.") }}
     </p>
   </AdminLayout>
 </template>

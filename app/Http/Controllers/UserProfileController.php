@@ -28,14 +28,18 @@ class UserProfileController extends Controller
             ->limit(8)
             ->get();
 
-        return response()->json($users->map(fn (User $u) => [
-            'id' => Str::slug($u->name, '.'),   // the handle inserted into the post
-            'uid' => $u->id,                    // numeric id (e.g. to start a DM)
-            'name' => $u->name,
-            'avatar' => $u->avatar_path,
-            'initials' => Present::avatar($u)['initials'],
-            'color' => Present::avatar($u)['color'],
-        ]));
+        return response()->json($users->map(function (User $u) {
+            $a = Present::avatar($u);
+
+            return [
+                'id' => $a['handle'],   // the handle inserted into the post
+                'uid' => $u->id,        // numeric id (e.g. to start a DM)
+                'name' => $a['name'],
+                'avatar' => $u->avatar_path,
+                'initials' => $a['initials'],
+                'color' => $a['color'],
+            ];
+        }));
     }
 
     /** Public profile: header, stats, recent activity, and the wall. */
@@ -49,15 +53,18 @@ class UserProfileController extends Controller
         $wall = $user->profilePosts()->with('author')->latest()->limit(30)->get()
             ->map(fn ($p) => Present::profilePost($p, $actorId));
 
+        $a = Present::avatar($user);
+
         return Inertia::render('Profile/Show', [
             'profile' => [
                 'id' => $user->id,
-                'name' => $user->name,
+                'name' => $a['name'],
                 'bio' => $user->bio,
                 'avatar' => $user->avatar_path,
                 'cover' => $user->cover_path,
-                'initials' => Present::avatar($user)['initials'],
-                'color' => Present::avatar($user)['color'],
+                'initials' => $a['initials'],
+                'color' => $a['color'],
+                'staff' => $a['staff'],
                 'joined' => optional($user->created_at)->isoFormat('MMMM YYYY'),
                 'isAdmin' => (bool) $user->is_admin,
                 'isSelf' => $actorId === (int) $user->id,

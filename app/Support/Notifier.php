@@ -43,7 +43,7 @@ class Notifier
 
         // Instant email (queued, never blocks the request). Skips noisy reactions,
         // and respects the member's per-account preference + a real address.
-        if (($data['type'] ?? '') !== 'reaction'
+        if (! in_array($data['type'] ?? '', ['reaction', 'badge'], true)
             && Settings::get('mail.configured')
             && ($user->notify_email ?? true)
             && filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
@@ -66,6 +66,7 @@ class Notifier
             $topic = $data['topic']['title'] ?? __('a topic');
 
             return match ($data['type'] ?? 'reply') {
+                'badge' => (string) ($data['text'] ?? __('You earned a badge')),
                 'mention' => __(':actor mentioned you in :topic', ['actor' => $actor, 'topic' => $topic]),
                 'reaction' => __(':actor reacted :emoji to your post', ['actor' => $actor, 'emoji' => $data['emoji'] ?? '']),
                 'wall' => __(':actor posted on your profile', ['actor' => $actor]),

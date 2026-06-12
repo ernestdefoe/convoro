@@ -30,7 +30,7 @@ const medal = (i: number) => (i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '�
             <span v-if="medal(i)">{{ medal(i) }}</span>
             <span v-else>{{ i + 1 }}</span>
           </div>
-          <Avatar :avatar="m" :size="44" />
+          <Avatar :avatar="m" :size="52" />
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-1.5">
               <span class="truncate font-bold">{{ m.name }}</span>

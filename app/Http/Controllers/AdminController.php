@@ -159,6 +159,17 @@ class AdminController extends Controller
         ];
     }
 
+    /** Lightweight JSON poll so the admin UI can auto-refresh when an update finishes. */
+    public function updateStatus(): \Illuminate\Http\JsonResponse
+    {
+        return response()->json([
+            'running' => (bool) Settings::get('update.running', false),
+            'current' => (string) config('convoro.version'),
+            'latest' => Settings::get('update.latest', (string) config('convoro.version')),
+            'lastStatus' => Settings::get('update.last_status'),
+        ]);
+    }
+
     public function system(): Response
     {
         return Inertia::render('Admin/System', [
@@ -184,6 +195,19 @@ class AdminController extends Controller
             'migrate' => fn () => Artisan::call('migrate', ['--force' => true]),
             'storage' => fn () => Artisan::call('storage:link'),
             'icons' => fn () => Artisan::call('convoro:icons'),
+            // Clear hung/stuck jobs: drop pending + failed jobs, then reload the
+            // workers so the queue starts fresh and new attempts can proceed.
+            'queue' => function () {
+                try {
+                    Artisan::call('queue:clear', ['--force' => true]);
+                } catch (\Throwable) {
+                }
+                try {
+                    Artisan::call('queue:flush');
+                } catch (\Throwable) {
+                }
+                Artisan::call('queue:restart');
+            },
         ];
         abort_unless(isset($tasks[$action]), 422);
 
@@ -699,7 +723,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:60'],
             'description' => ['nullable', 'string', 'max:200'],
-            'icon' => ['nullable', 'string', 'max:8'],
+            'icon' => ['nullable', 'string', 'max:40'],
             'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
         ]);
         $data['slug'] = $this->uniqueSlug(Category::class, $data['name']);
@@ -714,7 +738,7 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:60'],
             'description' => ['nullable', 'string', 'max:200'],
-            'icon' => ['nullable', 'string', 'max:8'],
+            'icon' => ['nullable', 'string', 'max:40'],
             'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'position' => ['nullable', 'integer', 'min:0'],
         ]);
@@ -793,7 +817,7 @@ class AdminController extends Controller
         return Inertia::render('Admin/Members', [
             'users' => $users,
             'q' => $q,
-            'groups' => Group::orderBy('name')->get(['id', 'name', 'color', 'is_staff', 'permissions']),
+            'groups' => Group::orderByDesc('priority')->orderBy('name')->get(['id', 'key', 'name', 'color', 'is_staff', 'priority', 'permissions']),
             'permissionCatalog' => Permissions::catalog(),
         ]);
     }
@@ -861,6 +885,8 @@ class AdminController extends Controller
 
     public function destroyGroup(Group $group): RedirectResponse
     {
+        // System groups (Admin/Moderator) are recolorable but not deletable.
+        abort_if($group->key !== null, 422, __('System groups can’t be deleted.'));
         $group->delete();
 
         return back();
@@ -1092,20 +1118,30 @@ class AdminController extends Controller
     {
         $data = $request->validate([
             'widgets' => ['present', 'array'],
-            'widgets.*.id' => ['required', 'string', 'max:40'],
-            'widgets.*.type' => ['required', 'string', 'in:text,stats,newest_members,online_now,top_posters,categories'],
-            'widgets.*.title' => ['nullable', 'string', 'max:80'],
-            'widgets.*.body' => ['nullable', 'string', 'max:8000'],
+            'widgets.*.key' => ['required', 'string', 'max:64'],
+            'widgets.*.enabled' => ['required', 'boolean'],
+            'about_html' => ['nullable', 'string', 'max:8000'],
+            'about_title' => ['nullable', 'string', 'max:80'],
         ]);
 
-        $clean = array_map(fn ($w) => [
-            'id' => $w['id'],
-            'type' => $w['type'],
-            'title' => $w['title'] ?? '',
-            'body' => $w['type'] === 'text' ? ($w['body'] ?? '') : '',
-        ], $data['widgets']);
-
+        $clean = [];
+        $seen = [];
+        foreach ($data['widgets'] as $w) {
+            if (isset($seen[$w['key']])) {
+                continue;
+            }
+            $seen[$w['key']] = true;
+            $clean[] = ['key' => $w['key'], 'enabled' => (bool) $w['enabled']];
+        }
         Settings::set('widgets.sidebar', json_encode(array_values($clean)));
+
+        // The "About / Custom HTML" widget stores its content alongside the layout.
+        if ($request->has('about_html')) {
+            Settings::set('widgets.about_html', (string) ($data['about_html'] ?? ''));
+        }
+        if ($request->has('about_title')) {
+            Settings::set('widgets.about_title', (string) ($data['about_title'] ?? ''));
+        }
 
         return back();
     }

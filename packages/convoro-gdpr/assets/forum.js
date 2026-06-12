@@ -1,11 +1,12 @@
-// Convoro extension: GDPR & Privacy — cookie consent banner (forum surface).
-// Shipped prebuilt — no build step. Renders a granular, accessible consent
-// banner into the `forum:footer` slot, persists the choice, logs proof of
-// consent server-side, and emits `gdpr:consent` so other extensions can gate
-// their analytics/marketing scripts.
+// Convoro extension: GDPR & Privacy — granular cookie consent (forum surface).
+// Worldwide-aware: honors Global Privacy Control / Do-Not-Track (CCPA), keeps a
+// persistent "Privacy choices / Do Not Sell or Share" link so consent can be
+// changed anytime, logs proof of consent server-side, and emits `gdpr:consent`
+// so other extensions can gate their analytics/marketing scripts.
 
 const c = window.Convoro;
 const KEY = 'convoro_consent';
+let CFG = null;
 
 function readConsent() {
   try { return JSON.parse(localStorage.getItem(KEY) || 'null'); } catch { return null; }
@@ -24,32 +25,61 @@ function persist(choice) {
     body: JSON.stringify(choice),
   }).catch(() => { /* silent */ });
 }
+// CCPA / ePrivacy: browser opt-out signals are legally binding — honor them.
+function gpcSignal() {
+  try {
+    return navigator.globalPrivacyControl === true
+      || navigator.doNotTrack === '1' || window.doNotTrack === '1';
+  } catch { return false; }
+}
+function getConfig() {
+  if (CFG) return Promise.resolve(CFG);
+  return fetch('/api/ext/gdpr/config', { headers: { Accept: 'application/json' } })
+    .then((r) => (r.ok ? r.json() : null))
+    .then((cfg) => { CFG = cfg; return cfg; })
+    .catch(() => null);
+}
+function openChoices() { getConfig().then((cfg) => { if (cfg) render(cfg, true); }); }
+// Exposed so a privacy policy page / "Do Not Sell" link anywhere can re-open it.
+window.convoroPrivacyChoices = openChoices;
 
-if (c && typeof c.registerSlot === 'function' && !readConsent()) {
+if (c && typeof c.registerSlot === 'function') {
   c.registerSlot('forum:footer', {
     ext: 'convoro-gdpr',
     order: 100,
     mount(el) {
-      if (readConsent()) return;
+      const a = document.createElement('a');
+      a.href = '#';
+      a.textContent = 'Privacy choices';
+      a.title = 'Manage cookies · Do Not Sell or Share My Personal Information';
+      a.style.cssText = 'color:rgb(var(--c-muted,138 144 166));text-decoration:none;font-size:13px';
+      a.addEventListener('click', (e) => { e.preventDefault(); openChoices(); });
+      el.appendChild(a);
 
-      fetch('/api/ext/gdpr/config', { headers: { Accept: 'application/json' } })
-        .then((r) => (r.ok ? r.json() : null))
-        .then((cfg) => {
-          if (!cfg) return;
-          render(el, cfg);
-        })
-        .catch(() => { /* silent */ });
+      if (!readConsent()) {
+        if (gpcSignal()) {
+          persist({ analytics: false, marketing: false, gpc: true });
+        } else {
+          getConfig().then((cfg) => { if (cfg) render(cfg, false); });
+        }
+      }
     },
   });
 }
 
-function render(el, cfg) {
+function render(cfg, forced) {
+  if (!forced && readConsent()) return;
+  const old = document.getElementById('convoro-consent');
+  if (old) old.remove();
+  const prior = readConsent() || {};
+
   const card = 'rgb(var(--c-surface, 255 255 255))';
   const text = 'rgb(var(--c-text, 27 32 48))';
   const muted = 'rgb(var(--c-muted, 138 144 166))';
   const line = 'rgb(var(--c-border, 230 232 240))';
 
   const wrap = document.createElement('div');
+  wrap.id = 'convoro-consent';
   wrap.setAttribute('role', 'dialog');
   wrap.setAttribute('aria-label', 'Cookie consent');
   wrap.style.cssText = [
@@ -68,7 +98,6 @@ function render(el, cfg) {
   p.textContent = cfg.message;
   p.style.cssText = `color:${muted};margin-bottom:14px`;
 
-  // Optional granular toggles.
   const prefs = document.createElement('div');
   prefs.style.cssText = 'display:none;flex-direction:column;gap:8px;margin-bottom:14px';
   const toggles = {};
@@ -84,12 +113,11 @@ function render(el, cfg) {
     toggles[key] = cb;
   };
   addToggle('necessary', 'Strictly necessary (always on)', true, true);
-  if (cfg.analytics) addToggle('analytics', 'Analytics — help us understand usage', false, false);
-  if (cfg.marketing) addToggle('marketing', 'Marketing — personalized content', false, false);
+  if (cfg.analytics) addToggle('analytics', 'Analytics — help us understand usage', !!prior.analytics, false);
+  if (cfg.marketing) addToggle('marketing', 'Marketing — personalized content', !!prior.marketing, false);
 
   const btns = document.createElement('div');
   btns.style.cssText = 'display:flex;flex-wrap:wrap;gap:10px;align-items:center';
-
   const mkBtn = (label, primary) => {
     const b = document.createElement('button');
     b.type = 'button'; b.textContent = label;
@@ -98,12 +126,10 @@ function render(el, cfg) {
       : `border:1px solid ${line};border-radius:9px;padding:9px 16px;font-weight:700;cursor:pointer;background:transparent;color:${text}`;
     return b;
   };
-
   const finish = (choice) => { persist(choice); wrap.remove(); };
 
   const acceptAll = mkBtn('Accept all', true);
   acceptAll.addEventListener('click', () => finish({ analytics: !!cfg.analytics, marketing: !!cfg.marketing }));
-
   const rejectAll = mkBtn('Reject non-essential', false);
   rejectAll.addEventListener('click', () => finish({ analytics: false, marketing: false }));
 
@@ -117,7 +143,8 @@ function render(el, cfg) {
       if (saveBtn) saveBtn.style.display = showing ? 'none' : 'inline-block';
     });
     saveBtn = mkBtn('Save choices', true);
-    saveBtn.style.display = 'none';
+    saveBtn.style.display = forced ? 'inline-block' : 'none';
+    if (forced) prefs.style.display = 'flex';
     saveBtn.addEventListener('click', () => finish({
       analytics: !!(toggles.analytics && toggles.analytics.checked),
       marketing: !!(toggles.marketing && toggles.marketing.checked),
@@ -135,6 +162,13 @@ function render(el, cfg) {
 
   wrap.appendChild(h);
   wrap.appendChild(p);
+  // CCPA notice when a "sale/share" category (marketing) is offered.
+  if (cfg.marketing) {
+    const ccpa = document.createElement('div');
+    ccpa.textContent = 'California residents: choose “Reject non-essential” to opt out of the sale or sharing of your personal information.';
+    ccpa.style.cssText = `color:${muted};font-size:12px;margin-bottom:12px`;
+    wrap.appendChild(ccpa);
+  }
   if (hasCategories) wrap.appendChild(prefs);
   wrap.appendChild(btns);
   document.body.appendChild(wrap);

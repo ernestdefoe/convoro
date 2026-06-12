@@ -22,7 +22,8 @@ class RunFlarumImportJob implements ShouldQueue
 
     public int $tries = 1;
 
-    public function __construct(public array $cfg, public array $opts) {}
+    /** @param  class-string  $importer  An importer with a static run(cfg, opts, progress). */
+    public function __construct(public array $cfg, public array $opts, public string $importer = FlarumImporter::class) {}
 
     public function handle(): void
     {
@@ -36,7 +37,7 @@ class RunFlarumImportJob implements ShouldQueue
         };
 
         try {
-            $summary = FlarumImporter::run($this->cfg, $this->opts, $progress);
+            $summary = ($this->importer)::run($this->cfg, $this->opts, $progress);
             Settings::setMany([
                 'import.running' => false,
                 'import.percent' => 100,

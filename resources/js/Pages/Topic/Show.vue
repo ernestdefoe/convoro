@@ -373,7 +373,7 @@ function submitReply() {
           <h1 class="mt-3 text-3xl font-extrabold leading-tight tracking-tight sm:text-4xl">{{ topic.title }}</h1>
 
           <div v-if="firstPost" class="mt-5 flex items-center gap-3">
-            <Link :href="firstPost.author.url"><Avatar :avatar="firstPost.author" :size="46" /></Link>
+            <Link :href="firstPost.author.url"><Avatar :avatar="firstPost.author" :size="56" badge /></Link>
             <div>
               <Link :href="firstPost.author.url" class="font-bold hover:underline">{{ firstPost.author.name }}</Link>
               <div class="text-sm text-ink-muted">
@@ -468,7 +468,7 @@ function submitReply() {
         <div class="space-y-3">
           <article v-for="post in replies" :key="post.id" :id="'post-' + post.id" class="q-post flex scroll-mt-24 gap-4 rounded-c border border-line bg-surface p-6 shadow-sm" :class="menuFor === post.id ? 'relative z-30' : ''">
             <div class="w-24 shrink-0 text-center">
-              <Link :href="post.author.url"><Avatar :avatar="post.author" :size="44" class="mx-auto" /></Link>
+              <Link :href="post.author.url"><Avatar :avatar="post.author" :size="52" class="mx-auto" badge /></Link>
               <div class="mt-2 text-sm font-bold">{{ post.author.name }}</div>
               <span v-if="post.isAi" class="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">✦ AI</span>
             </div>

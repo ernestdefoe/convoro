@@ -33,6 +33,10 @@ class DigestEmail extends Mailable implements ShouldQueue
 
     public function content(): Content
     {
-        return new Content(view: 'emails.digest');
+        return new Content(view: 'emails.digest', with: [
+            // Permanent signed URL — one-click unsubscribe straight from the email,
+            // no login required.
+            'unsubscribeUrl' => \Illuminate\Support\Facades\URL::signedRoute('digest.unsubscribe', ['user' => $this->user->id]),
+        ]);
     }
 }

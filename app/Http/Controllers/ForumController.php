@@ -24,7 +24,7 @@ class ForumController extends Controller
         $categorySlug = $request->query('category');
 
         $query = Topic::query()
-            ->with(['user', 'category', 'tags', 'firstPost.reactions'])
+            ->with(['user.groups', 'category', 'tags', 'firstPost.reactions'])
             ->when($categorySlug, fn ($q) => $q->whereHas('category', fn ($c) => $c->where('slug', $categorySlug)));
 
         $query->orderByDesc('is_pinned');
@@ -57,14 +57,30 @@ class ForumController extends Controller
             ],
             'widgets' => \App\Support\Settings::widgetLayout(),
             'widgetData' => $this->widgetData(),
+            'aboutHtml' => (string) \App\Support\Settings::get('widgets.about_html', ''),
+            'aboutTitle' => (string) \App\Support\Settings::get('widgets.about_title', ''),
         ]);
     }
 
     /** Dynamic data for configurable sidebar widgets (cheap, index-only). */
     private function widgetData(): array
     {
+        $onlineQuery = \App\Models\User::where('last_seen_at', '>=', now()->subMinutes(5));
+
+        // Trending: most-active topics by replies; fall back to most-viewed so an
+        // early forum (nothing replied to yet) still shows something.
+        $trending = Topic::query()->with('category')
+            ->where('reply_count', '>', 0)
+            ->orderByDesc('reply_count')->orderByDesc('view_count')
+            ->limit(5)->get();
+        if ($trending->isEmpty()) {
+            $trending = Topic::query()->with('category')->orderByDesc('view_count')->limit(5)->get();
+        }
+
         return [
-            'onlineNow' => \App\Models\User::where('last_seen_at', '>=', now()->subMinutes(5))->count(),
+            'onlineNow' => (clone $onlineQuery)->count(),
+            'onlineUsers' => (clone $onlineQuery)->latest('last_seen_at')->limit(12)->get()
+                ->map(fn ($u) => Present::avatar($u))->all(),
             'newestMembers' => \App\Models\User::latest()->limit(6)->get()
                 ->map(fn ($u) => Present::avatar($u))->all(),
             'topPosters' => \Illuminate\Support\Facades\DB::table('posts')
@@ -72,6 +88,12 @@ class ForumController extends Controller
                 ->select('users.name', \Illuminate\Support\Facades\DB::raw('COUNT(*) c'))
                 ->groupBy('users.id', 'users.name')->orderByDesc('c')->limit(5)->get()
                 ->map(fn ($p) => ['name' => $p->name, 'count' => (int) $p->c])->all(),
+            'trending' => $trending->map(fn (Topic $t) => [
+                'title' => $t->title,
+                'slug' => $t->slug,
+                'replies' => (int) $t->reply_count,
+                'cat' => $t->category?->name,
+            ])->all(),
         ];
     }
 }

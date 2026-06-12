@@ -7,11 +7,13 @@ import { t as tr } from '@/lib/i18n';
 const props = defineProps<{
   users: { data: any[]; links: { url: string | null; label: string; active: boolean }[]; prev_page_url: string | null; next_page_url: string | null; total: number };
   q: string;
-  groups: { id: number; name: string; color: string; is_staff: boolean; permissions: string[] | null }[];
+  groups: { id: number; key: string | null; name: string; color: string; is_staff: boolean; priority: number; permissions: string[] | null }[];
   permissionCatalog: { key: string; label: string; category: string; baseline: boolean }[];
 }>();
 
 const assignablePerms = props.permissionCatalog.filter((p) => !p.baseline);
+// The Admin badge follows the (editable) Admin group's color.
+const adminColor = props.groups.find((g) => g.key === 'admin')?.color || '#6366f1';
 
 const opts = { preserveScroll: true, preserveState: true };
 const search = ref(props.q ?? '');
@@ -72,7 +74,7 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
                 <span class="truncate font-semibold text-ink">{{ u.name }}</span>
-                <span v-if="u.is_admin" class="rounded-full bg-indigo-500/20 px-1.5 py-0.5 text-[10px] font-bold text-indigo-300">{{ tr('ADMIN') }}</span>
+                <span v-if="u.is_admin" class="rounded-full px-1.5 py-0.5 text-[10px] font-bold" :style="{ color: adminColor, background: adminColor + '22' }">{{ tr('ADMIN') }}</span>
                 <span v-for="g in u.groups" :key="g.id" class="rounded-full px-1.5 py-0.5 text-[10px] font-semibold" :style="{ color: g.color, background: g.color + '22' }">{{ g.name }}</span>
               </div>
               <div class="truncate text-xs text-ink-muted">{{ u.email }} · {{ tr('joined {when}', { when: u.joined }) }}</div>
@@ -124,8 +126,9 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
             <div v-else class="flex items-center gap-2">
               <span class="rounded-full px-2 py-0.5 text-xs font-semibold" :style="{ color: g.color, background: g.color + '22' }">{{ g.name }}</span>
               <span v-if="g.is_staff" class="text-[10px] font-bold text-ink-muted">{{ tr('STAFF') }}</span>
+              <span v-if="g.key" class="text-[10px] font-bold text-ink-muted">{{ tr('SYSTEM') }}</span>
               <button class="ml-auto text-ink-2 hover:text-ink" @click="startGroup(g)">{{ tr('Edit') }}</button>
-              <button class="text-ink-2 hover:text-red-400" @click="delGroup(g)">{{ tr('Delete') }}</button>
+              <button v-if="!g.key" class="text-ink-2 hover:text-red-400" @click="delGroup(g)">{{ tr('Delete') }}</button>
             </div>
           </li>
           <li v-if="!groups.length" class="text-sm text-ink-muted">{{ tr('No groups yet.') }}</li>

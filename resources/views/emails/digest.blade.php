@@ -41,7 +41,8 @@
 
         <p style="text-align:center; color:#9499ad; font-size:12px; margin-top:20px;">
             {{ __('You\'re receiving this because your digest is set to :frequency.', ['frequency' => $user->digest_frequency]) }}
-            <br>{!! __('Change it anytime in your :link.', ['link' => '<a href="' . config('app.url') . '/profile" style="color:#6b6f86;">' . __('profile settings') . '</a>']) !!}
+            <br>{!! __('Change it anytime in your :link', ['link' => '<a href="' . config('app.url') . '/profile" style="color:#6b6f86;">' . __('profile settings') . '</a>']) !!},
+            {{ __('or') }} <a href="{{ $unsubscribeUrl }}" style="color:#6b6f86;">{{ __('unsubscribe from digests') }}</a>.
         </p>
     </div>
 </body>

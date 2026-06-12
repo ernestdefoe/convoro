@@ -1,11 +1,16 @@
 {
-    "version": "0.35.0",
-    "download": "https://convoro.co/releases/convoro-0.35.0.zip",
+    "version": "1.0.0",
+    "download": "https://convoro.co/releases/convoro-1.0.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Favicon refresh fix",
-    "date": "2026-06-11",
-    "notes": "Favicon/app icons are cache-busted so they update immediately instead of browsers showing the old icon.",
+    "title": "Convoro 1.0 — the first stable release",
+    "date": "2026-06-12",
+    "notes": "Convoro is 1.0: feature-complete and stable. This release adds rich media embeds, RSS feeds, importers for XenForo / phpBB / Discourse / vBulletin, one-click digest unsubscribe, and worldwide privacy compliance.",
     "changelog": [
-        {"type": "fixed", "text": "The favicon and app icons now refresh immediately after you change them (cache-busted) instead of browsers showing the old icon."}
+        {"type": "new", "text": "Convoro 1.0 — a realtime, AI-native community platform that is now feature-complete and stable: WYSIWYG composer, live theme editor, marketplace, 45+ languages, moderation & GDPR tooling, PWA + push, and a self-updater."},
+        {"type": "new", "text": "Rich media embeds — paste a YouTube, Vimeo, Spotify, X, Facebook or Instagram link on its own line and it renders inline automatically."},
+        {"type": "new", "text": "RSS feeds add-on — site-wide, per-category and per-topic feeds with auto-discovery links."},
+        {"type": "new", "text": "Move from almost any forum — the Import wizard now migrates from XenForo, phpBB, Discourse and vBulletin in addition to Flarum (older platforms marked beta; back up first)."},
+        {"type": "improved", "text": "Email digests now include a one-click unsubscribe link that works without signing in."},
+        {"type": "improved", "text": "Worldwide privacy compliance — the cookie-consent add-on honors Global Privacy Control / Do Not Track, adds a CCPA “Do Not Sell or Share” notice, and keeps a persistent “Privacy choices” link."}
     ]
 }

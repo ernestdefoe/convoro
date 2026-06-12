@@ -9,6 +9,28 @@ use App\Http\Controllers\TopicController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
+// One-click digest unsubscribe — a permanent signed link from the digest email,
+// no login required. Sets the member's digest to off and shows a confirmation.
+Route::get('/digest/unsubscribe/{user}', function (\App\Models\User $user) {
+    $user->forceFill(['digest_frequency' => 'off'])->save();
+    $site = e(\App\Support\Settings::get('site.name') ?: config('app.name', 'Convoro'));
+    $home = e(config('app.url'));
+    $heading = e(__('You’re unsubscribed'));
+    $body = e(__('You won’t receive any more digest emails. You can re-enable them anytime in your profile settings.'));
+    $back = e(__('Back to :site', ['site' => $site]));
+
+    return response(<<<HTML
+    <!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{$heading} — {$site}</title><style>
+      body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:#f4f5f9;color:#1b2030;margin:0;display:grid;place-items:center;min-height:100vh}
+      .card{background:#fff;border:1px solid #e6e8f0;border-radius:16px;max-width:440px;padding:36px 32px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.05)}
+      h1{font-size:22px;margin:0 0 10px}p{color:#5a6178;line-height:1.5;margin:0 0 22px}
+      a{display:inline-block;background:#5b5bd6;color:#fff;text-decoration:none;font-weight:700;padding:11px 24px;border-radius:10px}
+    </style></head><body><div class="card"><div style="font-size:40px;margin-bottom:8px">✉️</div>
+    <h1>{$heading}</h1><p>{$body}</p><a href="{$home}">{$back}</a></div></body></html>
+    HTML);
+})->middleware('signed')->name('digest.unsubscribe');
+
 // Marketing + central store, scoped to the apex domain (convoro.co). Registered
 // FIRST so its `/` wins over the forum index on that host; the forum keeps `/`
 // on every other host. Shared login works via SESSION_DOMAIN=.convoro.co.
@@ -265,6 +287,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // System moved into the Dashboard; keep the URL working as a redirect.
     Route::get('/system', fn () => redirect('/admin'))->name('system');
     Route::post('/system/run', [App\Http\Controllers\AdminController::class, 'runMaintenance'])->name('system.run');
+    Route::get('/system/update-status', [App\Http\Controllers\AdminController::class, 'updateStatus'])->name('system.update-status');
     Route::post('/system/check-updates', [App\Http\Controllers\AdminController::class, 'checkUpdates'])->name('system.check');
     Route::post('/system/update', [App\Http\Controllers\AdminController::class, 'applyUpdate'])->name('system.update');
 });

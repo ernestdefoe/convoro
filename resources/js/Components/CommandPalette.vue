@@ -3,6 +3,7 @@ import { router, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { useCommandPalette } from '@/lib/commandPalette';
 import { t } from '@/lib/i18n';
+import { setTheme } from '@/lib/theme';
 
 interface Cmd { label: string; group: string; keywords?: string; href?: string; action?: () => void }
 
@@ -15,9 +16,7 @@ const active = ref(0);
 const inputEl = ref<HTMLInputElement | null>(null);
 
 function toggleTheme() {
-  const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-  document.documentElement.dataset.theme = next;
-  try { localStorage.setItem('convoro_theme', next); } catch { /* ignore */ }
+  setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
 }
 
 const commands = computed<Cmd[]>(() => {

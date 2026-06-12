@@ -16,20 +16,62 @@ class Present
     public static function avatar(?User $user): array
     {
         if (! $user) {
-            return ['name' => 'Unknown', 'initials' => '?', 'color' => 1];
+            return ['name' => __('Unknown'), 'initials' => '?', 'color' => 1];
         }
-        $parts = preg_split('/\s+/', trim($user->name)) ?: [];
-        $initials = strtoupper(Str::substr($parts[0] ?? '?', 0, 1) . (count($parts) > 1 ? Str::substr(end($parts), 0, 1) : ''));
+
+        // Render-time safety net: even if a malformed name slipped into the DB
+        // before validation existed, it can never surface as a bare diamond.
+        $name = Username::display($user->name, $user->id);
+        $handle = Str::slug($name, '.') ?: 'member-'.$user->id;
 
         return [
             'id' => $user->id,
-            'name' => $user->name,
-            'handle' => Str::slug($user->name, '.'),
-            'initials' => $initials,
+            'name' => $name,
+            'handle' => $handle,
+            'initials' => Username::initials($user->name, $user->id),
             'color' => ($user->id % 6) + 1, // av-g1..6
             'avatar' => $user->avatar_path ?: null,
             'url' => '/u/'.$user->id,
+            'staff' => self::staffBadge($user),
         ];
+    }
+
+    /** Seeded system groups (admin/moderator), memoized per request. */
+    private static ?array $systemGroups = null;
+
+    private static function systemGroup(string $key): ?\App\Models\Group
+    {
+        self::$systemGroups ??= \App\Models\Group::whereNotNull('key')->get()->keyBy('key')->all();
+
+        return self::$systemGroups[$key] ?? null;
+    }
+
+    /**
+     * The staff badge to show under a user's avatar: {name, color}, or null.
+     * Admins get the (editable) Admin group's color; otherwise the highest
+     * `priority` staff group the user belongs to — only when `groups` is already
+     * eager-loaded, so this never triggers an N+1 query per avatar.
+     */
+    public static function staffBadge(?User $user): ?array
+    {
+        if (! $user) {
+            return null;
+        }
+
+        if ($user->is_admin) {
+            $g = self::systemGroup('admin');
+
+            return ['name' => $g->name ?? 'Admin', 'color' => $g->color ?? '#5b5bd6'];
+        }
+
+        if ($user->relationLoaded('groups')) {
+            $staff = $user->groups->where('is_staff', true)->sortByDesc('priority')->first();
+            if ($staff) {
+                return ['name' => $staff->name, 'color' => $staff->color];
+            }
+        }
+
+        return null;
     }
 
     /** Shape a profile wall post for the frontend. */
@@ -101,7 +143,7 @@ class Present
     {
         return [
             'id' => $m->id,
-            'html' => Mentions::linkify($m->body_html),
+            'html' => Embeds::render(Mentions::linkify($m->body_html)),
             'detectedLocale' => $m->detected_locale,
             'author' => self::avatar($m->user),
             'createdAt' => optional($m->created_at)->diffForHumans(),
@@ -152,7 +194,7 @@ class Present
 
         return [
             'id' => $p->id,
-            'html' => Mentions::linkify($p->body_html),
+            'html' => Embeds::render(Mentions::linkify($p->body_html)),
             'detectedLocale' => $p->detected_locale,
             'held' => (bool) ($p->hidden ?? false),
             'author' => self::avatar($p->user),

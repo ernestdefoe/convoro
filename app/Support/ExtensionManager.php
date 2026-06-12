@@ -179,6 +179,7 @@ class ExtensionManager
             'permissions' => is_array($raw['permissions'] ?? null) ? $raw['permissions'] : [],
             'settings' => is_array($raw['settings'] ?? null) ? array_values(array_filter($raw['settings'], fn ($f) => is_array($f) && ! empty($f['key']))) : [],
             'assets' => is_array($raw['assets'] ?? null) ? $raw['assets'] : [],
+            'core' => (bool) ($raw['core'] ?? false),     // first-party, always-loaded
             'premium' => (bool) ($raw['premium'] ?? false),
             'price' => $raw['price'] ?? 0,
             'admin_url' => isset($raw['admin_url']) && is_string($raw['admin_url']) ? $raw['admin_url'] : null,
@@ -328,10 +329,30 @@ class ExtensionManager
     public static function assetsFor(string $surface): array
     {
         $out = [];
-        foreach (self::enabled() as $m) {
+        $seen = [];
+
+        // Enabled extensions, plus first-party "core" widgets which always load
+        // (their on/off + ordering is governed by the theme editor's layout,
+        // not the marketplace enable toggle).
+        $list = self::enabled();
+        foreach (self::all() as $m) {
+            if (! empty($m['core'])) {
+                $list[] = $m;
+            }
+        }
+
+        foreach ($list as $m) {
+            if (isset($seen[$m['id']])) {
+                continue;
+            }
+            $seen[$m['id']] = true;
             $file = $m['assets'][$surface] ?? null;
             if (is_string($file) && is_file($m['_path'].'/'.$file)) {
-                $out[] = ['id' => $m['id'], 'url' => "/ext-asset/{$m['id']}/{$surface}"];
+                // Cache-bust by app + extension version (assets are served with a
+                // 1-hour max-age), so a widget update propagates on the next load
+                // instead of being stuck on a stale cached copy.
+                $v = rawurlencode((string) config('convoro.version').'.'.($m['version'] ?? '1'));
+                $out[] = ['id' => $m['id'], 'url' => "/ext-asset/{$m['id']}/{$surface}?v={$v}"];
             }
         }
 
@@ -388,7 +409,9 @@ class ExtensionManager
     public static function assetPath(string $id, string $surface): ?string
     {
         $m = self::all()[$id] ?? null;
-        if (! $m || ! self::isEnabled($id)) {
+        // Core (first-party, always-loaded) widgets are served even though they
+        // aren't in the marketplace enable list.
+        if (! $m || (! self::isEnabled($id) && empty($m['core']))) {
             return null;
         }
         $file = $m['assets'][$surface] ?? null;

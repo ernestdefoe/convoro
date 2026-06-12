@@ -11,7 +11,7 @@ type Note = {
   id: string; read: boolean; time: string; type: string;
   actor: { name: string; initials: string; color: number };
   topic: { title: string; slug: string };
-  emoji?: string; excerpt?: string; url: string;
+  emoji?: string; excerpt?: string; text?: string; url: string;
 };
 
 const open = ref(false);
@@ -27,6 +27,7 @@ syncFromProps();
 watch(() => (page.props as any).notifications, syncFromProps, { deep: true });
 
 function label(n: Note): string {
+  if (n.type === 'badge') return n.text || t('You earned a badge');
   if (n.type === 'mention') return t('{actor} mentioned you in {topic}', { actor: n.actor.name, topic: n.topic.title });
   if (n.type === 'reaction') return t('{actor} reacted {emoji} to your post', { actor: n.actor.name, emoji: n.emoji ?? '' });
   return t('{actor} replied in {topic}', { actor: n.actor.name, topic: n.topic.title });

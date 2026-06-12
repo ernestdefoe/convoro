@@ -1,0 +1,13 @@
+{
+  "id": "convoro-trending",
+  "name": "Trending Topics",
+  "version": "1.0.0",
+  "description": "Sidebar widget highlighting the most active topics from the past week.",
+  "author": "Convoro",
+  "convoro": ">=0.37.0",
+  "core": true,
+  "assets": { "forum": "assets/forum.js" },
+  "icon": "icon.svg",
+  "premium": false,
+  "price": 0
+}

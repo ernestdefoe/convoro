@@ -1,16 +1,16 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, watch, watchEffect } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TopicCard from '@/Components/forum/TopicCard.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
 import Slot from '@/Components/ext/Slot.vue';
-import WidgetArea from '@/Components/WidgetArea.vue';
 import EmptyState from '@/Components/EmptyState.vue';
 import AskBar from '@/Components/AskBar.vue';
 import { useAuthModal } from '@/lib/authModal';
 import { t as tr } from '@/lib/i18n';
+import { convoro } from '@/lib/convoro-ext';
 
 const pg = usePage();
 const auth = useAuthModal();
@@ -27,9 +27,44 @@ const props = defineProps<{
   categories: any[];
   topics: { data: any[]; next: string | null };
   stats: Record<string, number>;
-  widgets?: any[];
+  widgets?: { key: string; enabled?: boolean }[];
   widgetData?: any;
+  aboutHtml?: string;
+  aboutTitle?: string;
 }>();
+
+// ── Sidebar widgets (extension-driven) ───────────────────────────────────
+// Built-in and add-on widgets all register into the `forum:sidebar` slot and
+// read shared page data synchronously from window.Convoro.data. We push that
+// data + the admin's order/visibility layout into the runtime here so the
+// framework-light widget bundles can render without their own fetches.
+const sidebarLayout = computed(() => {
+  const arr = Array.isArray(props.widgets) ? props.widgets : [];
+  return {
+    order: arr.map((w) => w.key).filter(Boolean) as string[],
+    disabled: arr.filter((w) => w && w.enabled === false).map((w) => w.key),
+  };
+});
+
+// Keep the host translator current so vanilla widgets stay i18n-aware.
+convoro.setTranslator((k, p) => tr(k, (p ?? {}) as Record<string, string | number>));
+
+watchEffect(() => {
+  convoro.setData({
+    stats: props.stats ?? {},
+    online: props.widgetData?.onlineNow ?? 0,
+    onlineUsers: props.widgetData?.onlineUsers ?? [],
+    newestMembers: props.widgetData?.newestMembers ?? [],
+    topPosters: props.widgetData?.topPosters ?? [],
+    trending: props.widgetData?.trending ?? [],
+    categories: props.categories ?? [],
+    aboutHtml: props.aboutHtml ?? '',
+    aboutTitle: props.aboutTitle ?? '',
+  });
+  convoro.emit('convoro:data');
+});
+
+watch(sidebarLayout, (l) => convoro.setLayout('forum:sidebar', l), { immediate: true, deep: true });
 
 function go(params: Record<string, string | null>) {
   // Remember the view choice so it sticks on the next visit (server reads this cookie).
@@ -55,9 +90,10 @@ function go(params: Record<string, string | null>) {
             <button @click="go({ category: null })" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold"
               :class="!activeCategory ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ tr('All topics') }}</button>
             <button v-for="c in categories" :key="c.slug" @click="go({ category: c.slug })"
-              class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold"
-              :class="activeCategory === c.slug ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">
-              <CategoryIcon :icon="c.icon" /> {{ c.name }}
+              class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition hover:bg-surface-2"
+              :style="activeCategory === c.slug ? { background: (c.color || '') + '24' } : undefined">
+              <CategoryIcon :icon="c.icon" :color="c.color" />
+              <span :style="{ color: c.color }">{{ c.name }}</span>
               <span class="ml-auto rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink-muted">{{ c.count }}</span>
             </button>
           </nav>
@@ -105,7 +141,7 @@ function go(params: Record<string, string | null>) {
               <h3 class="text-[15px] font-bold leading-snug">{{ t.title }}</h3>
               <p v-if="t.excerpt" class="mt-1.5 line-clamp-3 text-[13px] leading-relaxed text-ink-2">{{ t.excerpt }}</p>
               <div class="mt-auto flex items-center gap-2 pt-3 text-xs text-ink-muted">
-                <Avatar :avatar="t.author" :size="24" /><span>{{ t.author.name }}</span>
+                <Avatar :avatar="t.author" :size="28" /><span>{{ t.author.name }}</span>
                 <span class="ml-auto">💬 {{ t.replyCount }}</span>
               </div>
             </div>
@@ -117,12 +153,9 @@ function go(params: Record<string, string | null>) {
         </div>
       </section>
 
-      <!-- Right rail: admin-configurable widgets (drag & drop in the live editor) -->
+      <!-- Right rail: widget extensions, ordered/toggled in the live editor -->
       <aside class="hidden lg:block">
-        <WidgetArea :widgets="widgets || []" :data="widgetData" :stats="stats" :categories="categories" />
-
-        <!-- Widget extensions render here -->
-        <div class="mt-4"><Slot name="forum:sidebar" /></div>
+        <div class="flex flex-col gap-4"><Slot name="forum:sidebar" /></div>
       </aside>
     </div>
 
