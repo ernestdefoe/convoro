@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.0.5',
+            'date' => '2026-06-12',
+            'title' => 'Guided setup for new admins',
+            'items' => [
+                ['type' => 'added', 'text' => 'A friendly setup wizard now greets new admins on the dashboard and walks you step-by-step through getting your community ready — branding, categories, email, your app icon and first members. Each step links straight to where you do it, and you can dismiss it and pick up later from the “Guided setup” button.'],
+            ],
+        ],
+        [
             'tag' => '1.0.4',
             'date' => '2026-06-12',
             'title' => 'A fuller documentation site',
@@ -469,14 +477,15 @@ return [
             'Earnable badges & richer member profiles', 'RSS feeds',
             'Automated importer mapping tests (XenForo · phpBB · Discourse · vBulletin)',
             'Documentation site — install, migrate, moderate, theme, extend, deploy',
+            'Guided setup wizard for new admins',
         ],
         'now' => [
             'Importer polish from real-world migrations',
-            'Onboarding wizard for new admins',
+            'Single sign-on (OAuth/SAML)',
         ],
         'next' => [
-            'Single sign-on (OAuth/SAML)',
             'Advanced analytics & search',
+            'Scheduled posts & drafts',
         ],
         'later' => [
             'Native mobile wrapper',

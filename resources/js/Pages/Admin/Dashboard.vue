@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, router, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import WelcomeWizard from '@/Components/WelcomeWizard.vue';
 import { t as tr } from '@/lib/i18n';
 
 interface Analytics {
@@ -16,7 +17,7 @@ const props = defineProps<{
   newUsers: { name: string; joined: string }[];
   queue: { connection: string; pending: number | null; failed: number; horizon: boolean };
   analytics: Analytics | null;
-  onboarding: { steps: { label: string; detail: string; href: string; done: boolean }[]; done: number; total: number };
+  onboarding: { steps: { label: string; detail: string; href: string; done: boolean }[]; done: number; total: number; dismissed: boolean };
   update: { current: string; latest: string; available: boolean; url: string | null; title: string | null; notes: string | null; changelog: { type?: string; text: string }[]; checkedAt: string | null; enabled: boolean; running: boolean; lastStatus: string | null };
   health: { name: string; state: string; detail: string }[];
   info: { version: string; php: string; laravel: string; database: string; cache: string; queue: string };
@@ -26,6 +27,12 @@ const page = usePage();
 const flash = computed(() => (page.props as any).flash?.status as string | undefined);
 
 const onboardingPct = computed(() => Math.round((props.onboarding.done / props.onboarding.total) * 100));
+
+// Guided setup wizard — auto-opens on first run until dismissed or fully done.
+const wizardOpen = ref(false);
+onMounted(() => {
+  if (!props.onboarding.dismissed && props.onboarding.done < props.onboarding.total) wizardOpen.value = true;
+});
 
 const updating = ref(false);
 function checkUpdates() { router.post('/admin/system/check-updates', {}, { preserveScroll: true }); }
@@ -80,6 +87,8 @@ const maxSignup = computed(() => Math.max(1, ...(props.analytics?.signups.map((s
     <template #title>{{ tr('Dashboard') }}</template>
     <template #subtitle>{{ tr('An overview of your community') }}</template>
 
+    <WelcomeWizard v-if="wizardOpen" :steps="onboarding.steps" :done="onboarding.done" :total="onboarding.total" @close="wizardOpen = false" />
+
     <!-- Getting started (hidden once every step is done) -->
     <div v-if="onboarding.done < onboarding.total" class="mb-6 rounded-2xl border border-line bg-surface p-6">
       <div class="flex flex-wrap items-center gap-4">
@@ -87,8 +96,11 @@ const maxSignup = computed(() => Math.max(1, ...(props.analytics?.signups.map((s
           <h2 class="text-base font-bold text-ink">{{ tr('Get your community ready') }}</h2>
           <p class="text-sm text-ink-2">{{ tr('{done} of {total} steps done — you\'re {pct}% set up.', { done: onboarding.done, total: onboarding.total, pct: onboardingPct }) }}</p>
         </div>
-        <div class="h-2 w-40 overflow-hidden rounded-full bg-surface-2">
-          <div class="h-full rounded-full bg-primary transition-all" :style="{ width: onboardingPct + '%' }"></div>
+        <div class="flex items-center gap-3">
+          <div class="h-2 w-40 overflow-hidden rounded-full bg-surface-2">
+            <div class="h-full rounded-full bg-primary transition-all" :style="{ width: onboardingPct + '%' }"></div>
+          </div>
+          <button class="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-600" @click="wizardOpen = true">{{ tr('Guided setup') }}</button>
         </div>
       </div>
       <div class="mt-5 grid gap-2.5 sm:grid-cols-2">

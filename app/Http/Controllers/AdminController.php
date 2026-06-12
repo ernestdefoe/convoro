@@ -72,7 +72,16 @@ class AdminController extends Controller
             'steps' => $steps,
             'done' => collect($steps)->where('done', true)->count(),
             'total' => count($steps),
+            'dismissed' => (bool) Settings::get('onboarding.wizard_dismissed', false),
         ];
+    }
+
+    /** Don't auto-open the setup wizard again (admin chose "finish later"). */
+    public function dismissOnboarding(): RedirectResponse
+    {
+        Settings::setMany(['onboarding.wizard_dismissed' => true]);
+
+        return back();
     }
 
     /** Queue / jobs health for the dashboard panel. Best-effort — never throws. */

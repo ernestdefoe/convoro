@@ -224,6 +224,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::get('/members', [App\Http\Controllers\AdminController::class, 'members'])->name('members');
     Route::put('/members/{user}', [App\Http\Controllers\AdminController::class, 'updateMember'])->name('members.update');
+    Route::post('/onboarding/dismiss', [App\Http\Controllers\AdminController::class, 'dismissOnboarding'])->name('onboarding.dismiss');
     Route::post('/members/{user}/anonymize', [App\Http\Controllers\AdminController::class, 'anonymizeMember'])->name('members.anonymize');
     Route::delete('/members/{user}', [App\Http\Controllers\AdminController::class, 'destroyMember'])->name('members.destroy');
     Route::post('/groups', [App\Http\Controllers\AdminController::class, 'storeGroup'])->name('groups.store');
