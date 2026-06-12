@@ -1,11 +1,11 @@
 {
-    "version": "1.1.1",
-    "download": "https://convoro.co/releases/convoro-1.1.1.zip",
+    "version": "1.1.2",
+    "download": "https://convoro.co/releases/convoro-1.1.2.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Advanced search — filters & sorting",
+    "title": "The LIVE badge is now actually live",
     "date": "2026-06-12",
-    "notes": "Search now supports filters (category, author, time window) and sorting (relevance, newest, most replies) — and you can browse with filters alone, no search term required.",
+    "notes": "Discussions now show a “LIVE” badge automatically when several members are reading at the same time — driven by who's actually on the page. It appears and clears on its own and refreshes every few seconds without a reload.",
     "changelog": [
-        {"type": "added", "text": "Advanced search: filter by category, author and date, and sort by relevance, newest or most replies — with filter-only browsing."}
+        {"type": "improved", "text": "The “LIVE” badge on a discussion is now driven by real concurrent viewers (via lightweight heartbeats), refreshed on the forum without a reload."}
     ]
 }

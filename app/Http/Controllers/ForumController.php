@@ -4,13 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\Topic;
+use App\Support\LiveTopics;
 use App\Support\Present;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ForumController extends Controller
 {
+    /** Which of the given topic ids are live right now — polled by the forum to keep badges fresh. */
+    public function liveTopics(Request $request): JsonResponse
+    {
+        $ids = collect(explode(',', (string) $request->query('ids', '')))
+            ->map(fn ($i) => (int) trim($i))->filter()->take(50)->all();
+
+        return response()->json(['live' => $ids ? LiveTopics::liveIds($ids) : []]);
+    }
+
     public function index(Request $request): Response
     {
         // View preference: explicit ?view wins, else the visitor's saved choice
@@ -36,6 +47,7 @@ class ForumController extends Controller
 
         $topics = $query->paginate(20)->withQueryString();
         $unread = Present::unreadTopicIds($topics->items(), $request->user());
+        $live = LiveTopics::liveIds(collect($topics->items())->pluck('id')->all());
         $actorId = $request->user()?->id;
 
         return Inertia::render('Forum/Index', [
@@ -48,7 +60,7 @@ class ForumController extends Controller
                     'color' => $c->color, 'count' => $c->topics_count,
                 ]),
             'topics' => [
-                'data' => collect($topics->items())->map(fn (Topic $t) => Present::topicCard($t, $actorId, in_array($t->id, $unread, true))),
+                'data' => collect($topics->items())->map(fn (Topic $t) => Present::topicCard($t, $actorId, in_array($t->id, $unread, true), $t->is_live || in_array($t->id, $live, true))),
                 'next' => $topics->nextPageUrl(),
             ],
             'stats' => [

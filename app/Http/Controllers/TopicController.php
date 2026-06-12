@@ -76,6 +76,17 @@ class TopicController extends Controller
         return redirect()->route('topics.show', $topic);
     }
 
+    /** Heartbeat: the current member is viewing this topic right now (drives the LIVE badge). */
+    public function heartbeat(Request $request, Topic $topic): \Illuminate\Http\JsonResponse
+    {
+        if (! $request->user()) {
+            return response()->json(['count' => 0, 'live' => false]);
+        }
+        $count = \App\Support\LiveTopics::heartbeat($topic->id, $request->user()->id);
+
+        return response()->json(['count' => $count, 'live' => $count >= \App\Support\LiveTopics::threshold()]);
+    }
+
     public function show(Topic $topic): Response
     {
         $topic->increment('view_count');

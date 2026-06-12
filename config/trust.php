@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.1.2',
+            'date' => '2026-06-12',
+            'title' => 'The LIVE badge is now actually live',
+            'items' => [
+                ['type' => 'improved', 'text' => 'A discussion now shows a “LIVE” badge automatically when a few members are reading it at the same time — driven by who’s actually on the page right now. The badge appears and clears on its own as a thread heats up and quiets down, and the forum refreshes it every few seconds without a reload.'],
+            ],
+        ],
+        [
             'tag' => '1.1.1',
             'date' => '2026-06-12',
             'title' => 'Advanced search — filters & sorting',

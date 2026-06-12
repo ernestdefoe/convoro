@@ -157,6 +157,9 @@ Route::get('/demo', function () {
 Route::get('/', [ForumController::class, 'index'])->name('forum.index');
 Route::get('/search', [App\Http\Controllers\SearchController::class, 'index'])->name('search');
 Route::get('/t/{topic}', [TopicController::class, 'show'])->name('topics.show');
+// Live viewers — fresh "LIVE" badges driven by who's reading right now.
+Route::get('/api/live-topics', [App\Http\Controllers\ForumController::class, 'liveTopics'])->name('topics.live');
+Route::post('/t/{topic}/heartbeat', [TopicController::class, 'heartbeat'])->middleware(['auth', 'throttle:40,1'])->name('topics.heartbeat');
 Route::get('/u/{user}', [App\Http\Controllers\UserProfileController::class, 'show'])->name('profiles.show');
 Route::get('/extensions', [App\Http\Controllers\ExtensionsPageController::class, 'index'])->middleware('store.owner')->name('extensions.index');
 Route::get('/members', [App\Http\Controllers\MembersController::class, 'index'])->name('members.index');

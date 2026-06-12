@@ -307,6 +307,20 @@ onMounted(() => {
     });
 });
 
+// Heartbeat so this discussion can show a "LIVE" badge while members are reading it.
+let heartbeatTimer: any = null;
+function sendHeartbeat() {
+  if (!loggedIn.value) return;
+  const xsrf = decodeURIComponent((document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1] || '');
+  fetch(`/t/${props.topic.slug}/heartbeat`, { method: 'POST', headers: { 'X-XSRF-TOKEN': xsrf, Accept: 'application/json' }, credentials: 'same-origin' }).catch(() => {});
+}
+onMounted(() => {
+  if (!loggedIn.value) return;
+  sendHeartbeat();
+  heartbeatTimer = setInterval(sendHeartbeat, 25000);
+});
+onBeforeUnmount(() => { if (heartbeatTimer) clearInterval(heartbeatTimer); });
+
 // Selection-to-quote: update the tooltip on selection change, hide it on scroll.
 const hideQuoteTip = () => (quoteTip.value = null);
 onMounted(() => {

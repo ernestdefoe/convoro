@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, watch, watchEffect } from 'vue';
+import { computed, ref, watch, watchEffect, onMounted, onUnmounted } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TopicCard from '@/Components/forum/TopicCard.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
@@ -32,6 +32,23 @@ const props = defineProps<{
   aboutHtml?: string;
   aboutTitle?: string;
 }>();
+
+// Live badges: keep topics that were live on load, and poll for who's reading now.
+const initialLive = new Set<number>(props.topics.data.filter((t: any) => t.isLive).map((t: any) => t.id));
+const liveSet = ref<Set<number>>(new Set(initialLive));
+const withLive = (t: any) => ({ ...t, isLive: liveSet.value.has(t.id) });
+let liveTimer: any = null;
+async function pollLive() {
+  const ids = props.topics.data.map((t: any) => t.id);
+  if (!ids.length) return;
+  try {
+    const r = await fetch('/api/live-topics?ids=' + ids.join(','), { headers: { Accept: 'application/json' } });
+    const d = await r.json();
+    liveSet.value = new Set<number>([...initialLive, ...((d.live as number[]) || [])]);
+  } catch { /* ignore */ }
+}
+onMounted(() => { liveTimer = setInterval(pollLive, 20000); });
+onUnmounted(() => { if (liveTimer) clearInterval(liveTimer); });
 
 // ── Sidebar widgets (extension-driven) ───────────────────────────────────
 // Built-in and add-on widgets all register into the `forum:sidebar` slot and
@@ -125,7 +142,7 @@ function go(params: Record<string, string | null>) {
 
         <!-- Feed -->
         <div v-else-if="view === 'feed'" class="flex flex-col gap-3">
-          <TopicCard v-for="t in topics.data" :key="t.id" :topic="t" />
+          <TopicCard v-for="t in topics.data" :key="t.id" :topic="withLive(t)" />
         </div>
 
         <!-- Grid -->

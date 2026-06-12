@@ -109,7 +109,7 @@ class Present
         return ['summary' => $groups->all(), 'total' => $post->reactions->count()];
     }
 
-    public static function topicCard(Topic $t, ?int $actorId = null, bool $isNew = false): array
+    public static function topicCard(Topic $t, ?int $actorId = null, bool $isNew = false, ?bool $isLive = null): array
     {
         $first = $t->relationLoaded('firstPost') ? $t->firstPost : null;
         $react = self::reactions($first, $actorId);
@@ -131,7 +131,7 @@ class Present
             'replyCount' => $t->reply_count,
             'viewCount' => $t->view_count,
             'isPinned' => $t->is_pinned,
-            'isLive' => $t->is_live,
+            'isLive' => $isLive ?? (bool) $t->is_live,
             'isNew' => $isNew,
             'reactions' => $react['summary'],
             'reactionTotal' => $react['total'],
