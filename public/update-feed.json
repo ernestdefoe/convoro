@@ -1,13 +1,11 @@
 {
-    "version": "1.0.9",
-    "download": "https://convoro.co/releases/convoro-1.0.9.zip",
+    "version": "1.1.0",
+    "download": "https://convoro.co/releases/convoro-1.1.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Onboarding & polish fixes",
+    "title": "Single sign-on (OpenID Connect)",
     "date": "2026-06-12",
-    "notes": "The “Brand your community” and “Set your app icon” onboarding steps now complete correctly. The Invite friends button no longer shows a literal {n}. Add-on footer links (RSS, privacy choices) now sit in a tidy centered footer.",
+    "notes": "Built-in single sign-on with any OpenID Connect provider (Okta, Auth0, Azure AD, Google Workspace, Authentik, Keycloak…). Configure it under Admin → Single sign-on: issuer URL + client id/secret, add the shown redirect URI to your provider, and members get a “Sign in with …” button.",
     "changelog": [
-        {"type": "fixed", "text": "“Brand your community” and “Set your app icon” getting-started steps now tick off once done."},
-        {"type": "fixed", "text": "The “Send invites” button showed a literal {n} instead of the count."},
-        {"type": "improved", "text": "Add-on footer links (RSS, privacy choices) now sit in a tidy centered footer."}
+        {"type": "new", "text": "Single sign-on via OpenID Connect — connect any OIDC provider under Admin → Single sign-on, with optional auto-create and email-domain restriction."}
     ]
 }

@@ -10,6 +10,7 @@ const { state, close, toggleMode } = useAuthModal();
 const mode = computed(() => state.value.mode);
 
 const inviteOnly = computed(() => !!(usePage().props as any).inviteOnly);
+const sso = computed(() => (usePage().props as any).sso ?? { enabled: false });
 const urlInvite = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('invite') ?? '' : '';
 
 const login = useForm({ email: '', password: '', remember: false });
@@ -50,6 +51,13 @@ const field = 'mt-1 w-full rounded-lg border-line bg-surface-2 text-ink placehol
               {{ t(mode === 'login' ? 'Welcome back' : 'Join the community') }}
             </h2>
           </div>
+
+          <!-- Single sign-on (OpenID Connect), when configured. -->
+          <a v-if="sso.enabled" href="/auth/oidc/redirect"
+            class="flex w-full items-center justify-center gap-2 rounded-c border border-line bg-surface-2 px-4 py-2.5 text-sm font-semibold text-ink hover:bg-appbg">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" /></svg>
+            {{ sso.label }}
+          </a>
 
           <!-- Social login — provided by the Social Login extension via this slot. -->
           <Slot name="auth:providers" />

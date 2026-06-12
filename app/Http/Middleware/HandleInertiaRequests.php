@@ -43,6 +43,7 @@ class HandleInertiaRequests extends Middleware
             'appVersion' => config('convoro.version'),
             'ask' => fn () => ['enabled' => \App\Support\Ask::enabled(), 'suggestions' => \App\Support\Ask::suggestions()],
             'inviteOnly' => fn () => (bool) Settings::get('invites.only', false),
+            'sso' => fn () => \App\Support\Oidc::enabled() ? ['enabled' => true, 'label' => \App\Support\Oidc::label()] : ['enabled' => false],
             'i18n' => fn () => [
                 'locale' => app()->getLocale(),
                 'rtl' => \App\Support\I18n::isRtl(app()->getLocale()),

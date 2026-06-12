@@ -235,6 +235,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/pwa', [App\Http\Controllers\AdminController::class, 'updatePwa'])->name('pwa.update');
     Route::post('/pwa/icon', [App\Http\Controllers\AdminController::class, 'uploadIcon'])->name('pwa.icon');
 
+    // Single sign-on (generic OpenID Connect).
+    Route::get('/sso', [App\Http\Controllers\AdminController::class, 'sso'])->name('sso');
+    Route::post('/sso', [App\Http\Controllers\AdminController::class, 'updateSso'])->name('sso.update');
+
     Route::get('/content', [App\Http\Controllers\AdminController::class, 'content'])->name('content');
     Route::post('/categories', [App\Http\Controllers\AdminController::class, 'storeCategory'])->name('categories.store');
     Route::put('/categories/{category}', [App\Http\Controllers\AdminController::class, 'updateCategory'])->name('categories.update');
@@ -315,5 +319,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/invite', [App\Http\Controllers\MemberInviteController::class, 'index'])->name('invite');
     Route::post('/invite/send', [App\Http\Controllers\MemberInviteController::class, 'send'])->middleware('throttle:10,10')->name('invite.send');
 });
+
+// Generic OpenID Connect SSO (guest-accessible login flow).
+Route::get('/auth/oidc/redirect', [App\Http\Controllers\Auth\OidcController::class, 'redirect'])->name('oidc.redirect');
+Route::get('/auth/oidc/callback', [App\Http\Controllers\Auth\OidcController::class, 'callback'])->name('oidc.callback');
 
 require __DIR__.'/auth.php';

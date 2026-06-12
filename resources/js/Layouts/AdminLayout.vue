@@ -45,6 +45,7 @@ const groups = computed(() => [
     { label: 'Email', href: '/admin/email', component: 'Admin/Email', icon: I.mail },
     { label: 'Languages', href: '/admin/languages', component: 'Admin/Languages', icon: I.globe },
     { label: 'PWA', href: '/admin/pwa', component: 'Admin/Pwa', icon: I.pwa },
+    { label: 'Single sign-on', href: '/admin/sso', component: 'Admin/Sso', icon: I.shield },
   ] },
   { label: 'Extensions', items: [
     { label: 'Marketplace', href: '/admin/marketplace', component: 'Admin/Marketplace', icon: I.market },

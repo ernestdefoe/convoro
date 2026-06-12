@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.1.0',
+            'date' => '2026-06-12',
+            'title' => 'Single sign-on (OpenID Connect)',
+            'items' => [
+                ['type' => 'new', 'text' => 'Built-in single sign-on: connect any OpenID Connect identity provider — Okta, Auth0, Azure AD, Google Workspace, Authentik, Keycloak and more — under Admin → Single sign-on. Paste your issuer URL plus a client ID and secret, add the shown redirect URI to your provider, and members get a “Sign in with …” button. Accounts can be created automatically on first login, optionally restricted to a single email domain.'],
+            ],
+        ],
+        [
             'tag' => '1.0.9',
             'date' => '2026-06-12',
             'title' => 'Onboarding & polish fixes',
@@ -515,14 +523,16 @@ return [
             'Automated importer mapping tests (XenForo · phpBB · Discourse · vBulletin)',
             'Documentation site — install, migrate, moderate, theme, extend, deploy',
             'Guided setup wizard for new admins',
+            'Member invites & referrals', 'Unread / new-post indicators',
+            'Single sign-on (OpenID Connect)',
         ],
         'now' => [
             'Importer polish from real-world migrations',
-            'Single sign-on (OAuth/SAML)',
+            'Advanced analytics & search',
         ],
         'next' => [
-            'Advanced analytics & search',
             'Scheduled posts & drafts',
+            'More importers (MyBB, SMF, Invision)',
         ],
         'later' => [
             'Native mobile wrapper',

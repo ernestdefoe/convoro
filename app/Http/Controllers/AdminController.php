@@ -999,6 +999,56 @@ class AdminController extends Controller
         return back();
     }
 
+    /** Single sign-on (generic OpenID Connect) settings. */
+    public function sso(): Response
+    {
+        return Inertia::render('Admin/Sso', [
+            'values' => [
+                'enabled' => (bool) Settings::get('sso.enabled', false),
+                'label' => Settings::get('sso.label', ''),
+                'issuer' => Settings::get('sso.issuer', ''),
+                'client_id' => Settings::get('sso.client_id', ''),
+                'has_secret' => (bool) Settings::get('sso.client_secret'),
+                'scopes' => Settings::get('sso.scopes', 'openid profile email'),
+                'auto_create' => (bool) Settings::get('sso.auto_create', true),
+                'allowed_domain' => Settings::get('sso.allowed_domain', ''),
+            ],
+            'callbackUrl' => route('oidc.callback'),
+        ]);
+    }
+
+    public function updateSso(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+            'label' => ['nullable', 'string', 'max:40'],
+            'issuer' => ['nullable', 'string', 'max:300', 'url'],
+            'client_id' => ['nullable', 'string', 'max:300'],
+            'client_secret' => ['nullable', 'string', 'max:500'],
+            'scopes' => ['nullable', 'string', 'max:200'],
+            'auto_create' => ['required', 'boolean'],
+            'allowed_domain' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $set = [
+            'sso.enabled' => (bool) $data['enabled'],
+            'sso.label' => $data['label'] ?? '',
+            'sso.issuer' => rtrim((string) ($data['issuer'] ?? ''), '/'),
+            'sso.client_id' => $data['client_id'] ?? '',
+            'sso.scopes' => $data['scopes'] ?? '',
+            'sso.auto_create' => (bool) $data['auto_create'],
+            'sso.allowed_domain' => ltrim(strtolower((string) ($data['allowed_domain'] ?? '')), '@'),
+        ];
+        // Only overwrite the secret when a new one is provided (it's never sent back).
+        if (! empty($data['client_secret'])) {
+            $set['sso.client_secret'] = $data['client_secret'];
+        }
+        Settings::setMany($set);
+        \Illuminate\Support\Facades\Cache::forget('sso.discovery:'.md5((string) $set['sso.issuer']));
+
+        return back()->with('status', __('Single sign-on settings saved.'));
+    }
+
     public function email(): Response
     {
         return Inertia::render('Admin/Email', [
