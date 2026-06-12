@@ -12,8 +12,11 @@ import ThemeEditor from '@/Components/ThemeEditor.vue';
 import Toast from '@/Components/Toast.vue';
 import CommandPalette from '@/Components/CommandPalette.vue';
 import Slot from '@/Components/ext/Slot.vue';
+import { convoro } from '@/lib/convoro-ext';
 import { useAuthModal } from '@/lib/authModal';
 import { t } from '@/lib/i18n';
+
+const hasFooter = computed(() => convoro.slotEntries('forum:footer').length > 0);
 
 const auth = useAuthModal();
 
@@ -140,7 +143,11 @@ function goMobile(href: string) {
       <slot />
     </main>
 
-    <Slot name="forum:footer" />
+    <footer v-show="hasFooter" class="mt-10 border-t border-line">
+      <div class="mx-auto flex max-w-[var(--c-container)] flex-wrap items-center justify-center gap-x-5 gap-y-2 px-6 py-6 text-sm text-ink-muted">
+        <Slot name="forum:footer" />
+      </div>
+    </footer>
 
     <PwaBanner />
     <AuthModal />

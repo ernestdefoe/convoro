@@ -56,7 +56,7 @@ function send() {
           class="mt-2 w-full rounded-lg border-line bg-appbg text-sm text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary"></textarea>
         <div class="mt-3 flex items-center gap-3">
           <button :disabled="!parsedEmails.length || form.processing" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-50" @click="send">
-            {{ form.processing ? t('Sending…') : t('Send {n} invite | Send {n} invites', { n: parsedEmails.length || 0 }) }}
+            {{ form.processing ? t('Sending…') : (parsedEmails.length === 1 ? t('Send 1 invite') : t('Send {n} invites', { n: parsedEmails.length || 0 })) }}
           </button>
           <span v-if="parsedEmails.length" class="text-xs text-ink-muted">{{ parsedEmails.length }} {{ t('valid') }}</span>
         </div>

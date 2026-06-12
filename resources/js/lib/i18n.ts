@@ -11,7 +11,7 @@ export function t(key: string, replacements: Record<string, string | number> = {
   const messages = ((usePage().props as any).i18n?.messages ?? {}) as Record<string, string>;
   let out = messages[key] ?? key;
   for (const k in replacements) {
-    out = out.replace(`{${k}}`, String(replacements[k]));
+    out = out.split(`{${k}}`).join(String(replacements[k]));
   }
   return out;
 }

@@ -60,11 +60,11 @@ class AdminController extends Controller
     private function onboardingSteps(): array
     {
         $steps = [
-            ['label' => __('Brand your community'), 'detail' => __('Add a logo and tune your colors in the live theme editor.'), 'href' => '/', 'done' => (bool) Settings::get('site.logo')],
+            ['label' => __('Brand your community'), 'detail' => __('Add a logo and tune your colors in the live theme editor.'), 'href' => '/', 'done' => (bool) Settings::get('site.logo') || (bool) Settings::get('theme.customized', false)],
             ['label' => __('Create categories'), 'detail' => __('Give members a place to post.'), 'href' => '/admin/content', 'done' => Category::count() > 0],
             ['label' => __('Set up email'), 'detail' => __('So notifications and password resets actually send.'), 'href' => '/admin/email', 'done' => (bool) Settings::get('mail.configured', false)],
             ['label' => __('Add an extension'), 'detail' => __('Browse the marketplace and install your first add-on.'), 'href' => '/admin/marketplace', 'done' => count(\App\Support\ExtensionManager::enabledIds()) > 0],
-            ['label' => __('Set your app icon'), 'detail' => __('One image becomes every PWA icon size.'), 'href' => '/admin/pwa', 'done' => (bool) Settings::get('site.favicon')],
+            ['label' => __('Set your app icon'), 'detail' => __('One image becomes every PWA icon size.'), 'href' => '/admin/pwa', 'done' => (bool) Settings::get('pwa.custom_icon', false) || (bool) Settings::get('site.favicon')],
             ['label' => __('Invite your first members'), 'detail' => __('A community is people — bring some in.'), 'href' => '/members', 'done' => User::count() > 1],
         ];
 
@@ -939,6 +939,7 @@ class AdminController extends Controller
     {
         $request->validate(['icon' => ['required', 'image', 'max:8192']]);
         IconGenerator::generate(file_get_contents($request->file('icon')->getRealPath()));
+        Settings::set('pwa.custom_icon', true); // the admin uploaded their own app icon
 
         return back()->with('status', __('Icons regenerated from your image.'));
     }
@@ -1130,6 +1131,7 @@ class AdminController extends Controller
             'theme.custom_css' => $data['custom_css'] ?? '',
             'site.logo' => $data['logo'] ?? Settings::get('site.logo', ''),
             'site.favicon' => $data['favicon'] ?? Settings::get('site.favicon', ''),
+            'theme.customized' => true, // the admin saved the live theme editor
         ]);
 
         return back();

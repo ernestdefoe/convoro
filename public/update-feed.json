@@ -1,11 +1,13 @@
 {
-    "version": "1.0.8",
-    "download": "https://convoro.co/releases/convoro-1.0.8.zip",
+    "version": "1.0.9",
+    "download": "https://convoro.co/releases/convoro-1.0.9.zip",
     "url": "https://convoro.co/changelog",
-    "title": "New-post indicator on discussions",
+    "title": "Onboarding & polish fixes",
     "date": "2026-06-12",
-    "notes": "Discussions with replies you haven't seen yet now show a “New” badge in the top-right corner of their card (feed, grid and search). Opening the discussion clears it; a new reply brings it back.",
+    "notes": "The “Brand your community” and “Set your app icon” onboarding steps now complete correctly. The Invite friends button no longer shows a literal {n}. Add-on footer links (RSS, privacy choices) now sit in a tidy centered footer.",
     "changelog": [
-        {"type": "added", "text": "“New” badge on the top-right corner of a discussion card when it has posts you haven’t seen — cleared when you open it, restored on a new reply."}
+        {"type": "fixed", "text": "“Brand your community” and “Set your app icon” getting-started steps now tick off once done."},
+        {"type": "fixed", "text": "The “Send invites” button showed a literal {n} instead of the count."},
+        {"type": "improved", "text": "Add-on footer links (RSS, privacy choices) now sit in a tidy centered footer."}
     ]
 }

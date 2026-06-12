@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.0.9',
+            'date' => '2026-06-12',
+            'title' => 'Onboarding & polish fixes',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'The “Brand your community” and “Set your app icon” getting-started steps now tick off correctly once you’ve actually done them — they were checking the wrong signal before.'],
+                ['type' => 'fixed', 'text' => 'The “Send invites” button on the Invite friends page showed a literal “{n}” instead of the number — placeholders now substitute everywhere they appear.'],
+                ['type' => 'improved', 'text' => 'Footer links added by add-ons (like RSS and the privacy choices link) now sit in a tidy centered footer instead of crowding the live-theme-editor button in the corner.'],
+            ],
+        ],
+        [
             'tag' => '1.0.8',
             'date' => '2026-06-12',
             'title' => 'New-post indicator on discussions',
