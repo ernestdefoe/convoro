@@ -1,12 +1,11 @@
 {
-    "version": "1.0.3",
-    "download": "https://convoro.co/releases/convoro-1.0.3.zip",
+    "version": "1.0.4",
+    "download": "https://convoro.co/releases/convoro-1.0.4.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Importers, verified end-to-end",
+    "title": "A fuller documentation site",
     "date": "2026-06-12",
-    "notes": "The XenForo, phpBB, Discourse and vBulletin importers now have automated end-to-end tests that run each one against a sample database of that platform, verifying members, categories, topics, posts and formatting all map across correctly.",
+    "notes": "Seven new documentation guides at /docs — migrating from another forum, members & permissions, moderation & safety, privacy & GDPR, languages & translation, selling extensions, and updates & backups.",
     "changelog": [
-        {"type": "improved", "text": "XenForo, phpBB, Discourse & vBulletin importers are now covered by automated end-to-end mapping tests."},
-        {"type": "fixed", "text": "Tightened importer handling of deleted/hidden threads, private messages, bot accounts and table prefixes."}
+        {"type": "added", "text": "Seven new docs guides: migrating, members & permissions, moderation, privacy & GDPR, languages, selling extensions, and updates & backups."}
     ]
 }

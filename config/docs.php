@@ -163,4 +163,160 @@ return [
             ],
         ],
     ],
+
+    'migrating' => [
+        'icon' => '🔁',
+        'title' => 'Migrating from another forum',
+        'intro' => 'Bring your whole community across from Flarum, XenForo, phpBB, Discourse or vBulletin in one pass — members, categories, topics and posts.',
+        'sections' => [
+            [
+                'h' => 'How it works',
+                'body' => [
+                    'Open Admin → Import, pick your current platform, and enter your old forum’s database connection (host, database, username, password — and the table prefix for phpBB/vBulletin). The importer reads the source read-only; it never writes to it.',
+                    'Hit Test connection to see how many members, categories, topics and posts will come across, then Start import. It runs in the background, so you can leave the page and come back — a progress bar and live counts show where it’s up to.',
+                ],
+            ],
+            [
+                'h' => 'What comes across',
+                'body' => [
+                    'Forums/categories → categories, members → members, discussions/threads → topics, and replies → posts. Old formatting (BBCode, or Discourse’s rendered HTML) is converted to Convoro’s. Set your old forum’s URL to also bring over avatars and embedded images.',
+                    'Members keep their passwords wherever the old hashes are portable (Flarum, XenForo, phpBB 3.1+). Where they aren’t (Discourse, vBulletin), members simply reset their password on first login.',
+                ],
+            ],
+            [
+                'h' => 'Safe to re-run',
+                'body' => [
+                    'The import dedupes by email and by a source-derived slug, so existing members, categories and topics are skipped rather than duplicated — you can run it again to pick up new content.',
+                    'The Flarum importer is the most battle-tested; the XenForo, phpBB, Discourse and vBulletin importers are covered by automated mapping tests but every real forum differs slightly — back up your Convoro database first and review the result.',
+                ],
+            ],
+        ],
+    ],
+
+    'members' => [
+        'icon' => '👥',
+        'title' => 'Members, groups & permissions',
+        'intro' => 'Organize who can do what — with colored groups, a granular permission system, and invite-only signups.',
+        'sections' => [
+            [
+                'h' => 'Groups & permissions',
+                'body' => [
+                    'Admin → Members → Groups lets you create groups, give each a color, mark it as staff, and tick exactly which permissions its members get. Admin and Moderator are built-in system groups — you can recolor or rename them, but not delete them.',
+                    'Staff-group members show a small colored badge beneath their avatar (it follows the Admin group’s color), so moderators are recognizable everywhere.',
+                ],
+            ],
+            [
+                'h' => 'Invites & invite-only signup',
+                'body' => [
+                    'In Admin → Invites you can create shareable invite links — optionally with a maximum number of uses and an expiry — and turn on invite-only registration so new members must enter a code to join.',
+                ],
+            ],
+        ],
+    ],
+
+    'moderation' => [
+        'icon' => '🛡️',
+        'title' => 'Moderation & safety',
+        'intro' => 'Keep your community healthy with a moderation queue, an AI copilot, and IP tools.',
+        'sections' => [
+            [
+                'h' => 'The moderation queue',
+                'body' => ['Reported and flagged posts land in Admin → Moderation. From there you can approve, hide, move a reply to another topic, or remove content, and resolve reports with one click.'],
+            ],
+            [
+                'h' => 'AI moderation copilot',
+                'body' => ['Turn on the copilot in Admin → AI to have every new post screened for spam, toxicity and exposed personal data. Risky posts are flagged with a score and labels; very high-risk posts are held (hidden) until a moderator approves them.'],
+            ],
+            [
+                'h' => 'IP info & bans',
+                'body' => ['Posts record the author’s IP for moderation. You can look up a member’s IPs and ban an address outright when you need to stop a persistent abuser.'],
+            ],
+        ],
+    ],
+
+    'privacy' => [
+        'icon' => '🔒',
+        'title' => 'Privacy & GDPR',
+        'intro' => 'The tools to run a privacy-respecting community and honour data requests worldwide.',
+        'sections' => [
+            [
+                'h' => 'Anonymize or delete a member',
+                'body' => [
+                    'To honour a “delete my account” request, open Admin → Members, edit the member, and use the Data & privacy (GDPR) section.',
+                    'Anonymize erases their personal data — name, email, avatar, bio and stored IP addresses — but keeps their posts and topics readable as “Deleted user”, so discussions stay intact. This is the recommended option. Delete account & content fully removes the member and everything they authored.',
+                ],
+            ],
+            [
+                'h' => 'Cookie consent',
+                'body' => [
+                    'Install the Advanced Cookie Consent add-on for a GDPR/CCPA banner with granular categories and per-category script gating. It honours Global Privacy Control / Do Not Track signals, frames a “Do Not Sell or Share” notice for US visitors, and keeps a persistent “Privacy choices” link so members can change their mind.',
+                ],
+            ],
+            [
+                'h' => 'Data minimization',
+                'body' => ['Convoro only stores what a forum needs. IP addresses are kept for moderation and can be cleared by anonymizing the member; sessions and push subscriptions are removed when an account is anonymized or deleted.'],
+            ],
+        ],
+    ],
+
+    'languages' => [
+        'icon' => '🌐',
+        'title' => 'Languages & translation',
+        'intro' => 'Run a community in your members’ languages — and let them read each other across the language barrier.',
+        'sections' => [
+            [
+                'h' => 'Interface languages',
+                'body' => [
+                    'Admin → Languages shows translation coverage per language. Add any of 45+ languages, set the site default, and fill a language instantly with one-click AI translation (powered by your connected model). Right-to-left languages flip the whole layout automatically.',
+                ],
+            ],
+            [
+                'h' => 'Per-reader translation',
+                'body' => [
+                    'A Translate link on any post or direct message renders it in the reader’s language with a “Show original” toggle — so a member can write in Arabic and another can read it in English. Turn on Auto-translate to have everything arrive already translated.',
+                    'Notification and digest emails are sent in each recipient’s own language and text direction.',
+                ],
+            ],
+        ],
+    ],
+
+    'marketplace' => [
+        'icon' => '🛒',
+        'title' => 'Selling extensions',
+        'intro' => 'Run your own extension & theme store, with Stripe payouts and a GitHub-linked registry.',
+        'sections' => [
+            [
+                'h' => 'The store console',
+                'body' => ['Manage listings from the front-facing /extensions/manage — no admin section needed. Connect your account with Stripe to take payments, and your earnings are paid out via Stripe Connect.'],
+            ],
+            [
+                'h' => 'Publish from GitHub',
+                'body' => [
+                    'Link a public repo and Convoro tracks its releases Packagist-style — auto-refreshing on new tags (hourly, or instantly via a webhook) and letting you pin to a version. Every directory extension is also audited from its real source by an LLM, which posts an unbiased safety verdict on the listing.',
+                ],
+            ],
+            [
+                'h' => 'Licenses',
+                'body' => ['Buyers find their purchases under /account/licenses, where they can download files and retrieve license keys.'],
+            ],
+        ],
+    ],
+
+    'updates' => [
+        'icon' => '⬆️',
+        'title' => 'Updates & backups',
+        'intro' => 'Keep Convoro current with one click — safely.',
+        'sections' => [
+            [
+                'h' => 'One-click updates',
+                'body' => [
+                    'Admin → Dashboard checks for new releases and shows a “What’s new” summary before you install. Click Apply and Convoro downloads the release, copies the new files into place (preserving your .env, uploads and storage), runs any database migrations, and reloads — no Composer or terminal required, even on shared hosting.',
+                ],
+            ],
+            [
+                'h' => 'Back up first',
+                'body' => ['Updates are designed to be safe and protected paths are never overwritten, but take a database backup before any update or import — it’s the one habit that turns a bad day into a non-event.'],
+            ],
+        ],
+    ],
 ];

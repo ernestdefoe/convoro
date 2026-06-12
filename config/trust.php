@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.0.4',
+            'date' => '2026-06-12',
+            'title' => 'A fuller documentation site',
+            'items' => [
+                ['type' => 'added', 'text' => 'Seven new documentation guides at /docs: migrating from another forum, members & permissions, moderation & safety, privacy & GDPR, languages & translation, selling extensions, and updates & backups — covering the whole platform end to end.'],
+            ],
+        ],
+        [
             'tag' => '1.0.3',
             'date' => '2026-06-12',
             'title' => 'Importers, verified end-to-end',
@@ -460,13 +468,13 @@ return [
             'Email digests + one-click unsubscribe & notification preferences',
             'Earnable badges & richer member profiles', 'RSS feeds',
             'Automated importer mapping tests (XenForo · phpBB · Discourse · vBulletin)',
+            'Documentation site — install, migrate, moderate, theme, extend, deploy',
         ],
         'now' => [
             'Importer polish from real-world migrations',
-            'Full documentation site',
+            'Onboarding wizard for new admins',
         ],
         'next' => [
-            'Onboarding wizard for new admins',
             'Single sign-on (OAuth/SAML)',
             'Advanced analytics & search',
         ],
