@@ -11,22 +11,31 @@ return [
     'install' => [
         'icon' => '🚀',
         'title' => 'Installing Convoro',
-        'intro' => 'Get a community online in minutes — even on cheap shared hosting, entirely in your browser.',
+        'intro' => 'Get a community online in minutes — pick the no-terminal zip for shared hosting, or Composer if you prefer the command line.',
         'sections' => [
             [
                 'h' => 'Requirements',
                 'body' => [
-                    'Convoro runs on a standard PHP host. You need:',
-                    'PHP 8.3+ with the pdo, mbstring, openssl, gd, fileinfo, ctype, json and zip extensions, plus a MySQL/MariaDB or PostgreSQL database.',
-                    'No SSH, Composer, or Node is required on the server — the release archive ships with everything prebuilt.',
+                    'Convoro runs on a standard PHP host. You need PHP 8.3+ with the pdo, mbstring, openssl, gd, fileinfo, ctype, json and zip extensions, plus a MySQL/MariaDB or PostgreSQL database.',
                 ],
             ],
             [
-                'h' => 'One-click install',
+                'h' => 'Option A — Prebuilt zip (no terminal)',
                 'body' => [
-                    'Download the latest release zip, upload and unzip it to your web root, then open your domain in a browser. The guided installer checks requirements, writes your config, runs migrations, and creates your admin account.',
-                    ['code' => "# unzip on the server, then visit:\nhttps://your-domain.com/install", 'lang' => 'bash'],
+                    'The simplest route, ideal for shared hosting. Download the prebuilt archive — it already includes the vendor libraries and compiled assets, so there is nothing to build.',
+                    ['link' => 'https://convoro.co/releases/convoro-install.zip', 'label' => 'Download Convoro (.zip)'],
+                    'Upload and unzip it to your web root (point the document root at the public/ folder), then open your domain in a browser. The guided installer checks requirements, writes your config, runs migrations, and creates your admin account.',
+                    ['code' => "# after uploading + unzipping on the server, visit:\nhttps://your-domain.com/install", 'lang' => 'bash'],
                     'The installer also flags production recommendations (OPcache, memory overcommit) so you start on solid footing.',
+                ],
+            ],
+            [
+                'h' => 'Option B — Composer (command line)',
+                'body' => [
+                    'Prefer the terminal? Clone the repository and let Composer do the rest. You need PHP 8.3+, Composer and Node.js on the machine.',
+                    ['code' => "git clone https://github.com/ernestdefoe/convoro.git\ncd convoro\n\n# install PHP + JS deps, copy .env, generate a key,\n# run migrations and build the assets — all in one:\ncomposer setup\n\n# then serve it (or point your web server at public/):\nphp artisan serve", 'lang' => 'bash'],
+                    'Set your database credentials in the .env file before running migrations. `composer setup` runs composer install, copies .env.example to .env, generates the app key, migrates the database, and builds the frontend. To do it by hand:',
+                    ['code' => "composer install\ncp .env.example .env\nphp artisan key:generate\n# edit .env — set DB_DATABASE / DB_USERNAME / DB_PASSWORD\nphp artisan migrate\nnpm install && npm run build\nphp artisan storage:link", 'lang' => 'bash'],
                 ],
             ],
         ],

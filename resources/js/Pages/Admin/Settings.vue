@@ -6,13 +6,14 @@ import { uploadImage } from '@/lib/upload';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
-  values: { name: string; tagline: string; logo: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string };
+  values: { name: string; tagline: string; logo: string; favicon: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string };
 }>();
 
 const form = useForm({
   name: props.values.name,
   tagline: props.values.tagline,
   logo: props.values.logo ?? '',
+  favicon: props.values.favicon ?? '',
   default_view: props.values.default_view,
   realtime: props.values.realtime,
   digests: props.values.digests,
@@ -29,6 +30,14 @@ async function pickLogo(e: Event) {
   if (!file) return;
   uploadingLogo.value = true;
   try { const { url } = await uploadImage(file); form.logo = url; } catch { /* ignore */ } finally { uploadingLogo.value = false; }
+}
+
+const uploadingFavicon = ref(false);
+async function pickFavicon(e: Event) {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  uploadingFavicon.value = true;
+  try { const { url } = await uploadImage(file); form.favicon = url; } catch { /* ignore */ } finally { uploadingFavicon.value = false; }
 }
 
 const uploadingShare = ref(false);
@@ -71,6 +80,19 @@ function save() {
             <input type="file" accept="image/png,image/jpeg,image/webp" class="text-sm text-ink-2" @change="pickLogo" />
             <span v-if="uploadingLogo" class="text-sm text-ink-2">{{ t('Uploading…') }}</span>
             <button v-if="form.logo" type="button" class="text-sm text-ink-2 hover:text-red-400" @click="form.logo = ''">{{ t('Remove') }}</button>
+          </div>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-ink-2">{{ t('Favicon') }}</label>
+          <p class="text-xs text-ink-muted">{{ t('The little icon in the browser tab. A square PNG (at least 64×64) works best. Leave empty to use the default Convoro icon.') }}</p>
+          <div class="mt-2 flex items-center gap-3">
+            <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-surface-2">
+              <img v-if="form.favicon" :src="form.favicon" :alt="t('favicon')" class="h-6 w-6 rounded" />
+              <span v-else class="text-[10px] text-ink-muted">{{ t('None') }}</span>
+            </div>
+            <input type="file" accept="image/png,image/x-icon,image/svg+xml,image/webp" class="text-sm text-ink-2" @change="pickFavicon" />
+            <span v-if="uploadingFavicon" class="text-sm text-ink-2">{{ t('Uploading…') }}</span>
+            <button v-if="form.favicon" type="button" class="text-sm text-ink-2 hover:text-red-400" @click="form.favicon = ''">{{ t('Remove') }}</button>
           </div>
         </div>
         <div>

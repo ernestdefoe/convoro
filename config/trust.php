@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.0.6',
+            'date' => '2026-06-12',
+            'title' => 'Brand it as yours + easier install',
+            'items' => [
+                ['type' => 'added', 'text' => 'Upload your own favicon right in Admin → Settings, next to your logo — so the browser-tab icon is your brand, not Convoro’s. (Your logo already replaces the header mark.)'],
+                ['type' => 'added', 'text' => 'The install guide now has a real download button for a prebuilt zip (nothing to compile — ideal for shared hosting) plus copy-paste Composer commands for those who prefer the command line.'],
+                ['type' => 'improved', 'text' => 'The Flarum importer is now covered by an automated end-to-end mapping test, alongside XenForo, phpBB, Discourse and vBulletin.'],
+            ],
+        ],
+        [
             'tag' => '1.0.5',
             'date' => '2026-06-12',
             'title' => 'Guided setup for new admins',

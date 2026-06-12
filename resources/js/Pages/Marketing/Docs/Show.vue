@@ -9,6 +9,7 @@ defineProps<{
 }>();
 
 const isCode = (b: any) => typeof b === 'object' && b !== null && 'code' in b;
+const isLink = (b: any) => typeof b === 'object' && b !== null && 'link' in b;
 </script>
 
 <template>
@@ -43,6 +44,10 @@ const isCode = (b: any) => typeof b === 'object' && b !== null && 'code' in b;
               <div class="mt-3 space-y-3">
                 <template v-for="(b, j) in s.body" :key="j">
                   <pre v-if="isCode(b)" class="overflow-x-auto rounded-xl border border-line bg-ink p-4 text-sm text-slate-200"><code>{{ b.code }}</code></pre>
+                  <a v-else-if="isLink(b)" :href="b.link" class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 font-bold text-white shadow-lg shadow-primary/25 hover:bg-primary-600">
+                    {{ b.label || b.link }}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M19 12l-7 7-7-7" /></svg>
+                  </a>
                   <p v-else class="leading-relaxed text-ink-2">{{ b }}</p>
                 </template>
               </div>

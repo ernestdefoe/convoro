@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Support\FlarumImporter;
 use App\Support\Importers\DiscourseImporter;
 use App\Support\Importers\PhpbbImporter;
 use App\Support\Importers\VbulletinImporter;
@@ -57,6 +58,73 @@ class ImporterTest extends TestCase
     private function s(): \Illuminate\Database\Schema\Builder
     {
         return $this->src->getSchemaBuilder();
+    }
+
+    public function test_flarum_import(): void
+    {
+        $this->s()->create('tags', function ($t) {
+            $t->integer('id'); $t->string('name'); $t->string('slug'); $t->text('description')->nullable();
+            $t->string('color')->nullable(); $t->integer('position')->nullable();
+        });
+        $this->s()->create('users', function ($t) {
+            $t->integer('id'); $t->string('username'); $t->string('email'); $t->string('password');
+            $t->string('avatar_url')->nullable(); $t->text('bio')->nullable(); $t->timestamp('joined_at')->nullable();
+        });
+        $this->s()->create('discussions', function ($t) {
+            $t->integer('id'); $t->string('title'); $t->string('slug'); $t->integer('user_id')->nullable();
+            $t->boolean('is_private')->default(false); $t->boolean('is_sticky')->default(false); $t->boolean('is_locked')->default(false);
+            $t->timestamp('created_at')->nullable(); $t->timestamp('last_posted_at')->nullable();
+        });
+        $this->s()->create('discussion_tag', function ($t) { $t->integer('discussion_id'); $t->integer('tag_id'); });
+        $this->s()->create('posts', function ($t) {
+            $t->integer('id'); $t->integer('discussion_id'); $t->integer('user_id')->nullable(); $t->string('type')->default('comment');
+            $t->integer('number')->default(1); $t->text('content')->nullable(); $t->boolean('is_private')->default(false);
+            $t->timestamp('created_at')->nullable(); $t->timestamp('edited_at')->nullable();
+        });
+        $this->s()->create('post_likes', function ($t) { $t->integer('post_id'); $t->integer('user_id'); });
+
+        $bcrypt = '$2y$10$abcdefghijklmnopqrstuv0123456789012345678901234567890u';
+        // A primary tag (position set) → category; a secondary tag (position null) → tag.
+        $this->src->table('tags')->insert([
+            ['id' => 1, 'name' => 'General', 'slug' => 'general', 'description' => 'Main', 'color' => '#ff0000', 'position' => 0],
+            ['id' => 2, 'name' => 'Announce', 'slug' => 'announce', 'description' => null, 'color' => null, 'position' => null],
+        ]);
+        $this->src->table('users')->insert([
+            ['id' => 1, 'username' => 'Fiona', 'email' => 'fiona@fl.test', 'password' => $bcrypt, 'avatar_url' => null, 'bio' => 'hi', 'joined_at' => '2022-01-01 00:00:00'],
+            ['id' => 2, 'username' => 'Gus', 'email' => 'gus@fl.test', 'password' => '', 'avatar_url' => null, 'bio' => null, 'joined_at' => '2022-01-02 00:00:00'],
+        ]);
+        $this->src->table('discussions')->insert([
+            ['id' => 10, 'title' => 'Flarum topic', 'slug' => 'flarum-topic', 'user_id' => 1, 'is_private' => false, 'is_sticky' => true, 'is_locked' => false, 'created_at' => '2022-01-03 00:00:00', 'last_posted_at' => '2022-01-04 00:00:00'],
+            ['id' => 11, 'title' => 'Secret DM', 'slug' => 'secret', 'user_id' => 1, 'is_private' => true, 'is_sticky' => false, 'is_locked' => false, 'created_at' => '2022-01-03 00:00:00', 'last_posted_at' => null],
+        ]);
+        $this->src->table('discussion_tag')->insert([
+            ['discussion_id' => 10, 'tag_id' => 1], ['discussion_id' => 10, 'tag_id' => 2],
+        ]);
+        // s9e TextFormatter XML: rich (<r>) with bold tokens, and a plain (<t>).
+        $this->src->table('posts')->insert([
+            ['id' => 100, 'discussion_id' => 10, 'user_id' => 1, 'type' => 'comment', 'number' => 1, 'content' => '<r><p>Hello <STRONG><s>**</s>world<e>**</e></STRONG></p></r>', 'is_private' => false, 'created_at' => '2022-01-03 00:00:00', 'edited_at' => null],
+            ['id' => 101, 'discussion_id' => 10, 'user_id' => 2, 'type' => 'comment', 'number' => 2, 'content' => '<t>just plain</t>', 'is_private' => false, 'created_at' => '2022-01-04 00:00:00', 'edited_at' => null],
+            ['id' => 102, 'discussion_id' => 10, 'user_id' => 1, 'type' => 'discussionRenamed', 'number' => 3, 'content' => null, 'is_private' => false, 'created_at' => '2022-01-04 00:00:00', 'edited_at' => null],
+        ]);
+        $this->src->table('post_likes')->insert([['post_id' => 100, 'user_id' => 2]]);
+
+        $summary = FlarumImporter::run($this->cfg(['flarum_url' => 'https://old.example']), ['tags' => true], fn () => null);
+
+        $this->assertSame(1, $summary['categories'], 'primary tag → category');
+        $this->assertSame(1, $summary['tags'], 'secondary tag → tag');
+        $this->assertSame(2, $summary['users']);
+        $this->assertSame(1, $summary['topics'], 'private discussion skipped');
+        $this->assertSame(2, $summary['posts'], 'only comment posts');
+        $this->assertSame(1, $summary['reactions'], 'like → reaction');
+
+        $this->assertDatabaseHas('categories', ['name' => 'General', 'color' => '#ff0000']);
+        $this->assertDatabaseHas('users', ['name' => 'Fiona', 'email' => 'fiona@fl.test', 'password' => $bcrypt]);
+        $topic = DB::table('topics')->where('title', 'Flarum topic')->first();
+        $this->assertNotNull($topic);
+        $this->assertSame(1, (int) $topic->is_pinned);
+        $this->assertSame(1, (int) $topic->reply_count);
+        $this->assertStringContainsString('<strong>world</strong>', DB::table('posts')->where('topic_id', $topic->id)->where('is_first', true)->value('body_html'));
+        $this->assertDatabaseMissing('topics', ['title' => 'Secret DM']);
     }
 
     public function test_xenforo_import(): void

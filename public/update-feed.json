@@ -1,11 +1,13 @@
 {
-    "version": "1.0.5",
-    "download": "https://convoro.co/releases/convoro-1.0.5.zip",
+    "version": "1.0.6",
+    "download": "https://convoro.co/releases/convoro-1.0.6.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Guided setup for new admins",
+    "title": "Brand it as yours + easier install",
     "date": "2026-06-12",
-    "notes": "A friendly setup wizard now greets new admins on the dashboard and walks step-by-step through getting the community ready — branding, categories, email, app icon and first members — with each step linking straight to where you do it.",
+    "notes": "Upload your own favicon in Admin → Settings (next to your logo). The install guide now offers a real prebuilt download zip plus Composer commands. The Flarum importer is now covered by an automated mapping test.",
     "changelog": [
-        {"type": "added", "text": "Guided setup wizard for new admins — a step-by-step first-run flow on the dashboard, dismissable and resumable from a “Guided setup” button."}
+        {"type": "added", "text": "Upload your own favicon in Admin → Settings, next to your logo."},
+        {"type": "added", "text": "Install guide now has a prebuilt download zip plus Composer commands."},
+        {"type": "improved", "text": "Flarum importer is now covered by an automated end-to-end mapping test."}
     ]
 }

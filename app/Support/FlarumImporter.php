@@ -28,6 +28,16 @@ class FlarumImporter
     /** Build a runtime connection to the Flarum database. */
     public static function connect(array $cfg)
     {
+        // SQLite path — importer fixtures/tests (and the rare SQLite source).
+        if (($cfg['driver'] ?? 'mysql') === 'sqlite') {
+            config(['database.connections.'.self::CONN => [
+                'driver' => 'sqlite', 'database' => $cfg['database'] ?? '', 'prefix' => '', 'foreign_key_constraints' => false,
+            ]]);
+            DB::purge(self::CONN);
+
+            return DB::connection(self::CONN);
+        }
+
         config(['database.connections.'.self::CONN => [
             'driver' => 'mysql',
             'host' => $cfg['host'] ?: '127.0.0.1',
