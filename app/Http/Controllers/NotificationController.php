@@ -56,4 +56,28 @@ class NotificationController extends Controller
 
         return back();
     }
+
+    /** Save the per-type notification channel matrix (email + push per type). */
+    public function channelPrefs(Request $request): RedirectResponse
+    {
+        $types = \App\Models\User::NOTIFY_TYPES;
+        $rules = [];
+        foreach ($types as $t) {
+            $rules["prefs.$t.email"] = ['boolean'];
+            $rules["prefs.$t.push"] = ['boolean'];
+        }
+        $request->validate($rules);
+
+        $in = (array) $request->input('prefs', []);
+        $clean = [];
+        foreach ($types as $t) {
+            $clean[$t] = [
+                'email' => (bool) ($in[$t]['email'] ?? false),
+                'push' => (bool) ($in[$t]['push'] ?? false),
+            ];
+        }
+        $request->user()->update(['notification_prefs' => $clean]);
+
+        return back();
+    }
 }

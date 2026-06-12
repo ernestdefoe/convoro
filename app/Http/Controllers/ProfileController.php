@@ -18,9 +18,20 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = $request->user();
+        $prefs = [];
+        foreach (\App\Models\User::NOTIFY_TYPES as $t) {
+            $prefs[$t] = [
+                'email' => $user->wantsNotification($t, 'email'),
+                'push' => $user->wantsNotification($t, 'push'),
+            ];
+        }
+
         return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
+            'mustVerifyEmail' => $user instanceof MustVerifyEmail,
             'status' => session('status'),
+            'notificationPrefs' => $prefs,
+            'pushSubscribed' => $user->pushSubscriptions()->exists(),
         ]);
     }
 

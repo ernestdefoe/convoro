@@ -1,11 +1,13 @@
 {
-    "version": "1.8.0",
-    "download": "https://convoro.co/releases/convoro-1.8.0.zip",
+    "version": "1.9.0",
+    "download": "https://convoro.co/releases/convoro-1.9.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "A mobile bottom tab bar",
+    "title": "Finer notification controls",
     "date": "2026-06-12",
-    "notes": "Phones now get a bottom navigation tab bar — Home, Search, a centre “Post” button, notifications and your account, with unread badges. Admins configure it under Settings → “Mobile tab bar”: toggle it, choose which tabs appear, and reorder them.",
+    "notes": "Per-type notification preferences — for replies, mentions, direct messages, reactions, profile posts and badges, choose email, browser push, both or neither (the in-app bell is always on). Plus a “Send a test notification” button to confirm push works on your device, and the mobile tab bar's centre button now shows your community's logo.",
     "changelog": [
-        {"type": "added", "text": "Configurable mobile bottom tab bar — quick nav on phones with a raised compose button and unread badges; admins pick and reorder the tabs in Settings."}
+        {"type": "added", "text": "Notification preferences — per type (replies, mentions, DMs, reactions, profile posts, badges), pick email and/or browser push."},
+        {"type": "added", "text": "“Send a test notification” button in push settings to verify browser push on your device."},
+        {"type": "improved", "text": "Mobile tab bar centre button shows your community's logo/icon."}
     ]
 }

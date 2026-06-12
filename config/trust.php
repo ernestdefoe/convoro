@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.9.0',
+            'date' => '2026-06-12',
+            'title' => 'Finer notification controls',
+            'items' => [
+                ['type' => 'new', 'text' => 'Notification preferences: for each kind of notification — replies, mentions, direct messages, reactions, profile posts and badges — choose whether you get an email, a browser push, both or neither. (The in-app bell is always on.) Set it under your profile → Settings → Notifications.'],
+                ['type' => 'added', 'text' => 'A “Send a test notification” button in your push settings, so you can confirm browser push is actually working on your device.'],
+                ['type' => 'improved', 'text' => 'The mobile tab bar’s centre button now shows your community’s logo or icon instead of a generic plus.'],
+            ],
+        ],
+        [
             'tag' => '1.8.0',
             'date' => '2026-06-12',
             'title' => 'A mobile bottom tab bar',
@@ -637,9 +647,10 @@ return [
             'Advanced analytics & search',
             'Importers polished — every source schema-verified, Discourse & NodeBB tested live',
             'Configurable mobile bottom tab bar',
+            'Per-type notification controls (email & push)',
         ],
         'now' => [
-            'Native mobile apps — iOS & Android',
+            'Mobile & PWA experience — tab bar, push notifications & finer notification controls',
             'Federation — follow & cross-post across communities',
         ],
         'next' => [],

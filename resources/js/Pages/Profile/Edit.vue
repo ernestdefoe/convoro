@@ -3,6 +3,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import AccessTokensForm from './Partials/AccessTokensForm.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import DigestPreferenceForm from './Partials/DigestPreferenceForm.vue';
+import NotificationPreferencesForm from './Partials/NotificationPreferencesForm.vue';
 import ProfileDetailsForm from './Partials/ProfileDetailsForm.vue';
 import PushToggle from './Partials/PushToggle.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
@@ -32,6 +33,9 @@ const card = 'rounded-c border border-line bg-surface p-6 sm:p-8';
                 </div>
                 <div :class="card">
                     <UpdateProfileInformationForm :must-verify-email="mustVerifyEmail" :status="status" />
+                </div>
+                <div :class="card">
+                    <NotificationPreferencesForm />
                 </div>
                 <div :class="card">
                     <DigestPreferenceForm />

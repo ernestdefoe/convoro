@@ -34,18 +34,22 @@ class Notifier
         // RECIPIENT's language (not the actor's request locale).
         $locale = $user->locale ?: (Settings::get('site.locale') ?: config('app.locale', 'en'));
 
-        \App\Jobs\SendWebPush::dispatch((int) $user->id, [
-            'title' => Settings::get('site.name') ?: config('app.name', 'Convoro'),
-            'body' => self::label($data, $locale),
-            'url' => $data['url'] ?? '/',
-            'tag' => $data['type'] ?? 'convoro',
-        ]);
+        $type = $data['type'] ?? 'reply';
 
-        // Instant email (queued, never blocks the request). Skips noisy reactions,
-        // and respects the member's per-account preference + a real address.
-        if (! in_array($data['type'] ?? '', ['reaction', 'badge'], true)
+        // Browser push (queued), honouring the member's per-type preference.
+        if ($user->wantsNotification($type, 'push')) {
+            \App\Jobs\SendWebPush::dispatch((int) $user->id, [
+                'title' => Settings::get('site.name') ?: config('app.name', 'Convoro'),
+                'body' => self::label($data, $locale),
+                'url' => $data['url'] ?? '/',
+                'tag' => $type,
+            ]);
+        }
+
+        // Instant email (queued, never blocks the request), honouring the member's
+        // per-type preference + a real address.
+        if ($user->wantsNotification($type, 'email')
             && Settings::get('mail.configured')
-            && ($user->notify_email ?? true)
             && filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
             Mail::to($user->email)->locale($locale)->queue(new NotificationEmail(
                 heading: self::label($data, $locale),

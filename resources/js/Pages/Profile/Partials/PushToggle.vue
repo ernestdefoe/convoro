@@ -45,6 +45,22 @@ async function disable() {
     busy.value = false;
   }
 }
+
+const testing = ref(false);
+const testMsg = ref('');
+async function sendTest() {
+  testing.value = true;
+  testMsg.value = '';
+  try {
+    const xsrf = decodeURIComponent((document.cookie.match(/XSRF-TOKEN=([^;]+)/) || [])[1] || '');
+    const r = await fetch('/push/test', { method: 'POST', headers: { 'X-XSRF-TOKEN': xsrf, Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+    testMsg.value = r.ok ? t('Sent! Check your device — it can take a moment.') : t('Could not send. Make sure push is enabled on this device.');
+  } catch {
+    testMsg.value = t('Could not send the test notification.');
+  } finally {
+    testing.value = false;
+  }
+}
 </script>
 
 <template>
@@ -71,6 +87,11 @@ async function disable() {
 
         <p v-if="subscribed" class="mt-2 text-sm text-green-600 dark:text-green-400">{{ t('Push is enabled on this device.') }}</p>
         <p v-if="error" class="mt-2 text-sm text-red-600 dark:text-red-400">{{ error }}</p>
+
+        <div v-if="subscribed" class="mt-4">
+          <SecondaryButton :disabled="testing" @click="sendTest">{{ testing ? t('Sending…') : t('Send a test notification') }}</SecondaryButton>
+          <p v-if="testMsg" class="mt-2 text-sm text-ink-2">{{ testMsg }}</p>
+        </div>
       </template>
     </div>
   </section>

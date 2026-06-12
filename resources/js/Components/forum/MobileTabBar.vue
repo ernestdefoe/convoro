@@ -9,6 +9,12 @@ const page = usePage();
 const auth = useAuthModal();
 const user = computed(() => (page.props as any).auth?.user ?? null);
 const cfg = computed(() => (page.props as any).mobileNav ?? { enabled: true, tabs: [] });
+// The centre button shows the community's brand mark when one is set (favicon is
+// square so it fits the circle best; fall back to the logo, then the + icon).
+const brandImg = computed(() => {
+  const s = (page.props as any).site ?? {};
+  return s.favicon || s.logo || '';
+});
 const dmUnread = computed(() => Number((page.props as any).dmUnread ?? 0));
 const notifUnread = computed(() => Number((page.props as any).notifications?.unread ?? 0));
 
@@ -84,10 +90,11 @@ function go(tb: Tab, e: Event) {
         :aria-label="tab.label"
         @click="(e: Event) => go(tab, e)"
       >
-        <!-- Center compose: raised accent circle -->
+        <!-- Center compose: raised accent circle, branded with the site mark if set -->
         <template v-if="tab.center">
-          <span class="-mt-5 grid h-12 w-12 place-items-center rounded-full bg-primary text-white shadow-lg shadow-primary/40 ring-4 ring-surface">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path :d="tab.icon" /></svg>
+          <span class="-mt-5 grid h-12 w-12 place-items-center overflow-hidden rounded-full shadow-lg shadow-primary/40 ring-4 ring-surface" :class="brandImg ? 'bg-white' : 'bg-primary text-white'">
+            <img v-if="brandImg" :src="brandImg" alt="" class="h-8 w-8 object-contain" />
+            <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path :d="tab.icon" /></svg>
           </span>
           <span class="-mt-1 text-ink-muted">{{ tab.label }}</span>
         </template>

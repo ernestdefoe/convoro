@@ -194,6 +194,7 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/push/subscribe', [App\Http\Controllers\PushController::class, 'subscribe'])->name('push.subscribe');
     Route::post('/push/unsubscribe', [App\Http\Controllers\PushController::class, 'unsubscribe'])->name('push.unsubscribe');
+    Route::post('/push/test', [App\Http\Controllers\PushController::class, 'test'])->name('push.test');
 
     Route::get('/messages', [App\Http\Controllers\MessageController::class, 'index'])->name('messages.index');
     Route::post('/messages', [App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
@@ -205,6 +206,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/read', [NotificationController::class, 'readAll'])->name('notifications.readAll');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
     Route::post('/notifications/preferences', [NotificationController::class, 'preferences'])->name('notifications.preferences');
+    Route::post('/notifications/channel-prefs', [NotificationController::class, 'channelPrefs'])->name('notifications.channel-prefs');
 });
 
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {

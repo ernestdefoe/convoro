@@ -96,7 +96,34 @@ class User extends Authenticatable
             'last_digest_at' => 'datetime',
             'is_admin' => 'boolean',
             'notify_email' => 'boolean',
+            'notification_prefs' => 'array',
             'auto_translate' => 'boolean',
         ];
+    }
+
+    /** Notification types a member can tune per channel. */
+    public const NOTIFY_TYPES = ['reply', 'mention', 'message', 'reaction', 'wall', 'badge'];
+
+    /**
+     * Does this member want a notification of $type over $channel ('email'|'push')?
+     * Falls back to sensible defaults when they haven't set a preference: push on
+     * for everything; email on for everything except the noisy reaction/badge
+     * types, and never any email if their master email switch is off.
+     */
+    public function wantsNotification(string $type, string $channel): bool
+    {
+        $prefs = $this->notification_prefs ?? [];
+        if (isset($prefs[$type][$channel])) {
+            return (bool) $prefs[$type][$channel];
+        }
+        if ($channel === 'push') {
+            return true;
+        }
+        // email defaults
+        if (($this->notify_email ?? true) === false) {
+            return false;
+        }
+
+        return ! in_array($type, ['reaction', 'badge'], true);
     }
 }
