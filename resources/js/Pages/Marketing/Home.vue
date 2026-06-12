@@ -146,7 +146,7 @@ const stack = [
               <a href="/llms.txt" class="rounded-xl border border-line bg-surface px-5 py-3 font-bold text-ink-2 hover:bg-surface-2">{{ t('View the AI spec') }}</a>
             </div>
           </div>
-          <div class="rounded-2xl border border-line bg-ink p-5 font-mono text-sm text-slate-200 shadow-xl">
+          <div class="rounded-2xl border border-slate-700 bg-slate-900 p-5 font-mono text-sm text-slate-200 shadow-xl">
             <div class="mb-3 flex gap-1.5"><span class="h-3 w-3 rounded-full bg-red-400"></span><span class="h-3 w-3 rounded-full bg-amber-400"></span><span class="h-3 w-3 rounded-full bg-emerald-400"></span></div>
             <p class="text-emerald-300">$ curl convoro.co/llms.txt</p>
             <p class="mt-1 text-slate-400">{{ t('# Everything an AI needs to build a') }}</p>

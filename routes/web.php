@@ -270,6 +270,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/invites', [App\Http\Controllers\InviteController::class, 'store'])->name('invites.store');
     Route::delete('/invites/{invite}', [App\Http\Controllers\InviteController::class, 'destroy'])->name('invites.destroy');
     Route::post('/invites/only', [App\Http\Controllers\InviteController::class, 'setOnly'])->name('invites.only');
+    Route::post('/invites/members', [App\Http\Controllers\InviteController::class, 'setMembers'])->name('invites.members');
 
     // Import wizard — migrate from other forum software (Flarum in v1).
     Route::get('/import', [App\Http\Controllers\ImportController::class, 'index'])->name('import');
@@ -309,6 +310,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Member-facing invitations — referral link + email invites.
+    Route::get('/invite', [App\Http\Controllers\MemberInviteController::class, 'index'])->name('invite');
+    Route::post('/invite/send', [App\Http\Controllers\MemberInviteController::class, 'send'])->middleware('throttle:10,10')->name('invite.send');
 });
 
 require __DIR__.'/auth.php';

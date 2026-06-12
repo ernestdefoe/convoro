@@ -14,7 +14,7 @@ use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
-#[Fillable(['name', 'email', 'password', 'digest_frequency', 'notify_email', 'locale', 'auto_translate', 'is_admin', 'bio', 'avatar_path', 'cover_path', 'registration_ip', 'last_ip', 'banned_at', 'ban_reason'])]
+#[Fillable(['name', 'email', 'password', 'digest_frequency', 'notify_email', 'locale', 'auto_translate', 'is_admin', 'bio', 'avatar_path', 'cover_path', 'registration_ip', 'last_ip', 'banned_at', 'ban_reason', 'invited_by'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {

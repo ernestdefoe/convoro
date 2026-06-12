@@ -215,7 +215,7 @@ function onFile(e: Event) {
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFile" />
     </div>
     <EditorContent :editor="editor" class="min-h-[110px] px-4 py-3 text-ink" />
-    <div v-if="uploading" class="pointer-events-none absolute bottom-2 left-3 inline-flex items-center gap-2 rounded-full bg-ink/80 px-3 py-1 text-xs font-semibold text-white">
+    <div v-if="uploading" class="pointer-events-none absolute bottom-2 left-3 inline-flex items-center gap-2 rounded-full bg-slate-900/80 px-3 py-1 text-xs font-semibold text-white">
       <span class="h-2 w-2 animate-pulse rounded-full bg-white"></span> {{ t('Uploading & converting to WebP…') }}
     </div>
 

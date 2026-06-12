@@ -39,15 +39,13 @@ class RegisteredUserController extends Controller
 
         abort_if(\App\Models\IpBan::isBanned($request->ip()), 403, __('Registration is not available.'));
 
-        // Invite-only registration: require a valid invite code.
-        $invite = null;
-        if (\App\Support\Settings::get('invites.only', false)) {
-            $invite = \App\Models\Invite::usable($request->input('invite'));
-            if (! $invite) {
-                throw ValidationException::withMessages([
-                    'invite' => __('A valid invite code is required to join this community.'),
-                ]);
-            }
+        // Resolve any invite code on the request. Required when registration is
+        // invite-only; otherwise optional — but if present it credits the inviter.
+        $invite = \App\Models\Invite::usable($request->input('invite'));
+        if (\App\Support\Settings::get('invites.only', false) && ! $invite) {
+            throw ValidationException::withMessages([
+                'invite' => __('A valid invite code is required to join this community.'),
+            ]);
         }
 
         $user = User::create([
@@ -56,6 +54,7 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
             'registration_ip' => $request->ip(),
             'last_ip' => $request->ip(),
+            'invited_by' => $invite?->created_by,
         ]);
 
         $invite?->increment('uses');

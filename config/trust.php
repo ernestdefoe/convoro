@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.0.7',
+            'date' => '2026-06-12',
+            'title' => 'Invite your friends + dark-mode fix',
+            'items' => [
+                ['type' => 'added', 'text' => 'Members can now invite friends: a new “Invite friends” page (in the account menu) gives everyone a personal referral link and lets them send email invitations. Sign-ups through a member’s link are credited back to them, so they can see who they brought in. Admins can turn member invites on or off under Admin → Invites.'],
+                ['type' => 'fixed', 'text' => 'Code blocks in the documentation (and the terminal preview on the homepage) were showing as a white box with invisible text in dark mode — they’re now properly dark with readable text in both themes.'],
+            ],
+        ],
+        [
             'tag' => '1.0.6',
             'date' => '2026-06-12',
             'title' => 'Brand it as yours + easier install',

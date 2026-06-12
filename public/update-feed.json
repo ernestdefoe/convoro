@@ -1,13 +1,12 @@
 {
-    "version": "1.0.6",
-    "download": "https://convoro.co/releases/convoro-1.0.6.zip",
+    "version": "1.0.7",
+    "download": "https://convoro.co/releases/convoro-1.0.7.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Brand it as yours + easier install",
+    "title": "Invite your friends + dark-mode fix",
     "date": "2026-06-12",
-    "notes": "Upload your own favicon in Admin → Settings (next to your logo). The install guide now offers a real prebuilt download zip plus Composer commands. The Flarum importer is now covered by an automated mapping test.",
+    "notes": "Members can now invite friends via a personal referral link or by email, with sign-ups credited back to them (toggle under Admin → Invites). Also fixes code blocks in the docs showing as a white box with invisible text in dark mode.",
     "changelog": [
-        {"type": "added", "text": "Upload your own favicon in Admin → Settings, next to your logo."},
-        {"type": "added", "text": "Install guide now has a prebuilt download zip plus Composer commands."},
-        {"type": "improved", "text": "Flarum importer is now covered by an automated end-to-end mapping test."}
+        {"type": "added", "text": "Members can invite friends — a personal referral link + email invitations, with referral attribution. New “Invite friends” page in the account menu."},
+        {"type": "fixed", "text": "Documentation code blocks (and the homepage terminal) were a white box with invisible text in dark mode — now dark with readable text."}
     ]
 }

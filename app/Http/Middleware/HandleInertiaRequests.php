@@ -36,6 +36,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
                 'isAdmin' => (bool) $request->user()?->is_admin,
+                'canInvite' => (bool) $request->user() && (bool) Settings::get('invites.members_enabled', true),
             ],
             'site' => fn () => Settings::public(),
             'storeOwner' => (bool) config('convoro.store_owner'),

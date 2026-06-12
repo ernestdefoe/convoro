@@ -19,6 +19,7 @@ class InviteController extends Controller
 
         return Inertia::render('Admin/Invites', [
             'inviteOnly' => (bool) Settings::get('invites.only', false),
+            'membersEnabled' => (bool) Settings::get('invites.members_enabled', true),
             'registerBase' => $base.'/register?invite=',
             'invites' => Invite::with('creator')->latest()->limit(100)->get()->map(fn (Invite $i) => [
                 'id' => $i->id,
@@ -66,6 +67,13 @@ class InviteController extends Controller
     public function setOnly(Request $request): RedirectResponse
     {
         Settings::set('invites.only', $request->boolean('invite_only'));
+
+        return back()->with('status', __('Saved.'));
+    }
+
+    public function setMembers(Request $request): RedirectResponse
+    {
+        Settings::set('invites.members_enabled', $request->boolean('members_enabled'));
 
         return back()->with('status', __('Saved.'));
     }

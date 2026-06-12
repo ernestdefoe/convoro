@@ -6,6 +6,7 @@ import { t } from '@/lib/i18n';
 
 const props = defineProps<{
   inviteOnly: boolean;
+  membersEnabled: boolean;
   registerBase: string;
   invites: { id: number; code: string; note: string | null; email: string | null; uses: number; maxUses: number; expiresAt: string | null; usable: boolean; by: string | null; created: string }[];
 }>();
@@ -16,6 +17,11 @@ const status = computed(() => (page.props as any).flash?.status as string | unde
 const only = ref(props.inviteOnly);
 function toggleOnly() {
   router.post('/admin/invites/only', { invite_only: only.value }, { preserveScroll: true });
+}
+
+const members = ref(props.membersEnabled);
+function toggleMembers() {
+  router.post('/admin/invites/members', { members_enabled: members.value }, { preserveScroll: true });
 }
 
 const form = useForm({ note: '', email: '', max_uses: 1, expires_days: null as number | null });
@@ -56,6 +62,11 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
             <input v-model="only" type="checkbox" class="rounded border-line text-primary focus:ring-primary" @change="toggleOnly" />
             {{ t('Invite-only registration') }}
           </label>
+          <label class="mt-3 flex items-center gap-2 text-sm text-ink-2">
+            <input v-model="members" type="checkbox" class="rounded border-line text-primary focus:ring-primary" @change="toggleMembers" />
+            {{ t('Let members invite their friends') }}
+          </label>
+          <p class="mt-1 text-xs text-ink-muted">{{ t('Adds an “Invite friends” page with a personal referral link and email invites.') }}</p>
         </section>
 
         <section class="rounded-2xl border border-line bg-surface p-5">
