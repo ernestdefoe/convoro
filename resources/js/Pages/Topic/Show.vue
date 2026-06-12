@@ -3,12 +3,14 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
+import Poll from '@/Components/forum/Poll.vue';
 import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
 import ReaderMode from '@/Components/forum/ReaderMode.vue';
 import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import Editor from '@/Components/Editor.vue';
 import Slot from '@/Components/ext/Slot.vue';
 import { uploadImage } from '@/lib/upload';
+import UploadButton from '@/Components/UploadButton.vue';
 import { useAuthModal } from '@/lib/authModal';
 import { toast } from '@/lib/toast';
 import { t as tr } from '@/lib/i18n';
@@ -122,9 +124,7 @@ function moveTo(topicId: number) {
     onSuccess: () => { moving.value = null; },
   });
 }
-async function pickCover(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
+async function pickCover(file: File) {
   uploadingCover.value = true;
   try { const { url } = await uploadImage(file); editCover.value = url; } catch { /* ignore */ } finally { uploadingCover.value = false; }
 }
@@ -451,6 +451,9 @@ function submitReply() {
         </div>
       </article>
 
+      <!-- Poll -->
+      <Poll v-if="topic.poll" :poll="topic.poll" class="mt-5" />
+
       <div v-if="references && references.length" class="mt-5 rounded-c border border-line bg-surface p-4">
         <div class="mb-2 flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-ink-muted">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1" /></svg>
@@ -579,8 +582,7 @@ function submitReply() {
               <img v-if="editCover" :src="editCover" :alt="tr('cover')" class="h-full w-full object-cover" />
               <span v-else class="text-[11px] text-ink-muted">{{ tr('No cover') }}</span>
             </div>
-            <input type="file" accept="image/png,image/jpeg,image/webp" class="text-sm text-ink-2" @change="pickCover" />
-            <span v-if="uploadingCover" class="text-sm text-ink-muted">{{ tr('Uploading…') }}</span>
+            <UploadButton :uploading="uploadingCover" :label="tr('Choose cover')" accept="image/png,image/jpeg,image/webp" @file="pickCover" />
             <button v-if="editCover" type="button" class="text-sm text-ink-muted hover:text-red-500" @click="editCover = null">{{ tr('Remove') }}</button>
           </div>
 

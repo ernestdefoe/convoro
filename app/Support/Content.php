@@ -24,7 +24,9 @@ class Content
         $config->set('Attr.AllowedRel', ['noopener', 'noreferrer', 'nofollow']);
         $config->set('URI.AllowedSchemes', ['http' => true, 'https' => true, 'mailto' => true]);
         $config->set('AutoFormat.RemoveEmpty', true);
-        $config->set('Cache.SerializerPath', storage_path('app/htmlpurifier'));
+        $cacheDir = storage_path('app/htmlpurifier');
+        \Illuminate\Support\Facades\File::ensureDirectoryExists($cacheDir);
+        $config->set('Cache.SerializerPath', $cacheDir);
 
         return (new HTMLPurifier($config))->purify($html);
     }

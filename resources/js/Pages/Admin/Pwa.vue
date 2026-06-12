@@ -2,6 +2,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import UploadButton from '@/Components/UploadButton.vue';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
@@ -16,10 +17,9 @@ const form = useForm({ short_name: props.values.short_name, banner: props.values
 function save() { form.post('/admin/pwa', { preserveScroll: true }); }
 
 const iconForm = useForm<{ icon: File | null }>({ icon: null });
-function onIcon(e: Event) {
-  const f = (e.target as HTMLInputElement).files?.[0] ?? null;
+function onIcon(f: File) {
   iconForm.icon = f;
-  if (f) iconForm.post('/admin/pwa/icon', { preserveScroll: true, forceFormData: true });
+  iconForm.post('/admin/pwa/icon', { preserveScroll: true, forceFormData: true });
 }
 </script>
 
@@ -57,8 +57,7 @@ function onIcon(e: Event) {
           <img v-for="src in icons" :key="src" :src="src" class="h-12 w-12 rounded-lg border border-line" alt="" />
         </div>
         <div class="mt-4">
-          <input type="file" accept="image/*" class="text-sm text-ink-2" @change="onIcon" />
-          <span v-if="iconForm.processing" class="ml-2 text-sm text-ink-2">{{ t('Generating…') }}</span>
+          <UploadButton :uploading="iconForm.processing" :label="t('Choose app icon')" accept="image/png,image/jpeg,image/webp" @file="onIcon" />
         </div>
       </section>
     </div>

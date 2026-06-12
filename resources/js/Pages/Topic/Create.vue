@@ -2,8 +2,9 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Editor from '@/Components/Editor.vue';
 import { uploadImage } from '@/lib/upload';
+import UploadButton from '@/Components/UploadButton.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { ref, watch, computed } from 'vue';
+import { ref, reactive, watch, computed } from 'vue';
 import { t as tr } from '@/lib/i18n';
 import { toast } from '@/lib/toast';
 
@@ -14,6 +15,12 @@ const props = defineProps<{
 
 const editor = ref<any>(null);
 const uploadingCover = ref(false);
+
+// Optional attached poll.
+const poll = reactive({ enabled: false, question: '', options: ['', ''] as string[], multiple: false, closes_days: null as number | null });
+function addOption() { if (poll.options.length < 10) poll.options.push(''); }
+function removeOption(i: number) { if (poll.options.length > 2) poll.options.splice(i, 1); }
+const pollField = 'w-full rounded-lg border-line bg-appbg text-sm text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary';
 
 const form = useForm({
   title: '',
@@ -91,9 +98,7 @@ async function suggestTags() {
   } catch { /* ignore */ } finally { suggestingTags.value = false; }
 }
 
-async function pickCover(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
+async function pickCover(file: File) {
   uploadingCover.value = true;
   try { const { url } = await uploadImage(file); form.cover = url; } catch { /* ignore */ } finally { uploadingCover.value = false; }
 }
@@ -102,7 +107,14 @@ function submit() {
   if (!editor.value || editor.value.isEmpty()) { form.setError('body_html', tr('Write something first.')); return; }
   form.body_html = editor.value.getHTML();
   form.body_json = editor.value.getJSON();
-  form.post('/topics');
+  const opts = poll.options.map((o) => o.trim()).filter(Boolean);
+  form.transform((data) => ({
+    ...data,
+    poll: poll.enabled && poll.question.trim() && opts.length >= 2
+      ? { question: poll.question.trim(), options: opts, multiple: poll.multiple, closes_days: poll.closes_days || null }
+      : null,
+  }));
+  form.post('/topics', { onFinish: () => form.transform((d) => d) });
 }
 </script>
 
@@ -170,8 +182,24 @@ function submit() {
           <label class="mt-4 block text-sm font-semibold text-ink-2">{{ tr('Cover image') }} <span class="font-normal text-ink-muted">{{ tr('(optional, for grid view)') }}</span></label>
           <div class="mt-2 flex items-center gap-3">
             <img v-if="form.cover" :src="form.cover" alt="" class="h-14 w-24 rounded-lg object-cover" />
-            <input type="file" accept="image/*" class="text-sm text-ink-2" @change="pickCover" />
-            <span v-if="uploadingCover" class="text-sm text-ink-muted">{{ tr('Uploading…') }}</span>
+            <UploadButton :uploading="uploadingCover" :label="tr('Choose cover')" accept="image/*" @file="pickCover" />
+          </div>
+
+          <label class="mt-4 flex items-center gap-2 text-sm font-semibold text-ink-2">
+            <input v-model="poll.enabled" type="checkbox" class="rounded border-line text-primary focus:ring-primary" />
+            {{ tr('Add a poll') }}
+          </label>
+          <div v-if="poll.enabled" class="mt-2 space-y-2.5 rounded-xl border border-line bg-surface-2/40 p-4">
+            <input v-model="poll.question" type="text" :placeholder="tr('Ask a question…')" :class="pollField" maxlength="200" />
+            <div v-for="(o, i) in poll.options" :key="i" class="flex items-center gap-2">
+              <input v-model="poll.options[i]" type="text" :placeholder="tr('Option {n}', { n: i + 1 })" :class="pollField" maxlength="120" />
+              <button v-if="poll.options.length > 2" type="button" class="grid h-8 w-8 shrink-0 place-items-center rounded-lg text-ink-muted hover:bg-surface hover:text-red-500" :aria-label="tr('Remove')" @click="removeOption(i)">✕</button>
+            </div>
+            <button v-if="poll.options.length < 10" type="button" class="text-sm font-semibold text-primary hover:text-primary-600" @click="addOption">+ {{ tr('Add option') }}</button>
+            <div class="flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-line pt-3">
+              <label class="flex items-center gap-2 text-sm text-ink-2"><input v-model="poll.multiple" type="checkbox" class="rounded border-line text-primary focus:ring-primary" /> {{ tr('Allow multiple choices') }}</label>
+              <label class="flex items-center gap-2 text-sm text-ink-2">{{ tr('Close after') }} <input v-model.number="poll.closes_days" type="number" min="1" max="365" class="w-16 rounded-lg border-line bg-appbg text-sm text-ink focus:border-primary focus:ring-primary" /> {{ tr('days') }}</label>
+            </div>
           </div>
         </div>
 

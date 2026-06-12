@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import InputLabel from '@/Components/InputLabel.vue';
+import UploadButton from '@/Components/UploadButton.vue';
 import { uploadImage } from '@/lib/upload';
 import { useForm, usePage } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
@@ -17,9 +18,7 @@ const form = useForm({
 
 const uploading = ref<'avatar' | 'cover' | null>(null);
 
-async function pick(kind: 'avatar' | 'cover', e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
+async function pick(kind: 'avatar' | 'cover', file: File) {
   uploading.value = kind;
   try {
     const { url } = await uploadImage(file);
@@ -62,8 +61,7 @@ watch(
             <img v-if="form.cover" :src="form.cover" alt="" class="h-28 w-full object-cover" />
           </div>
         </div>
-        <input type="file" accept="image/*" class="mt-2 text-sm text-gray-600 dark:text-gray-400" @change="(e) => pick('cover', e)" />
-        <span v-if="uploading === 'cover'" class="ml-2 text-sm text-gray-500">{{ t('Uploading…') }}</span>
+        <UploadButton class="mt-2" :uploading="uploading === 'cover'" :label="t('Choose cover')" accept="image/*" @file="(f) => pick('cover', f)" />
       </div>
 
       <!-- Avatar -->
@@ -72,8 +70,7 @@ watch(
         <div class="mt-2 flex items-center gap-4">
           <img v-if="form.avatar" :src="form.avatar" alt="" class="h-16 w-16 rounded-full object-cover" />
           <span v-else class="grid h-16 w-16 place-items-center rounded-full bg-indigo-500 font-bold text-white">{{ (user.name ?? '?')[0] }}</span>
-          <input type="file" accept="image/*" class="text-sm text-gray-600 dark:text-gray-400" @change="(e) => pick('avatar', e)" />
-          <span v-if="uploading === 'avatar'" class="text-sm text-gray-500">{{ t('Uploading…') }}</span>
+          <UploadButton :uploading="uploading === 'avatar'" :label="t('Choose avatar')" accept="image/*" @file="(f) => pick('avatar', f)" />
         </div>
       </div>
 

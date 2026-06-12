@@ -1,11 +1,13 @@
 {
-    "version": "1.1.2",
-    "download": "https://convoro.co/releases/convoro-1.1.2.zip",
+    "version": "1.2.0",
+    "download": "https://convoro.co/releases/convoro-1.2.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "The LIVE badge is now actually live",
+    "title": "Polls — plus smarter bot & polished uploads",
     "date": "2026-06-12",
-    "notes": "Discussions now show a “LIVE” badge automatically when several members are reading at the same time — driven by who's actually on the page. It appears and clears on its own and refreshes every few seconds without a reload.",
+    "notes": "Polls! Attach a poll to any new topic — single or multiple choice, optional close date — with beautiful animated results. Plus: the AI assistant can be limited to topics matching trigger keywords, and every upload button is now a consistent on-brand control.",
     "changelog": [
-        {"type": "improved", "text": "The “LIVE” badge on a discussion is now driven by real concurrent viewers (via lightweight heartbeats), refreshed on the forum without a reload."}
+        {"type": "new", "text": "Polls — attach a poll to a new topic (up to 10 options, single/multiple choice, optional auto-close) with beautiful animated results, change-vote and view-results-first."},
+        {"type": "improved", "text": "AI auto-answer can be gated to topics matching trigger keywords (Admin → AI), so the assistant doesn't reply on every topic."},
+        {"type": "improved", "text": "Every upload button is now a consistent, on-brand control with an uploading state."}
     ]
 }

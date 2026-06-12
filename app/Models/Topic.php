@@ -19,5 +19,6 @@ class Topic extends Model {
     public function category(): BelongsTo { return $this->belongsTo(Category::class); }
     public function posts(): HasMany { return $this->hasMany(Post::class); }
     public function firstPost(): HasOne { return $this->hasOne(Post::class)->where('is_first', true); }
+    public function poll(): HasOne { return $this->hasOne(Poll::class); }
     public function tags(): BelongsToMany { return $this->belongsToMany(Tag::class, 'topic_tag'); }
 }

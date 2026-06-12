@@ -38,6 +38,12 @@ class TopicController extends Controller
             'body_html' => ['required', 'string', 'max:120000'],
             'body_json' => ['nullable', 'string', 'max:200000'],
             'cover' => ['nullable', 'string', 'max:2048'],
+            'poll' => ['nullable', 'array'],
+            'poll.question' => ['required_with:poll', 'string', 'max:200'],
+            'poll.options' => ['required_with:poll', 'array', 'min:2', 'max:10'],
+            'poll.options.*' => ['nullable', 'string', 'max:120'],
+            'poll.multiple' => ['boolean'],
+            'poll.closes_days' => ['nullable', 'integer', 'min:1', 'max:365'],
         ]);
 
         $html = Content::clean($data['body_html']);
@@ -67,6 +73,19 @@ class TopicController extends Controller
             $topic->tags()->sync($data['tags']);
         }
 
+        // Optional attached poll.
+        if (! empty($data['poll']['question'])) {
+            $options = collect($data['poll']['options'] ?? [])->map(fn ($o) => trim((string) $o))->filter()->take(10)->values();
+            if ($options->count() >= 2) {
+                $poll = $topic->poll()->create([
+                    'question' => $data['poll']['question'],
+                    'max_choices' => ! empty($data['poll']['multiple']) ? $options->count() : 1,
+                    'closes_at' => ! empty($data['poll']['closes_days']) ? now()->addDays((int) $data['poll']['closes_days']) : null,
+                ]);
+                $options->each(fn ($text, $i) => $poll->options()->create(['text' => $text, 'position' => $i]));
+            }
+        }
+
         // "No question goes unanswered" — let the assistant draft an answer.
         if (Ask::enabled() && Settings::get('ai.autoanswer_enabled', false)) {
             $delay = max(0, (int) Settings::get('ai.autoanswer_delay_minutes', 0));
@@ -90,7 +109,7 @@ class TopicController extends Controller
     public function show(Topic $topic): Response
     {
         $topic->increment('view_count');
-        $topic->load(['user', 'category', 'tags', 'posts.user.groups', 'posts.reactions']);
+        $topic->load(['user', 'category', 'tags', 'posts.user.groups', 'posts.reactions', 'poll.options']);
         $actor = auth()->user();
         $actor?->loadMissing('groups');
         $actorId = $actor?->id;
@@ -111,6 +130,7 @@ class TopicController extends Controller
                 'cover' => $topic->cover_image,
                 'isLive' => $topic->is_live,
                 'isLocked' => $topic->is_locked,
+                'poll' => $topic->poll ? \App\Support\Present::poll($topic->poll, $actorId) : null,
                 'category' => $topic->category ? [
                     'name' => $topic->category->name, 'slug' => $topic->category->slug,
                     'color' => $topic->category->color, 'icon' => $topic->category->icon,

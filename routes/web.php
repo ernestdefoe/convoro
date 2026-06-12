@@ -177,6 +177,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/new', [TopicController::class, 'create'])->name('topics.create');
     Route::post('/topics', [TopicController::class, 'store'])->name('topics.store');
     Route::post('/t/{topic}/posts', [PostController::class, 'store'])->name('posts.store');
+    Route::post('/polls/{poll}/vote', [App\Http\Controllers\PollController::class, 'vote'])->middleware('throttle:30,1')->name('polls.vote');
     Route::put('/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/posts/{post}/react', [ReactionController::class, 'toggle'])->name('posts.react');

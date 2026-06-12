@@ -46,6 +46,12 @@ class AutoAnswerTopicJob implements ShouldQueue
             return;
         }
 
+        // Keyword gate: when keywords are configured, only answer topics that
+        // mention at least one of them — so the bot doesn't reply on every topic.
+        if (! self::passesKeywordGate($question)) {
+            return;
+        }
+
         $res = Ask::answer($question);
         if (empty($res['answer']) || ! empty($res['error'])) {
             return;
@@ -61,6 +67,24 @@ class AutoAnswerTopicJob implements ShouldQueue
             'last_post_at' => now(),
             'reply_count' => $topic->posts()->where('is_first', false)->count(),
         ]);
+    }
+
+    /**
+     * Whether a topic clears the keyword gate. With no keywords configured the
+     * bot answers everything (back-compat); with keywords it only answers topics
+     * mentioning at least one.
+     */
+    public static function passesKeywordGate(string $text): bool
+    {
+        $raw = (string) Settings::get('ai.autoanswer_keywords', '');
+        $keywords = collect(preg_split('/[\n,]+/', $raw))
+            ->map(fn ($k) => mb_strtolower(trim($k)))->filter()->unique();
+        if ($keywords->isEmpty()) {
+            return true;
+        }
+        $haystack = mb_strtolower($text);
+
+        return $keywords->contains(fn ($k) => str_contains($haystack, $k));
     }
 
     /** Build the assistant's reply HTML (answer + sources + disclaimer). */

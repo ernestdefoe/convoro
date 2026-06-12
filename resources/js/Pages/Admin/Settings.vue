@@ -3,6 +3,7 @@ import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { uploadImage } from '@/lib/upload';
+import UploadButton from '@/Components/UploadButton.vue';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
@@ -25,25 +26,19 @@ const form = useForm({
 });
 
 const uploadingLogo = ref(false);
-async function pickLogo(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
+async function pickLogo(file: File) {
   uploadingLogo.value = true;
   try { const { url } = await uploadImage(file); form.logo = url; } catch { /* ignore */ } finally { uploadingLogo.value = false; }
 }
 
 const uploadingFavicon = ref(false);
-async function pickFavicon(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
+async function pickFavicon(file: File) {
   uploadingFavicon.value = true;
   try { const { url } = await uploadImage(file); form.favicon = url; } catch { /* ignore */ } finally { uploadingFavicon.value = false; }
 }
 
 const uploadingShare = ref(false);
-async function pickShare(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
+async function pickShare(file: File) {
   uploadingShare.value = true;
   try { const { url } = await uploadImage(file); form.seo_image = url; } catch { /* ignore */ } finally { uploadingShare.value = false; }
 }
@@ -77,8 +72,7 @@ function save() {
               <img v-if="form.logo" :src="form.logo" :alt="t('logo')" class="h-7" />
               <span v-else class="text-xs text-ink-muted">{{ t('No logo') }}</span>
             </div>
-            <input type="file" accept="image/png,image/jpeg,image/webp" class="text-sm text-ink-2" @change="pickLogo" />
-            <span v-if="uploadingLogo" class="text-sm text-ink-2">{{ t('Uploading…') }}</span>
+            <UploadButton :uploading="uploadingLogo" accept="image/png,image/jpeg,image/webp" :label="t('Choose logo')" @file="pickLogo" />
             <button v-if="form.logo" type="button" class="text-sm text-ink-2 hover:text-red-400" @click="form.logo = ''">{{ t('Remove') }}</button>
           </div>
         </div>
@@ -90,8 +84,7 @@ function save() {
               <img v-if="form.favicon" :src="form.favicon" :alt="t('favicon')" class="h-6 w-6 rounded" />
               <span v-else class="text-[10px] text-ink-muted">{{ t('None') }}</span>
             </div>
-            <input type="file" accept="image/png,image/x-icon,image/svg+xml,image/webp" class="text-sm text-ink-2" @change="pickFavicon" />
-            <span v-if="uploadingFavicon" class="text-sm text-ink-2">{{ t('Uploading…') }}</span>
+            <UploadButton :uploading="uploadingFavicon" accept="image/png,image/x-icon,image/svg+xml,image/webp" :label="t('Choose favicon')" @file="pickFavicon" />
             <button v-if="form.favicon" type="button" class="text-sm text-ink-2 hover:text-red-400" @click="form.favicon = ''">{{ t('Remove') }}</button>
           </div>
         </div>
@@ -150,8 +143,7 @@ function save() {
               <img v-if="form.seo_image" :src="form.seo_image" :alt="t('share image')" class="h-full w-full object-cover" />
               <span v-else class="text-xs text-ink-muted">{{ t('None') }}</span>
             </div>
-            <input type="file" accept="image/png,image/jpeg,image/webp" class="text-sm text-ink-2" @change="pickShare" />
-            <span v-if="uploadingShare" class="text-sm text-ink-2">{{ t('Uploading…') }}</span>
+            <UploadButton :uploading="uploadingShare" accept="image/png,image/jpeg,image/webp" :label="t('Choose image')" @file="pickShare" />
             <button v-if="form.seo_image" type="button" class="text-sm text-ink-2 hover:text-red-400" @click="form.seo_image = ''">{{ t('Remove') }}</button>
           </div>
         </div>

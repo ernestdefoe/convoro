@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.2.0',
+            'date' => '2026-06-12',
+            'title' => 'Polls — plus smarter bot & polished uploads',
+            'items' => [
+                ['type' => 'new', 'text' => 'Polls! Attach a poll to any new topic — a question with up to 10 options, single or multiple choice, and an optional auto-close date. Members vote with a tap and see beautiful, animated results bars with live percentages and counts, can change their vote, and view results before voting.'],
+                ['type' => 'improved', 'text' => 'The AI assistant no longer answers every new topic by default — under Admin → AI you can give it trigger keywords so it only replies to topics that mention them (e.g. “error”, “how do I”, “billing”).'],
+                ['type' => 'improved', 'text' => 'Every upload button across the app — logo, favicon, app icon, avatar, cover and topic images — is now a single, consistent, on-brand button with an uploading state, instead of the plain browser “Choose file” control.'],
+            ],
+        ],
+        [
             'tag' => '1.1.2',
             'date' => '2026-06-12',
             'title' => 'The LIVE badge is now actually live',
@@ -540,7 +550,8 @@ return [
             'Documentation site — install, migrate, moderate, theme, extend, deploy',
             'Guided setup wizard for new admins',
             'Member invites & referrals', 'Unread / new-post indicators',
-            'Single sign-on (OpenID Connect)',
+            'Single sign-on (OpenID Connect)', 'Advanced search filters',
+            'Polls with live results',
         ],
         'now' => [
             'Importer polish from real-world migrations',

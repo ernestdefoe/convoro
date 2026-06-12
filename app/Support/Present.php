@@ -147,6 +147,39 @@ class Present
      * @param  iterable<\App\Models\Topic>  $topics
      * @return array<int>
      */
+    /** Build the poll payload for a topic: options, counts, percentages, my votes. */
+    public static function poll(\App\Models\Poll $poll, ?int $userId): array
+    {
+        $poll->loadMissing('options');
+        $counts = \Illuminate\Support\Facades\DB::table('poll_votes')->where('poll_id', $poll->id)
+            ->selectRaw('option_id, count(*) as c')->groupBy('option_id')->pluck('c', 'option_id');
+        $total = (int) $counts->sum();
+        $myVotes = $userId
+            ? \Illuminate\Support\Facades\DB::table('poll_votes')->where('poll_id', $poll->id)->where('user_id', $userId)->pluck('option_id')->map(fn ($i) => (int) $i)->all()
+            : [];
+        $voters = (int) \Illuminate\Support\Facades\DB::table('poll_votes')->where('poll_id', $poll->id)->distinct('user_id')->count('user_id');
+
+        return [
+            'id' => $poll->id,
+            'question' => $poll->question,
+            'multiple' => $poll->max_choices > 1,
+            'maxChoices' => (int) $poll->max_choices,
+            'closesAt' => optional($poll->closes_at)->toIso8601String(),
+            'closesAtLabel' => $poll->closes_at ? $poll->closes_at->diffForHumans() : null,
+            'closed' => $poll->isClosed(),
+            'totalVotes' => $total,
+            'voterCount' => $voters,
+            'myVotes' => $myVotes,
+            'hasVoted' => $myVotes !== [],
+            'options' => $poll->options->map(fn ($o) => [
+                'id' => $o->id,
+                'text' => $o->text,
+                'votes' => (int) ($counts[$o->id] ?? 0),
+                'percent' => $total > 0 ? (int) round(((int) ($counts[$o->id] ?? 0)) / $total * 100) : 0,
+            ])->all(),
+        ];
+    }
+
     public static function unreadTopicIds(iterable $topics, $user): array
     {
         if (! $user) {

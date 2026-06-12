@@ -5,7 +5,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
-  config: { provider: string; model: string; base_url: string; has_key: boolean; ask_enabled: boolean; embed_has_key: boolean; embed_model: string; autoanswer_enabled: boolean; bot_name: string; moderation_enabled: boolean; translate_posts: boolean; price_in: number; price_out: number; monthly_budget: number };
+  config: { provider: string; model: string; base_url: string; has_key: boolean; ask_enabled: boolean; embed_has_key: boolean; embed_model: string; autoanswer_enabled: boolean; autoanswer_keywords: string; bot_name: string; moderation_enabled: boolean; translate_posts: boolean; price_in: number; price_out: number; monthly_budget: number };
   index: { ready: boolean; count: number; running: boolean; percent: number; status: string | null; builtAt: string | null };
   usage: { spentCents: number; budgetCents: number; overBudget: boolean; calls: number; tokens: number; byFeature: { feature: string; calls: number; tokens: number; cents: number }[] };
 }>();
@@ -22,6 +22,7 @@ const form = reactive({
   embed_model: props.config.embed_model || '',
   embed_key: '',
   autoanswer_enabled: props.config.autoanswer_enabled,
+  autoanswer_keywords: props.config.autoanswer_keywords || '',
   bot_name: props.config.bot_name || 'Convoro Assistant',
   moderation_enabled: props.config.moderation_enabled,
   translate_posts: props.config.translate_posts,
@@ -147,6 +148,10 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
           <input v-model="form.autoanswer_enabled" type="checkbox" class="rounded border-line text-primary focus:ring-primary" @change="save" />
           {{ t('Let the assistant draft an answer on unanswered topics') }}
         </label>
+
+        <label class="mt-3 block text-xs font-semibold text-ink-2">{{ t('Only answer topics mentioning…') }} <span class="font-normal text-ink-muted">{{ t('(optional keywords)') }}</span></label>
+        <textarea v-model="form.autoanswer_keywords" rows="2" :class="field" :placeholder="t('e.g. how do I, error, not working, setup, billing')" @change="save"></textarea>
+        <p class="mt-1 text-xs text-ink-muted">{{ t('Comma- or line-separated. The assistant only replies to topics that mention at least one of these — so it doesn’t respond on every topic. Leave empty to answer all unanswered topics.') }}</p>
 
         <label class="mt-3 block text-xs font-semibold text-ink-2">{{ t('Assistant display name') }}</label>
         <input v-model="form.bot_name" :class="field" placeholder="Convoro Assistant" @change="save" />
