@@ -84,6 +84,8 @@ Route::post('/api/related', [App\Http\Controllers\AiController::class, 'related'
 Route::get('/api/topics/{topic}/summary', [App\Http\Controllers\AiController::class, 'summarize'])->middleware('throttle:60,1')->name('topics.summary');
 // Per-reader post translation — translate one post into the viewer's language (cached).
 Route::post('/api/posts/{post}/translate', [App\Http\Controllers\AiController::class, 'translatePost'])->middleware('throttle:120,1')->name('posts.translate');
+// Per-reader DM translation — same, for a conversation message (auth + participant-checked).
+Route::post('/api/messages/{message}/translate', [App\Http\Controllers\AiController::class, 'translateMessage'])->middleware(['auth', 'throttle:120,1'])->name('messages.translate');
 // Writing assistant — transform a draft, suggest titles/tags (auth, throttled).
 Route::post('/api/ai/assist', [App\Http\Controllers\AiController::class, 'assist'])->middleware(['auth', 'throttle:40,1'])->name('ai.assist');
 Route::post('/api/ai/suggest-title', [App\Http\Controllers\AiController::class, 'suggestTitle'])->middleware(['auth', 'throttle:30,1'])->name('ai.suggest.title');

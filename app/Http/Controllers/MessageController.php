@@ -132,6 +132,9 @@ class MessageController extends Controller
         $message = $conversation->messages()->create(['user_id' => $me, 'body_html' => $html]);
         $conversation->update(['last_message_at' => now()]);
 
+        // Detect language so readers with auto-translate can see it in theirs.
+        \App\Jobs\DetectMessageLanguageJob::dispatch($message->id)->afterCommit();
+
         $message->load('user');
         broadcast(new MessageCreated(Present::message($message, 0), $conversation->id));
 

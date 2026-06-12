@@ -101,7 +101,8 @@ class Present
     {
         return [
             'id' => $m->id,
-            'html' => $m->body_html,
+            'html' => Mentions::linkify($m->body_html),
+            'detectedLocale' => $m->detected_locale,
             'author' => self::avatar($m->user),
             'createdAt' => optional($m->created_at)->diffForHumans(),
             'mine' => (int) $m->user_id === $actorId,

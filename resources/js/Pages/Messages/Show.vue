@@ -17,10 +17,59 @@ const posting = ref(false);
 const thread = ref<HTMLElement | null>(null);
 
 const live = ref<any[]>([...props.messages]);
-watch(() => props.messages, (v) => { live.value = [...v]; scrollDown(); });
+watch(() => props.messages, (v) => { live.value = [...v]; scrollDown(); autoTranslateAll(); });
 
 function mine(m: any) {
   return Number(m.author?.id) === meId.value;
+}
+
+// ---- Per-reader DM translation (mirrors Topic post translation) ----
+const user = computed(() => (page.props as any).auth?.user ?? null);
+const baseLang = (code: string | null | undefined) => (code ? String(code).split('-')[0].toLowerCase() : '');
+const viewerLocale = computed(() => user.value?.locale || (page.props as any).i18n?.locale || 'en');
+const autoTranslate = computed(() => !!user.value?.auto_translate);
+const translateEnabled = computed(() => !!(page.props as any).ask?.enabled); // same LLM gate as Ask
+const tx = ref<Record<number, { html?: string; shown: boolean; loading: boolean; failed?: boolean; source?: string | null }>>({});
+
+function xsrf(): string {
+  return decodeURIComponent(document.cookie.match(/XSRF-TOKEN=([^;]+)/)?.[1] ?? '');
+}
+function needsTranslation(m: any): boolean {
+  const src = baseLang(m?.detectedLocale);
+  return !!src && src !== baseLang(viewerLocale.value);
+}
+async function translateMessage(m: any) {
+  const id = m.id;
+  const cur = tx.value[id];
+  if (cur?.loading) return;
+  if (cur?.html) { tx.value[id] = { ...cur, shown: true }; return; }
+  tx.value[id] = { shown: false, loading: true };
+  try {
+    const r = await fetch(`/api/messages/${id}/translate`, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': xsrf(), Accept: 'application/json' },
+      body: JSON.stringify({ locale: viewerLocale.value }),
+    });
+    const data = await r.json();
+    if (data.translated && data.html) tx.value[id] = { html: data.html, shown: true, loading: false, source: data.source };
+    else tx.value[id] = { shown: false, loading: false, failed: !data.translated };
+  } catch { tx.value[id] = { shown: false, loading: false, failed: true }; }
+}
+function toggleTranslation(m: any) {
+  const cur = tx.value[m.id];
+  if (cur?.html) tx.value[m.id] = { ...cur, shown: !cur.shown };
+  else translateMessage(m);
+}
+function displayHtml(m: any): string {
+  const cur = tx.value[m.id];
+  return cur?.shown && cur.html ? cur.html : m.html;
+}
+function autoTranslateAll() {
+  if (!autoTranslate.value || !translateEnabled.value) return;
+  for (const m of live.value) {
+    if (needsTranslation(m) && !tx.value[m.id]) translateMessage(m);
+  }
 }
 
 function scrollDown() {
@@ -64,11 +113,13 @@ const Echo = () => (window as any).Echo;
 let channel: any = null;
 onMounted(() => {
   scrollDown();
+  autoTranslateAll();
   if (!Echo()) return;
   channel = Echo().private(`conversation.${props.conversation.id}`).listen('.MessageCreated', (e: any) => {
     if (e?.message && !live.value.some((m) => m.id === e.message.id)) {
       live.value.push(e.message);
       scrollDown();
+      if (needsTranslation(e.message)) translateMessage(e.message);
     }
   });
 });
@@ -116,9 +167,20 @@ onBeforeUnmount(() => { if (Echo()) Echo().leave(`conversation.${props.conversat
           <Avatar :avatar="m.author" :size="32" />
           <div class="max-w-[75%]">
             <div class="rounded-2xl px-3.5 py-2 text-sm" :class="mine(m) ? 'bg-primary text-white' : 'bg-surface-2 text-ink'">
-              <div class="prose-q" :class="mine(m) ? 'prose-onprimary' : ''" v-html="m.html"></div>
+              <div class="prose-q" :class="mine(m) ? 'prose-onprimary' : ''" v-html="displayHtml(m)"></div>
             </div>
-            <div class="mt-0.5 text-[11px] text-ink-muted" :class="mine(m) ? 'text-right' : ''">{{ m.createdAt }}</div>
+            <div class="mt-0.5 flex items-center gap-2 text-[11px] text-ink-muted" :class="mine(m) ? 'flex-row-reverse text-right' : ''">
+              <span>{{ m.createdAt }}</span>
+              <button
+                v-if="translateEnabled && (needsTranslation(m) || tx[m.id]?.html)"
+                type="button"
+                class="font-semibold text-primary hover:underline"
+                @click="toggleTranslation(m)"
+              >
+                {{ tx[m.id]?.loading ? t('Translating…') : tx[m.id]?.shown ? t('Show original') : t('Translate') }}
+              </button>
+              <span v-if="tx[m.id]?.failed" class="text-ink-muted">{{ t('Translation unavailable') }}</span>
+            </div>
           </div>
         </div>
         <p v-if="!live.length" class="py-10 text-center text-sm text-ink-muted">{{ t('Say hello 👋') }}</p>

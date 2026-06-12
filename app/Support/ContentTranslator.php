@@ -78,8 +78,63 @@ class ContentTranslator
             return ['locale' => $targetLocale, 'html' => $cached, 'translated' => true, 'source' => $source];
         }
 
-        if (! Llm::configured()) {
+        $clean = self::llmTranslate((string) $post->body_html, $targetLocale);
+        if ($clean === null) {
             return ['locale' => $targetLocale, 'html' => $post->body_html, 'translated' => false, 'source' => $source];
+        }
+
+        DB::table('content_translations')->updateOrInsert(
+            ['post_id' => $post->id, 'locale' => $targetLocale],
+            ['message_id' => null, 'body_html' => $clean, 'source_hash' => $hash, 'updated_at' => now(), 'created_at' => now()]
+        );
+
+        return ['locale' => $targetLocale, 'html' => $clean, 'translated' => true, 'source' => $source];
+    }
+
+    /**
+     * Translate a direct message into $targetLocale (cached per message+locale),
+     * so a member reading in one language sees DMs written in another translated.
+     * Same shape/contract as translatePost.
+     */
+    public static function translateMessage(\App\Models\Message $message, string $targetLocale): array
+    {
+        $source = $message->detected_locale;
+        $base = I18n::baseLanguage($targetLocale);
+
+        if ($source && I18n::baseLanguage($source) === $base) {
+            return ['locale' => $targetLocale, 'html' => $message->body_html, 'translated' => false, 'source' => $source];
+        }
+
+        $hash = sha1((string) $message->body_html);
+
+        $cached = DB::table('content_translations')
+            ->where('message_id', $message->id)->where('locale', $targetLocale)->where('source_hash', $hash)
+            ->value('body_html');
+        if ($cached !== null) {
+            return ['locale' => $targetLocale, 'html' => $cached, 'translated' => true, 'source' => $source];
+        }
+
+        $clean = self::llmTranslate((string) $message->body_html, $targetLocale);
+        if ($clean === null) {
+            return ['locale' => $targetLocale, 'html' => $message->body_html, 'translated' => false, 'source' => $source];
+        }
+
+        DB::table('content_translations')->updateOrInsert(
+            ['message_id' => $message->id, 'locale' => $targetLocale],
+            ['post_id' => null, 'body_html' => $clean, 'source_hash' => $hash, 'updated_at' => now(), 'created_at' => now()]
+        );
+
+        return ['locale' => $targetLocale, 'html' => $clean, 'translated' => true, 'source' => $source];
+    }
+
+    /**
+     * Translate an HTML body into $targetLocale via the LLM. Returns sanitized
+     * translated HTML, or null if translation is unavailable/failed/empty.
+     */
+    private static function llmTranslate(string $html, string $targetLocale): ?string
+    {
+        if (! Llm::configured()) {
+            return null;
         }
 
         $language = I18n::languageName($targetLocale);
@@ -88,29 +143,19 @@ class ContentTranslator
             .'(2) Do NOT translate text inside <code> or <pre> elements, URLs, @mentions, #hashtags, or the word "Convoro". '
             .'(3) Do not add explanations, notes, or code fences. (4) Keep emoji as-is.';
 
-        $maxTokens = min(4000, max(600, (int) (mb_strlen((string) $post->body_html) / 2)));
+        $maxTokens = min(4000, max(600, (int) (mb_strlen($html) / 2)));
 
         try {
-            $out = Llm::chat($system, (string) $post->body_html, $maxTokens, 'translate');
+            $out = Llm::chat($system, $html, $maxTokens, 'translate');
         } catch (\Throwable $e) {
-            Log::warning('Post translation failed: '.$e->getMessage());
+            Log::warning('Content translation failed: '.$e->getMessage());
 
-            return ['locale' => $targetLocale, 'html' => $post->body_html, 'translated' => false, 'source' => $source];
+            return null;
         }
 
         $out = trim(preg_replace('/^```(?:html)?|```$/m', '', trim($out)) ?? $out);
         $clean = Content::clean($out);
 
-        if (trim(strip_tags($clean)) === '') {
-            return ['locale' => $targetLocale, 'html' => $post->body_html, 'translated' => false, 'source' => $source];
-        }
-
-        // Upsert the cached translation.
-        DB::table('content_translations')->updateOrInsert(
-            ['post_id' => $post->id, 'locale' => $targetLocale],
-            ['body_html' => $clean, 'source_hash' => $hash, 'updated_at' => now(), 'created_at' => now()]
-        );
-
-        return ['locale' => $targetLocale, 'html' => $clean, 'translated' => true, 'source' => $source];
+        return trim(strip_tags($clean)) === '' ? null : $clean;
     }
 }

@@ -169,6 +169,29 @@ class AiController extends Controller
         return response()->json(\App\Support\ContentTranslator::translatePost($post, $target));
     }
 
+    /** Translate a single DM into the reader's language (cached per message+locale). */
+    public function translateMessage(Request $request, \App\Models\Message $message): JsonResponse
+    {
+        // Only participants of the conversation may translate its messages.
+        $me = (int) $request->user()->id;
+        abort_unless($message->conversation->participants()->where('users.id', $me)->exists(), 403);
+
+        if (! \App\Support\ContentTranslator::enabled()) {
+            return response()->json(['translated' => false, 'html' => $message->body_html]);
+        }
+
+        $data = $request->validate(['locale' => ['nullable', 'string', 'max:16']]);
+        $target = $data['locale']
+            ?? $request->user()?->locale
+            ?? app()->getLocale();
+
+        if (! array_key_exists($target, \App\Support\I18n::available()) && ! array_key_exists($target, \App\Support\I18n::known())) {
+            $target = 'en';
+        }
+
+        return response()->json(\App\Support\ContentTranslator::translateMessage($message, $target));
+    }
+
     /** "Catch me up" — an on-demand, cached AI summary of a long topic. */
     public function summarize(\App\Models\Topic $topic): JsonResponse
     {
