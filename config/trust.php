@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.5.1',
+            'date' => '2026-06-12',
+            'title' => 'Per-extension admin icons + Discourse import verified',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Each add-on in the admin sidebar now has its own icon (announcement bar, analytics, privacy, social login, badges, RSS, queue dashboard…) instead of every one sharing the same puzzle-piece.'],
+                ['type' => 'improved', 'text' => 'The Discourse importer is now verified end-to-end against a real Discourse 3.x instance (categories, users, topics and posts with their formatted HTML) — no longer “beta”.'],
+            ],
+        ],
+        [
             'tag' => '1.5.0',
             'date' => '2026-06-12',
             'title' => 'MyBB & SMF imports — plus hardened XenForo & phpBB',

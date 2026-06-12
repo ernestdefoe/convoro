@@ -32,6 +32,33 @@ const I = {
   globe: 'M12 2a10 10 0 100 20 10 10 0 000-20M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20',
 };
 
+// Distinct icons for extension nav entries, matched on the extension's id/name so
+// each add-on gets its own glyph instead of every one sharing the puzzle piece.
+// Unknown extensions fall back to the puzzle.
+const EXT = {
+  megaphone: 'M3 11v2a1 1 0 001 1h3l5 4V5L7 10H4a1 1 0 00-1 1z M16 9a4 4 0 010 6',
+  chart: 'M3 3v18h18 M7 14l3-3 3 3 5-6',
+  privacy: 'M6 11h12v9H6z M9 11V7a3 3 0 016 0v4',
+  cookie: 'M12 3a9 9 0 109 9 3 3 0 01-3-3 3 3 0 01-3-3 9 9 0 00-3-3z M9 12h.01 M13 15h.01 M15 10h.01',
+  social: 'M9 15l6-6 M10 6l1-1a4 4 0 115 5l-1 1 M14 18l-1 1a4 4 0 11-5-5l1-1',
+  badge: 'M12 14a5 5 0 100-10 5 5 0 000 10z M9 13l-1 8 4-2.5 4 2.5-1-8',
+  rss: 'M4 11a9 9 0 019 9 M4 4a16 16 0 0116 16 M6 18.5a1.5 1.5 0 100-3 1.5 1.5 0 000 3z',
+  queue: 'M4 5h16v5H4z M4 14h16v5H4z M8 7.5h.01 M8 16.5h.01',
+};
+
+function extIcon(e: { id?: string; name?: string }): string {
+  const s = ((e.id ?? '') + ' ' + (e.name ?? '')).toLowerCase();
+  if (s.includes('announc')) return EXT.megaphone;
+  if (s.includes('analytic') || s.includes('stat')) return EXT.chart;
+  if (s.includes('cookie')) return EXT.cookie;
+  if (s.includes('gdpr') || s.includes('privacy') || s.includes('consent')) return EXT.privacy;
+  if (s.includes('social') || s.includes('login') || s.includes('oauth')) return EXT.social;
+  if (s.includes('badge') || s.includes('award')) return EXT.badge;
+  if (s.includes('rss') || s.includes('feed')) return EXT.rss;
+  if (s.includes('horizon') || s.includes('queue')) return EXT.queue;
+  return I.puzzle;
+}
+
 const groups = computed(() => [
   { label: null, items: [{ label: 'Dashboard', href: '/admin', component: 'Admin/Dashboard', icon: I.dash }] },
   { label: 'Community', items: [
@@ -51,7 +78,7 @@ const groups = computed(() => [
     { label: 'Marketplace', href: '/admin/marketplace', component: 'Admin/Marketplace', icon: I.market },
     // The seller/store console lives front-facing now (convoro.co/extensions/manage),
     // reached from the forum's "Extensions" nav — no admin Store section.
-    ...extNav.value.map((e) => ({ label: e.name, href: e.href, component: '', icon: I.puzzle })),
+    ...extNav.value.map((e) => ({ label: e.name, href: e.href, component: '', icon: extIcon(e) })),
   ] },
   { label: 'System', items: [
     { label: 'AI', href: '/admin/ai', component: 'Admin/Ai', icon: I.ai },

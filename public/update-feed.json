@@ -1,12 +1,12 @@
 {
-    "version": "1.5.0",
-    "download": "https://convoro.co/releases/convoro-1.5.0.zip",
+    "version": "1.5.1",
+    "download": "https://convoro.co/releases/convoro-1.5.1.zip",
     "url": "https://convoro.co/changelog",
-    "title": "MyBB & SMF imports — plus hardened XenForo & phpBB",
+    "title": "Per-extension admin icons + Discourse import verified",
     "date": "2026-06-12",
-    "notes": "The Import wizard gains MyBB (1.8) and SMF (2.0 & 2.1) — members, forums, topics and posts with BBCode converted. XenForo and phpBB are now verified against their real schemas (XenForo passwords now carry over correctly; phpBB skips empty container forums). Where passwords can’t safely transfer, those members reset on first login.",
+    "notes": "Each add-on in the admin sidebar now has its own distinct icon instead of sharing the puzzle-piece. The Discourse importer is verified against a real Discourse 3.x instance and is no longer marked beta.",
     "changelog": [
-        {"type": "added", "text": "MyBB (1.8) and SMF / Simple Machines Forum (2.0 & 2.1) importers — members, forums, topics and posts with BBCode converted."},
-        {"type": "improved", "text": "XenForo & phpBB importers verified against real schemas (no longer beta): XenForo passwords now carry over (was a skip bug); phpBB skips empty container forums."}
+        {"type": "improved", "text": "Admin sidebar: each extension gets its own icon instead of the shared puzzle-piece."},
+        {"type": "improved", "text": "Discourse importer verified end-to-end against a real Discourse 3.x database (no longer beta)."}
     ]
 }
