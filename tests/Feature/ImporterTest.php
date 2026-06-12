@@ -337,6 +337,76 @@ class ImporterTest extends TestCase
         $this->assertStringContainsString('<em>Italic</em>', DB::table('posts')->where('topic_id', $topic->id)->where('is_first', true)->value('body_html'));
     }
 
+    public function test_vbulletin5_node_import(): void
+    {
+        // vB5/6 node model — VbulletinImporter should auto-detect and delegate.
+        $this->s()->create('contenttype', function ($t) { $t->integer('contenttypeid'); $t->string('class'); });
+        $this->s()->create('node', function ($t) {
+            $t->integer('nodeid'); $t->integer('parentid')->default(0); $t->integer('contenttypeid'); $t->integer('userid')->default(0);
+            $t->string('title')->nullable(); $t->text('description')->nullable(); $t->integer('publishdate')->default(0); $t->integer('created')->default(0);
+            $t->integer('displayorder')->default(0); $t->integer('sticky')->default(0); $t->integer('open')->default(1); $t->integer('approved')->default(1);
+        });
+        $this->s()->create('text', function ($t) { $t->integer('nodeid'); $t->text('rawtext')->nullable(); $t->string('htmlstate')->default('off'); });
+        $this->s()->create('user', function ($t) {
+            $t->integer('userid'); $t->string('username'); $t->string('displayname')->nullable(); $t->string('email');
+            $t->integer('joindate')->default(0); $t->string('token')->nullable(); $t->string('scheme')->nullable();
+        });
+
+        $this->src->table('contenttype')->insert([
+            ['contenttypeid' => 1, 'class' => 'Channel'],
+            ['contenttypeid' => 2, 'class' => 'Text'],
+            ['contenttypeid' => 3, 'class' => 'Poll'],
+        ]);
+        $this->src->table('user')->insert([
+            ['userid' => 1, 'username' => 'vbadmin', 'displayname' => 'VB Admin', 'email' => 'admin@vb.test', 'joindate' => 1500000000, 'token' => 'deadbeef', 'scheme' => 'legacy'],
+            ['userid' => 2, 'username' => 'vbuser', 'displayname' => '', 'email' => 'user@vb.test', 'joindate' => 1500000001, 'token' => 'cafe', 'scheme' => 'legacy'],
+        ]);
+        $this->src->table('node')->insert([
+            // Channels → categories.
+            ['nodeid' => 10, 'parentid' => 0, 'contenttypeid' => 1, 'userid' => 1, 'title' => 'Lobby', 'description' => 'Talk', 'displayorder' => 1, 'sticky' => 0, 'open' => 1, 'approved' => 1, 'publishdate' => 1500000000, 'created' => 1500000000],
+            ['nodeid' => 11, 'parentid' => 0, 'contenttypeid' => 1, 'userid' => 1, 'title' => 'Archive', 'description' => null, 'displayorder' => 2, 'sticky' => 0, 'open' => 1, 'approved' => 1, 'publishdate' => 1500000000, 'created' => 1500000000],
+            // Thread starters (Text under a Channel) → topics.
+            ['nodeid' => 20, 'parentid' => 10, 'contenttypeid' => 2, 'userid' => 1, 'title' => 'First thread', 'description' => null, 'displayorder' => 0, 'sticky' => 1, 'open' => 1, 'approved' => 1, 'publishdate' => 1600000100, 'created' => 1600000100],
+            ['nodeid' => 23, 'parentid' => 10, 'contenttypeid' => 2, 'userid' => 2, 'title' => 'Locked thread', 'description' => null, 'displayorder' => 0, 'sticky' => 0, 'open' => 0, 'approved' => 1, 'publishdate' => 1600000100, 'created' => 1600000100],
+            // Replies (Text under a thread).
+            ['nodeid' => 21, 'parentid' => 20, 'contenttypeid' => 2, 'userid' => 2, 'title' => 'RE: first', 'description' => null, 'displayorder' => 0, 'sticky' => 0, 'open' => 1, 'approved' => 1, 'publishdate' => 1600000200, 'created' => 1600000200],
+            ['nodeid' => 22, 'parentid' => 20, 'contenttypeid' => 2, 'userid' => 1, 'title' => 'pending', 'description' => null, 'displayorder' => 0, 'sticky' => 0, 'open' => 1, 'approved' => 0, 'publishdate' => 1600000300, 'created' => 1600000300], // unapproved → skipped
+            ['nodeid' => 24, 'parentid' => 23, 'contenttypeid' => 2, 'userid' => 1, 'title' => 'RE: locked', 'description' => null, 'displayorder' => 0, 'sticky' => 0, 'open' => 1, 'approved' => 1, 'publishdate' => 1600000150, 'created' => 1600000150],
+        ]);
+        $this->src->table('text')->insert([
+            ['nodeid' => 20, 'rawtext' => '[b]Hello[/b] world', 'htmlstate' => 'off'],
+            ['nodeid' => 21, 'rawtext' => 'a reply', 'htmlstate' => 'off'],
+            ['nodeid' => 22, 'rawtext' => 'pending body', 'htmlstate' => 'off'],
+            ['nodeid' => 23, 'rawtext' => 'locked op', 'htmlstate' => 'off'],
+            ['nodeid' => 24, 'rawtext' => 'reply two', 'htmlstate' => 'off'],
+        ]);
+
+        // Call through VbulletinImporter to exercise node-schema auto-detection.
+        $summary = VbulletinImporter::run($this->cfg(), [], fn () => null);
+
+        $this->assertSame(2, $summary['categories'], 'two Channel nodes');
+        $this->assertSame(2, $summary['users']);
+        $this->assertSame(2, $summary['topics'], 'Text-under-Channel nodes');
+        $this->assertSame(4, $summary['posts'], '2 starters + 2 approved replies (unapproved skipped)');
+
+        $this->assertDatabaseHas('categories', ['name' => 'Lobby']);
+        // displayname preferred; vB token not portable → reset to bcrypt.
+        $this->assertDatabaseHas('users', ['name' => 'VB Admin', 'email' => 'admin@vb.test']);
+        $this->assertDatabaseHas('users', ['name' => 'vbuser', 'email' => 'user@vb.test']); // empty displayname → username
+        $this->assertStringStartsWith('$2', DB::table('users')->where('email', 'admin@vb.test')->value('password'));
+
+        $topic = DB::table('topics')->where('title', 'First thread')->first();
+        $this->assertNotNull($topic);
+        $this->assertSame(1, (int) $topic->is_pinned);
+        $this->assertSame(0, (int) $topic->is_locked);
+        $this->assertSame(1, (int) $topic->reply_count, 'first post + 1 reply');
+        // The starter node's own text is the first post (BBCode converted).
+        $first = DB::table('posts')->where('topic_id', $topic->id)->where('is_first', true)->value('body_html');
+        $this->assertStringContainsString('<strong>Hello</strong>', $first);
+
+        $this->assertSame(1, (int) DB::table('topics')->where('title', 'Locked thread')->value('is_locked'));
+    }
+
     public function test_invision_import(): void
     {
         // Forum + group names live in core_sys_lang_words, not on the forum row.

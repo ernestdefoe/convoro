@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.6.0',
+            'date' => '2026-06-12',
+            'title' => 'Import from vBulletin 5 & 6',
+            'items' => [
+                ['type' => 'new', 'text' => 'The vBulletin importer now also handles vBulletin 5 and 6, which use a completely different “node” database. The wizard detects which generation you’re on automatically — one option covers vBulletin 3, 4, 5 and 6 — bringing across forums, members, threads and posts (with BBCode converted to formatting). As with vBulletin 3/4, members reset their password on first login.'],
+            ],
+        ],
+        [
             'tag' => '1.5.1',
             'date' => '2026-06-12',
             'title' => 'Per-extension admin icons + Discourse import verified',
@@ -608,6 +616,7 @@ return [
             'Drafts & scheduled posts',
             'Invision Community importer (IPS 4 & 5)',
             'MyBB & SMF importers; XenForo & phpBB schema-verified',
+            'vBulletin 5 & 6 (node) import + Discourse verified live',
         ],
         'now' => [
             'Importer polish from real-world migrations',

@@ -12,14 +12,27 @@ use Illuminate\Support\Str;
  *   thread → topics
  *   post   → posts (BBCode → HTML)
  *
- * Supports an optional table prefix.
+ * Supports an optional table prefix. vBulletin 5/6 replaced this classic schema
+ * with the node architecture, so when a `node` table is present we delegate to
+ * Vbulletin5Importer — one wizard option covers both generations.
  */
 class VbulletinImporter
 {
+    /** vB5/6 use the node model — detect it and hand off. */
+    private static function isNodeSchema($conn, string $p): bool
+    {
+        $sb = $conn->getSchemaBuilder();
+
+        return $sb->hasTable($p.'node') && $sb->hasTable($p.'contenttype') && ! $sb->hasTable($p.'thread');
+    }
+
     public static function test(array $cfg): array
     {
         $conn = Src::connect($cfg);
         $p = trim((string) ($cfg['prefix'] ?? ''));
+        if (self::isNodeSchema($conn, $p)) {
+            return Vbulletin5Importer::test($cfg);
+        }
         $sb = $conn->getSchemaBuilder();
         foreach (['user', 'thread', 'post', 'forum'] as $req) {
             if (! $sb->hasTable($p.$req)) {
@@ -40,6 +53,9 @@ class VbulletinImporter
         @set_time_limit(0);
         $conn = Src::connect($cfg);
         $p = trim((string) ($cfg['prefix'] ?? ''));
+        if (self::isNodeSchema($conn, $p)) {
+            return Vbulletin5Importer::run($cfg, $opts, $progress);
+        }
         $now = now();
         $summary = ['categories' => 0, 'users' => 0, 'topics' => 0, 'posts' => 0, 'reactions' => 0, 'skipped' => 0];
         $catMap = $userMap = $topicMap = $newTopics = $topicStat = [];

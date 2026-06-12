@@ -45,7 +45,7 @@ class ImportController extends Controller
                 ['id' => 'xenforo', 'name' => 'XenForo', 'db' => 'MySQL', 'prefix' => '', 'tested' => true],
                 ['id' => 'phpbb', 'name' => 'phpBB', 'db' => 'MySQL', 'prefix' => 'phpbb_', 'tested' => true],
                 ['id' => 'discourse', 'name' => 'Discourse', 'db' => 'PostgreSQL', 'prefix' => '', 'tested' => true],
-                ['id' => 'vbulletin', 'name' => 'vBulletin', 'db' => 'MySQL', 'prefix' => '', 'tested' => false],
+                ['id' => 'vbulletin', 'name' => 'vBulletin (3–6)', 'db' => 'MySQL', 'prefix' => '', 'tested' => true],
                 ['id' => 'invision', 'name' => 'Invision Community', 'db' => 'MySQL', 'prefix' => '', 'tested' => true],
                 ['id' => 'mybb', 'name' => 'MyBB', 'db' => 'MySQL', 'prefix' => 'mybb_', 'tested' => true],
                 ['id' => 'smf', 'name' => 'SMF', 'db' => 'MySQL', 'prefix' => 'smf_', 'tested' => true],

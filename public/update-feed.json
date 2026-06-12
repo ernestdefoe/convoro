@@ -1,12 +1,11 @@
 {
-    "version": "1.5.1",
-    "download": "https://convoro.co/releases/convoro-1.5.1.zip",
+    "version": "1.6.0",
+    "download": "https://convoro.co/releases/convoro-1.6.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Per-extension admin icons + Discourse import verified",
+    "title": "Import from vBulletin 5 & 6",
     "date": "2026-06-12",
-    "notes": "Each add-on in the admin sidebar now has its own distinct icon instead of sharing the puzzle-piece. The Discourse importer is verified against a real Discourse 3.x instance and is no longer marked beta.",
+    "notes": "The vBulletin importer now handles vBulletin 5 and 6 (the node-based database) in addition to 3 and 4 — the wizard auto-detects which generation you're on. Forums, members, threads and posts come across with BBCode converted; members reset their password on first login.",
     "changelog": [
-        {"type": "improved", "text": "Admin sidebar: each extension gets its own icon instead of the shared puzzle-piece."},
-        {"type": "improved", "text": "Discourse importer verified end-to-end against a real Discourse 3.x database (no longer beta)."}
+        {"type": "added", "text": "vBulletin 5 & 6 import (node architecture) — auto-detected, one wizard option now covers vBulletin 3 through 6."}
     ]
 }
