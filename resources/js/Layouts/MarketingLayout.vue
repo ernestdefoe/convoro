@@ -21,6 +21,7 @@ const auth = useAuthModal();
         <nav class="ml-2 hidden items-center gap-1 md:flex">
           <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Home</Link>
           <Link href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Extensions</Link>
+          <Link href="/compare" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Compare</Link>
           <a href="/docs" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Docs</a>
           <a :href="forumUrl" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Community</a>
         </nav>
@@ -45,6 +46,7 @@ const auth = useAuthModal();
         <div class="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm text-ink-muted">
           <Link href="/" class="flex items-center"><ConvoroLogo :size="24" /></Link>
           <Link href="/extensions" class="font-semibold text-ink-2 hover:text-ink">Extensions</Link>
+          <Link href="/compare" class="font-semibold text-ink-2 hover:text-ink">Compare</Link>
           <a href="/docs" class="font-semibold text-ink-2 hover:text-ink">Docs</a>
           <Link href="/changelog" class="font-semibold text-ink-2 hover:text-ink">Changelog</Link>
           <Link href="/roadmap" class="font-semibold text-ink-2 hover:text-ink">Roadmap</Link>

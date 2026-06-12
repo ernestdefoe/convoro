@@ -25,6 +25,18 @@ class MarketingController extends Controller
         ]);
     }
 
+    /** Honest feature-by-feature comparison vs other forum software. */
+    public function compare(): Response
+    {
+        return Inertia::render('Marketing/Compare', [
+            'seo' => Seo::make([
+                'title' => __('Convoro vs Flarum, Discourse, XenForo, phpBB & Invision'),
+                'description' => __('An honest, feature-by-feature comparison of Convoro against the forum software people most often switch from — covering the member experience, AI features, customization, hosting and cost.'),
+                'type' => 'website',
+            ]),
+        ]);
+    }
+
     public static function card(Product $p): array
     {
         return [

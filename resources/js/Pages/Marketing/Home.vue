@@ -22,6 +22,17 @@ const features = [
   { icon: '🔑', title: t('Tokens & permissions'), body: t('Core API access tokens, user groups, and a granular permission system built in.') },
   { icon: '🔔', title: t('Notifications & digests'), body: t('In-app, push, and scheduled email digests keep members coming back.') },
 ];
+
+// The modern, open-source stack Convoro is built on. Logos are the official
+// single-path marks (simple-icons), tinted with each brand's color.
+const stack = [
+  { name: 'Laravel', hex: '#FF2D20', d: 'M23.642 5.43a.364.364 0 01.014.1v5.149c0 .135-.073.26-.189.326l-4.323 2.49v4.934a.378.378 0 01-.188.326L9.93 23.949a.316.316 0 01-.066.027c-.008.002-.016.008-.024.01a.348.348 0 01-.192 0c-.011-.002-.02-.008-.03-.012-.02-.008-.042-.014-.062-.025L.533 18.755a.376.376 0 01-.189-.326V2.974c0-.033.005-.066.014-.098.003-.012.01-.02.014-.032a.369.369 0 01.023-.058c.004-.013.015-.022.023-.033l.033-.045c.012-.01.025-.018.037-.027.014-.012.027-.024.041-.034H.53L5.043.05a.375.375 0 01.375 0L9.93 2.647h.002c.015.01.027.021.04.033l.038.027c.013.014.02.03.033.045.008.011.02.021.025.033.01.02.017.038.024.058.003.011.01.021.013.032.01.031.014.064.014.098v9.652l3.76-2.164V5.527c0-.033.004-.066.013-.098.003-.01.01-.02.013-.032a.487.487 0 01.024-.059c.007-.012.018-.02.025-.033.012-.015.021-.03.033-.043.012-.012.025-.02.037-.028.014-.01.026-.023.041-.032h.001l4.513-2.598a.375.375 0 01.375 0l4.513 2.598c.016.01.027.021.042.031.012.01.025.018.036.028.013.014.022.03.034.044.008.012.019.021.024.033.011.02.018.04.024.06.006.01.012.021.015.032zm-.74 5.032V6.179l-1.578.908-2.182 1.256v4.283zm-4.51 7.75v-4.287l-2.147 1.225-6.126 3.498v4.325zM1.093 3.624v14.588l8.273 4.761v-4.325l-4.322-2.445-.002-.003H5.04c-.014-.01-.025-.021-.04-.031-.011-.01-.024-.018-.035-.027l-.001-.002c-.013-.012-.021-.025-.031-.04-.01-.011-.021-.022-.028-.036h-.002c-.008-.014-.013-.031-.02-.047-.006-.016-.014-.027-.018-.043a.49.49 0 01-.008-.057c-.002-.014-.006-.027-.006-.041V5.789l-2.18-1.257zM5.23.81L1.47 2.974l3.76 2.164 3.758-2.164zm1.956 13.505l2.182-1.256V3.624l-1.58.91-2.182 1.255v9.435zm11.581-10.95l-3.76 2.163 3.76 2.163 3.759-2.164zm-.376 4.978L16.21 7.087 14.63 6.18v4.283l2.182 1.256 1.58.908zm-8.65 9.654l5.514-3.148 2.756-1.572-3.757-2.163-4.323 2.489-3.941 2.27z' },
+  { name: 'Vue.js', hex: '#42B883', d: 'M24,1.61H14.06L12,5.16,9.94,1.61H0L12,22.39ZM12,14.08,5.16,2.23H9.59L12,6.41l2.41-4.18h4.43Z' },
+  { name: 'Inertia.js', hex: '#9553E9', d: 'M6.901 5.331H0L6.669 12 0 18.669h6.901L13.571 12 6.9 5.331zm10.43 0H10.43L17.099 12l-6.67 6.669h6.902L24 12l-6.669-6.669z' },
+  { name: 'Tailwind CSS', hex: '#38BDF8', d: 'M12.001,4.8c-3.2,0-5.2,1.6-6,4.8c1.2-1.6,2.6-2.2,4.2-1.8c0.913,0.228,1.565,0.89,2.288,1.624 C13.666,10.618,15.027,12,18.001,12c3.2,0,5.2-1.6,6-4.8c-1.2,1.6-2.6,2.2-4.2,1.8c-0.913-0.228-1.565-0.89-2.288-1.624 C16.337,6.182,14.976,4.8,12.001,4.8z M6.001,12c-3.2,0-5.2,1.6-6,4.8c1.2-1.6,2.6-2.2,4.2-1.8c0.913,0.228,1.565,0.89,2.288,1.624 c1.177,1.194,2.538,2.576,5.512,2.576c3.2,0,5.2-1.6,6-4.8c-1.2,1.6-2.6,2.2-4.2,1.8c-0.913-0.228-1.565-0.89-2.288-1.624 C10.337,13.382,8.976,12,6.001,12z' },
+  { name: 'TypeScript', hex: '#3178C6', d: 'M1.125 0C.502 0 0 .502 0 1.125v21.75C0 23.498.502 24 1.125 24h21.75c.623 0 1.125-.502 1.125-1.125V1.125C24 .502 23.498 0 22.875 0zm17.363 9.75c.612 0 1.154.037 1.627.111a6.38 6.38 0 0 1 1.306.34v2.458a3.95 3.95 0 0 0-.643-.361 5.093 5.093 0 0 0-.717-.26 5.453 5.453 0 0 0-1.426-.2c-.3 0-.573.028-.819.086a2.1 2.1 0 0 0-.623.242c-.17.104-.3.229-.393.374a.888.888 0 0 0-.14.49c0 .196.053.373.156.529.104.156.252.304.443.444s.423.276.696.41c.273.135.582.274.926.416.47.197.892.407 1.266.628.374.222.695.473.963.753.268.279.472.598.614.957.142.359.214.776.214 1.253 0 .657-.125 1.21-.373 1.656a3.033 3.033 0 0 1-1.012 1.085 4.38 4.38 0 0 1-1.487.596c-.566.12-1.163.18-1.79.18a9.916 9.916 0 0 1-1.84-.164 5.544 5.544 0 0 1-1.512-.493v-2.63a5.033 5.033 0 0 0 3.237 1.2c.333 0 .624-.03.872-.09.249-.06.456-.144.623-.25.166-.108.29-.234.373-.38a1.023 1.023 0 0 0-.074-1.089 2.12 2.12 0 0 0-.537-.5 5.597 5.597 0 0 0-.807-.444 27.72 27.72 0 0 0-1.007-.436c-.918-.383-1.602-.852-2.053-1.405-.45-.553-.676-1.222-.676-2.005 0-.614.123-1.141.369-1.582.246-.441.58-.804 1.004-1.089a4.494 4.494 0 0 1 1.47-.629 7.536 7.536 0 0 1 1.77-.201zm-15.113.188h9.563v2.166H9.506v9.646H6.789v-9.646H3.375z' },
+  { name: 'Vite', hex: '#646CFF', d: 'M13.056 23.238a.57.57 0 0 1-1.02-.355v-5.202c0-.63-.512-1.143-1.144-1.143H5.148a.57.57 0 0 1-.464-.903l3.777-5.29c.54-.753 0-1.804-.93-1.804H.57a.574.574 0 0 1-.543-.746.6.6 0 0 1 .08-.157L5.008.78a.57.57 0 0 1 .467-.24h14.589a.57.57 0 0 1 .466.903l-3.778 5.29c-.54.755 0 1.806.93 1.806h5.745c.238 0 .424.138.513.322a.56.56 0 0 1-.063.603z' },
+];
 </script>
 
 <template>
@@ -91,6 +102,24 @@ const features = [
       </div>
     </section>
 
+    <!-- Built on — the modern open-source stack -->
+    <section class="border-y border-line bg-surface/40">
+      <div class="mx-auto max-w-6xl px-6 py-16">
+        <div class="mx-auto mb-10 max-w-2xl text-center">
+          <span class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">{{ t('🛠️ Built on') }}</span>
+          <h2 class="mt-4 text-3xl font-extrabold tracking-tight sm:text-4xl">{{ t('A modern, open-source foundation') }}</h2>
+          <p class="mt-3 text-lg text-ink-2">{{ t('No bespoke black box — Convoro stands on the same battle-tested tools millions of developers already know and trust.') }}</p>
+        </div>
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <div v-for="s in stack" :key="s.name" class="flex flex-col items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-6 transition hover:shadow-lg hover:shadow-black/5" :title="s.name">
+            <svg viewBox="0 0 24 24" class="h-9 w-9" :fill="s.hex" aria-hidden="true"><path :d="s.d" /></svg>
+            <span class="text-sm font-bold text-ink-2">{{ s.name }}</span>
+          </div>
+        </div>
+        <p class="mt-8 text-center text-sm text-ink-muted">{{ t('Plus Laravel Reverb for websockets, Valkey / Redis for cache & queues, and MySQL · MariaDB · PostgreSQL for storage.') }}</p>
+      </div>
+    </section>
+
     <!-- Hosting band (intentionally dark in both themes) -->
     <section class="bg-slate-900 py-20 text-white">
       <div class="mx-auto max-w-4xl px-6 text-center">
@@ -139,6 +168,17 @@ const features = [
           <a href="/docs/install" class="rounded-xl bg-primary px-6 py-3.5 font-bold text-white shadow-lg shadow-primary/25 hover:bg-primary-600">{{ t('Get started free →') }}</a>
           <Link href="/extensions" class="rounded-xl border border-line bg-surface px-6 py-3.5 font-bold text-ink-2 hover:bg-surface-2">{{ t('Browse the marketplace') }}</Link>
         </div>
+      </div>
+    </section>
+
+    <!-- Switching? Compare -->
+    <section class="mx-auto max-w-6xl px-6 py-12">
+      <div class="flex flex-col items-center justify-between gap-5 rounded-3xl border border-line bg-surface p-8 text-center sm:flex-row sm:text-left">
+        <div>
+          <h2 class="text-2xl font-extrabold tracking-tight">{{ t('Coming from another forum?') }}</h2>
+          <p class="mt-1.5 text-ink-2">{{ t('See how Convoro stacks up against Flarum, Discourse, XenForo, phpBB and Invision Community — feature by feature.') }}</p>
+        </div>
+        <Link href="/compare" class="shrink-0 rounded-xl bg-primary px-6 py-3.5 font-bold text-white shadow-lg shadow-primary/25 hover:bg-primary-600">{{ t('Compare forum software →') }}</Link>
       </div>
     </section>
 

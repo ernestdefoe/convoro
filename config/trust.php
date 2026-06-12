@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.0.1',
+            'date' => '2026-06-12',
+            'title' => 'Built-on showcase + a forum comparison page',
+            'items' => [
+                ['type' => 'added', 'text' => 'The homepage now shows the modern open-source stack Convoro is built on — Laravel, Vue, Inertia, Tailwind, TypeScript and Vite — with their logos.'],
+                ['type' => 'added', 'text' => 'A new Compare page (linked from the homepage and nav) lays out, feature by feature, how Convoro stacks up against Flarum, Discourse, XenForo, phpBB and Invision Community.'],
+            ],
+        ],
+        [
             'tag' => '1.0.0',
             'date' => '2026-06-12',
             'title' => 'Convoro 1.0 — the first stable release',
