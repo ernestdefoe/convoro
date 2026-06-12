@@ -136,3 +136,17 @@ main.q-main { padding-top: calc(1.5rem * var(--c-density, 1)); padding-bottom: c
 .prose-q blockquote a:hover { text-decoration: underline; }
 /* Nested quotes get progressively quieter. */
 .prose-q blockquote blockquote { opacity: 0.85; }
+
+/* @mentions rendered as profile chips (Mentions::linkify). */
+.prose-q .mention,
+.mention {
+  color: rgb(var(--c-primary));
+  font-weight: 600;
+  text-decoration: none;
+  background: rgb(var(--c-primary) / 0.1);
+  padding: 0 4px;
+  border-radius: 5px;
+  white-space: nowrap;
+}
+.prose-q .mention:hover,
+.mention:hover { background: rgb(var(--c-primary) / 0.18); }

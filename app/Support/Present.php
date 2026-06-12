@@ -151,7 +151,7 @@ class Present
 
         return [
             'id' => $p->id,
-            'html' => $p->body_html,
+            'html' => Mentions::linkify($p->body_html),
             'detectedLocale' => $p->detected_locale,
             'held' => (bool) ($p->hidden ?? false),
             'author' => self::avatar($p->user),
