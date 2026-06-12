@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.5.0',
+            'date' => '2026-06-12',
+            'title' => 'MyBB & SMF imports — plus hardened XenForo & phpBB',
+            'items' => [
+                ['type' => 'new', 'text' => 'Two more sources in the Import wizard: MyBB (1.8) and SMF / Simple Machines Forum (2.0 & 2.1) — bringing across members, boards/forums, topics and posts, with BBCode converted to formatting.'],
+                ['type' => 'improved', 'text' => 'The XenForo and phpBB importers are now verified against their real install schemas (no longer “beta”). XenForo member passwords now carry over correctly — a bug was skipping them — and phpBB no longer creates empty “category” placeholders for container forums.'],
+                ['type' => 'improved', 'text' => 'Where a platform’s passwords can’t safely transfer (MyBB and SMF salt the hash in a non-portable way), those members simply reset their password on first login — clearly the safe choice rather than silently breaking sign-in.'],
+            ],
+        ],
+        [
             'tag' => '1.4.0',
             'date' => '2026-06-12',
             'title' => 'Move in from Invision Community',
@@ -588,13 +598,14 @@ return [
             'Pin & lock topics',
             'Drafts & scheduled posts',
             'Invision Community importer (IPS 4 & 5)',
+            'MyBB & SMF importers; XenForo & phpBB schema-verified',
         ],
         'now' => [
             'Importer polish from real-world migrations',
             'Advanced analytics & search',
         ],
         'next' => [
-            'More importers (MyBB, SMF, NodeBB)',
+            'More importers (NodeBB, Vanilla, bbPress)',
         ],
         'later' => [
             'Native mobile wrapper',

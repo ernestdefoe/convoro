@@ -5,7 +5,9 @@ namespace Tests\Feature;
 use App\Support\FlarumImporter;
 use App\Support\Importers\DiscourseImporter;
 use App\Support\Importers\InvisionImporter;
+use App\Support\Importers\MybbImporter;
 use App\Support\Importers\PhpbbImporter;
+use App\Support\Importers\SmfImporter;
 use App\Support\Importers\VbulletinImporter;
 use App\Support\Importers\XenForoImporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -154,8 +156,9 @@ class ImporterTest extends TestCase
             ['node_id' => 2, 'title' => 'Category Holder', 'node_type_id' => 'Category', 'description' => null, 'display_order' => 0],
         ]);
         $bcrypt = '$2y$10$abcdefghijklmnopqrstuv0123456789012345678901234567890u';
+        // XF2 Core12 stores just the bcrypt string under 'hash' — no 'hashFunc' key.
         $this->src->table('xf_user_authenticate')->insert([
-            ['user_id' => 1, 'data' => serialize(['hash' => $bcrypt, 'hashFunc' => 'password_hash'])],
+            ['user_id' => 1, 'data' => serialize(['hash' => $bcrypt, 'cost' => 10])],
         ]);
         $this->src->table('xf_user')->insert([
             ['user_id' => 1, 'username' => 'Ada', 'email' => 'ada@xf.test', 'register_date' => 1600000000, 'avatar_date' => 1600000001],
@@ -192,6 +195,7 @@ class ImporterTest extends TestCase
     {
         $this->s()->create('phpbb_forums', function ($t) {
             $t->integer('forum_id'); $t->string('forum_name'); $t->text('forum_desc')->nullable(); $t->integer('left_id')->default(0);
+            $t->integer('forum_type')->default(1);
         });
         $this->s()->create('phpbb_users', function ($t) {
             $t->integer('user_id'); $t->string('username'); $t->string('user_email'); $t->string('user_password');
@@ -207,7 +211,11 @@ class ImporterTest extends TestCase
             $t->string('bbcode_uid')->default(''); $t->integer('post_visibility')->default(1); $t->integer('post_time')->default(0);
         });
 
-        $this->src->table('phpbb_forums')->insert([['forum_id' => 1, 'forum_name' => 'Support', 'forum_desc' => 'Help', 'left_id' => 1]]);
+        $this->src->table('phpbb_forums')->insert([
+            ['forum_id' => 1, 'forum_name' => 'Support', 'forum_desc' => 'Help', 'left_id' => 2, 'forum_type' => 1],
+            ['forum_id' => 2, 'forum_name' => 'Category Header', 'forum_desc' => null, 'left_id' => 1, 'forum_type' => 0], // container — skipped
+            ['forum_id' => 3, 'forum_name' => 'Our Wiki', 'forum_desc' => null, 'left_id' => 3, 'forum_type' => 2], // link — skipped
+        ]);
         $this->src->table('phpbb_users')->insert([
             ['user_id' => 2, 'username' => 'Cara', 'user_email' => 'cara@pb.test', 'user_password' => '$H$9oldphpass', 'user_type' => 0, 'user_regdate' => 1500000000],
             ['user_id' => 3, 'username' => 'Bot', 'user_email' => 'bot@pb.test', 'user_password' => 'x', 'user_type' => 2, 'user_regdate' => 1500000000],
@@ -447,5 +455,126 @@ class ImporterTest extends TestCase
         $this->assertDatabaseHas('tags', ['name' => 'Help']);
         $tagId = DB::table('tags')->where('name', 'Help')->value('id');
         $this->assertDatabaseHas('topic_tag', ['topic_id' => $topic->id, 'tag_id' => $tagId]);
+    }
+
+    public function test_mybb_import(): void
+    {
+        $this->s()->create('mybb_forums', function ($t) {
+            $t->integer('fid'); $t->string('name'); $t->text('description')->nullable(); $t->string('type')->default('f');
+            $t->string('linkto')->default(''); $t->integer('disporder')->default(0);
+        });
+        $this->s()->create('mybb_users', function ($t) {
+            $t->integer('uid'); $t->string('username'); $t->string('email'); $t->string('password')->nullable();
+            $t->string('salt')->nullable(); $t->integer('regdate')->default(0); $t->text('signature')->nullable(); $t->string('avatar')->nullable();
+        });
+        $this->s()->create('mybb_threads', function ($t) {
+            $t->integer('tid'); $t->integer('fid'); $t->integer('uid'); $t->string('subject');
+            $t->integer('sticky')->default(0); $t->integer('closed')->default(0); $t->integer('views')->default(0);
+            $t->integer('visible')->default(1); $t->integer('dateline')->default(0); $t->integer('lastpost')->default(0); $t->integer('firstpost')->default(0);
+        });
+        $this->s()->create('mybb_posts', function ($t) {
+            $t->integer('pid'); $t->integer('tid'); $t->integer('fid'); $t->integer('uid'); $t->text('message');
+            $t->integer('visible')->default(1); $t->integer('dateline')->default(0);
+        });
+
+        $this->src->table('mybb_forums')->insert([
+            ['fid' => 1, 'name' => 'Lounge', 'description' => 'Chat', 'type' => 'f', 'linkto' => '', 'disporder' => 1],
+            ['fid' => 2, 'name' => 'Container', 'description' => null, 'type' => 'c', 'linkto' => '', 'disporder' => 0], // category container → skipped
+            ['fid' => 3, 'name' => 'Our Site', 'description' => null, 'type' => 'f', 'linkto' => 'https://x.test', 'disporder' => 2], // redirect → skipped
+        ]);
+        $this->src->table('mybb_users')->insert([
+            ['uid' => 1, 'username' => 'Mona', 'email' => 'mona@mybb.test', 'password' => 'deadbeef', 'salt' => 'abc', 'regdate' => 1500000000, 'signature' => 'sig', 'avatar' => 'https://cdn.test/a.png?dateline=99'],
+            ['uid' => 2, 'username' => 'Ned', 'email' => 'ned@mybb.test', 'password' => 'cafe', 'salt' => 'xyz', 'regdate' => 1500000000, 'signature' => null, 'avatar' => ''],
+        ]);
+        $this->src->table('mybb_threads')->insert([
+            ['tid' => 10, 'fid' => 1, 'uid' => 1, 'subject' => 'MyBB thread', 'sticky' => 1, 'closed' => 1, 'views' => 8, 'visible' => 1, 'dateline' => 1500000100, 'lastpost' => 1500000200, 'firstpost' => 100],
+            ['tid' => 11, 'fid' => 1, 'uid' => 2, 'subject' => 'Moderated', 'sticky' => 0, 'closed' => 0, 'views' => 0, 'visible' => 0, 'dateline' => 1500000100, 'lastpost' => 1500000100, 'firstpost' => 102],
+        ]);
+        $this->src->table('mybb_posts')->insert([
+            ['pid' => 100, 'tid' => 10, 'fid' => 1, 'uid' => 1, 'message' => '[b]Bold[/b] start', 'visible' => 1, 'dateline' => 1500000100],
+            ['pid' => 101, 'tid' => 10, 'fid' => 1, 'uid' => 2, 'message' => 'a reply', 'visible' => 1, 'dateline' => 1500000200],
+            ['pid' => 102, 'tid' => 11, 'fid' => 1, 'uid' => 2, 'message' => 'hidden', 'visible' => 1, 'dateline' => 1500000100],
+        ]);
+
+        $summary = MybbImporter::run($this->cfg(['prefix' => 'mybb_']), [], fn () => null);
+
+        $this->assertSame(1, $summary['categories'], 'container + redirect forum skipped');
+        $this->assertSame(2, $summary['users']);
+        $this->assertSame(1, $summary['topics'], 'non-visible thread skipped');
+        $this->assertSame(2, $summary['posts'], 'only the visible thread’s posts');
+        $this->assertDatabaseHas('categories', ['name' => 'Lounge']);
+        $this->assertDatabaseHas('users', ['name' => 'Mona', 'email' => 'mona@mybb.test', 'avatar_path' => 'https://cdn.test/a.png']);
+        // md5+salt password is not portable → replaced with a bcrypt reset hash.
+        $this->assertStringStartsWith('$2', DB::table('users')->where('email', 'mona@mybb.test')->value('password'));
+        $topic = DB::table('topics')->where('title', 'MyBB thread')->first();
+        $this->assertSame(1, (int) $topic->is_pinned);
+        $this->assertSame(1, (int) $topic->is_locked, 'closed → locked');
+        $this->assertSame(1, (int) $topic->reply_count);
+        $this->assertStringContainsString('<strong>Bold</strong>', DB::table('posts')->where('topic_id', $topic->id)->where('is_first', true)->value('body_html'));
+        $this->assertDatabaseMissing('topics', ['title' => 'Moderated']);
+    }
+
+    public function test_smf_import(): void
+    {
+        $this->s()->create('smf_boards', function ($t) {
+            $t->integer('id_board'); $t->string('name'); $t->text('description')->nullable();
+            $t->integer('board_order')->default(0); $t->string('redirect')->default('');
+        });
+        $this->s()->create('smf_members', function ($t) {
+            $t->integer('id_member'); $t->string('member_name'); $t->string('real_name'); $t->string('email_address');
+            $t->string('passwd')->nullable(); $t->integer('date_registered')->default(0); $t->text('signature')->nullable(); $t->string('avatar')->nullable();
+        });
+        $this->s()->create('smf_topics', function ($t) {
+            $t->integer('id_topic'); $t->integer('id_board'); $t->integer('id_first_msg'); $t->integer('id_member_started');
+            $t->integer('is_sticky')->default(0); $t->integer('locked')->default(0); $t->integer('num_views')->default(0);
+            $t->integer('approved')->default(1); $t->integer('id_redirect_topic')->default(0);
+        });
+        $this->s()->create('smf_messages', function ($t) {
+            $t->integer('id_msg'); $t->integer('id_topic'); $t->integer('id_board'); $t->integer('id_member');
+            $t->string('subject'); $t->text('body'); $t->integer('poster_time')->default(0); $t->integer('approved')->default(1);
+        });
+
+        $this->src->table('smf_boards')->insert([
+            ['id_board' => 1, 'name' => 'General', 'description' => 'Talk', 'board_order' => 1, 'redirect' => ''],
+            ['id_board' => 2, 'name' => 'Off site', 'description' => null, 'board_order' => 2, 'redirect' => 'https://x.test'], // redirect → skipped
+        ]);
+        $bcryptSmf = '$2y$10$abcdefghijklmnopqrstuv0123456789012345678901234567890u'; // username-salted, NOT portable
+        $this->src->table('smf_members')->insert([
+            ['id_member' => 1, 'member_name' => 'olga', 'real_name' => 'Olga &amp; Co', 'email_address' => 'olga@smf.test', 'passwd' => $bcryptSmf, 'date_registered' => 1400000000, 'signature' => 'sig', 'avatar' => 'https://cdn.test/o.png'],
+            ['id_member' => 2, 'member_name' => 'pete', 'real_name' => 'Pete', 'email_address' => 'pete@smf.test', 'passwd' => $bcryptSmf, 'date_registered' => 1400000000, 'signature' => null, 'avatar' => ''],
+        ]);
+        $this->src->table('smf_topics')->insert([
+            ['id_topic' => 10, 'id_board' => 1, 'id_first_msg' => 100, 'id_member_started' => 1, 'is_sticky' => 1, 'locked' => 1, 'num_views' => 6, 'approved' => 1, 'id_redirect_topic' => 0],
+            ['id_topic' => 11, 'id_board' => 1, 'id_first_msg' => 102, 'id_member_started' => 1, 'is_sticky' => 0, 'locked' => 0, 'num_views' => 0, 'approved' => 0, 'id_redirect_topic' => 0], // unapproved → skipped
+        ]);
+        $this->src->table('smf_messages')->insert([
+            // Title lives here on the first message; body has BBCode + <br /> + entities.
+            ['id_msg' => 100, 'id_topic' => 10, 'id_board' => 1, 'id_member' => 1, 'subject' => 'SMF &quot;topic&quot;', 'body' => '[b]Hi[/b] all<br />line two &amp; more', 'poster_time' => 1400000100, 'approved' => 1],
+            ['id_msg' => 101, 'id_topic' => 10, 'id_board' => 1, 'id_member' => 2, 'subject' => 'Re: SMF', 'body' => 'a reply', 'poster_time' => 1400000200, 'approved' => 1],
+            ['id_msg' => 102, 'id_topic' => 11, 'id_board' => 1, 'id_member' => 1, 'subject' => 'Hidden', 'body' => 'nope', 'poster_time' => 1400000100, 'approved' => 1],
+        ]);
+
+        $summary = SmfImporter::run($this->cfg(['prefix' => 'smf_']), [], fn () => null);
+
+        $this->assertSame(1, $summary['categories'], 'redirect board skipped');
+        $this->assertSame(2, $summary['users']);
+        $this->assertSame(1, $summary['topics'], 'unapproved topic skipped');
+        $this->assertSame(2, $summary['posts']);
+        $this->assertDatabaseHas('categories', ['name' => 'General']);
+        // Display name is HTML-entity decoded; password is reset (username-salted hash not portable).
+        $this->assertDatabaseHas('users', ['name' => 'Olga & Co', 'email' => 'olga@smf.test']);
+        $this->assertStringStartsWith('$2', DB::table('users')->where('email', 'olga@smf.test')->value('password'));
+        // Title resolved from the first message (and entity-decoded).
+        $topic = DB::table('topics')->where('title', 'SMF "topic"')->first();
+        $this->assertNotNull($topic);
+        $this->assertSame(1, (int) $topic->is_pinned);
+        $this->assertSame(1, (int) $topic->is_locked);
+        $this->assertSame(1, (int) $topic->reply_count);
+        // Body: BBCode bold, <br> → line break, entities decoded then re-escaped safely.
+        $first = DB::table('posts')->where('topic_id', $topic->id)->where('is_first', true)->value('body_html');
+        $this->assertStringContainsString('<strong>Hi</strong>', $first);
+        $this->assertStringContainsString('<br', $first, '<br /> became a line break');
+        $this->assertStringContainsString('&amp; more', $first, 'literal ampersand stays escaped, not double-encoded');
+        $this->assertDatabaseMissing('topics', ['title' => 'Hidden']);
     }
 }

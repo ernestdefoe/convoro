@@ -65,9 +65,13 @@ class XenForoImporter
         $progress('Importing members…', 20, $summary);
         $pw = [];
         if ($sb->hasTable('xf_user_authenticate')) {
+            // `data` is a PHP-serialized array. XF2's Core/Core12 scheme stores the
+            // bcrypt string under 'hash' (no 'hashFunc' key — that was XF1). Hand the
+            // hash to Src::password, which copies bcrypt and resets anything else
+            // (e.g. XF1 sha256, or an external SSO scheme).
             foreach ($conn->table('xf_user_authenticate')->get(['user_id', 'data']) as $a) {
                 $arr = @unserialize((string) $a->data);
-                if (is_array($arr) && ! empty($arr['hash']) && ($arr['hashFunc'] ?? '') === 'password_hash') {
+                if (is_array($arr) && ! empty($arr['hash']) && is_string($arr['hash'])) {
                     $pw[$a->user_id] = $arr['hash'];
                 }
             }

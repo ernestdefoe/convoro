@@ -1,11 +1,12 @@
 {
-    "version": "1.4.0",
-    "download": "https://convoro.co/releases/convoro-1.4.0.zip",
+    "version": "1.5.0",
+    "download": "https://convoro.co/releases/convoro-1.5.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Move in from Invision Community",
+    "title": "MyBB & SMF imports — plus hardened XenForo & phpBB",
     "date": "2026-06-12",
-    "notes": "The Import wizard can now migrate from Invision Community (IPS 4 & 5) — members, forums, topics, posts, tags and reactions. Modern member passwords carry over and log straight in; legacy accounts reset on first login. Invision’s rich-HTML posts (quotes and @mentions) are converted to Convoro’s format automatically.",
+    "notes": "The Import wizard gains MyBB (1.8) and SMF (2.0 & 2.1) — members, forums, topics and posts with BBCode converted. XenForo and phpBB are now verified against their real schemas (XenForo passwords now carry over correctly; phpBB skips empty container forums). Where passwords can’t safely transfer, those members reset on first login.",
     "changelog": [
-        {"type": "added", "text": "Invision Community importer (IPS 4 & 5): migrate members, forums, topics, posts, tags and reactions. Passwords carry over where possible; quotes and @mentions in posts are converted automatically."}
+        {"type": "added", "text": "MyBB (1.8) and SMF / Simple Machines Forum (2.0 & 2.1) importers — members, forums, topics and posts with BBCode converted."},
+        {"type": "improved", "text": "XenForo & phpBB importers verified against real schemas (no longer beta): XenForo passwords now carry over (was a skip bug); phpBB skips empty container forums."}
     ]
 }

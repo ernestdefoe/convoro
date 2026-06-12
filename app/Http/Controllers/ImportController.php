@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Jobs\RunFlarumImportJob;
 use App\Support\Importers\DiscourseImporter;
 use App\Support\Importers\InvisionImporter;
+use App\Support\Importers\MybbImporter;
 use App\Support\Importers\PhpbbImporter;
+use App\Support\Importers\SmfImporter;
 use App\Support\Importers\VbulletinImporter;
 use App\Support\Importers\XenForoImporter;
 use App\Support\FlarumImporter;
@@ -30,6 +32,8 @@ class ImportController extends Controller
         'discourse' => DiscourseImporter::class,
         'vbulletin' => VbulletinImporter::class,
         'invision' => InvisionImporter::class,
+        'mybb' => MybbImporter::class,
+        'smf' => SmfImporter::class,
     ];
 
     public function index(): Response
@@ -38,11 +42,13 @@ class ImportController extends Controller
             'state' => $this->state(),
             'sources' => [
                 ['id' => 'flarum', 'name' => 'Flarum', 'db' => 'MySQL', 'prefix' => '', 'tested' => true],
-                ['id' => 'xenforo', 'name' => 'XenForo', 'db' => 'MySQL', 'prefix' => '', 'tested' => false],
-                ['id' => 'phpbb', 'name' => 'phpBB', 'db' => 'MySQL', 'prefix' => 'phpbb_', 'tested' => false],
+                ['id' => 'xenforo', 'name' => 'XenForo', 'db' => 'MySQL', 'prefix' => '', 'tested' => true],
+                ['id' => 'phpbb', 'name' => 'phpBB', 'db' => 'MySQL', 'prefix' => 'phpbb_', 'tested' => true],
                 ['id' => 'discourse', 'name' => 'Discourse', 'db' => 'PostgreSQL', 'prefix' => '', 'tested' => false],
                 ['id' => 'vbulletin', 'name' => 'vBulletin', 'db' => 'MySQL', 'prefix' => '', 'tested' => false],
                 ['id' => 'invision', 'name' => 'Invision Community', 'db' => 'MySQL', 'prefix' => '', 'tested' => true],
+                ['id' => 'mybb', 'name' => 'MyBB', 'db' => 'MySQL', 'prefix' => 'mybb_', 'tested' => true],
+                ['id' => 'smf', 'name' => 'SMF', 'db' => 'MySQL', 'prefix' => 'smf_', 'tested' => true],
             ],
         ]);
     }

@@ -46,7 +46,13 @@ class PhpbbImporter
         $catMap = $userMap = $topicMap = $newTopics = $topicStat = [];
 
         $progress('Importing categories…', 5, $summary);
+        // forum_type: 0 = category container (no posts), 1 = POST forum, 2 = link.
+        // Only POST forums hold topics, so skip the others when the column exists.
+        $hasForumType = $sb->hasColumn($p.'forums', 'forum_type');
         foreach ($conn->table($p.'forums')->orderBy('left_id')->orderBy('forum_id')->get() as $f) {
+            if ($hasForumType && (int) ($f->forum_type ?? 1) !== 1) {
+                continue;
+            }
             $slug = Src::catSlug($f->forum_name ?: 'forum', (int) $f->forum_id);
             if ($ex = DB::table('categories')->where('slug', $slug)->value('id')) {
                 $catMap[$f->forum_id] = $ex;
