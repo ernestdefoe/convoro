@@ -84,6 +84,14 @@ class TopicController extends Controller
         $actor?->loadMissing('groups');
         $actorId = $actor?->id;
 
+        // Mark this discussion read for the current member (clears its "new" badge).
+        if ($actor) {
+            \Illuminate\Support\Facades\DB::table('topic_reads')->updateOrInsert(
+                ['user_id' => $actor->id, 'topic_id' => $topic->id],
+                ['last_read_at' => now()],
+            );
+        }
+
         return Inertia::render('Topic/Show', [
             'topic' => [
                 'id' => $topic->id,

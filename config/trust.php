@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.0.8',
+            'date' => '2026-06-12',
+            'title' => 'New-post indicator on discussions',
+            'items' => [
+                ['type' => 'added', 'text' => 'Discussions with replies you haven’t seen yet now show a “New” badge in the top-right corner of their card (in both feed and grid views, and in search). Opening a discussion clears its badge, and a fresh reply brings it back.'],
+            ],
+        ],
+        [
             'tag' => '1.0.7',
             'date' => '2026-06-12',
             'title' => 'Invite your friends + dark-mode fix',

@@ -2,7 +2,7 @@
 
 return [
     // Current installed version of the software.
-    'version' => '1.0.7',
+    'version' => '1.0.8',
 
     // Optional URL returning JSON {"version": "x.y.z", "url": "...", "notes": "..."}
     // used by the admin "check for updates" feature. Null = update checks disabled.

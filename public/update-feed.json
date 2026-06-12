@@ -1,12 +1,11 @@
 {
-    "version": "1.0.7",
-    "download": "https://convoro.co/releases/convoro-1.0.7.zip",
+    "version": "1.0.8",
+    "download": "https://convoro.co/releases/convoro-1.0.8.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Invite your friends + dark-mode fix",
+    "title": "New-post indicator on discussions",
     "date": "2026-06-12",
-    "notes": "Members can now invite friends via a personal referral link or by email, with sign-ups credited back to them (toggle under Admin → Invites). Also fixes code blocks in the docs showing as a white box with invisible text in dark mode.",
+    "notes": "Discussions with replies you haven't seen yet now show a “New” badge in the top-right corner of their card (feed, grid and search). Opening the discussion clears it; a new reply brings it back.",
     "changelog": [
-        {"type": "added", "text": "Members can invite friends — a personal referral link + email invitations, with referral attribution. New “Invite friends” page in the account menu."},
-        {"type": "fixed", "text": "Documentation code blocks (and the homepage terminal) were a white box with invisible text in dark mode — now dark with readable text."}
+        {"type": "added", "text": "“New” badge on the top-right corner of a discussion card when it has posts you haven’t seen — cleared when you open it, restored on a new reply."}
     ]
 }

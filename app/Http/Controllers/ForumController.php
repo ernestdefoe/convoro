@@ -35,6 +35,8 @@ class ForumController extends Controller
         };
 
         $topics = $query->paginate(20)->withQueryString();
+        $unread = Present::unreadTopicIds($topics->items(), $request->user());
+        $actorId = $request->user()?->id;
 
         return Inertia::render('Forum/Index', [
             'view' => $view,
@@ -46,7 +48,7 @@ class ForumController extends Controller
                     'color' => $c->color, 'count' => $c->topics_count,
                 ]),
             'topics' => [
-                'data' => collect($topics->items())->map(fn (Topic $t) => Present::topicCard($t)),
+                'data' => collect($topics->items())->map(fn (Topic $t) => Present::topicCard($t, $actorId, in_array($t->id, $unread, true))),
                 'next' => $topics->nextPageUrl(),
             ],
             'stats' => [

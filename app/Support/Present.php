@@ -109,7 +109,7 @@ class Present
         return ['summary' => $groups->all(), 'total' => $post->reactions->count()];
     }
 
-    public static function topicCard(Topic $t, ?int $actorId = null): array
+    public static function topicCard(Topic $t, ?int $actorId = null, bool $isNew = false): array
     {
         $first = $t->relationLoaded('firstPost') ? $t->firstPost : null;
         $react = self::reactions($first, $actorId);
@@ -132,10 +132,54 @@ class Present
             'viewCount' => $t->view_count,
             'isPinned' => $t->is_pinned,
             'isLive' => $t->is_live,
+            'isNew' => $isNew,
             'reactions' => $react['summary'],
             'reactionTotal' => $react['total'],
             'lastActivity' => optional($t->last_post_at)->diffForHumans(),
         ];
+    }
+
+    /**
+     * Given a list of topics and the current user, return the set of topic ids
+     * that have unread activity (a post newer than the user last opened them, or
+     * — for never-opened topics — newer than when the user joined). Guests: none.
+     *
+     * @param  iterable<\App\Models\Topic>  $topics
+     * @return array<int>
+     */
+    public static function unreadTopicIds(iterable $topics, $user): array
+    {
+        if (! $user) {
+            return [];
+        }
+        $topics = collect($topics);
+        $ids = $topics->pluck('id')->all();
+        if (! $ids) {
+            return [];
+        }
+        $reads = \Illuminate\Support\Facades\DB::table('topic_reads')
+            ->where('user_id', $user->id)->whereIn('topic_id', $ids)
+            ->pluck('last_read_at', 'topic_id');
+        $joined = $user->created_at;
+        // For never-opened topics, only flag genuinely recent activity — this also
+        // avoids marking the whole forum "new" the first time the feature ships.
+        $recentCutoff = now()->subDays(30);
+        $freshBaseline = $joined && $joined->gt($recentCutoff) ? $joined : $recentCutoff;
+
+        $new = [];
+        foreach ($topics as $t) {
+            $last = $t->last_post_at;
+            if (! $last) {
+                continue;
+            }
+            $last = $last instanceof \Carbon\CarbonInterface ? $last : \Illuminate\Support\Carbon::parse($last);
+            $baseline = isset($reads[$t->id]) ? \Illuminate\Support\Carbon::parse($reads[$t->id]) : $freshBaseline;
+            if ($last->gt($baseline)) {
+                $new[] = (int) $t->id;
+            }
+        }
+
+        return $new;
     }
 
     /** A single direct message. */

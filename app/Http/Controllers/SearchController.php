@@ -41,12 +41,12 @@ class SearchController extends Controller
 
             if ($ids) {
                 $order = array_flip($ids);
-                $results = Topic::with(['user', 'category', 'tags', 'firstPost.reactions'])
+                $collection = Topic::with(['user', 'category', 'tags', 'firstPost.reactions'])
                     ->whereIn('id', $ids)->get()
                     ->sortBy(fn (Topic $t) => $order[$t->id] ?? PHP_INT_MAX)
-                    ->values()
-                    ->map(fn (Topic $t) => Present::topicCard($t, $actorId))
-                    ->all();
+                    ->values();
+                $unread = Present::unreadTopicIds($collection, $request->user());
+                $results = $collection->map(fn (Topic $t) => Present::topicCard($t, $actorId, in_array($t->id, $unread, true)))->all();
             }
         }
 

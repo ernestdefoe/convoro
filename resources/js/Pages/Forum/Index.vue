@@ -131,7 +131,9 @@ function go(params: Record<string, string | null>) {
         <!-- Grid -->
         <div v-else class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
           <Link v-for="t in topics.data" :key="t.id" :href="`/t/${t.slug}`"
-            class="flex flex-col overflow-hidden rounded-c border border-line bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            class="relative flex flex-col overflow-hidden rounded-c border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+            :class="t.isNew ? 'border-primary/40' : 'border-line'">
+            <span v-if="t.isNew" class="absolute right-2 top-2 z-10 inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md shadow-primary/30">{{ tr('New') }}</span>
             <div class="aspect-[16/8] bg-surface-2">
               <img v-if="t.cover" :src="t.cover" class="h-full w-full object-cover" loading="lazy" />
             </div>
