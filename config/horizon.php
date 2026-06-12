@@ -83,7 +83,7 @@ return [
     |
     */
 
-    'middleware' => ['web', \App\Http\Middleware\HorizonColorScheme::class],
+    'middleware' => ['web'],
 
     /*
     |--------------------------------------------------------------------------
