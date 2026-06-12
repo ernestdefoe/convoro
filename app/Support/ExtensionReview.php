@@ -29,10 +29,26 @@ class ExtensionReview
         return (bool) Settings::get('review.enabled', true) && Llm::configured();
     }
 
-    /** True if there's any source archive we can audit (GitHub repo OR uploaded zip). */
+    /** True if there's source we can audit: a GitHub repo, an uploaded zip, OR a
+     *  locally-installed package (e.g. a first-party extension bundled in packages/). */
     public static function reviewable(Product $product): bool
     {
-        return ($product->source === 'github' && $product->download_url) || (bool) $product->download_path;
+        return ($product->source === 'github' && $product->download_url)
+            || (bool) $product->download_path
+            || self::localPath($product) !== null;
+    }
+
+    /** Path to the installed package dir matching this product's slug/package, or null. */
+    private static function localPath(Product $product): ?string
+    {
+        $id = (string) ($product->slug ?: $product->package);
+        if ($id === '') {
+            return null;
+        }
+        $manifest = ExtensionManager::all()[$id] ?? null;
+        $path = $manifest['_path'] ?? null;
+
+        return (is_string($path) && is_dir($path)) ? $path : null;
     }
 
     /** Run the review for a product. Persists the verdict; returns the rating. */
@@ -75,9 +91,18 @@ class ExtensionReview
         }
     }
 
-    /** Locate the source zip (download it for GitHub, or use the uploaded file). */
+    /** Locate the source (GitHub zip, uploaded zip, or local installed package). */
     private static function fetchSource(Product $product): string
     {
+        // No remote/uploaded archive but the extension is installed locally
+        // (e.g. a bundled first-party extension): audit the files on disk.
+        if (! ($product->source === 'github' && $product->download_url) && ! $product->download_path) {
+            $dir = self::localPath($product);
+            if ($dir !== null) {
+                return self::bundleDir($dir);
+            }
+        }
+
         $tmpZip = null;
         if ($product->source === 'github' && $product->download_url) {
             $tmpZip = tempnam(sys_get_temp_dir(), 'cvr_zip_');
@@ -137,6 +162,42 @@ class ExtensionReview
         $zip->close();
         if ($tmpZip) {
             @unlink($tmpZip); // only the temp download; never the uploaded file
+        }
+
+        return $bundle;
+    }
+
+    /** Bundle audited source files from a local directory (same caps as the zip path). */
+    private static function bundleDir(string $dir): string
+    {
+        $bundle = '';
+        $total = 0;
+        $it = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS)
+        );
+        foreach ($it as $file) {
+            if ($total >= self::MAX_TOTAL) {
+                break;
+            }
+            if (! $file->isFile()) {
+                continue;
+            }
+            $rel = ltrim(str_replace('\\', '/', substr($file->getPathname(), strlen($dir))), '/');
+            $lower = strtolower($rel);
+            if (self::skip('/'.$lower) || ! self::wanted($lower)) {
+                continue;
+            }
+            if ($file->getSize() > self::MAX_FILE * 4) {
+                continue;
+            }
+            $code = @file_get_contents($file->getPathname());
+            if ($code === false || $code === '') {
+                continue;
+            }
+            $code = substr($code, 0, self::MAX_FILE);
+            $chunk = "\n\n===== FILE: {$rel} =====\n".$code;
+            $total += strlen($chunk);
+            $bundle .= $chunk;
         }
 
         return $bundle;

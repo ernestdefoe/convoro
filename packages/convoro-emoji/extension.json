@@ -1,0 +1,16 @@
+{
+    "id": "convoro-emoji",
+    "name": "Emoji Picker",
+    "version": "1.0.0",
+    "description": "Adds an emoji picker to the composer toolbar so members can quickly insert emoji into posts, replies and direct messages. Categories, search and a recents row, themed to match the forum.",
+    "author": "Convoro",
+    "convoro": ">=0.36.0",
+    "type": "extension",
+    "namespace": "Convoro\\Ext\\Emoji\\",
+    "assets": {
+        "forum": "assets/forum.js"
+    },
+    "icon": "icon.svg",
+    "premium": false,
+    "price": 0
+}
