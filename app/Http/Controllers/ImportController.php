@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\RunFlarumImportJob;
 use App\Support\Importers\DiscourseImporter;
+use App\Support\Importers\InvisionImporter;
 use App\Support\Importers\PhpbbImporter;
 use App\Support\Importers\VbulletinImporter;
 use App\Support\Importers\XenForoImporter;
@@ -18,7 +19,7 @@ use Inertia\Response;
 
 /**
  * Import wizard — migrate a community from other forum software into Convoro.
- * Source-pluggable: Flarum, XenForo, phpBB, Discourse and vBulletin.
+ * Source-pluggable: Flarum, XenForo, phpBB, Discourse, vBulletin and Invision Community.
  */
 class ImportController extends Controller
 {
@@ -28,6 +29,7 @@ class ImportController extends Controller
         'phpbb' => PhpbbImporter::class,
         'discourse' => DiscourseImporter::class,
         'vbulletin' => VbulletinImporter::class,
+        'invision' => InvisionImporter::class,
     ];
 
     public function index(): Response
@@ -40,6 +42,7 @@ class ImportController extends Controller
                 ['id' => 'phpbb', 'name' => 'phpBB', 'db' => 'MySQL', 'prefix' => 'phpbb_', 'tested' => false],
                 ['id' => 'discourse', 'name' => 'Discourse', 'db' => 'PostgreSQL', 'prefix' => '', 'tested' => false],
                 ['id' => 'vbulletin', 'name' => 'vBulletin', 'db' => 'MySQL', 'prefix' => '', 'tested' => false],
+                ['id' => 'invision', 'name' => 'Invision Community', 'db' => 'MySQL', 'prefix' => '', 'tested' => true],
             ],
         ]);
     }

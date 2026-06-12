@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Support\FlarumImporter;
 use App\Support\Importers\DiscourseImporter;
+use App\Support\Importers\InvisionImporter;
 use App\Support\Importers\PhpbbImporter;
 use App\Support\Importers\VbulletinImporter;
 use App\Support\Importers\XenForoImporter;
@@ -326,5 +327,125 @@ class ImporterTest extends TestCase
         $this->assertSame(1, (int) $topic->is_pinned);
         $this->assertSame(1, (int) $topic->reply_count);
         $this->assertStringContainsString('<em>Italic</em>', DB::table('posts')->where('topic_id', $topic->id)->where('is_first', true)->value('body_html'));
+    }
+
+    public function test_invision_import(): void
+    {
+        // Forum + group names live in core_sys_lang_words, not on the forum row.
+        $this->s()->create('core_sys_lang_words', function ($t) {
+            $t->integer('word_id'); $t->integer('lang_id')->default(1); $t->string('word_app');
+            $t->string('word_key'); $t->text('word_default')->nullable(); $t->text('word_custom')->nullable();
+        });
+        $this->s()->create('forums_forums', function ($t) {
+            $t->integer('id'); $t->integer('position')->default(0); $t->string('name_seo')->nullable();
+            $t->string('feature_color')->nullable(); $t->integer('redirect_on')->default(0); $t->string('redirect_url')->nullable();
+        });
+        $this->s()->create('core_members', function ($t) {
+            $t->integer('member_id'); $t->string('name'); $t->string('email'); $t->string('members_pass_hash')->nullable();
+            $t->text('signature')->nullable(); $t->integer('joined')->default(0);
+            $t->string('pp_photo_type')->nullable(); $t->string('pp_main_photo')->nullable();
+        });
+        $this->s()->create('forums_topics', function ($t) {
+            $t->integer('tid'); $t->string('title'); $t->integer('approved')->default(1); $t->string('state')->default('open');
+            $t->string('moved_to')->nullable(); $t->integer('pinned')->default(0); $t->integer('starter_id'); $t->integer('forum_id');
+            $t->integer('views')->default(0); $t->integer('start_date')->default(0); $t->integer('last_post')->default(0);
+        });
+        $this->s()->create('forums_posts', function ($t) {
+            $t->integer('pid'); $t->integer('topic_id'); $t->integer('author_id'); $t->text('post');
+            $t->integer('queued')->default(0); $t->integer('pdelete_time')->default(0); $t->integer('new_topic')->default(0); $t->integer('post_date')->default(0);
+        });
+        $this->s()->create('core_tags', function ($t) {
+            $t->integer('tag_id'); $t->string('tag_meta_app'); $t->integer('tag_meta_id'); $t->string('tag_text');
+        });
+        $this->s()->create('core_reputation_index', function ($t) {
+            $t->integer('id'); $t->string('app'); $t->string('type'); $t->integer('type_id'); $t->integer('member_id');
+        });
+
+        $this->src->table('core_sys_lang_words')->insert([
+            ['word_id' => 1, 'lang_id' => 1, 'word_app' => 'forums', 'word_key' => 'forums_forum_1', 'word_default' => 'Announcements', 'word_custom' => null],
+            ['word_id' => 2, 'lang_id' => 1, 'word_app' => 'forums', 'word_key' => 'forums_forum_1_desc', 'word_default' => 'News here', 'word_custom' => null],
+            ['word_id' => 3, 'lang_id' => 1, 'word_app' => 'forums', 'word_key' => 'forums_forum_2', 'word_default' => 'Redirect', 'word_custom' => null],
+        ]);
+        $this->src->table('forums_forums')->insert([
+            ['id' => 1, 'position' => 1, 'name_seo' => 'announcements', 'feature_color' => 'ff8800', 'redirect_on' => 0, 'redirect_url' => null],
+            ['id' => 2, 'position' => 2, 'name_seo' => 'redirect', 'feature_color' => null, 'redirect_on' => 1, 'redirect_url' => 'https://elsewhere.test'],
+        ]);
+        $bcrypt = '$2y$10$abcdefghijklmnopqrstuv0123456789012345678901234567890u';
+        $legacyMd5 = 'a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6'; // IP.Board 3 md5 — not portable.
+        $this->src->table('core_members')->insert([
+            ['member_id' => 1, 'name' => 'Hana', 'email' => 'hana@ips.test', 'members_pass_hash' => $bcrypt, 'signature' => 'sig', 'joined' => 1600000000, 'pp_photo_type' => null, 'pp_main_photo' => null],
+            ['member_id' => 2, 'name' => 'Ivan', 'email' => 'ivan@ips.test', 'members_pass_hash' => $legacyMd5, 'signature' => null, 'joined' => 1600000000, 'pp_photo_type' => 'custom', 'pp_main_photo' => 'monthly_2020/ivan.jpg'],
+        ]);
+        $this->src->table('forums_topics')->insert([
+            ['tid' => 10, 'title' => 'IPS topic', 'approved' => 1, 'state' => 'open', 'moved_to' => null, 'pinned' => 1, 'starter_id' => 1, 'forum_id' => 1, 'views' => 12, 'start_date' => 1600000100, 'last_post' => 1600000300],
+            ['tid' => 11, 'title' => 'Unapproved', 'approved' => 0, 'state' => 'open', 'moved_to' => null, 'pinned' => 0, 'starter_id' => 1, 'forum_id' => 1, 'views' => 0, 'start_date' => 1600000100, 'last_post' => 1600000100],
+            ['tid' => 12, 'title' => 'Closed thread', 'approved' => 1, 'state' => 'closed', 'moved_to' => null, 'pinned' => 0, 'starter_id' => 1, 'forum_id' => 1, 'views' => 3, 'start_date' => 1600000100, 'last_post' => 1600000200],
+            ['tid' => 13, 'title' => 'Moved away', 'approved' => 1, 'state' => 'link', 'moved_to' => '99', 'pinned' => 0, 'starter_id' => 1, 'forum_id' => 1, 'views' => 0, 'start_date' => 1600000100, 'last_post' => 1600000100],
+        ]);
+        $this->src->table('forums_posts')->insert([
+            // First post of topic 10: a @mention + bold.
+            ['pid' => 100, 'topic_id' => 10, 'author_id' => 1, 'post' => '<p>Hi <a href="https://x" data-mentionid="2" data-ipshover="">@Ivan</a> <strong>welcome</strong></p>', 'queued' => 0, 'pdelete_time' => 0, 'new_topic' => 1, 'post_date' => 1600000100],
+            // Reply with an IPS quote block.
+            ['pid' => 101, 'topic_id' => 10, 'author_id' => 2, 'post' => '<blockquote class="ipsQuote" data-ipsquote="" data-ipsquote-username="Hana"><div class="ipsQuote_citation">Hana said:</div><div class="ipsQuote_contents"><p>original</p></div></blockquote><p>agreed</p>', 'queued' => 0, 'pdelete_time' => 0, 'new_topic' => 0, 'post_date' => 1600000300],
+            // Queued (unapproved) + soft-deleted posts are skipped.
+            ['pid' => 102, 'topic_id' => 10, 'author_id' => 1, 'post' => '<p>pending</p>', 'queued' => 1, 'pdelete_time' => 0, 'new_topic' => 0, 'post_date' => 1600000200],
+            ['pid' => 103, 'topic_id' => 10, 'author_id' => 1, 'post' => '<p>gone</p>', 'queued' => 0, 'pdelete_time' => 1600000400, 'new_topic' => 0, 'post_date' => 1600000200],
+            ['pid' => 110, 'topic_id' => 12, 'author_id' => 1, 'post' => '<p>closed op</p>', 'queued' => 0, 'pdelete_time' => 0, 'new_topic' => 1, 'post_date' => 1600000100],
+        ]);
+        $this->src->table('core_tags')->insert([
+            ['tag_id' => 1, 'tag_meta_app' => 'forums', 'tag_meta_id' => 10, 'tag_text' => 'Help'],
+            ['tag_id' => 2, 'tag_meta_app' => 'gallery', 'tag_meta_id' => 10, 'tag_text' => 'Ignore'],
+        ]);
+        $this->src->table('core_reputation_index')->insert([
+            ['id' => 1, 'app' => 'forums', 'type' => 'pid', 'type_id' => 100, 'member_id' => 1],
+            ['id' => 2, 'app' => 'forums', 'type' => 'pid', 'type_id' => 100, 'member_id' => 2],
+            ['id' => 3, 'app' => 'gallery', 'type' => 'img_id', 'type_id' => 100, 'member_id' => 1],
+        ]);
+
+        $summary = InvisionImporter::run($this->cfg(), [], fn () => null);
+
+        $this->assertSame(1, $summary['categories'], 'redirect forum skipped');
+        $this->assertSame(2, $summary['users']);
+        $this->assertSame(2, $summary['topics'], 'unapproved + moved/link topics skipped');
+        $this->assertSame(3, $summary['posts'], 'queued + soft-deleted posts skipped');
+        $this->assertSame(1, $summary['tags'], 'only the forums-app tag links');
+        $this->assertSame(2, $summary['reactions'], 'both reputation rows on the post');
+
+        // Forum name resolved from the language table; color normalised.
+        $this->assertDatabaseHas('categories', ['name' => 'Announcements', 'color' => '#ff8800']);
+        // Modern bcrypt copies verbatim; legacy md5 is replaced with a random hash.
+        $this->assertDatabaseHas('users', ['name' => 'Hana', 'email' => 'hana@ips.test', 'password' => $bcrypt]);
+        $ivanPass = DB::table('users')->where('email', 'ivan@ips.test')->value('password');
+        $this->assertNotSame($legacyMd5, $ivanPass, 'legacy md5 not copied');
+        $this->assertStringStartsWith('$2', $ivanPass, 'replaced with a bcrypt reset hash');
+
+        $topic = DB::table('topics')->where('title', 'IPS topic')->first();
+        $this->assertNotNull($topic);
+        $this->assertSame(1, (int) $topic->is_pinned);
+        $this->assertSame(0, (int) $topic->is_locked);
+        $this->assertSame(12, (int) $topic->view_count);
+        $this->assertSame(1, (int) $topic->reply_count, '2 posts → 1 reply');
+
+        // state=closed → locked.
+        $this->assertSame(1, (int) DB::table('topics')->where('title', 'Closed thread')->value('is_locked'));
+
+        // First post: mention became plain @Ivan text, bold kept, IPS data-* stripped.
+        $first = DB::table('posts')->where('topic_id', $topic->id)->where('is_first', true)->value('body_html');
+        $this->assertStringContainsString('@Ivan', $first);
+        $this->assertStringContainsString('<strong>welcome</strong>', $first);
+        $this->assertStringNotContainsString('data-mentionid', $first);
+        $this->assertStringNotContainsString('<a ', $first);
+
+        // Reply: IPS quote became a clean blockquote with attribution; chrome dropped.
+        $reply = DB::table('posts')->where('topic_id', $topic->id)->where('is_first', false)->value('body_html');
+        $this->assertStringContainsString('Hana wrote:', $reply);
+        $this->assertStringContainsString('original', $reply);
+        $this->assertStringContainsString('agreed', $reply);
+        $this->assertStringNotContainsString('ipsQuote', $reply);
+
+        // Tag linked through to the topic.
+        $this->assertDatabaseHas('tags', ['name' => 'Help']);
+        $tagId = DB::table('tags')->where('name', 'Help')->value('id');
+        $this->assertDatabaseHas('topic_tag', ['topic_id' => $topic->id, 'tag_id' => $tagId]);
     }
 }

@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.4.0',
+            'date' => '2026-06-12',
+            'title' => 'Move in from Invision Community',
+            'items' => [
+                ['type' => 'new', 'text' => 'The Import wizard can now migrate from Invision Community (IPS 4 & 5) — members, forums, topics, posts, tags and reactions all come across. Member passwords carry over where possible (modern accounts log straight in; older legacy accounts simply reset on first login). Invision stores posts as rich HTML, so quotes and @mentions are converted to Convoro’s format automatically.'],
+            ],
+        ],
+        [
             'tag' => '1.3.0',
             'date' => '2026-06-12',
             'title' => 'Drafts & scheduled posts',
@@ -579,17 +587,17 @@ return [
             'Polls with live results',
             'Pin & lock topics',
             'Drafts & scheduled posts',
+            'Invision Community importer (IPS 4 & 5)',
         ],
         'now' => [
             'Importer polish from real-world migrations',
             'Advanced analytics & search',
         ],
         'next' => [
-            'More importers (MyBB, SMF, Invision)',
+            'More importers (MyBB, SMF, NodeBB)',
         ],
         'later' => [
             'Native mobile wrapper',
-            'Invision Community importer',
             'Federation / cross-community follow',
         ],
     ],
