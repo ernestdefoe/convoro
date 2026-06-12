@@ -47,6 +47,9 @@ class PostController extends Controller
 
         $this->notifyParticipants($request, $topic, $post, $html);
 
+        // Cross-post out to the fediverse (no-op unless federation is on + relevant).
+        \App\Support\Federation::announceReply($post, $topic);
+
         return back();
     }
 

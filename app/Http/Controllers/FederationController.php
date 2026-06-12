@@ -107,15 +107,14 @@ class FederationController extends Controller
         $activity = $request->json()->all();
         $type = $activity['type'] ?? null;
 
-        if ($type === 'Follow') {
-            $this->handleFollow($activity);
-        } elseif ($type === 'Undo' && (($activity['object']['type'] ?? null) === 'Follow')) {
-            $actor = (string) ($activity['actor'] ?? '');
-            if ($actor !== '') {
-                \Illuminate\Support\Facades\DB::table('federation_followers')->where('actor', $actor)->delete();
-            }
-        }
-        // Other activity types (Like, Announce, …) are accepted but ignored in Phase 1.
+        match ($type) {
+            'Follow' => $this->handleFollow($activity),
+            'Create' => $this->handleCreate($activity),
+            'Like' => $this->handleLike($activity),
+            'Delete' => $this->handleDelete($activity),
+            'Undo' => $this->handleUndo($activity),
+            default => null, // accepted but ignored
+        };
 
         return response('', 202);
     }
@@ -150,5 +149,87 @@ class FederationController extends Controller
             'object' => $activity,
         ];
         \App\Jobs\DeliverActivity::dispatch($accept, [$remote['inbox']])->afterCommit();
+    }
+
+    private function handleUndo(array $activity): void
+    {
+        if (($activity['object']['type'] ?? null) === 'Follow') {
+            $actor = (string) ($activity['actor'] ?? '');
+            if ($actor !== '') {
+                \Illuminate\Support\Facades\DB::table('federation_followers')->where('actor', $actor)->delete();
+            }
+        }
+    }
+
+    /** A remote reply to one of our topics → a federated Post in that topic. */
+    private function handleCreate(array $activity): void
+    {
+        $obj = $activity['object'] ?? null;
+        if (! is_array($obj)) {
+            return;
+        }
+        $topic = Federation::topicFromUrl($obj['inReplyTo'] ?? null);
+        if (! $topic) {
+            return; // not a reply to our content
+        }
+        $objectId = (string) ($obj['id'] ?? $activity['id'] ?? '');
+        if ($objectId === '' || \App\Models\Post::where('federated_object', $objectId)->exists()) {
+            return; // missing id or already imported
+        }
+        $author = Federation::upsertRemoteUser((string) ($activity['actor'] ?? ''));
+        if (! $author) {
+            return;
+        }
+        $html = \App\Support\Content::clean((string) ($obj['content'] ?? ''));
+        if (trim(strip_tags($html)) === '') {
+            return;
+        }
+        $created = isset($obj['published']) ? \Illuminate\Support\Carbon::parse($obj['published']) : now();
+
+        $post = new \App\Models\Post;
+        $post->forceFill([
+            'topic_id' => $topic->id,
+            'user_id' => $author->id,
+            'body_html' => $html,
+            'is_first' => false,
+            'federated_object' => $objectId,
+            'created_at' => $created,
+            'updated_at' => now(),
+        ])->save();
+
+        $topic->increment('reply_count');
+        $topic->update(['last_post_at' => now()]);
+
+        $post->load(['user', 'reactions']);
+        broadcast(new \App\Events\PostCreated(\App\Support\Present::post($post, null), $topic->id));
+    }
+
+    /** A remote Like on one of our topics → a 👍 reaction on its first post. */
+    private function handleLike(array $activity): void
+    {
+        $obj = $activity['object'] ?? null;
+        $url = is_string($obj) ? $obj : (string) ($obj['id'] ?? '');
+        $topic = Federation::topicFromUrl($url);
+        if (! $topic || ! $topic->firstPost) {
+            return;
+        }
+        $author = Federation::upsertRemoteUser((string) ($activity['actor'] ?? ''));
+        if (! $author) {
+            return;
+        }
+        \Illuminate\Support\Facades\DB::table('reactions')->insertOrIgnore([
+            'post_id' => $topic->firstPost->id, 'user_id' => $author->id, 'emoji' => '👍',
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+    }
+
+    /** A remote Delete → remove the federated post it refers to. */
+    private function handleDelete(array $activity): void
+    {
+        $obj = $activity['object'] ?? null;
+        $id = is_string($obj) ? $obj : (string) ($obj['id'] ?? '');
+        if ($id !== '') {
+            \App\Models\Post::where('federated_object', $id)->delete();
+        }
     }
 }

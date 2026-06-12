@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.12.0',
+            'date' => '2026-06-12',
+            'title' => 'Federation Phase 2 — two-way conversations',
+            'items' => [
+                ['type' => 'new', 'text' => 'Federation is now two-way. When someone on the fediverse replies to one of your discussions, their reply appears in the topic — shown with their fediverse handle and avatar and a 🌐 badge. Likes from the fediverse become reactions, and when a remote post is deleted it’s removed here too.'],
+                ['type' => 'new', 'text' => 'Replies posted in your community are cross-posted back out to followers and to the fediverse users taking part in the thread, so the conversation stays in sync across servers.'],
+            ],
+        ],
+        [
             'tag' => '1.11.0',
             'date' => '2026-06-12',
             'title' => 'Federation — join the fediverse',
@@ -685,6 +694,7 @@ return [
             'Per-type notification controls (email & push)',
             'Translate forum content (titles, excerpts, categories) + pull-to-refresh',
             'Federation (ActivityPub) — followable from Mastodon, Lemmy & the fediverse',
+            'Federation Phase 2 — two-way replies, likes & cross-posting',
         ],
         'now' => [],
         'next' => [],

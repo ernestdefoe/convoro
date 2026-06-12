@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Topic;
+use App\Models\User;
 use App\Support\Federation;
 use App\Support\Settings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -76,5 +78,47 @@ class FederationTest extends TestCase
             'HTTP_SIGNATURE' => 'keyId="x",headers="(request-target)",signature="bm9wZQ=="',
             'CONTENT_TYPE' => Federation::CTYPE,
         ], '{"type":"Follow"}')->assertStatus(401);
+    }
+
+    public function test_topic_from_url_resolves_local_topic(): void
+    {
+        $user = User::factory()->create();
+        $topic = Topic::create(['title' => 'Hello world', 'slug' => 'hello-world-1', 'user_id' => $user->id, 'last_post_at' => now()]);
+
+        $this->assertSame($topic->id, Federation::topicFromUrl(Federation::base().'/t/hello-world-1')?->id);
+        $this->assertNull(Federation::topicFromUrl('https://elsewhere.test/t/hello-world-1'));
+        $this->assertNull(Federation::topicFromUrl(null));
+    }
+
+    public function test_inbound_remote_reply_creates_federated_post(): void
+    {
+        $this->keysOrSkip();
+        $user = User::factory()->create();
+        $topic = Topic::create(['title' => 'Federated topic', 'slug' => 'federated-topic-9', 'user_id' => $user->id, 'last_post_at' => now()]);
+        $topicUrl = Federation::base().'/t/federated-topic-9';
+        $alice = 'https://remote.test/users/alice';
+
+        Http::fake([
+            Federation::actorUrl() => Http::response(Federation::actor(), 200),
+            $alice => Http::response([
+                'id' => $alice, 'type' => 'Person', 'preferredUsername' => 'alice', 'name' => 'Alice',
+                'inbox' => $alice.'/inbox',
+            ], 200),
+        ]);
+
+        $body = json_encode([
+            'type' => 'Create', 'actor' => $alice,
+            'object' => ['id' => 'https://remote.test/notes/1', 'type' => 'Note', 'inReplyTo' => $topicUrl, 'content' => '<p>Great topic!</p>', 'published' => now()->toAtomString()],
+        ]);
+        $headers = Federation::signHeaders('post', Federation::base().'/federation/inbox', $body);
+
+        $this->call('POST', '/federation/inbox', [], [], [], [
+            'HTTP_SIGNATURE' => $headers['Signature'], 'HTTP_HOST' => $headers['Host'],
+            'HTTP_DATE' => $headers['Date'], 'HTTP_DIGEST' => $headers['Digest'], 'CONTENT_TYPE' => Federation::CTYPE,
+        ], $body)->assertStatus(202);
+
+        $this->assertDatabaseHas('users', ['federated_actor' => $alice, 'is_federated' => true]);
+        $this->assertDatabaseHas('posts', ['topic_id' => $topic->id, 'federated_object' => 'https://remote.test/notes/1']);
+        $this->assertSame(1, (int) $topic->fresh()->reply_count);
     }
 }

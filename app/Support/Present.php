@@ -33,6 +33,8 @@ class Present
             'avatar' => $user->avatar_path ?: null,
             'url' => '/u/'.$user->id,
             'staff' => self::staffBadge($user),
+            'fedi' => $user->is_federated ? ($user->federated_handle ?: null) : null,
+            'fediUrl' => $user->is_federated ? $user->federated_actor : null,
         ];
     }
 

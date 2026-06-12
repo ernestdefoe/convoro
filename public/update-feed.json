@@ -1,11 +1,12 @@
 {
-    "version": "1.11.0",
-    "download": "https://convoro.co/releases/convoro-1.11.0.zip",
+    "version": "1.12.0",
+    "download": "https://convoro.co/releases/convoro-1.12.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Federation — join the fediverse",
+    "title": "Federation Phase 2 — two-way conversations",
     "date": "2026-06-12",
-    "notes": "Convoro now speaks ActivityPub. Enable Federation under Admin → Settings and your community becomes a followable fediverse account — people on Mastodon, Lemmy and beyond can follow @your-community and see every new discussion in their feed. Discoverable via WebFinger; follows auto-accepted; new topics delivered to followers, signed.",
+    "notes": "Federation is now two-way. Replies from Mastodon/Lemmy appear in your topics (with the author's fediverse handle, avatar and a 🌐 badge); likes become reactions; remote deletes are mirrored. And replies posted in your community cross-post back out to followers and remote participants, keeping the thread in sync across servers.",
     "changelog": [
-        {"type": "added", "text": "Federation (ActivityPub): your community is a followable fediverse actor — WebFinger discovery, auto-accepted follows, and signed delivery of new topics to followers. Enable it under Admin → Settings."}
+        {"type": "added", "text": "Federation Phase 2: remote replies flow into your topics (with fediverse handle + avatar + 🌐 badge), likes become reactions, deletes are mirrored."},
+        {"type": "added", "text": "Local replies cross-post back out to followers and the fediverse participants in the thread."}
     ]
 }

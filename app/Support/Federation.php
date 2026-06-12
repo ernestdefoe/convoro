@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use App\Models\Post;
 use App\Models\Topic;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -156,6 +158,121 @@ class Federation
                 'cc' => [$base.'/federation/followers'],
             ],
         ];
+    }
+
+    // ---- Phase 2: inbound replies + outbound cross-post ----
+
+    /** Resolve an inReplyTo URL (one of our topic Notes) to the local Topic. */
+    public static function topicFromUrl(?string $url): ?Topic
+    {
+        if (! $url) {
+            return null;
+        }
+        $prefix = self::base().'/t/';
+        if (! str_starts_with($url, $prefix)) {
+            return null;
+        }
+        $slug = (string) strtok(trim(substr($url, strlen($prefix)), '/'), '#?');
+
+        return $slug !== '' ? Topic::where('slug', $slug)->first() : null;
+    }
+
+    /** Find-or-create a local "federated" user mirroring a remote actor. */
+    public static function upsertRemoteUser(string $actorUri): ?User
+    {
+        $actorUri = trim($actorUri);
+        if ($actorUri === '') {
+            return null;
+        }
+        $existing = User::where('federated_actor', $actorUri)->first();
+        $doc = self::fetchActor($actorUri);
+        if (! $doc && ! $existing) {
+            return null;
+        }
+
+        if ($doc) {
+            $username = (string) ($doc['preferredUsername'] ?? 'user');
+            $host = (string) (parse_url((string) ($doc['id'] ?? $actorUri), PHP_URL_HOST) ?: 'remote');
+            $icon = $doc['icon'] ?? null;
+            $avatar = is_array($icon) ? ($icon['url'] ?? ($icon[0]['url'] ?? null)) : null;
+            $fields = [
+                'name' => Str::limit(strip_tags((string) ($doc['name'] ?? $username)), 80, ''),
+                'federated_handle' => '@'.$username.'@'.$host,
+                'federated_inbox' => $doc['endpoints']['sharedInbox'] ?? ($doc['inbox'] ?? null),
+                'avatar_path' => is_string($avatar) ? $avatar : null,
+                'is_federated' => true,
+            ];
+        } else {
+            $fields = [];
+        }
+
+        $user = $existing ?: new User;
+        $user->forceFill($fields);
+        if (! $existing) {
+            $user->forceFill([
+                'federated_actor' => $actorUri,
+                'email' => 'fedi-'.sha1($actorUri).'@federated.invalid',
+                'password' => bcrypt(Str::random(32)),
+                'is_federated' => true,
+            ]);
+            if (trim((string) $user->name) === '') {
+                $user->name = 'fediverse user';
+            }
+        }
+        $user->save();
+
+        return $user;
+    }
+
+    /** Cross-post a local reply out to followers + remote thread participants. */
+    public static function announceReply(Post $post, Topic $topic): void
+    {
+        try {
+            if (! self::enabled() || ! \Illuminate\Support\Facades\Schema::hasTable('federation_followers')) {
+                return;
+            }
+            $remoteInboxes = User::whereIn('id', $topic->posts()->pluck('user_id'))
+                ->where('is_federated', true)->pluck('federated_inbox')->filter()->all();
+            $followerInboxes = DB::table('federation_followers')->get()
+                ->map(fn ($f) => $f->shared_inbox ?: $f->inbox)->filter()->all();
+            $inboxes = array_values(array_unique(array_merge($followerInboxes, $remoteInboxes)));
+            if (! $inboxes) {
+                return;
+            }
+
+            $base = self::base();
+            $actor = self::actorUrl();
+            $topicUrl = $base.'/t/'.$topic->slug;
+            $postUrl = $topicUrl.'#post-'.$post->id;
+            $author = \App\Support\Username::display($post->user->name, (int) $post->user->id);
+            $published = ($post->created_at ?? now())->toAtomString();
+            $content = '<p><strong>'.e($author).'</strong> '.__('replied').':</p>'.$post->body_html
+                .'<p><a href="'.e($postUrl).'">'.e($topicUrl).'</a></p>';
+
+            $activity = [
+                '@context' => 'https://www.w3.org/ns/activitystreams',
+                'id' => $postUrl.'#create',
+                'type' => 'Create',
+                'actor' => $actor,
+                'published' => $published,
+                'to' => ['https://www.w3.org/ns/activitystreams#Public'],
+                'cc' => [$base.'/federation/followers'],
+                'object' => [
+                    'id' => $postUrl,
+                    'type' => 'Note',
+                    'attributedTo' => $actor,
+                    'inReplyTo' => $topicUrl,
+                    'content' => $content,
+                    'url' => $postUrl,
+                    'published' => $published,
+                    'to' => ['https://www.w3.org/ns/activitystreams#Public'],
+                    'cc' => [$base.'/federation/followers'],
+                ],
+            ];
+            \App\Jobs\DeliverActivity::dispatch($activity, $inboxes)->afterCommit();
+        } catch (\Throwable $e) {
+            Log::debug('Federation reply cross-post skipped: '.$e->getMessage());
+        }
     }
 
     /** Queue delivery of a new topic to all followers (no-op if disabled / no followers). */

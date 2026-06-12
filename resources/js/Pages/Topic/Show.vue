@@ -406,6 +406,7 @@ function submitReply() {
             <Link :href="firstPost.author.url"><Avatar :avatar="firstPost.author" :size="56" badge /></Link>
             <div>
               <Link :href="firstPost.author.url" class="font-bold hover:underline">{{ firstPost.author.name }}</Link>
+              <a v-if="firstPost.author.fedi" :href="firstPost.author.fediUrl" target="_blank" rel="noopener" class="ml-1.5 inline-flex items-center gap-1 rounded-full bg-surface-2 px-1.5 py-0.5 align-middle text-[11px] font-medium text-ink-muted hover:text-primary" :title="tr('From the fediverse')">🌐 {{ firstPost.author.fedi }}</a>
               <div class="text-sm text-ink-muted">
                 <a :href="'#post-' + firstPost.id" class="font-semibold text-ink-muted hover:text-primary" :title="tr('Permalink to this post')">#{{ postNumber(firstPost) }}</a>
                 · {{ firstPost.createdAt }}<span v-if="firstPost.editedAt"> · {{ tr('edited {date}', { date: firstPost.editedAt }) }}</span>
@@ -505,6 +506,7 @@ function submitReply() {
             <div class="w-24 shrink-0 text-center">
               <Link :href="post.author.url"><Avatar :avatar="post.author" :size="52" class="mx-auto" badge /></Link>
               <div class="mt-2 text-sm font-bold">{{ post.author.name }}</div>
+              <a v-if="post.author.fedi" :href="post.author.fediUrl" target="_blank" rel="noopener" class="mt-0.5 block truncate text-[11px] text-ink-muted hover:text-primary" :title="tr('From the fediverse')">🌐 {{ post.author.fedi }}</a>
               <span v-if="post.isAi" class="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">✦ AI</span>
             </div>
             <div class="min-w-0 flex-1">

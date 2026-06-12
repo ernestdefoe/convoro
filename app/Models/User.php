@@ -98,6 +98,7 @@ class User extends Authenticatable
             'notify_email' => 'boolean',
             'notification_prefs' => 'array',
             'auto_translate' => 'boolean',
+            'is_federated' => 'boolean',
         ];
     }
 
