@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Link, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { Link, router, usePage } from '@inertiajs/vue3';
+import { computed, ref, watchEffect } from 'vue';
 import ConvoroLogo from '@/Components/ConvoroLogo.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import NotificationBell from '@/Components/forum/NotificationBell.vue';
@@ -9,8 +9,11 @@ import PwaBanner from '@/Components/PwaBanner.vue';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
 import AuthModal from '@/Components/AuthModal.vue';
 import ThemeEditor from '@/Components/ThemeEditor.vue';
+import Toast from '@/Components/Toast.vue';
+import CommandPalette from '@/Components/CommandPalette.vue';
 import Slot from '@/Components/ext/Slot.vue';
 import { useAuthModal } from '@/lib/authModal';
+import { t } from '@/lib/i18n';
 
 const auth = useAuthModal();
 
@@ -25,6 +28,38 @@ const initials = computed(() => {
   const p = String(user.value.name).trim().split(/\s+/);
   return (p[0]?.[0] ?? '') + (p.length > 1 ? p[p.length - 1][0] : '');
 });
+
+// Mobile nav
+const mobileOpen = ref(false);
+const locales = computed<Record<string, string>>(() => (page.props as any).i18n?.locales ?? {});
+const currentLocale = computed(() => (page.props as any).i18n?.locale ?? 'en');
+function setLocale(e: Event) {
+  router.post('/locale', { locale: (e.target as HTMLSelectElement).value }, { preserveScroll: true });
+}
+// Auto-translate posts into the member's language (per-user preference).
+const autoTranslate = computed(() => !!(page.props as any).auth?.user?.auto_translate);
+function toggleAutoTranslate(e: Event) {
+  router.post('/preferences/auto-translate', { auto: (e.target as HTMLInputElement).checked }, { preserveScroll: true });
+}
+// Apply text direction for right-to-left languages (e.g. Arabic).
+watchEffect(() => {
+  if (typeof document !== 'undefined') {
+    document.documentElement.dir = (page.props as any).i18n?.rtl ? 'rtl' : 'ltr';
+  }
+});
+const headerSearch = ref('');
+function goSearch() {
+  const q = headerSearch.value.trim();
+  if (q) router.visit('/search?q=' + encodeURIComponent(q));
+}
+function startTopic() {
+  mobileOpen.value = false;
+  user.value ? router.visit('/new') : auth.open('register');
+}
+function goMobile(href: string) {
+  mobileOpen.value = false;
+  router.visit(href);
+}
 </script>
 
 <template>
@@ -37,16 +72,26 @@ const initials = computed(() => {
           <ConvoroLogo v-else :size="34" />
         </Link>
         <nav class="ml-2 hidden items-center gap-1 md:flex">
-          <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Forum') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Community</Link>
-          <Link v-if="storeOwner" href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Extensions') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Extensions</Link>
-          <Link href="/members" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component === 'Members/Index' ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Members</Link>
-          <Link href="/leaderboard" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component === 'Members/Leaderboard' ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">Leaderboard</Link>
+          <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Forum') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Community') }}</Link>
+          <Link v-if="storeOwner" href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Extensions') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Extensions') }}</Link>
+          <Link href="/members" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component === 'Members/Index' ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Members') }}</Link>
+          <Link href="/leaderboard" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component === 'Members/Leaderboard' ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Leaderboard') }}</Link>
         </nav>
         <div class="ml-auto flex items-center gap-3">
-          <div class="hidden items-center gap-2 rounded-full border border-line bg-surface-2 px-4 py-2 text-ink-muted sm:flex">
+          <form class="hidden items-center gap-2 rounded-full border border-line bg-surface-2 px-4 py-2 text-ink-muted sm:flex" @submit.prevent="goSearch">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-            <input class="w-40 border-0 bg-transparent p-0 text-sm text-ink placeholder:text-ink-muted focus:ring-0" placeholder="Search…" />
-          </div>
+            <input v-model="headerSearch" type="search" class="w-40 border-0 bg-transparent p-0 text-sm text-ink placeholder:text-ink-muted focus:ring-0" :placeholder="t('Search…')" />
+          </form>
+          <select v-if="Object.keys(locales).length > 1" :value="currentLocale" @change="setLocale" :aria-label="t('Language')"
+            class="hidden rounded-lg border-line bg-surface-2 py-1.5 pl-2 pr-7 text-xs font-semibold text-ink-2 focus:border-primary focus:ring-primary sm:block">
+            <option v-for="(label, code) in locales" :key="code" :value="code">{{ label }}</option>
+          </select>
+          <label v-if="user" :title="t('Automatically translate posts into your language')"
+            class="hidden cursor-pointer items-center gap-1.5 rounded-lg bg-surface-2 px-2 py-1.5 text-xs font-semibold text-ink-2 sm:flex">
+            <input type="checkbox" :checked="autoTranslate" @change="toggleAutoTranslate" class="h-3.5 w-3.5 rounded border-line text-primary focus:ring-primary" />
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 8 6 6M4 14l6-6 2-3M2 5h12M7 2h1M22 22l-5-10-5 10M14 18h6" /></svg>
+            <span>{{ t('Auto-translate') }}</span>
+          </label>
           <ThemeToggle />
           <Slot name="header:end" />
           <template v-if="user">
@@ -58,11 +103,37 @@ const initials = computed(() => {
             <UserMenu />
           </template>
           <template v-else>
-            <button type="button" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="auth.open('login')">Log in</button>
-            <button type="button" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600" @click="auth.open('register')">Join</button>
+            <button type="button" class="hidden rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2 sm:block" @click="auth.open('login')">{{ t('Log in') }}</button>
+            <button type="button" class="hidden rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600 sm:block" @click="auth.open('register')">{{ t('Join') }}</button>
           </template>
+          <!-- Mobile menu toggle -->
+          <button type="button" class="grid h-[34px] w-[34px] place-items-center rounded-full border border-line bg-surface-2 text-ink-2 hover:text-ink md:hidden" :aria-expanded="mobileOpen" aria-label="Menu" @click="mobileOpen = !mobileOpen">
+            <svg v-if="!mobileOpen" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
+            <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
+          </button>
         </div>
       </div>
+
+      <!-- Mobile menu panel -->
+      <Transition name="mnav">
+        <div v-if="mobileOpen" class="border-t border-line bg-surface md:hidden">
+          <nav class="mx-auto max-w-[var(--c-container)] space-y-1 px-4 py-3">
+            <button type="button" @click="startTopic" class="mb-2 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/30 hover:bg-primary-600">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14" /></svg> {{ t('Start a discussion') }}
+            </button>
+            <button type="button" @click="goMobile('/')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Community') }}</button>
+            <button v-if="storeOwner" type="button" @click="goMobile('/extensions')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Extensions') }}</button>
+            <button type="button" @click="goMobile('/members')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Members') }}</button>
+            <button type="button" @click="goMobile('/leaderboard')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Leaderboard') }}</button>
+            <template v-if="!user">
+              <div class="!mt-3 flex gap-2 border-t border-line pt-3">
+                <button type="button" class="flex-1 rounded-lg border border-line px-3 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="mobileOpen = false; auth.open('login')">{{ t('Log in') }}</button>
+                <button type="button" class="flex-1 rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-white hover:bg-primary-600" @click="mobileOpen = false; auth.open('register')">{{ t('Join') }}</button>
+              </div>
+            </template>
+          </nav>
+        </div>
+      </Transition>
     </header>
 
     <main id="main" tabindex="-1" class="q-main mx-auto max-w-[var(--c-container)] px-6 py-6">
@@ -74,5 +145,12 @@ const initials = computed(() => {
     <PwaBanner />
     <AuthModal />
     <ThemeEditor />
+    <Toast />
+    <CommandPalette />
   </div>
 </template>
+
+<style scoped>
+.mnav-enter-active, .mnav-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
+.mnav-enter-from, .mnav-leave-to { opacity: 0; transform: translateY(-6px); }
+</style>

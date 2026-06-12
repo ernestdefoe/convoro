@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ app()->getLocale() }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,12 +15,12 @@
         </div>
 
         <div style="background:#ffffff; border:1px solid #e6e7ef; border-radius:16px; padding:28px;">
-            <h1 style="margin:0 0 4px; font-size:20px; font-weight:800; letter-spacing:-0.02em;">Hi {{ $user->name }},</h1>
-            <p style="margin:0 0 20px; color:#6b6f86; font-size:14px;">Here's what happened in the community over the {{ $periodLabel }}.</p>
+            <h1 style="margin:0 0 4px; font-size:20px; font-weight:800; letter-spacing:-0.02em;">{{ __('Hi :name,', ['name' => $user->name]) }}</h1>
+            <p style="margin:0 0 20px; color:#6b6f86; font-size:14px;">{{ __('Here\'s what happened in the community over the :period.', ['period' => $periodLabel]) }}</p>
 
             @if ($unread > 0)
                 <div style="background:#eef0fe; border-radius:12px; padding:12px 16px; margin-bottom:20px; font-size:14px; color:#4338ca;">
-                    🔔 You have <strong>{{ $unread }}</strong> unread {{ \Illuminate\Support\Str::plural('notification', $unread) }}.
+                    🔔 {!! __('You have <strong>:count</strong> unread :notifications.', ['count' => $unread, 'notifications' => \Illuminate\Support\Str::plural(__('notification'), $unread)]) !!}
                 </div>
             @endif
 
@@ -28,20 +28,20 @@
                 <div style="padding:16px 0; border-top:1px solid #eef0f4;">
                     <a href="{{ $topic['url'] }}" style="font-size:16px; font-weight:700; color:#1f2233; text-decoration:none;">{{ $topic['title'] }}</a>
                     <p style="margin:6px 0 8px; color:#6b6f86; font-size:14px; line-height:1.5;">{{ $topic['excerpt'] }}</p>
-                    <div style="font-size:12px; color:#9499ad;">by {{ $topic['author'] }} · {{ $topic['replyCount'] }} {{ \Illuminate\Support\Str::plural('reply', $topic['replyCount']) }}</div>
+                    <div style="font-size:12px; color:#9499ad;">{{ __('by :author', ['author' => $topic['author']]) }} · {{ $topic['replyCount'] }} {{ \Illuminate\Support\Str::plural(__('reply'), $topic['replyCount']) }}</div>
                 </div>
             @empty
-                <p style="color:#6b6f86; font-size:14px;">No new topics this time — check in to start a conversation.</p>
+                <p style="color:#6b6f86; font-size:14px;">{{ __('No new topics this time — check in to start a conversation.') }}</p>
             @endforelse
 
             <div style="text-align:center; margin-top:24px;">
-                <a href="{{ config('app.url') }}" style="display:inline-block; background:#5b5bd6; color:#ffffff; text-decoration:none; font-weight:700; font-size:14px; padding:12px 28px; border-radius:10px;">Open Convoro</a>
+                <a href="{{ config('app.url') }}" style="display:inline-block; background:#5b5bd6; color:#ffffff; text-decoration:none; font-weight:700; font-size:14px; padding:12px 28px; border-radius:10px;">{{ __('Open Convoro') }}</a>
             </div>
         </div>
 
         <p style="text-align:center; color:#9499ad; font-size:12px; margin-top:20px;">
-            You're receiving this because your digest is set to {{ $user->digest_frequency }}.
-            <br>Change it anytime in your <a href="{{ config('app.url') }}/profile" style="color:#6b6f86;">profile settings</a>.
+            {{ __('You\'re receiving this because your digest is set to :frequency.', ['frequency' => $user->digest_frequency]) }}
+            <br>{!! __('Change it anytime in your :link.', ['link' => '<a href="' . config('app.url') . '/profile" style="color:#6b6f86;">' . __('profile settings') . '</a>']) !!}
         </p>
     </div>
 </body>

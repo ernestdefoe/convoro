@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
+import { t } from '@/lib/i18n';
 
 const mode = ref<'light' | 'dark'>('light');
 
@@ -18,8 +19,8 @@ function toggle() {
   <button
     type="button"
     class="flex h-[34px] w-[34px] items-center justify-center rounded-full border border-line bg-surface-2 text-ink-2 hover:text-ink"
-    :aria-label="mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'"
-    :title="mode === 'dark' ? 'Light mode' : 'Dark mode'"
+    :aria-label="mode === 'dark' ? t('Switch to light mode') : t('Switch to dark mode')"
+    :title="mode === 'dark' ? t('Light mode') : t('Dark mode')"
     @click="toggle"
   >
     <!-- sun (shown in dark mode → click for light) -->

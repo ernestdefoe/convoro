@@ -26,7 +26,9 @@ class DigestEmail extends Mailable implements ShouldQueue
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Your Convoro digest — '.$this->periodLabel);
+        $site = \App\Support\Settings::get('site.name') ?: config('app.name', 'Convoro');
+
+        return new Envelope(subject: __('Your :site digest — :period', ['site' => $site, 'period' => $this->periodLabel]));
     }
 
     public function content(): Content

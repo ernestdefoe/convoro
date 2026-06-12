@@ -54,6 +54,19 @@ class ExtensionManager
             return self::$cache;
         }
 
+        // Shared-host optimization: read a compiled manifest (a plain PHP array,
+        // OPcache-friendly) instead of re-scanning the filesystem every request.
+        // A cheap mtime signature of the roots auto-invalidates it when an
+        // extension is added/removed, so it's self-healing — no stale cache.
+        $compiled = self::compiledPath();
+        $sig = self::signature();
+        if (is_file($compiled)) {
+            $data = @include $compiled;
+            if (is_array($data) && ($data['__sig'] ?? null) === $sig && isset($data['items']) && is_array($data['items'])) {
+                return self::$cache = $data['items'];
+            }
+        }
+
         $found = [];
         foreach (self::roots() as $root) {
             if (! is_dir($root)) {
@@ -80,7 +93,42 @@ class ExtensionManager
             }
         }
 
+        self::writeCompiled($found, $sig);
+
         return self::$cache = $found;
+    }
+
+    /** Path to the compiled manifest cache (a plain PHP array). */
+    private static function compiledPath(): string
+    {
+        return base_path('bootstrap/cache/convoro-extensions.php');
+    }
+
+    /** Cheap fingerprint of the extension roots — changes when one is added/removed. */
+    private static function signature(): string
+    {
+        $parts = [];
+        foreach (self::roots() as $root) {
+            $parts[] = is_dir($root) ? (string) @filemtime($root) : '0';
+        }
+        $installed = base_path('vendor/composer/installed.json');
+        $parts[] = is_file($installed) ? (string) @filemtime($installed) : '0';
+
+        return implode('-', $parts);
+    }
+
+    /** Best-effort write of the compiled manifest. Silently no-ops if not writable. */
+    private static function writeCompiled(array $found, string $sig): void
+    {
+        $file = self::compiledPath();
+        if (! is_dir(dirname($file))) {
+            return;
+        }
+        @file_put_contents(
+            $file,
+            '<?php return '.var_export(['__sig' => $sig, 'items' => $found], true).';'.PHP_EOL,
+            LOCK_EX,
+        );
     }
 
     /** Absolute dirs of Composer packages declaring `type: convoro-extension`. */
@@ -183,6 +231,10 @@ class ExtensionManager
     public static function flushCache(): void
     {
         self::$cache = null;
+        $file = self::compiledPath();
+        if (is_file($file)) {
+            @unlink($file);
+        }
     }
 
     // -- Boot-time wiring --------------------------------------------------

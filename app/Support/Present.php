@@ -24,6 +24,7 @@ class Present
         return [
             'id' => $user->id,
             'name' => $user->name,
+            'handle' => Str::slug($user->name, '.'),
             'initials' => $initials,
             'color' => ($user->id % 6) + 1, // av-g1..6
             'avatar' => $user->avatar_path ?: null,
@@ -151,14 +152,18 @@ class Present
         return [
             'id' => $p->id,
             'html' => $p->body_html,
+            'detectedLocale' => $p->detected_locale,
+            'held' => (bool) ($p->hidden ?? false),
             'author' => self::avatar($p->user),
             'isFirst' => $p->is_first,
+            'isAi' => (bool) ($p->is_ai ?? false),
             'createdAt' => optional($p->created_at)->diffForHumans(),
             'editedAt' => optional($p->edited_at)->diffForHumans(),
             'reactions' => $react['summary'],
             'reactionTotal' => $react['total'],
             'canEdit' => (bool) $canEdit,
             'canDelete' => (bool) $canDelete,
+            'canMove' => (bool) ($actor && $actor->is_admin && ! $p->is_first),
         ];
     }
 }

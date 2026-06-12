@@ -3,9 +3,10 @@
 namespace App\Support;
 
 use App\Events\NotificationCreated;
+use App\Mail\NotificationEmail;
 use App\Models\User;
-use App\Notifications\WebPushAlert;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * Persists a notification to the DB (instant), broadcasts it live over the
@@ -29,26 +30,50 @@ class Notifier
 
         broadcast(new NotificationCreated(Present::notification($fresh), (int) $user->id, $unread));
 
-        $user->notify(new WebPushAlert([
-            'title' => config('app.name', 'Convoro'),
-            'body' => self::label($data),
+        // Everything below is rendered server-side, so localize it to the
+        // RECIPIENT's language (not the actor's request locale).
+        $locale = $user->locale ?: (Settings::get('site.locale') ?: config('app.locale', 'en'));
+
+        \App\Jobs\SendWebPush::dispatch((int) $user->id, [
+            'title' => Settings::get('site.name') ?: config('app.name', 'Convoro'),
+            'body' => self::label($data, $locale),
             'url' => $data['url'] ?? '/',
             'tag' => $data['type'] ?? 'convoro',
-        ]));
+        ]);
+
+        // Instant email (queued, never blocks the request). Skips noisy reactions,
+        // and respects the member's per-account preference + a real address.
+        if (($data['type'] ?? '') !== 'reaction'
+            && Settings::get('mail.configured')
+            && ($user->notify_email ?? true)
+            && filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+            Mail::to($user->email)->locale($locale)->queue(new NotificationEmail(
+                heading: self::label($data, $locale),
+                excerpt: $data['excerpt'] ?? null,
+                url: url($data['url'] ?? '/'),
+                site: (string) (Settings::get('site.name') ?: config('app.name', 'Convoro')),
+            ));
+        }
     }
 
-    /** Human sentence for a notification payload (also used for push body). */
-    private static function label(array $data): string
+    /** Human sentence for a notification payload, in $locale (push/email body). */
+    private static function label(array $data, string $locale): string
     {
-        $actor = $data['actor']['name'] ?? 'Someone';
-        $topic = $data['topic']['title'] ?? 'a topic';
+        $prev = app()->getLocale();
+        app()->setLocale($locale);
+        try {
+            $actor = $data['actor']['name'] ?? __('Someone');
+            $topic = $data['topic']['title'] ?? __('a topic');
 
-        return match ($data['type'] ?? 'reply') {
-            'mention' => "{$actor} mentioned you in {$topic}",
-            'reaction' => "{$actor} reacted ".($data['emoji'] ?? '')." to your post",
-            'wall' => "{$actor} posted on your profile",
-            'message' => "{$actor} sent you a message",
-            default => "{$actor} replied in {$topic}",
-        };
+            return match ($data['type'] ?? 'reply') {
+                'mention' => __(':actor mentioned you in :topic', ['actor' => $actor, 'topic' => $topic]),
+                'reaction' => __(':actor reacted :emoji to your post', ['actor' => $actor, 'emoji' => $data['emoji'] ?? '']),
+                'wall' => __(':actor posted on your profile', ['actor' => $actor]),
+                'message' => __(':actor sent you a message', ['actor' => $actor]),
+                default => __(':actor replied in :topic', ['actor' => $actor, 'topic' => $topic]),
+            };
+        } finally {
+            app()->setLocale($prev);
+        }
     }
 }

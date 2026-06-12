@@ -108,6 +108,12 @@ class Theme
             },
         ];
 
+        // Optional muted-text override (for accessibility/contrast tuning).
+        $muted = trim((string) Settings::get('theme.muted', ''));
+        if ($muted !== '') {
+            $vars['--c-muted'] = self::triplet(self::hexToRgb($muted));
+        }
+
         $body = '';
         foreach ($vars as $k => $v) {
             $body .= "{$k}:{$v};";

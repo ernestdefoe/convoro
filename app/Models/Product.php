@@ -13,11 +13,30 @@ class Product extends Model
         'price_cents' => 'integer',
         'published' => 'boolean',
         'featured' => 'boolean',
+        'last_synced_at' => 'datetime',
+        'review_findings' => 'array',
+        'reviewed_at' => 'datetime',
     ];
 
     public function licenses(): HasMany
     {
         return $this->hasMany(License::class);
+    }
+
+    /** Public-facing AI security-review summary for the directory + detail page. */
+    public function reviewPayload(): array
+    {
+        return [
+            'status' => $this->review_status ?: 'none',
+            'rating' => $this->review_rating,
+            'score' => $this->review_score,
+            'summary' => $this->review_summary,
+            'findings' => $this->review_findings ?: [],
+            'model' => $this->review_model,
+            'reviewedVersion' => $this->reviewed_version,
+            'reviewedAt' => $this->reviewed_at?->diffForHumans(),
+            'stale' => $this->reviewed_version && $this->reviewed_version !== $this->version,
+        ];
     }
 
     public function getRouteKeyName(): string

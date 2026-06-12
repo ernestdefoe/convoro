@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\AutoAnswerTopicJob;
 use App\Models\Category;
 use App\Models\Tag;
 use App\Models\Topic;
+use App\Support\Ask;
 use App\Support\Content;
 use App\Support\Present;
+use App\Support\Settings;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -25,7 +28,7 @@ class TopicController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        abort_if($request->user()->isBanned(), 403, 'Your account is suspended.');
+        abort_if($request->user()->isBanned(), 403, __('Your account is suspended.'));
 
         $data = $request->validate([
             'title' => ['required', 'string', 'min:3', 'max:160'],
@@ -38,7 +41,7 @@ class TopicController extends Controller
         ]);
 
         $html = Content::clean($data['body_html']);
-        abort_if(trim(strip_tags($html)) === '', 422, 'The post body is empty.');
+        abort_if(trim(strip_tags($html)) === '', 422, __('The post body is empty.'));
 
         $base = Str::slug($data['title']) ?: 'topic';
         $slug = $base.'-'.Str::lower(Str::random(6));
@@ -62,6 +65,12 @@ class TopicController extends Controller
 
         if (! empty($data['tags'])) {
             $topic->tags()->sync($data['tags']);
+        }
+
+        // "No question goes unanswered" — let the assistant draft an answer.
+        if (Ask::enabled() && Settings::get('ai.autoanswer_enabled', false)) {
+            $delay = max(0, (int) Settings::get('ai.autoanswer_delay_minutes', 0));
+            AutoAnswerTopicJob::dispatch($topic->id)->delay(now()->addMinutes($delay))->afterCommit();
         }
 
         return redirect()->route('topics.show', $topic);
@@ -88,10 +97,19 @@ class TopicController extends Controller
                     'color' => $topic->category->color, 'icon' => $topic->category->icon,
                 ] : null,
                 'tags' => $topic->tags->map(fn ($t) => ['name' => $t->name, 'slug' => $t->slug, 'color' => $t->color]),
+                'categoryId' => $topic->category_id,
+                'tagIds' => $topic->tags->pluck('id'),
                 'replyCount' => $topic->reply_count,
                 'viewCount' => $topic->view_count,
             ],
-            'posts' => $topic->posts->sortBy('created_at')->values()->map(fn ($p) => Present::post($p, $actorId, $actor)),
+            'posts' => $topic->posts->sortBy('created_at')
+                // Posts held by the AI moderation copilot are hidden from everyone
+                // except moderators and the post's own author (who sees a notice).
+                ->filter(fn ($p) => ! $p->hidden || ($actor && $actor->is_admin) || ($actorId && (int) $p->user_id === (int) $actorId))
+                ->values()->map(fn ($p) => Present::post($p, $actorId, $actor)),
+            'references' => \App\Support\CrossRef::into($topic->id),
+            'categories' => Category::orderBy('position')->get(['id', 'name', 'icon', 'color']),
+            'allTags' => Tag::orderBy('name')->get(['id', 'name', 'color']),
             'canReply' => auth()->check() && ! $topic->is_locked,
             'seo' => \App\Support\Seo::make([
                 'title' => $topic->title,

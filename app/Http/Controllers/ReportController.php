@@ -34,6 +34,6 @@ class ReportController extends Controller
             ]);
         }
 
-        return back()->with('status', 'Thanks — our moderators will take a look.');
+        return back()->with('status', __('Thanks — our moderators will take a look.'));
     }
 }

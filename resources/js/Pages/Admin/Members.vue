@@ -2,6 +2,7 @@
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { reactive, ref, watch } from 'vue';
+import { t as tr } from '@/lib/i18n';
 
 const props = defineProps<{
   users: { data: any[]; links: { url: string | null; label: string; active: boolean }[]; prev_page_url: string | null; next_page_url: string | null; total: number };
@@ -35,7 +36,7 @@ function saveMember() {
   router.put(`/admin/members/${editing.value.id}`, { ...buf }, { ...opts, onSuccess: () => (editing.value = null) });
 }
 function deleteMember() {
-  if (!confirm(`Delete ${editing.value.name}? This removes their account and content.`)) return;
+  if (!confirm(tr('Delete {name}? This removes their account and content.', { name: editing.value.name }))) return;
   router.delete(`/admin/members/${editing.value.id}`, { ...opts, onSuccess: () => (editing.value = null) });
 }
 
@@ -49,21 +50,21 @@ function addGroup() {
 }
 function startGroup(g: any) { editGroupId.value = g.id; Object.assign(gbuf, { name: g.name, color: g.color, is_staff: g.is_staff, permissions: [...(g.permissions ?? [])] }); }
 function saveGroup() { router.put(`/admin/groups/${editGroupId.value}`, { ...gbuf }, { ...opts, onSuccess: () => (editGroupId.value = null) }); }
-function delGroup(g: any) { if (confirm(`Delete group “${g.name}”?`)) router.delete(`/admin/groups/${g.id}`, opts); }
+function delGroup(g: any) { if (confirm(tr('Delete group “{name}”?', { name: g.name }))) router.delete(`/admin/groups/${g.id}`, opts); }
 
 const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500';
 </script>
 
 <template>
-  <Head title="Admin · Members" />
+  <Head :title="tr('Admin · Members')" />
   <AdminLayout>
-    <template #title>Members</template>
-    <template #subtitle>{{ users.total }} members</template>
+    <template #title>{{ tr('Members') }}</template>
+    <template #subtitle>{{ tr('{n} members', { n: users.total }) }}</template>
 
     <div class="grid gap-6 lg:grid-cols-[1fr_320px]">
       <!-- Members list -->
       <section class="rounded-2xl border border-line bg-surface p-5">
-        <input v-model="search" type="text" placeholder="Search name or email…" :class="inp" class="mb-4 w-full" />
+        <input v-model="search" type="text" :placeholder="tr('Search name or email…')" :class="inp" class="mb-4 w-full" />
         <ul class="divide-y divide-line">
           <li v-for="u in users.data" :key="u.id" class="flex items-center gap-3 py-3">
             <img v-if="u.avatar" :src="u.avatar" class="h-9 w-9 rounded-full object-cover" alt="" />
@@ -71,37 +72,37 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
                 <span class="truncate font-semibold text-ink">{{ u.name }}</span>
-                <span v-if="u.is_admin" class="rounded-full bg-indigo-500/20 px-1.5 py-0.5 text-[10px] font-bold text-indigo-300">ADMIN</span>
+                <span v-if="u.is_admin" class="rounded-full bg-indigo-500/20 px-1.5 py-0.5 text-[10px] font-bold text-indigo-300">{{ tr('ADMIN') }}</span>
                 <span v-for="g in u.groups" :key="g.id" class="rounded-full px-1.5 py-0.5 text-[10px] font-semibold" :style="{ color: g.color, background: g.color + '22' }">{{ g.name }}</span>
               </div>
-              <div class="truncate text-xs text-ink-muted">{{ u.email }} · joined {{ u.joined }}</div>
+              <div class="truncate text-xs text-ink-muted">{{ u.email }} · {{ tr('joined {when}', { when: u.joined }) }}</div>
             </div>
-            <button class="text-sm font-semibold text-indigo-300 hover:text-indigo-200" @click="edit(u)">Edit</button>
+            <button class="text-sm font-semibold text-indigo-300 hover:text-indigo-200" @click="edit(u)">{{ tr('Edit') }}</button>
           </li>
-          <li v-if="!users.data.length" class="py-6 text-center text-sm text-ink-muted">No members found.</li>
+          <li v-if="!users.data.length" class="py-6 text-center text-sm text-ink-muted">{{ tr('No members found.') }}</li>
         </ul>
         <div class="mt-4 flex justify-between text-sm">
-          <button :disabled="!users.prev_page_url" class="text-ink-2 disabled:opacity-30" @click="users.prev_page_url && router.get(users.prev_page_url, {}, opts)">← Prev</button>
-          <button :disabled="!users.next_page_url" class="text-ink-2 disabled:opacity-30" @click="users.next_page_url && router.get(users.next_page_url, {}, opts)">Next →</button>
+          <button :disabled="!users.prev_page_url" class="text-ink-2 disabled:opacity-30" @click="users.prev_page_url && router.get(users.prev_page_url, {}, opts)">{{ tr('← Prev') }}</button>
+          <button :disabled="!users.next_page_url" class="text-ink-2 disabled:opacity-30" @click="users.next_page_url && router.get(users.next_page_url, {}, opts)">{{ tr('Next →') }}</button>
         </div>
       </section>
 
       <!-- Groups manager -->
       <section class="rounded-2xl border border-line bg-surface p-5">
-        <h3 class="mb-3 text-sm font-bold text-ink">Groups</h3>
+        <h3 class="mb-3 text-sm font-bold text-ink">{{ tr('Groups') }}</h3>
         <div class="mb-4 space-y-2 rounded-xl border border-line bg-appbg p-3">
-          <input v-model="newGroup.name" :class="inp" class="w-full" placeholder="New group name" @keyup.enter="addGroup" />
+          <input v-model="newGroup.name" :class="inp" class="w-full" :placeholder="tr('New group name')" @keyup.enter="addGroup" />
           <div class="flex items-center gap-2">
             <input v-model="newGroup.color" type="color" class="h-9 w-10 rounded border-line bg-transparent" />
-            <label class="flex items-center gap-1.5 text-xs text-ink-2"><input v-model="newGroup.is_staff" type="checkbox" class="rounded border-line bg-appbg text-indigo-500" /> Staff</label>
-            <button class="ml-auto rounded-lg bg-indigo-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-600" @click="addGroup">Add</button>
+            <label class="flex items-center gap-1.5 text-xs text-ink-2"><input v-model="newGroup.is_staff" type="checkbox" class="rounded border-line bg-appbg text-indigo-500" /> {{ tr('Staff') }}</label>
+            <button class="ml-auto rounded-lg bg-indigo-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-600" @click="addGroup">{{ tr('Add') }}</button>
           </div>
           <div class="space-y-1 pt-1">
-            <div class="text-[11px] uppercase tracking-wide text-ink-muted">Permissions</div>
+            <div class="text-[11px] uppercase tracking-wide text-ink-muted">{{ tr('Permissions') }}</div>
             <label v-for="p in assignablePerms" :key="p.key" class="flex items-center gap-2 text-xs text-ink-2">
               <input v-model="newGroup.permissions" type="checkbox" :value="p.key" class="rounded border-line bg-appbg text-indigo-500" /> {{ p.label }}
             </label>
-            <p class="text-[11px] text-ink-muted">All members can post, react &amp; edit their own content by default.</p>
+            <p class="text-[11px] text-ink-muted">{{ tr('All members can post, react & edit their own content by default.') }}</p>
           </div>
         </div>
         <ul class="space-y-2">
@@ -110,9 +111,9 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
               <input v-model="gbuf.name" :class="inp" class="w-full" />
               <div class="mt-2 flex items-center gap-2">
                 <input v-model="gbuf.color" type="color" class="h-8 w-9 rounded border-line bg-transparent" />
-                <label class="flex items-center gap-1.5 text-xs text-ink-2"><input v-model="gbuf.is_staff" type="checkbox" class="rounded border-line bg-appbg text-indigo-500" /> Staff</label>
-                <button class="ml-auto rounded-lg bg-emerald-500 px-2.5 py-1 text-sm font-semibold text-white" @click="saveGroup">Save</button>
-                <button class="text-sm text-ink-2" @click="editGroupId = null">Cancel</button>
+                <label class="flex items-center gap-1.5 text-xs text-ink-2"><input v-model="gbuf.is_staff" type="checkbox" class="rounded border-line bg-appbg text-indigo-500" /> {{ tr('Staff') }}</label>
+                <button class="ml-auto rounded-lg bg-emerald-500 px-2.5 py-1 text-sm font-semibold text-white" @click="saveGroup">{{ tr('Save') }}</button>
+                <button class="text-sm text-ink-2" @click="editGroupId = null">{{ tr('Cancel') }}</button>
               </div>
               <div class="mt-2 space-y-1">
                 <label v-for="p in assignablePerms" :key="p.key" class="flex items-center gap-2 text-xs text-ink-2">
@@ -122,12 +123,12 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
             </template>
             <div v-else class="flex items-center gap-2">
               <span class="rounded-full px-2 py-0.5 text-xs font-semibold" :style="{ color: g.color, background: g.color + '22' }">{{ g.name }}</span>
-              <span v-if="g.is_staff" class="text-[10px] font-bold text-ink-muted">STAFF</span>
-              <button class="ml-auto text-ink-2 hover:text-ink" @click="startGroup(g)">Edit</button>
-              <button class="text-ink-2 hover:text-red-400" @click="delGroup(g)">Delete</button>
+              <span v-if="g.is_staff" class="text-[10px] font-bold text-ink-muted">{{ tr('STAFF') }}</span>
+              <button class="ml-auto text-ink-2 hover:text-ink" @click="startGroup(g)">{{ tr('Edit') }}</button>
+              <button class="text-ink-2 hover:text-red-400" @click="delGroup(g)">{{ tr('Delete') }}</button>
             </div>
           </li>
-          <li v-if="!groups.length" class="text-sm text-ink-muted">No groups yet.</li>
+          <li v-if="!groups.length" class="text-sm text-ink-muted">{{ tr('No groups yet.') }}</li>
         </ul>
       </section>
     </div>
@@ -136,27 +137,27 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
     <div v-if="editing" class="fixed inset-0 z-[80] flex items-center justify-center p-4">
       <div class="absolute inset-0 bg-black/60" @click="editing = null"></div>
       <div class="relative w-full max-w-md rounded-2xl border border-line bg-surface p-6">
-        <h3 class="mb-4 text-lg font-bold text-ink">Edit {{ editing.name }}</h3>
-        <label class="block text-sm text-ink-2">Name</label>
+        <h3 class="mb-4 text-lg font-bold text-ink">{{ tr('Edit {name}', { name: editing.name }) }}</h3>
+        <label class="block text-sm text-ink-2">{{ tr('Name') }}</label>
         <input v-model="buf.name" :class="inp" class="mt-1 w-full" />
-        <label class="mt-3 block text-sm text-ink-2">Email</label>
+        <label class="mt-3 block text-sm text-ink-2">{{ tr('Email') }}</label>
         <input v-model="buf.email" type="email" :class="inp" class="mt-1 w-full" />
         <label class="mt-3 flex items-center gap-2 text-sm text-ink-2">
-          <input v-model="buf.is_admin" type="checkbox" class="rounded border-line bg-appbg text-indigo-500" /> Administrator
+          <input v-model="buf.is_admin" type="checkbox" class="rounded border-line bg-appbg text-indigo-500" /> {{ tr('Administrator') }}
         </label>
         <div class="mt-3">
-          <div class="text-sm text-ink-2">Groups</div>
+          <div class="text-sm text-ink-2">{{ tr('Groups') }}</div>
           <div class="mt-2 flex flex-wrap gap-2">
             <button v-for="g in groups" :key="g.id" type="button" class="rounded-full border px-2.5 py-1 text-xs font-semibold"
               :class="buf.groups.includes(g.id) ? 'border-indigo-500 bg-indigo-500/20 text-ink' : 'border-line text-ink-2'"
               @click="toggleGroup(g.id)">{{ g.name }}</button>
-            <span v-if="!groups.length" class="text-xs text-ink-muted">No groups — create one first.</span>
+            <span v-if="!groups.length" class="text-xs text-ink-muted">{{ tr('No groups — create one first.') }}</span>
           </div>
         </div>
         <div class="mt-6 flex items-center gap-2">
-          <button class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="saveMember">Save</button>
-          <button class="rounded-lg px-3 py-2 text-sm text-ink-2 hover:text-ink" @click="editing = null">Cancel</button>
-          <button class="ml-auto rounded-lg px-3 py-2 text-sm font-semibold text-red-400 hover:text-red-300" @click="deleteMember">Delete</button>
+          <button class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="saveMember">{{ tr('Save') }}</button>
+          <button class="rounded-lg px-3 py-2 text-sm text-ink-2 hover:text-ink" @click="editing = null">{{ tr('Cancel') }}</button>
+          <button class="ml-auto rounded-lg px-3 py-2 text-sm font-semibold text-red-400 hover:text-red-300" @click="deleteMember">{{ tr('Delete') }}</button>
         </div>
       </div>
     </div>

@@ -1,7 +1,7 @@
 /* Convoro service worker — installable PWA + Web Push.
  * Conservative caching: only same-origin built assets + icons (stale-while-revalidate).
  * Navigations and API/XHR always hit the network, so Inertia/CSRF are never stale. */
-const CACHE = 'convoro-static-v2';
+const CACHE = 'convoro-static-v3';
 
 self.addEventListener('install', () => self.skipWaiting());
 

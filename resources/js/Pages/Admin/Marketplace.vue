@@ -2,6 +2,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { t } from '@/lib/i18n';
 
 interface SettingField { key: string; label: string; type?: string; default?: unknown; help?: string; options?: { value: string; label: string }[] }
 interface Ext { id: string; name: string; version: string; description: string; author: string; type: string; premium: boolean; enabled: boolean; removable: boolean; settings: SettingField[]; values: Record<string, unknown>; adminUrl: string | null; image?: string | null }
@@ -79,16 +80,16 @@ function toggle(ext: { id: string; enabled: boolean }) {
 }
 
 function uninstall(ext: { id: string; name: string }) {
-  if (!confirm(`Remove “${ext.name}”? This deletes the extension and rolls back its database tables.`)) return;
+  if (!confirm(t('Remove “{name}”? This deletes the extension and rolls back its database tables.', { name: ext.name }))) return;
   router.post('/admin/marketplace/uninstall', { id: ext.id }, { preserveScroll: true });
 }
 </script>
 
 <template>
-  <Head title="Admin · Marketplace" />
+  <Head :title="t('Admin · Marketplace')" />
   <AdminLayout>
-    <template #title>Marketplace</template>
-    <template #subtitle>Extensions, themes &amp; software updates</template>
+    <template #title>{{ t('Marketplace') }}</template>
+    <template #subtitle>{{ t('Extensions, themes & software updates') }}</template>
 
     <!-- Software update status -->
     <section class="mb-6 rounded-2xl border border-line bg-surface p-5">
@@ -98,11 +99,11 @@ function uninstall(ext: { id: string; name: string }) {
           <div class="text-xl font-extrabold text-ink">{{ update.current }}</div>
         </div>
         <div v-if="update.available" class="rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-2 text-sm text-indigo-200">
-          Version <strong>{{ update.latest }}</strong> is available.
-          <a v-if="update.url" :href="update.url" target="_blank" class="ml-1 font-semibold underline">Details</a>
+          {{ t('Version') }} <strong>{{ update.latest }}</strong> {{ t('is available') }}.
+          <a v-if="update.url" :href="update.url" target="_blank" class="ml-1 font-semibold underline">{{ t('Details') }}</a>
         </div>
-        <div v-else class="rounded-xl bg-emerald-500/10 px-4 py-2 text-sm text-emerald-300">You’re on the latest version.</div>
-        <button class="ml-auto rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="checkUpdates">Check for updates</button>
+        <div v-else class="rounded-xl bg-emerald-500/10 px-4 py-2 text-sm text-emerald-300">{{ t('You’re on the latest version.') }}</div>
+        <button class="ml-auto rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="checkUpdates">{{ t('Check for updates') }}</button>
       </div>
     </section>
 
@@ -111,57 +112,57 @@ function uninstall(ext: { id: string; name: string }) {
 
     <!-- Install options -->
     <section class="mb-6 rounded-2xl border border-line bg-surface p-5">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">Add an extension</h2>
-      <p class="mt-1 text-xs text-ink-muted">Install from the <strong>catalog</strong> below (extensions are published from GitHub), redeem a premium <strong>license key</strong>, or — on Composer-capable hosts — pull a package directly.</p>
+      <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('Add an extension') }}</h2>
+      <p class="mt-1 text-xs text-ink-muted">{{ t('Install from the catalog below (extensions are published from GitHub), redeem a premium license key, or — on Composer-capable hosts — pull a package directly.') }}</p>
 
       <!-- Redeem a premium license key from the Convoro store -->
       <div class="mt-5">
-        <h3 class="text-xs font-bold uppercase tracking-wide text-ink-2">Have a license key?</h3>
-        <p class="mt-1 text-xs text-ink-muted">Bought a premium extension or theme from the Convoro store? Paste your key to install it here.</p>
+        <h3 class="text-xs font-bold uppercase tracking-wide text-ink-2">{{ t('Have a license key?') }}</h3>
+        <p class="mt-1 text-xs text-ink-muted">{{ t('Bought a premium extension or theme from the Convoro store? Paste your key to install it here.') }}</p>
         <div class="mt-3 flex flex-wrap items-center gap-3">
           <input v-model="licenseKey" type="text" placeholder="CONV-XXXX-XXXX-XXXX-XXXX" :disabled="redeeming"
             class="w-72 rounded-lg border-line bg-appbg font-mono text-sm uppercase text-ink focus:border-indigo-500 focus:ring-indigo-500" />
           <button type="button" :disabled="redeeming || !licenseKey.trim()" @click="redeemLicense"
             class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">
-            {{ redeeming ? 'Redeeming…' : 'Redeem & install' }}
+            {{ redeeming ? t('Redeeming…') : t('Redeem & install') }}
           </button>
         </div>
       </div>
 
       <!-- Composer install path (only when Composer is available) -->
       <div class="mt-5 border-t border-line pt-5">
-        <h3 class="text-xs font-bold uppercase tracking-wide text-ink-2">Install via Composer</h3>
+        <h3 class="text-xs font-bold uppercase tracking-wide text-ink-2">{{ t('Install via Composer') }}</h3>
         <template v-if="composer.available">
-          <p class="mt-1 text-xs text-ink-muted">Have Composer (no SSH needed)? Pull a package straight from Packagist — dependencies resolved automatically.</p>
+          <p class="mt-1 text-xs text-ink-muted">{{ t('Have Composer (no SSH needed)? Pull a package straight from Packagist — dependencies resolved automatically.') }}</p>
           <div class="mt-3 flex flex-wrap items-center gap-3">
             <input v-model="composerPkg" type="text" placeholder="vendor/package" :disabled="composer.task.state === 'running'"
               class="w-72 rounded-lg border-line bg-appbg font-mono text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500" />
             <button type="button" :disabled="composer.task.state === 'running' || !composerPkg.trim()" @click="composerInstall"
               class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">
-              {{ composer.task.state === 'running' ? 'Working…' : 'Install' }}
+              {{ composer.task.state === 'running' ? t('Working…') : t('Install') }}
             </button>
           </div>
           <p v-if="composer.task && composer.task.state !== 'idle'" class="mt-3 text-sm"
             :class="composer.task.state === 'failed' ? 'text-red-300' : composer.task.state === 'done' ? 'text-emerald-300' : 'text-ink-2'">
             <span class="font-semibold">{{ composer.task.action }} {{ composer.task.package }}</span> —
-            {{ composer.task.state === 'running' ? 'in progress…' : composer.task.state }}
+            {{ composer.task.state === 'running' ? t('in progress…') : composer.task.state }}
           </p>
         </template>
-        <p v-else class="mt-1 text-xs text-ink-muted">Composer isn’t available on this server — use the zip upload above instead. (Both work without a terminal.)</p>
+        <p v-else class="mt-1 text-xs text-ink-muted">{{ t('Composer isn’t available on this server — use the zip upload above instead. (Both work without a terminal.)') }}</p>
       </div>
     </section>
 
     <!-- Installed extensions -->
     <section class="rounded-2xl border border-line bg-surface p-5">
       <div class="mb-4 flex flex-wrap items-center gap-3">
-        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">Installed</h2>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('Installed') }}</h2>
 
         <!-- Type pills -->
         <div class="flex items-center gap-1 rounded-lg bg-appbg p-1">
           <button v-for="p in pills" :key="p.key" type="button" @click="filter = p.key"
             class="rounded-md px-3 py-1 text-xs font-semibold transition"
             :class="filter === p.key ? 'bg-indigo-500 text-white' : 'text-white-2 hover:text-white'">
-            {{ p.label }}
+            {{ t(p.label) }}
             <span class="ml-1 opacity-70">{{ counts[p.key] }}</span>
           </button>
         </div>
@@ -169,22 +170,22 @@ function uninstall(ext: { id: string; name: string }) {
         <!-- Search -->
         <div class="ml-auto flex items-center gap-2 rounded-lg border border-line bg-appbg px-3 py-1.5">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-ink-muted"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-          <input v-model="query" type="search" placeholder="Search…" class="w-44 border-0 bg-transparent p-0 text-sm text-ink placeholder:text-ink-muted focus:ring-0" />
+          <input v-model="query" type="search" :placeholder="t('Search…')" class="w-44 border-0 bg-transparent p-0 text-sm text-ink placeholder:text-ink-muted focus:ring-0" />
         </div>
       </div>
 
       <div v-if="!extensions.length" class="rounded-xl border border-dashed border-line p-8 text-center text-sm text-ink-2">
-        No extensions installed yet. Upload one above to get started.
+        {{ t('No extensions installed yet. Upload one above to get started.') }}
       </div>
       <div v-else-if="!visibleExtensions.length" class="rounded-xl border border-dashed border-line p-8 text-center text-sm text-ink-2">
-        Nothing matches your filter.
+        {{ t('Nothing matches your filter.') }}
       </div>
 
       <div v-else class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <div v-for="ext in visibleExtensions" :key="ext.id"
           class="flex flex-col overflow-hidden rounded-2xl border bg-appbg p-5 transition"
           :class="ext.enabled ? 'border-indigo-500/30' : 'border-line'">
-          <img v-if="ext.image" :src="ext.image" :alt="ext.name" class="-mx-5 -mt-5 mb-3 aspect-[3/1] w-full object-cover" />
+          <img v-if="ext.image" :src="ext.image" :alt="ext.name" class="-mx-5 -mt-5 mb-3 aspect-[2/1] w-[calc(100%+2.5rem)] max-w-none object-cover" />
           <!-- Header: icon + name + version -->
           <div class="flex items-start gap-3">
             <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg font-bold"
@@ -196,7 +197,7 @@ function uninstall(ext: { id: string; name: string }) {
                 <span class="truncate font-bold text-ink">{{ ext.name }}</span>
                 <span class="shrink-0 rounded bg-surface-2 px-1.5 py-0.5 text-[11px] text-ink-2">v{{ ext.version }}</span>
               </div>
-              <p v-if="ext.author" class="mt-0.5 truncate text-[11px] text-ink-muted">by {{ ext.author }}</p>
+              <p v-if="ext.author" class="mt-0.5 truncate text-[11px] text-ink-muted">{{ t('by {author}', { author: ext.author }) }}</p>
             </div>
           </div>
 
@@ -206,9 +207,9 @@ function uninstall(ext: { id: string; name: string }) {
           <!-- Badges -->
           <div class="mt-3 flex flex-wrap items-center gap-1.5">
             <span class="rounded bg-sky-500/15 px-1.5 py-0.5 text-[11px] font-semibold capitalize text-sky-300">{{ ext.type }}</span>
-            <span v-if="ext.premium" class="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-amber-300">Premium</span>
-            <span v-if="ext.enabled" class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-300">Enabled</span>
-            <span v-if="!ext.removable" class="rounded bg-surface-2 px-1.5 py-0.5 text-[11px] text-ink-muted" title="Ships with Convoro">Bundled</span>
+            <span v-if="ext.premium" class="rounded bg-amber-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-amber-300">{{ t('Premium') }}</span>
+            <span v-if="ext.enabled" class="rounded bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-semibold text-emerald-300">{{ t('Enabled') }}</span>
+            <span v-if="!ext.removable" class="rounded bg-surface-2 px-1.5 py-0.5 text-[11px] text-ink-muted" :title="t('Ships with Convoro')">{{ t('Bundled') }}</span>
           </div>
 
           <!-- Footer actions -->
@@ -216,19 +217,19 @@ function uninstall(ext: { id: string; name: string }) {
             <button type="button" @click.stop="toggle(ext)"
               class="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition"
               :class="ext.enabled ? 'bg-indigo-500' : 'bg-ink-muted/40'"
-              :aria-pressed="ext.enabled" :aria-label="(ext.enabled ? 'Disable ' : 'Enable ') + ext.name">
+              :aria-pressed="ext.enabled" :aria-label="ext.enabled ? t('Disable {name}', { name: ext.name }) : t('Enable {name}', { name: ext.name })">
               <span class="inline-block h-4 w-4 transform rounded-full bg-white transition" :class="ext.enabled ? 'translate-x-6' : 'translate-x-1'" />
             </button>
-            <span class="text-xs font-semibold" :class="ext.enabled ? 'text-emerald-300' : 'text-ink-muted'">{{ ext.enabled ? 'Enabled' : 'Disabled' }}</span>
+            <span class="text-xs font-semibold" :class="ext.enabled ? 'text-emerald-300' : 'text-ink-muted'">{{ ext.enabled ? t('Enabled') : t('Disabled') }}</span>
 
             <Link v-if="ext.settings.length || ext.adminUrl" :href="ext.adminUrl || `/admin/extensions/${ext.id}`"
               class="ml-auto inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-indigo-300 hover:bg-indigo-500/10">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3" /><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4" /></svg>
-              Settings
+              {{ t('Settings') }}
             </Link>
             <button v-if="ext.removable" type="button" @click.stop="uninstall(ext)"
               :class="(ext.settings.length || ext.adminUrl) ? '' : 'ml-auto'"
-              class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-ink-2 hover:bg-red-500/10 hover:text-red-400">Remove</button>
+              class="rounded-lg px-2.5 py-1.5 text-xs font-semibold text-ink-2 hover:bg-red-500/10 hover:text-red-400">{{ t('Remove') }}</button>
           </div>
         </div>
       </div>
@@ -236,16 +237,16 @@ function uninstall(ext: { id: string; name: string }) {
 
     <!-- Catalog from the Convoro store -->
     <section class="mt-6 rounded-2xl border border-line bg-surface p-5">
-      <h2 class="mb-1 text-sm font-bold uppercase tracking-wide text-ink-2">Browse the catalog</h2>
-      <p class="mb-4 text-xs text-ink-muted">Extensions &amp; themes from the Convoro store. Free items install in one click; premium items unlock with a license key.</p>
+      <h2 class="mb-1 text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('Browse the catalog') }}</h2>
+      <p class="mb-4 text-xs text-ink-muted">{{ t('Extensions & themes from the Convoro store. Free items install in one click; premium items unlock with a license key.') }}</p>
 
       <div v-if="!catalog.length" class="rounded-xl border border-dashed border-line p-8 text-center text-sm text-ink-2">
-        Nothing new in the catalog right now — everything available is already installed.
+        {{ t('Nothing new in the catalog right now — everything available is already installed.') }}
       </div>
 
       <div v-else class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <div v-for="item in catalog" :key="item.slug" class="flex flex-col overflow-hidden rounded-2xl border border-line bg-appbg p-5">
-          <img v-if="item.image" :src="item.image" :alt="item.name" class="-mx-5 -mt-5 mb-3 aspect-[3/1] w-full object-cover" />
+          <img v-if="item.image" :src="item.image" :alt="item.name" class="-mx-5 -mt-5 mb-3 aspect-[2/1] w-[calc(100%+2.5rem)] max-w-none object-cover" />
           <div class="flex items-start gap-3">
             <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg"
               :class="item.type === 'theme' ? 'bg-fuchsia-500/15 text-fuchsia-300' : 'bg-indigo-500/15 text-indigo-300'">
@@ -263,11 +264,11 @@ function uninstall(ext: { id: string; name: string }) {
           <div class="mt-4 border-t border-line pt-3">
             <button v-if="item.free" type="button" :disabled="installingSlug === item.slug" @click="installCatalog(item)"
               class="w-full rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">
-              {{ installingSlug === item.slug ? 'Installing…' : 'Download &amp; install' }}
+              {{ installingSlug === item.slug ? t('Installing…') : t('Download & install') }}
             </button>
             <a v-else :href="`https://convoro.co/extensions/${item.slug}`" target="_blank" rel="noopener"
               class="block rounded-lg border border-line px-3 py-2 text-center text-sm font-semibold text-amber-300 hover:bg-surface-2">
-              Buy on convoro.co — then redeem your key above
+              {{ t('Buy on convoro.co — then redeem your key above') }}
             </a>
           </div>
         </div>

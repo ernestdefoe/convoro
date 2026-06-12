@@ -23,16 +23,17 @@ class CoverImage
             name: $product->name,
             tagline: (string) ($product->tagline ?: ($meta['description'] ?? '')),
             type: $product->type ?: 'extension',
-            language: $meta['language'] ?? null,
-            stars: $meta['stars'] ?? null,
             premium: ! $product->isFree(),
             slug: $product->slug,
+            repo: $product->repo ?: ('ernestdefoe/'.$product->slug),
         );
 
         $path = 'covers/'.$product->slug.'.svg';
         Storage::disk('public')->put($path, $svg, 'public');
 
-        $url = Storage::disk('public')->url($path);
+        // Store a HOST-RELATIVE url so covers work on any domain (the absolute
+        // url baked in whatever APP_URL happened to be at generation time).
+        $url = '/storage/'.$path;
         $product->forceFill(['image' => $url])->save();
 
         return $url;
@@ -65,64 +66,132 @@ class CoverImage
         }
     }
 
-    private static function svg(string $name, string $tagline, string $type, ?string $language, ?int $stars, bool $premium, string $slug): string
+    private static function svg(string $name, string $tagline, string $type, bool $premium, string $slug, string $repo): string
     {
         $e = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES | ENT_XML1);
+        $mono = "'JetBrains Mono', 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace";
 
-        // Deterministic hue from the slug → two harmonious gradient stops.
-        $hue = crc32($slug) % 360;
-        $c1 = "hsl({$hue}, 72%, 56%)";
-        $c2 = 'hsl('.(($hue + 38) % 360).', 70%, 44%)';
-        $glyph = $type === 'theme' ? '🎨' : '🧩';
+        // Brand violet, nudged a little per-slug so covers vary but stay on-brand.
+        $hue = 250 + (crc32($slug) % 26); // 250–275 (indigo → violet)
+        $accent = "hsl({$hue}, 85%, 70%)";
+        $accent2 = 'hsl('.($hue + 12).', 80%, 62%)';
 
-        // Fit the title size to its length.
+        // Title: fit size to length, hard-cap to avoid overflow.
+        $name = trim(mb_strimwidth($name, 0, 28, '…'));
         $len = mb_strlen($name);
-        $titleSize = $len > 26 ? 52 : ($len > 18 ? 64 : 76);
-
-        $tag = $e(mb_strimwidth($tagline, 0, 96, '…'));
+        $titleSize = $len > 22 ? 58 : ($len > 14 ? 72 : 86);
         $title = $e($name);
 
-        // Bottom meta row.
-        $badges = [];
-        $badges[] = strtoupper($e($type));
-        if ($language) {
-            $badges[] = $e($language);
+        $eyebrow = $e(strtoupper('Convoro '.$type)).($premium ? '  ·  PREMIUM' : '');
+        $cmd = $e('$ composer require '.$repo);
+        $pascal = self::pascal($name);
+        $mono2 = self::monogram($name);
+
+        // Description, wrapped to ≤2 lines.
+        $descSvg = '';
+        $dy = 408;
+        foreach (self::wrapLines($tagline, 52, 2) as $line) {
+            $descSvg .= '<text x="64" y="'.$dy.'" font-size="27" font-family="'.$mono.'" fill="rgba(233,233,245,0.62)">'.$e($line).'</text>';
+            $dy += 40;
         }
-        if ($stars) {
-            $badges[] = '★ '.number_format($stars);
-        }
-        $meta = implode('  ·  ', $badges);
-        $tier = $premium ? 'PREMIUM' : 'FREE';
 
         return <<<SVG
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="{$c1}"/>
-      <stop offset="1" stop-color="{$c2}"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0a12"/>
+      <stop offset="1" stop-color="#13101f"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.8" cy="0.15" r="0.9">
-      <stop offset="0" stop-color="rgba(255,255,255,0.22)"/>
-      <stop offset="1" stop-color="rgba(255,255,255,0)"/>
+    <radialGradient id="rglow" cx="0.78" cy="0.42" r="0.5">
+      <stop offset="0" stop-color="hsla({$hue}, 85%, 62%, 0.45)"/>
+      <stop offset="1" stop-color="hsla({$hue}, 85%, 62%, 0)"/>
     </radialGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="{$accent}"/>
+      <stop offset="1" stop-color="{$accent2}"/>
+    </linearGradient>
   </defs>
-  <rect width="1200" height="600" fill="url(#g)"/>
-  <rect width="1200" height="600" fill="url(#glow)"/>
-  <circle cx="1030" cy="120" r="220" fill="rgba(255,255,255,0.06)"/>
-  <circle cx="120" cy="540" r="160" fill="rgba(0,0,0,0.08)"/>
 
-  <g transform="translate(80,90)">
-    <rect width="96" height="96" rx="22" fill="rgba(255,255,255,0.16)"/>
-    <text x="48" y="64" font-size="50" text-anchor="middle">{$glyph}</text>
-  </g>
-  <text x="824" y="132" text-anchor="end" font-size="22" font-weight="800" letter-spacing="3" fill="rgba(255,255,255,0.85)">{$tier}</text>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#rglow)"/>
+  <rect x="24" y="24" width="1152" height="582" rx="26" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="1.5"/>
 
-  <text x="80" y="330" font-size="{$titleSize}" font-weight="800" fill="#ffffff">{$title}</text>
-  <text x="82" y="392" font-size="30" fill="rgba(255,255,255,0.92)">{$tag}</text>
+  <text x="64" y="112" font-size="26" font-family="{$mono}" fill="rgba(255,255,255,0.16)">{$cmd}</text>
 
-  <text x="80" y="516" font-size="24" font-weight="700" letter-spacing="1" fill="rgba(255,255,255,0.92)">{$meta}</text>
-  <text x="1120" y="540" text-anchor="end" font-size="26" font-weight="800" letter-spacing="1" fill="rgba(255,255,255,0.9)">Convoro</text>
+  <text x="64" y="214" font-size="22" font-weight="700" letter-spacing="5" font-family="{$mono}" fill="{$accent}">{$eyebrow}</text>
+  <text x="62" y="316" font-size="{$titleSize}" font-weight="800" fill="#ffffff">{$title}</text>
+  <rect x="64" y="344" width="148" height="7" rx="3.5" fill="url(#acc)"/>
+
+  {$descSvg}
+
+  <text x="64" y="514" font-size="24" font-family="{$mono}" fill="rgba(255,255,255,0.14)">&lt;{$pascal} /&gt;</text>
+  <text x="64" y="558" font-size="24" font-family="{$mono}" fill="rgba(255,255,255,0.16)">&lt;/convoro.co&gt;<tspan fill="{$accent}"> ▌</tspan></text>
+
+  <circle cx="965" cy="300" r="150" fill="url(#rglow)"/>
+  <text x="965" y="300" text-anchor="middle" dominant-baseline="central" font-size="150" font-weight="800" font-family="Georgia, 'Times New Roman', serif" fill="{$accent}">{$mono2}</text>
+  <rect x="888" y="392" width="154" height="11" rx="5.5" fill="{$accent}" opacity="0.85"/>
+  <rect x="888" y="418" width="100" height="11" rx="5.5" fill="{$accent}" opacity="0.5"/>
 </svg>
 SVG;
+    }
+
+    /** "Google Fonts" → "GoogleFonts" (for the decorative &lt;Component /&gt; line). */
+    private static function pascal(string $name): string
+    {
+        $words = preg_split('/[^A-Za-z0-9]+/', $name, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $out = implode('', array_map('ucfirst', $words));
+
+        return $out !== '' ? mb_strimwidth($out, 0, 24) : 'Extension';
+    }
+
+    /** A 1–2 char monogram: initials for multi-word names, else first+second letter ("Aa"). */
+    private static function monogram(string $name): string
+    {
+        $words = preg_split('/[^A-Za-z0-9]+/', $name, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if (count($words) >= 2) {
+            return strtoupper(mb_substr($words[0], 0, 1).mb_substr($words[1], 0, 1));
+        }
+        $w = $words[0] ?? 'C';
+
+        return mb_strlen($w) >= 2
+            ? strtoupper(mb_substr($w, 0, 1)).strtolower(mb_substr($w, 1, 1))
+            : strtoupper(mb_substr($w, 0, 1));
+    }
+
+    /** Word-wrap text into up to $maxLines lines of ~$perLine chars, ellipsizing overflow. */
+    private static function wrapLines(string $text, int $perLine, int $maxLines): array
+    {
+        $text = trim(preg_replace('/\s+/', ' ', (string) $text));
+        if ($text === '') {
+            return [];
+        }
+
+        $lines = [];
+        $cur = '';
+        foreach (explode(' ', $text) as $word) {
+            $try = $cur === '' ? $word : $cur.' '.$word;
+            if (mb_strlen($try) <= $perLine) {
+                $cur = $try;
+
+                continue;
+            }
+            $lines[] = $cur;
+            $cur = $word;
+            if (count($lines) === $maxLines) {
+                break;
+            }
+        }
+        if ($cur !== '' && count($lines) < $maxLines) {
+            $lines[] = $cur;
+        }
+
+        // If text didn't fully fit, ellipsize the last visible line.
+        $used = implode(' ', $lines);
+        if (mb_strlen($used) < mb_strlen($text)) {
+            $last = count($lines) - 1;
+            $lines[$last] = rtrim(mb_strimwidth($lines[$last], 0, $perLine - 1)).'…';
+        }
+
+        return $lines;
     }
 }

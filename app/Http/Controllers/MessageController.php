@@ -46,7 +46,7 @@ class MessageController extends Controller
                 'isGroup' => (bool) $conversation->is_group,
                 'title' => $conversation->is_group
                     ? ($conversation->title ?: $others->pluck('name')->join(', '))
-                    : ($others->first()?->name ?? 'Conversation'),
+                    : ($others->first()?->name ?? __('Conversation')),
                 'partner' => Present::avatar($others->first()),
                 'participants' => $conversation->participants->map(fn ($u) => Present::avatar($u))->values(),
             ],
@@ -74,7 +74,7 @@ class MessageController extends Controller
             ->reject(fn ($id) => $id === $me)
             ->unique()->values();
 
-        abort_if($ids->isEmpty(), 422, 'Choose at least one person to message.');
+        abort_if($ids->isEmpty(), 422, __('Choose at least one person to message.'));
 
         if ($ids->count() === 1) {
             $other = $ids->first();
@@ -127,7 +127,7 @@ class MessageController extends Controller
 
         $data = $request->validate(['body_html' => ['required', 'string', 'max:20000']]);
         $html = Content::clean($data['body_html']);
-        abort_if(trim(strip_tags($html)) === '', 422, 'Empty message.');
+        abort_if(trim(strip_tags($html)) === '', 422, __('Empty message.'));
 
         $message = $conversation->messages()->create(['user_id' => $me, 'body_html' => $html]);
         $conversation->update(['last_message_at' => now()]);

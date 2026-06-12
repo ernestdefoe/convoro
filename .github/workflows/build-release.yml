@@ -35,7 +35,10 @@ jobs:
           coverage: none
 
       - name: Install PHP dependencies (production)
-        run: composer install --no-dev --no-interaction --prefer-dist --optimize-autoloader
+        # classmap-authoritative = fastest autoload on shared hosts (no per-class
+        # filesystem stats). Convoro extensions load via their own autoloader, so
+        # they're unaffected by an authoritative Composer classmap.
+        run: composer install --no-dev --no-interaction --prefer-dist --classmap-authoritative
 
       - name: Setup Node
         uses: actions/setup-node@v4

@@ -20,7 +20,7 @@ class PostController extends Controller
     public function store(Request $request, Topic $topic): RedirectResponse
     {
         abort_if($topic->is_locked, 403);
-        abort_if($request->user()->isBanned(), 403, 'Your account is suspended.');
+        abort_if($request->user()->isBanned(), 403, __('Your account is suspended.'));
 
         $data = $request->validate([
             'body_html' => ['required', 'string', 'max:120000'],
@@ -28,7 +28,7 @@ class PostController extends Controller
         ]);
 
         $html = Content::clean($data['body_html']);
-        abort_if(trim(strip_tags($html)) === '', 422, 'Empty post.');
+        abort_if(trim(strip_tags($html)) === '', 422, __('Empty post.'));
 
         $post = Post::create([
             'topic_id' => $topic->id,
@@ -60,13 +60,16 @@ class PostController extends Controller
             'body_html' => ['required', 'string', 'max:120000'],
             'title' => ['nullable', 'string', 'max:160'],
             'cover' => ['nullable', 'string', 'max:2048'],
+            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'tags' => ['array'],
+            'tags.*' => ['integer', 'exists:tags,id'],
         ]);
         $html = Content::clean($data['body_html']);
-        abort_if(trim(strip_tags($html)) === '', 422, 'Empty post.');
+        abort_if(trim(strip_tags($html)) === '', 422, __('Empty post.'));
 
         $post->update(['body_html' => $html, 'edited_at' => now()]);
 
-        // The opening post owns the topic's title + cover image.
+        // The opening post owns the topic's title, cover, category and tags.
         if ($post->is_first) {
             $topicChanges = [];
             if ($request->filled('title')) {
@@ -75,8 +78,14 @@ class PostController extends Controller
             if ($request->has('cover')) {
                 $topicChanges['cover_image'] = $data['cover'] ?: null;
             }
+            if ($request->has('category_id')) {
+                $topicChanges['category_id'] = $data['category_id'] ?: null;
+            }
             if ($topicChanges) {
                 $post->topic->update($topicChanges);
+            }
+            if ($request->has('tags')) {
+                $post->topic->tags()->sync($data['tags'] ?? []);
             }
         }
 

@@ -2,6 +2,7 @@
 import { Head, useForm, usePage, router } from '@inertiajs/vue3';
 import { ref, computed } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import { t } from '@/lib/i18n';
 
 const props = defineProps<{
   values: {
@@ -48,30 +49,30 @@ function sendTest() {
 </script>
 
 <template>
-  <Head title="Admin · Email" />
+  <Head :title="t('Admin · Email')" />
   <AdminLayout>
-    <template #title>Email</template>
-    <template #subtitle>How your community sends mail — notifications, digests, password resets</template>
+    <template #title>{{ t('Email') }}</template>
+    <template #subtitle>{{ t('How your community sends mail — notifications, digests, password resets') }}</template>
 
     <form class="max-w-2xl space-y-6" @submit.prevent="save">
       <!-- Transport -->
       <div class="rounded-2xl border border-line bg-surface p-6 space-y-5">
-        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">Sending method</h2>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('Sending method') }}</h2>
         <div class="grid gap-3 sm:grid-cols-2">
           <label class="flex cursor-pointer items-start gap-3 rounded-xl border p-4"
             :class="form.transport === 'sendmail' ? 'border-indigo-500 bg-indigo-500/10' : 'border-line hover:border-line'">
             <input v-model="form.transport" type="radio" value="sendmail" class="mt-0.5 text-indigo-500 focus:ring-indigo-500" />
             <span>
-              <span class="block text-sm font-semibold text-ink">Server mail (PHP)</span>
-              <span class="block text-xs text-ink-2">Uses the host's built-in <code>sendmail</code>/PHP mail. No setup — works on most shared hosting.</span>
+              <span class="block text-sm font-semibold text-ink">{{ t('Server mail (PHP)') }}</span>
+              <span class="block text-xs text-ink-2">{{ t("Uses the host's built-in sendmail/PHP mail. No setup — works on most shared hosting.") }}</span>
             </span>
           </label>
           <label class="flex cursor-pointer items-start gap-3 rounded-xl border p-4"
             :class="form.transport === 'smtp' ? 'border-indigo-500 bg-indigo-500/10' : 'border-line hover:border-line'">
             <input v-model="form.transport" type="radio" value="smtp" class="mt-0.5 text-indigo-500 focus:ring-indigo-500" />
             <span>
-              <span class="block text-sm font-semibold text-ink">SMTP</span>
-              <span class="block text-xs text-ink-2">Send through a mail provider (Gmail, Mailgun, SES, Postmark…). More reliable deliverability.</span>
+              <span class="block text-sm font-semibold text-ink">{{ t('SMTP') }}</span>
+              <span class="block text-xs text-ink-2">{{ t('Send through a mail provider (Gmail, Mailgun, SES, Postmark…). More reliable deliverability.') }}</span>
             </span>
           </label>
         </div>
@@ -79,17 +80,17 @@ function sendTest() {
 
       <!-- From identity -->
       <div class="rounded-2xl border border-line bg-surface p-6 space-y-5">
-        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">From address</h2>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('From address') }}</h2>
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
-            <label class="block text-sm font-medium text-ink-2">From email</label>
+            <label class="block text-sm font-medium text-ink-2">{{ t('From email') }}</label>
             <input v-model="form.from_address" type="email" placeholder="community@example.com"
               class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500" />
             <p v-if="form.errors.from_address" class="mt-1 text-xs text-red-400">{{ form.errors.from_address }}</p>
           </div>
           <div>
-            <label class="block text-sm font-medium text-ink-2">From name</label>
-            <input v-model="form.from_name" type="text" placeholder="(defaults to community name)"
+            <label class="block text-sm font-medium text-ink-2">{{ t('From name') }}</label>
+            <input v-model="form.from_name" type="text" :placeholder="t('(defaults to community name)')"
               class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500" />
           </div>
         </div>
@@ -97,58 +98,58 @@ function sendTest() {
 
       <!-- SMTP details -->
       <div v-if="form.transport === 'smtp'" class="rounded-2xl border border-line bg-surface p-6 space-y-5">
-        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">SMTP server</h2>
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('SMTP server') }}</h2>
         <div class="grid gap-4 sm:grid-cols-3">
           <div class="sm:col-span-2">
-            <label class="block text-sm font-medium text-ink-2">Host</label>
+            <label class="block text-sm font-medium text-ink-2">{{ t('Host') }}</label>
             <input v-model="form.smtp_host" type="text" placeholder="smtp.example.com"
               class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-ink-2">Port</label>
+            <label class="block text-sm font-medium text-ink-2">{{ t('Port') }}</label>
             <input v-model.number="form.smtp_port" type="number" min="1" max="65535"
               class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500" />
           </div>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
           <div>
-            <label class="block text-sm font-medium text-ink-2">Username</label>
+            <label class="block text-sm font-medium text-ink-2">{{ t('Username') }}</label>
             <input v-model="form.smtp_username" type="text" autocomplete="off"
               class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-ink-2">Password</label>
+            <label class="block text-sm font-medium text-ink-2">{{ t('Password') }}</label>
             <input v-model="form.smtp_password" type="password" autocomplete="new-password"
-              :placeholder="props.values.smtp_password_set ? '•••••••• (leave blank to keep)' : ''"
+              :placeholder="props.values.smtp_password_set ? t('•••••••• (leave blank to keep)') : ''"
               class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500" />
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-ink-2">Encryption</label>
+          <label class="block text-sm font-medium text-ink-2">{{ t('Encryption') }}</label>
           <select v-model="form.smtp_encryption" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500">
-            <option value="tls">TLS / STARTTLS (port 587)</option>
-            <option value="ssl">SSL (port 465)</option>
-            <option value="none">None</option>
+            <option value="tls">{{ t('TLS / STARTTLS (port 587)') }}</option>
+            <option value="ssl">{{ t('SSL (port 465)') }}</option>
+            <option value="none">{{ t('None') }}</option>
           </select>
         </div>
       </div>
 
       <div class="flex items-center gap-3">
-        <button type="submit" :disabled="form.processing" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">Save changes</button>
-        <span v-if="form.recentlySuccessful" class="text-sm text-emerald-400">Saved.</span>
+        <button type="submit" :disabled="form.processing" class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">{{ t('Save changes') }}</button>
+        <span v-if="form.recentlySuccessful" class="text-sm text-emerald-400">{{ t('Saved.') }}</span>
       </div>
     </form>
 
     <!-- Test -->
     <div class="mt-8 max-w-2xl rounded-2xl border border-line bg-surface p-6">
-      <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">Send a test email</h2>
-      <p class="mt-1 text-xs text-ink-muted">Save your settings first, then send a test to confirm mail is going out.</p>
+      <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('Send a test email') }}</h2>
+      <p class="mt-1 text-xs text-ink-muted">{{ t('Save your settings first, then send a test to confirm mail is going out.') }}</p>
       <div class="mt-3 flex flex-wrap items-center gap-3">
         <input v-model="testTo" type="email" placeholder="you@example.com"
           class="w-64 rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500" />
         <button type="button" :disabled="sending || !testTo" @click="sendTest"
           class="rounded-lg border border-line px-4 py-2 text-sm font-semibold text-ink hover:bg-surface-2 disabled:opacity-60">
-          {{ sending ? 'Sending…' : 'Send test' }}
+          {{ sending ? t('Sending…') : t('Send test') }}
         </button>
       </div>
       <p v-if="mailTest" class="mt-3 text-sm" :class="mailTest.ok ? 'text-emerald-400' : 'text-red-400'">{{ mailTest.message }}</p>

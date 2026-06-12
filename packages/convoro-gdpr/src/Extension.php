@@ -275,22 +275,29 @@ label.chk{display:flex;align-items:center;gap:8px;font-size:14px;color:#c7cbe0;m
 <div style="margin-top:12px"><button class="btn ghost" id="prune">Prune IP logs now</button><span class="ok" id="pruneMsg"></span></div>
 </div>
 
-<div><button class="btn" id="save">Save settings</button><span class="ok" id="saveMsg"></span></div>
+<div><span class="ok" id="saveMsg" style="margin-left:0;color:#9aa0b8">Changes save automatically</span></div>
 </div><script>
 const csrf=document.querySelector('meta[name=csrf-token]').content;
 const h={'X-CSRF-TOKEN':csrf,'Content-Type':'application/json','Accept':'application/json'};
-document.getElementById('save').addEventListener('click',async()=>{
-  const body={
-    banner_heading:document.getElementById('banner_heading').value,
-    banner_message:document.getElementById('banner_message').value,
-    analytics_enabled:document.getElementById('analytics_enabled').checked,
-    marketing_enabled:document.getElementById('marketing_enabled').checked,
-    ip_retention_days:parseInt(document.getElementById('ip_retention_days').value||'0',10),
-    privacy_url:document.getElementById('privacy_url').value,
-  };
-  await fetch('/admin/ext/gdpr',{method:'POST',headers:h,body:JSON.stringify(body)});
-  const m=document.getElementById('saveMsg');m.textContent='Saved ✓';setTimeout(()=>m.textContent='',2000);
-});
+const msg=document.getElementById('saveMsg'),IDLE='Changes save automatically';let t=null;
+const notifyParent=(message,kind='success')=>{try{if(window.parent!==window)window.parent.postMessage({type:'convoro:toast',message,kind},location.origin);}catch(e){}};
+function collect(){return{
+  banner_heading:document.getElementById('banner_heading').value,
+  banner_message:document.getElementById('banner_message').value,
+  analytics_enabled:document.getElementById('analytics_enabled').checked,
+  marketing_enabled:document.getElementById('marketing_enabled').checked,
+  ip_retention_days:parseInt(document.getElementById('ip_retention_days').value||'0',10),
+  privacy_url:document.getElementById('privacy_url').value,
+};}
+async function save(){msg.style.color='#9aa0b8';msg.textContent='Saving…';
+  try{const r=await fetch('/admin/ext/gdpr',{method:'POST',headers:h,body:JSON.stringify(collect())});
+    msg.style.color=r.ok?'#34d399':'#f87171';msg.textContent=r.ok?'Saved ✓':'Error — will retry';
+    notifyParent(r.ok?'Settings saved':"Couldn't save",r.ok?'success':'error');}
+  catch(e){msg.style.color='#f87171';msg.textContent='Error — will retry';notifyParent("Couldn't save",'error');}
+  setTimeout(()=>{if(msg.textContent==='Saved ✓'){msg.style.color='#9aa0b8';msg.textContent=IDLE;}},1800);}
+function debounced(){if(t)clearTimeout(t);t=setTimeout(save,700);}
+['banner_heading','banner_message','ip_retention_days','privacy_url'].forEach(id=>document.getElementById(id).addEventListener('input',debounced));
+['analytics_enabled','marketing_enabled'].forEach(id=>document.getElementById(id).addEventListener('change',save));
 document.getElementById('prune').addEventListener('click',async()=>{
   const r=await fetch('/admin/ext/gdpr/prune',{method:'POST',headers:h});const d=await r.json();
   document.getElementById('pruneMsg').textContent=d.message||'Done';

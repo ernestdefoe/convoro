@@ -101,6 +101,40 @@ class Installer
         ];
     }
 
+    /**
+     * Non-blocking, production-reliability recommendations. Shown in the
+     * installer as "Recommended for production" but never block the install.
+     * See deploy/DEPLOYMENT.md for the why behind each.
+     */
+    public static function advisories(): array
+    {
+        $out = [];
+
+        // OPcache: large performance win in production.
+        $opcache = function_exists('opcache_get_status');
+        if ($opcache) {
+            $status = @opcache_get_status(false);
+            $opcache = is_array($status) ? ($status['opcache_enabled'] ?? false) : false;
+        }
+        $out[] = [
+            'label' => 'PHP OPcache enabled (big performance win)',
+            'pass' => (bool) $opcache,
+            'hint' => 'Set opcache.enable=1 in php.ini',
+        ];
+
+        // Memory overcommit: required by Redis/Valkey to avoid background-save crashes.
+        $oc = @file_get_contents('/proc/sys/vm/overcommit_memory');
+        if ($oc !== false) {
+            $out[] = [
+                'label' => 'Memory overcommit on (vm.overcommit_memory=1) — keeps Redis/Valkey stable',
+                'pass' => trim($oc) === '1',
+                'hint' => 'See deploy/DEPLOYMENT.md §2',
+            ];
+        }
+
+        return $out;
+    }
+
     /** Supported DB engines for the installer dropdown. */
     public static function drivers(): array
     {

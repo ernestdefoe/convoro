@@ -2,24 +2,20 @@
 
 namespace App\Notifications;
 
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
 use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 
 /**
  * Fires a browser push for an already-stored in-app notification.
- * Queued (ShouldQueue) so the originating request never blocks on the push
- * service — the cron-driven scheduler drains it on shared hosting; a worker
- * delivers it instantly on a VPS.
+ * Dispatched (and error-swallowed) via App\Jobs\SendWebPush so a stale/corrupt
+ * device subscription can never surface as a "failed job" — push is best-effort
+ * and the same alert is always delivered in-app + by email anyway.
  *
  * @property array{title:string,body:string,url:string,tag:string} $payload
  */
-class WebPushAlert extends Notification implements ShouldQueue
+class WebPushAlert extends Notification
 {
-    use Queueable;
-
     public function __construct(public array $payload) {}
 
     public function via(object $notifiable): array

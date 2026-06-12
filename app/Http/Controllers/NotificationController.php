@@ -46,9 +46,13 @@ class NotificationController extends Controller
     {
         $data = $request->validate([
             'digest_frequency' => ['required', 'in:off,daily,weekly'],
+            'notify_email' => ['boolean'],
         ]);
 
-        $request->user()->update(['digest_frequency' => $data['digest_frequency']]);
+        $request->user()->update([
+            'digest_frequency' => $data['digest_frequency'],
+            'notify_email' => $request->boolean('notify_email'),
+        ]);
 
         return back();
     }

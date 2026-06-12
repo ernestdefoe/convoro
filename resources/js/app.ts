@@ -34,7 +34,27 @@ createInertiaApp({
 
 // Register the PWA service worker (installability + push). Safe no-op if unsupported.
 if ('serviceWorker' in navigator) {
+    // When a new worker takes control, reload once so a client that was stuck on
+    // a stale worker/shell rescues itself automatically (guarded against loops).
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+    });
+
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(() => {});
+        // updateViaCache:'none' forces the sw.js script to bypass the HTTP cache on
+        // every update check, so new workers are picked up promptly.
+        navigator.serviceWorker
+            .register('/sw.js', { updateViaCache: 'none' })
+            .then((reg) => {
+                reg.update().catch(() => {});
+                // Re-check for a new worker whenever the tab regains focus.
+                document.addEventListener('visibilitychange', () => {
+                    if (document.visibilityState === 'visible') reg.update().catch(() => {});
+                });
+            })
+            .catch(() => {});
     });
 }

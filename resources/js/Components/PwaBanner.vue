@@ -2,6 +2,7 @@
 import { isStandalone, pushSupported, subscribeToPush } from '@/lib/push';
 import { usePage } from '@inertiajs/vue3';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
+import { t } from '@/lib/i18n';
 
 const DISMISS_KEY = 'convoro_pwa_banner_dismissed';
 
@@ -77,38 +78,38 @@ async function enablePush() {
       v-if="show"
       class="fixed inset-x-3 bottom-3 z-[60] mx-auto max-w-md rounded-c border border-line bg-surface p-4 shadow-2xl shadow-black/20 sm:inset-x-auto sm:right-4"
       role="dialog"
-      aria-label="Install Convoro"
+      :aria-label="t('Install Convoro')"
     >
       <div class="flex items-start gap-3">
         <img src="/icons/icon-192.png" alt="" width="44" height="44" class="rounded-xl" />
         <div class="min-w-0 flex-1">
           <template v-if="mode === 'install'">
-            <p class="text-sm font-bold text-ink">Install the Convoro app</p>
-            <p class="mt-0.5 text-sm text-ink-muted">Add it to your home screen for a faster, full-screen experience with push notifications.</p>
+            <p class="text-sm font-bold text-ink">{{ t('Install the Convoro app') }}</p>
+            <p class="mt-0.5 text-sm text-ink-muted">{{ t('Add it to your home screen for a faster, full-screen experience with push notifications.') }}</p>
             <div class="mt-3 flex gap-2">
-              <button type="button" :disabled="busy" class="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-60" @click="install">Install</button>
-              <button type="button" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="dismiss">Not now</button>
+              <button type="button" :disabled="busy" class="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-60" @click="install">{{ t('Install') }}</button>
+              <button type="button" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="dismiss">{{ t('Not now') }}</button>
             </div>
           </template>
 
           <template v-else-if="mode === 'ios'">
-            <p class="text-sm font-bold text-ink">Install Convoro</p>
-            <p class="mt-0.5 text-sm text-ink-muted">Tap the Share button, then <strong>Add to Home Screen</strong> to install the app and unlock notifications.</p>
+            <p class="text-sm font-bold text-ink">{{ t('Install Convoro') }}</p>
+            <p class="mt-0.5 text-sm text-ink-muted">{{ t('Tap the Share button, then') }} <strong>{{ t('Add to Home Screen') }}</strong> {{ t('to install the app and unlock notifications.') }}</p>
             <div class="mt-3">
-              <button type="button" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="dismiss">Got it</button>
+              <button type="button" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="dismiss">{{ t('Got it') }}</button>
             </div>
           </template>
 
           <template v-else>
-            <p class="text-sm font-bold text-ink">Turn on notifications</p>
-            <p class="mt-0.5 text-sm text-ink-muted">Get notified about replies, mentions and reactions.</p>
+            <p class="text-sm font-bold text-ink">{{ t('Turn on notifications') }}</p>
+            <p class="mt-0.5 text-sm text-ink-muted">{{ t('Get notified about replies, mentions and reactions.') }}</p>
             <div class="mt-3 flex gap-2">
-              <button type="button" :disabled="busy" class="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-60" @click="enablePush">Enable</button>
-              <button type="button" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="dismiss">No thanks</button>
+              <button type="button" :disabled="busy" class="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-60" @click="enablePush">{{ t('Enable') }}</button>
+              <button type="button" class="rounded-lg px-3 py-1.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="dismiss">{{ t('No thanks') }}</button>
             </div>
           </template>
         </div>
-        <button type="button" aria-label="Dismiss" class="text-ink-muted hover:text-ink" @click="dismiss">
+        <button type="button" :aria-label="t('Dismiss')" class="text-ink-muted hover:text-ink" @click="dismiss">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
       </div>

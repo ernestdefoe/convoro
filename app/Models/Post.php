@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Post extends Model {
     protected $guarded = [];
-    protected $casts = ['is_first' => 'boolean', 'edited_at' => 'datetime'];
+    protected $casts = ['is_first' => 'boolean', 'is_ai' => 'boolean', 'hidden' => 'boolean', 'moderation' => 'array', 'edited_at' => 'datetime'];
     public function topic(): BelongsTo { return $this->belongsTo(Topic::class); }
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function reactions(): HasMany { return $this->hasMany(Reaction::class); }

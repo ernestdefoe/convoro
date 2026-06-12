@@ -14,6 +14,7 @@ class InstallController extends Controller
     {
         return view('install', [
             'requirements' => Installer::requirements(),
+            'advisories' => Installer::advisories(),
             'drivers' => Installer::drivers(),
             'appUrl' => url('/'),
         ]);
@@ -33,7 +34,7 @@ class InstallController extends Controller
         try {
             Installer::testDatabase($db);
 
-            return response()->json(['ok' => true, 'message' => 'Connection successful.']);
+            return response()->json(['ok' => true, 'message' => __('Connection successful.')]);
         } catch (\Throwable $e) {
             return response()->json(['ok' => false, 'message' => $e->getMessage()], 422);
         }

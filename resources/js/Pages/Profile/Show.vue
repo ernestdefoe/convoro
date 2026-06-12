@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import Editor from '@/Components/Editor.vue';
 import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
+import { t as tr } from '@/lib/i18n';
 
 const props = defineProps<{
   profile: { id: number; name: string; bio: string | null; avatar: string | null; cover: string | null; initials: string; color: number; joined: string; isAdmin: boolean; isSelf: boolean };
@@ -53,18 +54,18 @@ function message() {
             <div class="rounded-full ring-4 ring-surface">
               <Avatar :avatar="{ initials: profile.initials, color: profile.color, avatar: profile.avatar }" :size="96" />
             </div>
-            <Link v-if="profile.isSelf" href="/profile" class="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Edit profile</Link>
-            <button v-else-if="loggedIn" type="button" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600" @click="message">Message</button>
+            <Link v-if="profile.isSelf" href="/profile" class="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ tr('Edit profile') }}</Link>
+            <button v-else-if="loggedIn" type="button" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600" @click="message">{{ tr('Message') }}</button>
           </div>
           <div class="mt-3 flex items-center gap-2">
             <h1 class="text-2xl font-extrabold tracking-tight">{{ profile.name }}</h1>
-            <span v-if="profile.isAdmin" class="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">Admin</span>
+            <span v-if="profile.isAdmin" class="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">{{ tr('Admin') }}</span>
           </div>
           <p v-if="profile.bio" class="mt-1 text-ink-2">{{ profile.bio }}</p>
           <div class="mt-3 flex flex-wrap gap-4 text-sm text-ink-muted">
-            <span>Joined {{ profile.joined }}</span>
-            <span><strong class="text-ink">{{ stats.topics }}</strong> topics</span>
-            <span><strong class="text-ink">{{ stats.posts }}</strong> posts</span>
+            <span>{{ tr('Joined {joined}', { joined: profile.joined }) }}</span>
+            <span><strong class="text-ink">{{ stats.topics }}</strong> {{ tr('topics') }}</span>
+            <span><strong class="text-ink">{{ stats.posts }}</strong> {{ tr('posts') }}</span>
           </div>
         </div>
       </div>
@@ -72,13 +73,13 @@ function message() {
       <div class="mt-6 grid gap-6 md:grid-cols-[1fr_280px]">
         <!-- Wall -->
         <div>
-          <h2 class="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">Profile wall</h2>
+          <h2 class="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">{{ tr('Profile wall') }}</h2>
 
           <div v-if="loggedIn" class="mb-4 rounded-c border border-line bg-surface p-3">
-            <Editor ref="editor" placeholder="Write something…" />
+            <Editor ref="editor" :placeholder="tr('Write something…')" />
             <div class="mt-2 flex justify-end">
               <button type="button" :disabled="posting" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-60" @click="postToWall">
-                {{ posting ? 'Posting…' : 'Post' }}
+                {{ posting ? tr('Posting…') : tr('Post') }}
               </button>
             </div>
           </div>
@@ -91,25 +92,25 @@ function message() {
                   <Link :href="p.author.url" class="text-sm font-bold hover:underline">{{ p.author.name }}</Link>
                   <div class="text-xs text-ink-muted">{{ p.createdAt }}</div>
                 </div>
-                <button v-if="p.canDelete" type="button" class="text-ink-muted hover:text-red-500" aria-label="Delete" @click="removePost(p.id)">
+                <button v-if="p.canDelete" type="button" class="text-ink-muted hover:text-red-500" :aria-label="tr('Delete')" @click="removePost(p.id)">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" /></svg>
                 </button>
               </div>
               <div class="prose-convoro mt-2 text-ink-2" v-html="p.html"></div>
             </div>
-            <p v-if="!wall.length" class="rounded-c border border-dashed border-line p-6 text-center text-sm text-ink-muted">No wall posts yet.</p>
+            <p v-if="!wall.length" class="rounded-c border border-dashed border-line p-6 text-center text-sm text-ink-muted">{{ tr('No wall posts yet.') }}</p>
           </div>
         </div>
 
         <!-- Recent activity -->
         <aside>
-          <h2 class="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">Recent topics</h2>
+          <h2 class="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">{{ tr('Recent topics') }}</h2>
           <div class="rounded-c border border-line bg-surface">
             <Link v-for="(t, i) in recentTopics" :key="i" :href="t.url" class="block border-b border-line/60 px-4 py-3 last:border-0 hover:bg-surface-2">
               <div class="text-sm font-semibold text-ink line-clamp-1">{{ t.title }}</div>
               <div class="text-xs text-ink-muted">{{ t.when }}</div>
             </Link>
-            <p v-if="!recentTopics.length" class="px-4 py-6 text-center text-sm text-ink-muted">No topics yet.</p>
+            <p v-if="!recentTopics.length" class="px-4 py-6 text-center text-sm text-ink-muted">{{ tr('No topics yet.') }}</p>
           </div>
         </aside>
       </div>

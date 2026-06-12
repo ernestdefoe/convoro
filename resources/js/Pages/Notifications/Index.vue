@@ -2,6 +2,7 @@
 import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
+import { t } from '@/lib/i18n';
 
 type Note = {
   id: string; read: boolean; time: string; type: string;
@@ -13,9 +14,9 @@ type Note = {
 const props = defineProps<{ items: Note[]; unread: number }>();
 
 function label(n: Note): string {
-  if (n.type === 'mention') return `${n.actor.name} mentioned you in ${n.topic.title}`;
-  if (n.type === 'reaction') return `${n.actor.name} reacted ${n.emoji ?? ''} to your post`;
-  return `${n.actor.name} replied in ${n.topic.title}`;
+  if (n.type === 'mention') return t('{name} mentioned you in {topic}', { name: n.actor.name, topic: n.topic.title });
+  if (n.type === 'reaction') return t('{name} reacted {emoji} to your post', { name: n.actor.name, emoji: n.emoji ?? '' });
+  return t('{name} replied in {topic}', { name: n.actor.name, topic: n.topic.title });
 }
 
 function go(n: Note) {
@@ -29,17 +30,17 @@ function markAll() {
 </script>
 
 <template>
-  <Head title="Notifications" />
+  <Head :title="t('Notifications')" />
   <AppLayout>
     <div class="mx-auto max-w-[760px]">
       <div class="mb-5 flex items-center justify-between">
-        <h1 class="text-2xl font-extrabold tracking-tight">Notifications</h1>
+        <h1 class="text-2xl font-extrabold tracking-tight">{{ t('Notifications') }}</h1>
         <button
           v-if="props.unread > 0"
           type="button"
           class="rounded-lg border border-line bg-surface px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2"
           @click="markAll"
-        >Mark all read</button>
+        >{{ t('Mark all read') }}</button>
       </div>
 
       <div class="overflow-hidden rounded-c border border-line bg-surface">
@@ -62,7 +63,7 @@ function markAll() {
 
         <div v-if="!props.items.length" class="px-5 py-16 text-center text-ink-muted">
           <div class="text-3xl">🎉</div>
-          <p class="mt-2 text-sm">No notifications yet — you're all caught up.</p>
+          <p class="mt-2 text-sm">{{ t("No notifications yet — you're all caught up.") }}</p>
         </div>
       </div>
     </div>

@@ -95,7 +95,7 @@ class UserProfileController extends Controller
         $data = $request->validate(['body_html' => ['required', 'string', 'max:20000']]);
 
         $html = Content::clean($data['body_html']);
-        abort_if(trim(strip_tags($html)) === '', 422, 'Empty post.');
+        abort_if(trim(strip_tags($html)) === '', 422, __('Empty post.'));
 
         $post = ProfilePost::create([
             'profile_user_id' => $user->id,

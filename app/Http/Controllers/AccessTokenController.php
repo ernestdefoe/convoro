@@ -13,7 +13,7 @@ class AccessTokenController extends Controller
             $request->user()->tokens()->latest()->get()->map(fn ($t) => [
                 'id' => $t->id,
                 'name' => $t->name,
-                'lastUsed' => $t->last_used_at ? $t->last_used_at->diffForHumans() : 'never',
+                'lastUsed' => $t->last_used_at ? $t->last_used_at->diffForHumans() : __('never'),
                 'created' => optional($t->created_at)->diffForHumans(),
             ])
         );
@@ -30,8 +30,8 @@ class AccessTokenController extends Controller
             'token' => [
                 'id' => $new->accessToken->id,
                 'name' => $new->accessToken->name,
-                'lastUsed' => 'never',
-                'created' => 'just now',
+                'lastUsed' => __('never'),
+                'created' => __('just now'),
             ],
         ]);
     }

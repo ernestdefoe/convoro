@@ -41,7 +41,38 @@ class AdminController extends Controller
             'queue' => $this->queueOverview(),
             'analytics' => \App\Support\ExtensionManager::isEnabled('convoro-analytics')
                 ? $this->analyticsOverview() : null,
+            'onboarding' => $this->onboardingSteps(),
+            // System (consolidated onto the dashboard).
+            'update' => $this->updateState(),
+            'health' => \App\Support\Health::checks(),
+            'info' => [
+                'version' => config('convoro.version'),
+                'php' => PHP_VERSION,
+                'laravel' => app()->version(),
+                'database' => config('database.default'),
+                'cache' => config('cache.default'),
+                'queue' => config('queue.default'),
+            ],
         ]);
+    }
+
+    /** First-run "getting started" checklist for the dashboard. */
+    private function onboardingSteps(): array
+    {
+        $steps = [
+            ['label' => __('Brand your community'), 'detail' => __('Add a logo and tune your colors in the live theme editor.'), 'href' => '/', 'done' => (bool) Settings::get('site.logo')],
+            ['label' => __('Create categories'), 'detail' => __('Give members a place to post.'), 'href' => '/admin/content', 'done' => Category::count() > 0],
+            ['label' => __('Set up email'), 'detail' => __('So notifications and password resets actually send.'), 'href' => '/admin/email', 'done' => (bool) Settings::get('mail.configured', false)],
+            ['label' => __('Add an extension'), 'detail' => __('Browse the marketplace and install your first add-on.'), 'href' => '/admin/marketplace', 'done' => count(\App\Support\ExtensionManager::enabledIds()) > 0],
+            ['label' => __('Set your app icon'), 'detail' => __('One image becomes every PWA icon size.'), 'href' => '/admin/pwa', 'done' => (bool) Settings::get('site.favicon')],
+            ['label' => __('Invite your first members'), 'detail' => __('A community is people — bring some in.'), 'href' => '/members', 'done' => User::count() > 1],
+        ];
+
+        return [
+            'steps' => $steps,
+            'done' => collect($steps)->where('done', true)->count(),
+            'total' => count($steps),
+        ];
     }
 
     /** Queue / jobs health for the dashboard panel. Best-effort — never throws. */
@@ -118,6 +149,9 @@ class AdminController extends Controller
             'latest' => Settings::get('update.latest', $current),
             'available' => (bool) Settings::get('update.available', false),
             'url' => Settings::get('update.url'),
+            'title' => Settings::get('update.title'),
+            'notes' => Settings::get('update.notes'),
+            'changelog' => Settings::get('update.changelog', []),
             'checkedAt' => Settings::get('update.checked_at'),
             'enabled' => (bool) config('convoro.update_url'),
             'running' => (bool) Settings::get('update.running', false),
@@ -155,9 +189,9 @@ class AdminController extends Controller
 
         try {
             $tasks[$action]();
-            $status = 'Done: '.$action;
+            $status = __('Done: :action', ['action' => $action]);
         } catch (\Throwable $e) {
-            $status = 'Failed: '.$e->getMessage();
+            $status = __('Failed: :error', ['error' => $e->getMessage()]);
         }
 
         return back()->with('status', $status);
@@ -171,22 +205,26 @@ class AdminController extends Controller
         if (! $url) {
             Settings::setMany(['update.available' => false, 'update.latest' => $current, 'update.checked_at' => now()->toDateTimeString()]);
 
-            return back()->with('status', 'Update checks are not configured.');
+            return back()->with('status', __('Update checks are not configured.'));
         }
 
         try {
             $res = Http::timeout(6)->acceptJson()->get($url);
             $latest = (string) ($res->json('version') ?? $current);
+            $changelog = $res->json('changelog');
             Settings::setMany([
                 'update.latest' => $latest,
                 'update.available' => version_compare($latest, $current, '>'),
                 'update.url' => $res->json('url'),
+                'update.title' => $res->json('title'),
+                'update.notes' => $res->json('notes'),
+                'update.changelog' => is_array($changelog) ? $changelog : [],
                 'update.checked_at' => now()->toDateTimeString(),
             ]);
         } catch (\Throwable $e) {
             Settings::set('update.checked_at', now()->toDateTimeString());
 
-            return back()->with('status', 'Could not reach the update server.');
+            return back()->with('status', __('Could not reach the update server.'));
         }
 
         return back();
@@ -195,13 +233,13 @@ class AdminController extends Controller
     public function applyUpdate(): RedirectResponse
     {
         if (Settings::get('update.running')) {
-            return back()->with('status', 'An update is already in progress.');
+            return back()->with('status', __('An update is already in progress.'));
         }
 
-        Settings::setMany(['update.running' => true, 'update.last_status' => 'Update started…']);
+        Settings::setMany(['update.running' => true, 'update.last_status' => __('Update started…')]);
         \App\Jobs\ApplyUpdateJob::dispatch();
 
-        return back()->with('status', 'Update started — it runs in the background and finishes in a moment. Refresh to see the new version.');
+        return back()->with('status', __('Update started — it runs in the background and finishes in a moment. Refresh to see the new version.'));
     }
 
     // ---- Store (central, convoro.co) ------------------------------------
@@ -233,7 +271,7 @@ class AdminController extends Controller
 
     public function connectStripe(Request $request): \Illuminate\Http\RedirectResponse
     {
-        abort_unless(\App\Support\StripeService::canConnect(), 422, 'Stripe Connect is not configured (set STRIPE_CONNECT_CLIENT_ID + STRIPE_SECRET).');
+        abort_unless(\App\Support\StripeService::canConnect(), 422, __('Stripe Connect is not configured (set STRIPE_CONNECT_CLIENT_ID + STRIPE_SECRET).'));
 
         $request->session()->put('stripe_connect_state', $state = \Illuminate\Support\Str::random(40));
 
@@ -245,18 +283,18 @@ class AdminController extends Controller
     public function stripeCallback(Request $request): \Illuminate\Http\RedirectResponse
     {
         if ($request->query('state') !== $request->session()->pull('stripe_connect_state')) {
-            return redirect()->route('admin.store')->with('status', 'Stripe connection expired — please try again.');
+            return redirect('/extensions/manage')->with('status', __('Stripe connection expired — please try again.'));
         }
         if ($request->query('error')) {
-            return redirect()->route('admin.store')->with('status', 'Stripe connection cancelled.');
+            return redirect('/extensions/manage')->with('status', __('Stripe connection cancelled.'));
         }
 
         try {
             \App\Support\StripeService::completeConnect((string) $request->query('code'));
 
-            return redirect()->route('admin.store')->with('status', 'Stripe account connected — checkout is live.');
+            return redirect('/extensions/manage')->with('status', __('Stripe account connected — checkout is live.'));
         } catch (\Throwable $e) {
-            return redirect()->route('admin.store')->with('status', $e->getMessage());
+            return redirect('/extensions/manage')->with('status', $e->getMessage());
         }
     }
 
@@ -264,7 +302,7 @@ class AdminController extends Controller
     {
         \App\Support\StripeService::disconnect();
 
-        return back()->with('status', 'Stripe account disconnected.');
+        return back()->with('status', __('Stripe account disconnected.'));
     }
 
     public function updateStripe(Request $request): RedirectResponse
@@ -282,7 +320,7 @@ class AdminController extends Controller
             Settings::set('stripe.webhook_secret', $data['webhook_secret']);
         }
 
-        return back()->with('status', 'Stripe settings saved.');
+        return back()->with('status', __('Stripe settings saved.'));
     }
 
     public function storeProduct(Request $request): RedirectResponse
@@ -299,6 +337,41 @@ class AdminController extends Controller
         return back();
     }
 
+    /** Queue an unbiased AI security review of a GitHub product's source. */
+    public function reviewProduct(\App\Models\Product $product): RedirectResponse
+    {
+        abort_unless(\App\Support\ExtensionReview::reviewable($product), 422);
+        if (! \App\Support\ExtensionReview::enabled()) {
+            return back()->with('status', __('Add an AI API key under “AI code review” first.'));
+        }
+        \App\Support\GitHubRegistry::queueReview($product);
+
+        return back()->with('status', __('Security review queued for “:name”.', ['name' => $product->name]));
+    }
+
+    /** Save the AI-review config (shares the ai.* keys with the AI Helper). */
+    public function updateReviewAi(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['boolean'],
+            'provider' => ['required', 'in:anthropic,openai'],
+            'model' => ['nullable', 'string', 'max:120'],
+            'base_url' => ['nullable', 'string', 'max:300'],
+            'api_key' => ['nullable', 'string', 'max:300'],
+        ]);
+        Settings::setMany([
+            'review.enabled' => $request->boolean('enabled'),
+            'ai.provider' => $data['provider'],
+            'ai.model' => $data['model'] ?? '',
+            'ai.base_url' => $data['base_url'] ?? '',
+        ]);
+        if ($request->filled('api_key')) {
+            Settings::set('ai.api_key', $data['api_key']);
+        }
+
+        return back()->with('status', __('AI code-review settings saved.'));
+    }
+
     public function destroyProduct(\App\Models\Product $product): RedirectResponse
     {
         $product->delete();
@@ -313,7 +386,10 @@ class AdminController extends Controller
         $request->file('file')->storeAs('products', $product->slug.'.zip');
         $product->update(['download_path' => $path]);
 
-        return back()->with('status', 'Download uploaded.');
+        // Auto-queue an AI security review of the freshly uploaded package.
+        \App\Support\GitHubRegistry::queueReview($product);
+
+        return back()->with('status', __('Download uploaded.'));
     }
 
     private function saveProduct(Request $request, \App\Models\Product $product): void
@@ -329,11 +405,28 @@ class AdminController extends Controller
             'image' => ['nullable', 'string', 'max:2048'],
             'published' => ['boolean'],
             'featured' => ['boolean'],
+            'pinned_version' => ['nullable', 'string', 'max:60'],
         ]);
+
+        $newPin = isset($data['pinned_version']) && trim((string) $data['pinned_version']) !== ''
+            ? trim($data['pinned_version']) : null;
+        unset($data['pinned_version']);
+        $pinChanged = $product->source === 'github' && $newPin !== $product->pinned_version;
 
         $data['slug'] = $product->slug ?: $this->uniqueSlug(\App\Models\Product::class, $data['name']);
         $data['version'] = $data['version'] ?: '1.0.0';
-        $product->fill($data)->save();
+        $product->fill($data);
+        $product->pinned_version = $newPin;
+        $product->save();
+
+        // When a GitHub product's pin changes, re-resolve to that tag (or back
+        // to latest if cleared) so the download URL + version follow the pin.
+        if ($pinChanged) {
+            try {
+                \App\Support\GitHubRegistry::syncProduct($product);
+            } catch (\Throwable) {
+            }
+        }
     }
 
     /** Link (or refresh) a product from a GitHub repository (the registry). */
@@ -349,19 +442,22 @@ class AdminController extends Controller
             }
         }
 
-        return back()->with('status', "Generated {$n} cover images.");
+        return back()->with('status', __('Generated :count cover images.', ['count' => $n]));
     }
 
     public function linkRepo(Request $request): RedirectResponse
     {
-        $repo = $request->validate(['repo' => ['required', 'string', 'max:160']])['repo'];
+        $data = $request->validate([
+            'repo' => ['required', 'string', 'max:160'],
+            'pin' => ['nullable', 'string', 'max:60'],
+        ]);
 
         try {
-            $product = \App\Support\GitHubRegistry::linkProduct($repo);
+            $product = \App\Support\GitHubRegistry::linkProduct($data['repo'], $data['pin'] ?? null);
 
-            return back()->with('status', "Linked “{$product->name}” v{$product->version} from GitHub.");
+            return back()->with('status', __('Linked “:name” v:version from GitHub.', ['name' => $product->name, 'version' => $product->version]));
         } catch (\Throwable $e) {
-            return back()->with('status', 'Could not link: '.$e->getMessage());
+            return back()->with('status', __('Could not link: :error', ['error' => $e->getMessage()]));
         }
     }
 
@@ -370,11 +466,14 @@ class AdminController extends Controller
         abort_unless($product->source === 'github' && $product->repo, 422);
 
         try {
-            \App\Support\GitHubRegistry::linkProduct($product->repo);
+            $changed = \App\Support\GitHubRegistry::syncProduct($product);
+            $msg = $changed
+                ? __('Updated “:name” → v:version.', ['name' => $product->name, 'version' => $product->version])
+                : __('“:name” is already up to date (v:version).', ['name' => $product->name, 'version' => $product->version]);
 
-            return back()->with('status', "Refreshed “{$product->name}” from GitHub.");
+            return back()->with('status', $msg);
         } catch (\Throwable $e) {
-            return back()->with('status', 'Refresh failed: '.$e->getMessage());
+            return back()->with('status', __('Refresh failed: :error', ['error' => $e->getMessage()]));
         }
     }
 
@@ -436,15 +535,15 @@ class AdminController extends Controller
             $item = collect($res->json('items', []))->firstWhere('slug', $slug);
 
             if (! $item) {
-                return back()->with('extResult', ['ok' => false, 'message' => 'Item not found in the catalog.']);
+                return back()->with('extResult', ['ok' => false, 'message' => __('Item not found in the catalog.')]);
             }
             if (! ($item['free'] ?? false) || empty($item['download_url'])) {
-                return back()->with('extResult', ['ok' => false, 'message' => "“{$item['name']}” is premium — redeem your license key below to install it."]);
+                return back()->with('extResult', ['ok' => false, 'message' => __('“:name” is premium — redeem your license key below to install it.', ['name' => $item['name']])]);
             }
 
             $id = \App\Support\ExtensionInstaller::installFromUrl($item['download_url']);
 
-            return back()->with('extResult', ['ok' => true, 'message' => "Installed “{$id}”. Enable it to activate."]);
+            return back()->with('extResult', ['ok' => true, 'message' => __('Installed “:id”. Enable it to activate.', ['id' => $id])]);
         } catch (\Throwable $e) {
             return back()->with('extResult', ['ok' => false, 'message' => $e->getMessage()]);
         }
@@ -452,7 +551,7 @@ class AdminController extends Controller
 
     public function composerInstall(Request $request): RedirectResponse
     {
-        abort_unless(\App\Support\ComposerRunner::available(), 422, 'Composer is not available on this server.');
+        abort_unless(\App\Support\ComposerRunner::available(), 422, __('Composer is not available on this server.'));
 
         $data = $request->validate([
             'action' => ['required', 'in:require,remove'],
@@ -461,7 +560,7 @@ class AdminController extends Controller
 
         \App\Jobs\ComposerTaskJob::dispatch($data['action'], $data['package']);
 
-        return back()->with('extResult', ['ok' => true, 'message' => "Composer {$data['action']} queued for “{$data['package']}”. This can take a minute."]);
+        return back()->with('extResult', ['ok' => true, 'message' => __('Composer :action queued for “:package”. This can take a minute.', ['action' => $data['action'], 'package' => $data['package']])]);
     }
 
     public function installLicense(Request $request): RedirectResponse
@@ -473,18 +572,18 @@ class AdminController extends Controller
                 ->post(rtrim(config('convoro.store_url'), '/').'/api/licenses/validate', ['key' => trim($key)]);
 
             if (! $res->successful() || ! $res->json('valid')) {
-                return back()->with('extResult', ['ok' => false, 'message' => $res->json('message') ?? 'Invalid license key.']);
+                return back()->with('extResult', ['ok' => false, 'message' => $res->json('message') ?? __('Invalid license key.')]);
             }
 
             $download = $res->json('download_url');
             $name = $res->json('product.name') ?? 'item';
             if (! $download) {
-                return back()->with('extResult', ['ok' => true, 'message' => "License for “{$name}” is valid, but no download is available yet."]);
+                return back()->with('extResult', ['ok' => true, 'message' => __('License for “:name” is valid, but no download is available yet.', ['name' => $name])]);
             }
 
             $id = \App\Support\ExtensionInstaller::installFromUrl($download);
 
-            return back()->with('extResult', ['ok' => true, 'message' => "Installed “{$id}” from your license. Enable it to activate."]);
+            return back()->with('extResult', ['ok' => true, 'message' => __('Installed “:id” from your license. Enable it to activate.', ['id' => $id])]);
         } catch (\Throwable $e) {
             return back()->with('extResult', ['ok' => false, 'message' => $e->getMessage()]);
         }
@@ -496,7 +595,7 @@ class AdminController extends Controller
         try {
             \App\Support\ExtensionInstaller::enable($id);
 
-            return back()->with('extResult', ['ok' => true, 'message' => "Enabled “{$id}”."]);
+            return back()->with('extResult', ['ok' => true, 'message' => __('Enabled “:id”.', ['id' => $id])]);
         } catch (\Throwable $e) {
             return back()->with('extResult', ['ok' => false, 'message' => $e->getMessage()]);
         }
@@ -507,7 +606,7 @@ class AdminController extends Controller
         $id = $request->validate(['id' => ['required', 'string']])['id'];
         \App\Support\ExtensionInstaller::disable($id);
 
-        return back()->with('extResult', ['ok' => true, 'message' => "Disabled “{$id}”."]);
+        return back()->with('extResult', ['ok' => true, 'message' => __('Disabled “:id”.', ['id' => $id])]);
     }
 
     public function uninstallExtension(Request $request): RedirectResponse
@@ -515,7 +614,7 @@ class AdminController extends Controller
         $id = $request->validate(['id' => ['required', 'string']])['id'];
         \App\Support\ExtensionInstaller::uninstall($id);
 
-        return back()->with('extResult', ['ok' => true, 'message' => "Removed “{$id}”."]);
+        return back()->with('extResult', ['ok' => true, 'message' => __('Removed “:id”.', ['id' => $id])]);
     }
 
     public function extensionSettings(string $id): Response
@@ -565,7 +664,7 @@ class AdminController extends Controller
             \App\Support\Settings::set(\App\Support\ExtensionManager::settingKey($id, $key), $value);
         }
 
-        return back()->with('extResult', ['ok' => true, 'message' => 'Settings saved.']);
+        return back()->with('extResult', ['ok' => true, 'message' => __('Settings saved.')]);
     }
 
     // ---- Categories & Tags ------------------------------------------------
@@ -627,7 +726,7 @@ class AdminController extends Controller
 
     public function destroyCategory(Category $category): RedirectResponse
     {
-        abort_if($category->topics()->exists(), 422, 'Move or delete this category\'s topics first.');
+        abort_if($category->topics()->exists(), 422, __('Move or delete this category\'s topics first.'));
         $category->delete();
 
         return back();
@@ -712,15 +811,15 @@ class AdminController extends Controller
         $user->update(['name' => $data['name'], 'email' => $data['email'], 'is_admin' => (bool) $data['is_admin']]);
         $user->groups()->sync($data['groups'] ?? []);
 
-        return back()->with('status', 'Member updated.');
+        return back()->with('status', __('Member updated.'));
     }
 
     public function destroyMember(Request $request, User $user): RedirectResponse
     {
-        abort_if($user->id === $request->user()->id, 422, 'You cannot delete your own account here.');
+        abort_if($user->id === $request->user()->id, 422, __('You cannot delete your own account here.'));
         $user->delete();
 
-        return back()->with('status', 'Member deleted.');
+        return back()->with('status', __('Member deleted.'));
     }
 
     private function groupRules(): array
@@ -788,7 +887,7 @@ class AdminController extends Controller
         ]);
         Settings::setMany(['pwa.short_name' => $data['short_name'], 'pwa.banner' => (bool) $data['banner']]);
 
-        return back()->with('status', 'PWA settings saved.');
+        return back()->with('status', __('PWA settings saved.'));
     }
 
     public function uploadIcon(Request $request): RedirectResponse
@@ -796,7 +895,7 @@ class AdminController extends Controller
         $request->validate(['icon' => ['required', 'image', 'max:8192']]);
         IconGenerator::generate(file_get_contents($request->file('icon')->getRealPath()));
 
-        return back()->with('status', 'Icons regenerated from your image.');
+        return back()->with('status', __('Icons regenerated from your image.'));
     }
 
     public function settings(): Response
@@ -911,13 +1010,13 @@ class AdminController extends Controller
 
         try {
             \Illuminate\Support\Facades\Mail::raw(
-                "This is a test email from your Convoro community. If you received it, outgoing mail is working.",
+                __('This is a test email from your Convoro community. If you received it, outgoing mail is working.'),
                 function ($m) use ($to) {
-                    $m->to($to)->subject('Convoro test email');
+                    $m->to($to)->subject(__('Convoro test email'));
                 }
             );
 
-            return back()->with('mailTest', ['ok' => true, 'message' => "Test email sent to {$to}."]);
+            return back()->with('mailTest', ['ok' => true, 'message' => __('Test email sent to :email.', ['email' => $to])]);
         } catch (\Throwable $e) {
             return back()->with('mailTest', ['ok' => false, 'message' => $e->getMessage()]);
         }
@@ -957,6 +1056,7 @@ class AdminController extends Controller
             'header_color' => ['nullable', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'density' => ['nullable', 'in:compact,comfortable,spacious'],
             'link_color' => ['nullable', 'in:primary,accent'],
+            'muted' => ['nullable', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'custom_css' => ['nullable', 'string', 'max:20000'],
             'logo' => ['nullable', 'string', 'max:2048'],
             'favicon' => ['nullable', 'string', 'max:2048'],
@@ -978,6 +1078,7 @@ class AdminController extends Controller
             'theme.header_color' => $data['header_color'] ?? Settings::get('theme.header_color', '#5b5bd6'),
             'theme.density' => $data['density'] ?? 'comfortable',
             'theme.link_color' => $data['link_color'] ?? 'primary',
+            'theme.muted' => $data['muted'] ?? '',
             'theme.custom_css' => $data['custom_css'] ?? '',
             'site.logo' => $data['logo'] ?? Settings::get('site.logo', ''),
             'site.favicon' => $data['favicon'] ?? Settings::get('site.favicon', ''),

@@ -22,7 +22,7 @@ class DirectMessageNotification extends Notification
         return [
             'type' => 'message',
             'actor' => Present::avatar($m->user),
-            'topic' => ['title' => 'a message', 'slug' => ''],
+            'topic' => ['title' => __('a message'), 'slug' => ''],
             'post_id' => $m->id,
             'excerpt' => Present::excerpt($m->body_html, 100),
             'url' => '/messages/'.$m->conversation_id,
