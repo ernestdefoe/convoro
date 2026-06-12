@@ -18,11 +18,24 @@ use Inertia\Response;
 
 class TopicController extends Controller
 {
-    public function create(): Response
+    public function create(Request $request): Response
     {
+        // Resume a saved draft when ?draft=<id> is present and it's the member's own.
+        $draft = null;
+        if ($request->filled('draft') && $request->user()) {
+            $d = \App\Models\Draft::where('user_id', $request->user()->id)->find($request->query('draft'));
+            if ($d) {
+                $draft = [
+                    'id' => $d->id, 'title' => $d->title, 'body_html' => $d->body_html, 'body_json' => $d->body_json,
+                    'category_id' => $d->category_id, 'tags' => $d->tags ?? [], 'cover' => $d->cover, 'poll' => $d->poll,
+                ];
+            }
+        }
+
         return Inertia::render('Topic/Create', [
             'categories' => Category::orderBy('position')->get(['id', 'name', 'icon', 'color']),
             'tags' => Tag::orderBy('name')->get(['id', 'name', 'color']),
+            'draft' => $draft,
         ]);
     }
 
@@ -46,50 +59,14 @@ class TopicController extends Controller
             'poll.closes_days' => ['nullable', 'integer', 'min:1', 'max:365'],
         ]);
 
-        $html = Content::clean($data['body_html']);
-        abort_if(trim(strip_tags($html)) === '', 422, __('The post body is empty.'));
+        $data['body_html'] = Content::clean($data['body_html']);
+        abort_if(trim(strip_tags($data['body_html'])) === '', 422, __('The post body is empty.'));
 
-        $base = Str::slug($data['title']) ?: 'topic';
-        $slug = $base.'-'.Str::lower(Str::random(6));
+        $topic = \App\Support\TopicPublisher::publish($request->user(), $data, $request->ip());
 
-        $topic = Topic::create([
-            'title' => $data['title'],
-            'slug' => $slug,
-            'user_id' => $request->user()->id,
-            'category_id' => $data['category_id'] ?? null,
-            'cover_image' => $data['cover'] ?? null,
-            'last_post_at' => now(),
-        ]);
-
-        $topic->posts()->create([
-            'user_id' => $request->user()->id,
-            'ip_address' => $request->ip(),
-            'body_html' => $html,
-            'body_json' => $data['body_json'] ?? null,
-            'is_first' => true,
-        ]);
-
-        if (! empty($data['tags'])) {
-            $topic->tags()->sync($data['tags']);
-        }
-
-        // Optional attached poll.
-        if (! empty($data['poll']['question'])) {
-            $options = collect($data['poll']['options'] ?? [])->map(fn ($o) => trim((string) $o))->filter()->take(10)->values();
-            if ($options->count() >= 2) {
-                $poll = $topic->poll()->create([
-                    'question' => $data['poll']['question'],
-                    'max_choices' => ! empty($data['poll']['multiple']) ? $options->count() : 1,
-                    'closes_at' => ! empty($data['poll']['closes_days']) ? now()->addDays((int) $data['poll']['closes_days']) : null,
-                ]);
-                $options->each(fn ($text, $i) => $poll->options()->create(['text' => $text, 'position' => $i]));
-            }
-        }
-
-        // "No question goes unanswered" — let the assistant draft an answer.
-        if (Ask::enabled() && Settings::get('ai.autoanswer_enabled', false)) {
-            $delay = max(0, (int) Settings::get('ai.autoanswer_delay_minutes', 0));
-            AutoAnswerTopicJob::dispatch($topic->id)->delay(now()->addMinutes($delay))->afterCommit();
+        // Publishing from a saved draft removes it.
+        if ($request->filled('draft_id')) {
+            \App\Models\Draft::where('user_id', $request->user()->id)->whereKey($request->input('draft_id'))->delete();
         }
 
         return redirect()->route('topics.show', $topic);

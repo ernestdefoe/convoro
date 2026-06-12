@@ -11,25 +11,59 @@ import { toast } from '@/lib/toast';
 const props = defineProps<{
   categories: { id: number; name: string; icon: string | null; color: string }[];
   tags: { id: number; name: string; color: string }[];
+  draft?: any;
 }>();
 
 const editor = ref<any>(null);
 const uploadingCover = ref(false);
+const draftId = ref<number | null>(props.draft?.id ?? null);
+const draftBody = props.draft?.body_html ?? '';
 
-// Optional attached poll.
-const poll = reactive({ enabled: false, question: '', options: ['', ''] as string[], multiple: false, closes_days: null as number | null });
+// Optional attached poll (prefilled when resuming a draft that had one).
+const dp = props.draft?.poll ?? null;
+const poll = reactive({
+  enabled: !!dp?.question,
+  question: dp?.question ?? '',
+  options: (dp?.options && dp.options.length >= 2 ? [...dp.options] : ['', '']) as string[],
+  multiple: !!dp?.multiple,
+  closes_days: (dp?.closes_days ?? null) as number | null,
+});
 function addOption() { if (poll.options.length < 10) poll.options.push(''); }
 function removeOption(i: number) { if (poll.options.length > 2) poll.options.splice(i, 1); }
 const pollField = 'w-full rounded-lg border-line bg-appbg text-sm text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary';
 
 const form = useForm({
-  title: '',
-  category_id: props.categories[0]?.id ?? null,
-  tags: [] as number[],
-  cover: '' as string,
+  title: props.draft?.title ?? '',
+  category_id: props.draft?.category_id ?? (props.categories[0]?.id ?? null),
+  tags: (props.draft?.tags ?? []) as number[],
+  cover: (props.draft?.cover ?? '') as string,
   body_html: '',
   body_json: '',
 });
+
+// Scheduling.
+const showSchedule = ref(false);
+const scheduledAt = ref('');
+const pollPayload = () => {
+  const opts = poll.options.map((o) => o.trim()).filter(Boolean);
+  return poll.enabled && poll.question.trim() && opts.length >= 2
+    ? { question: poll.question.trim(), options: opts, multiple: poll.multiple, closes_days: poll.closes_days || null }
+    : null;
+};
+const draftForm = useForm({ draft_id: null as number | null, title: '', category_id: null as number | null, tags: [] as number[], cover: '', body_html: '', body_json: '', poll: null as any, scheduled_at: null as string | null });
+function saveDraft(schedule = false) {
+  if (schedule && !scheduledAt.value) { showSchedule.value = true; return; }
+  draftForm.draft_id = draftId.value;
+  draftForm.title = form.title;
+  draftForm.category_id = form.category_id;
+  draftForm.tags = form.tags;
+  draftForm.cover = form.cover;
+  draftForm.body_html = editor.value?.getHTML() ?? '';
+  draftForm.body_json = editor.value?.getJSON() ?? '';
+  draftForm.poll = pollPayload();
+  draftForm.scheduled_at = schedule ? scheduledAt.value : null;
+  draftForm.post('/drafts');
+}
 
 // "Asked before?" — surface existing discussions as the member types a title.
 const related = ref<{ title: string; url: string; snippet: string }[]>([]);
@@ -110,6 +144,7 @@ function submit() {
   const opts = poll.options.map((o) => o.trim()).filter(Boolean);
   form.transform((data) => ({
     ...data,
+    draft_id: draftId.value,
     poll: poll.enabled && poll.question.trim() && opts.length >= 2
       ? { question: poll.question.trim(), options: opts, multiple: poll.multiple, closes_days: poll.closes_days || null }
       : null,
@@ -205,15 +240,29 @@ function submit() {
 
         <div>
           <label class="mb-1.5 block text-sm font-semibold text-ink-2">{{ tr('Post') }}</label>
-          <Editor ref="editor" :placeholder="tr('Write your post… (rich text, drag images in)')" />
+          <Editor ref="editor" :content="draftBody" :placeholder="tr('Write your post… (rich text, drag images in)')" />
           <p v-if="form.errors.body_html" class="mt-1 text-sm text-red-500">{{ form.errors.body_html }}</p>
         </div>
 
-        <div class="flex items-center gap-3">
+        <!-- Schedule picker -->
+        <div v-if="showSchedule" class="flex flex-wrap items-center gap-3 rounded-c border border-line bg-surface p-4">
+          <label class="text-sm font-semibold text-ink-2">{{ tr('Publish at') }}</label>
+          <input v-model="scheduledAt" type="datetime-local" class="rounded-lg border-line bg-surface-2 text-sm text-ink focus:border-primary focus:ring-primary" />
+          <button type="button" :disabled="!scheduledAt || draftForm.processing" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-50" @click="saveDraft(true)">{{ tr('Schedule post') }}</button>
+          <button type="button" class="text-sm text-ink-2 hover:text-ink" @click="showSchedule = false">{{ tr('Cancel') }}</button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
           <button type="submit" :disabled="form.processing" class="rounded-c bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600 disabled:opacity-60">
             {{ form.processing ? tr('Posting…') : tr('Post topic') }}
           </button>
-          <Link href="/" class="text-sm font-semibold text-ink-2 hover:text-ink">{{ tr('Cancel') }}</Link>
+          <button type="button" :disabled="draftForm.processing" class="rounded-c border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-2 disabled:opacity-60" @click="saveDraft(false)">
+            {{ draftForm.processing ? tr('Saving…') : (draftId ? tr('Update draft') : tr('Save draft')) }}
+          </button>
+          <button type="button" class="rounded-c border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="showSchedule = !showSchedule">
+            🕑 {{ tr('Schedule') }}
+          </button>
+          <Link href="/drafts" class="ml-auto text-sm font-semibold text-ink-2 hover:text-ink">{{ tr('My drafts') }}</Link>
         </div>
       </form>
     </div>

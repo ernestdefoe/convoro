@@ -176,6 +176,12 @@ Route::get('/dashboard', fn () => redirect()->route('forum.index'))->middleware(
 Route::middleware('auth')->group(function () {
     Route::get('/new', [TopicController::class, 'create'])->name('topics.create');
     Route::post('/topics', [TopicController::class, 'store'])->name('topics.store');
+
+    // Drafts + scheduled posts.
+    Route::get('/drafts', [App\Http\Controllers\DraftController::class, 'index'])->name('drafts.index');
+    Route::post('/drafts', [App\Http\Controllers\DraftController::class, 'store'])->name('drafts.store');
+    Route::post('/drafts/{draft}/publish', [App\Http\Controllers\DraftController::class, 'publish'])->name('drafts.publish');
+    Route::delete('/drafts/{draft}', [App\Http\Controllers\DraftController::class, 'destroy'])->name('drafts.destroy');
     Route::post('/t/{topic}/posts', [PostController::class, 'store'])->name('posts.store');
     Route::post('/polls/{poll}/vote', [App\Http\Controllers\PollController::class, 'vote'])->middleware('throttle:30,1')->name('polls.vote');
     Route::post('/t/{topic}/pin', [TopicController::class, 'togglePin'])->name('topics.pin');

@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.3.0',
+            'date' => '2026-06-12',
+            'title' => 'Drafts & scheduled posts',
+            'items' => [
+                ['type' => 'new', 'text' => 'Save a topic as a draft and finish it later — your title, body, category, tags, cover image and poll are all kept. Pick up where you left off from the new “Drafts” page in your account menu.'],
+                ['type' => 'new', 'text' => 'Schedule a post to publish itself at a set date and time. Write it now, choose when it goes live, and Convoro posts it for you automatically — perfect for announcements and timing across time zones.'],
+            ],
+        ],
+        [
             'tag' => '1.2.2',
             'date' => '2026-06-12',
             'title' => 'Lock topics',
@@ -568,13 +577,14 @@ return [
             'Member invites & referrals', 'Unread / new-post indicators',
             'Single sign-on (OpenID Connect)', 'Advanced search filters',
             'Polls with live results',
+            'Pin & lock topics',
+            'Drafts & scheduled posts',
         ],
         'now' => [
             'Importer polish from real-world migrations',
             'Advanced analytics & search',
         ],
         'next' => [
-            'Scheduled posts & drafts',
             'More importers (MyBB, SMF, Invision)',
         ],
         'later' => [

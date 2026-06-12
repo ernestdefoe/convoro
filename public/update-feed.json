@@ -1,11 +1,12 @@
 {
-    "version": "1.2.2",
-    "download": "https://convoro.co/releases/convoro-1.2.2.zip",
+    "version": "1.3.0",
+    "download": "https://convoro.co/releases/convoro-1.3.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Lock topics",
+    "title": "Drafts & scheduled posts",
     "date": "2026-06-12",
-    "notes": "Moderators can now lock a topic to stop new replies — lock/unlock from the topic's “⋯” menu. Locked topics show a badge and a notice in place of the reply box. Gated by the “Lock / unlock topics” permission.",
+    "notes": "Save a topic as a draft and finish it later — title, body, category, tags, cover and poll are all kept, in a new “Drafts” page in your account menu. Or schedule a post to publish itself at a date and time you pick, and Convoro posts it for you automatically.",
     "changelog": [
-        {"type": "added", "text": "Lock topics: moderators can lock a discussion to stop new replies (topic “⋯” menu), gated by the “Lock / unlock topics” permission."}
+        {"type": "added", "text": "Drafts: save a topic as a draft (title, body, category, tags, cover image and poll all kept) and finish it later from the new “Drafts” page in your account menu."},
+        {"type": "added", "text": "Scheduled posts: choose a date and time for a topic to publish itself — Convoro posts it for you automatically."}
     ]
 }

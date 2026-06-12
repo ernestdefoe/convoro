@@ -44,6 +44,7 @@ function logout() {
 
       <Link :href="`/u/${user.id}`" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink" @click="open = false">{{ t('Your profile') }}</Link>
       <Link href="/profile" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink" @click="open = false">{{ t('Settings') }}</Link>
+      <Link href="/drafts" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink" @click="open = false">{{ t('Drafts') }}</Link>
       <Link v-if="canInvite" href="/invite" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink" @click="open = false">{{ t('Invite friends') }}</Link>
       <a v-if="isAdmin" href="/admin" target="_blank" rel="noopener" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink">{{ t('Admin') }} <span class="text-ink-muted">↗</span></a>
 
