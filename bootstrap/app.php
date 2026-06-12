@@ -30,12 +30,13 @@ return Application::configure(basePath: dirname(__DIR__))
             'store.owner' => \App\Http\Middleware\EnsureStoreOwner::class,
         ]);
 
-        // Server-to-server endpoints (Stripe webhook, remote license checks)
-        // carry no CSRF token.
+        // Server-to-server endpoints (Stripe webhook, remote license checks,
+        // ActivityPub inbox) carry no CSRF token.
         $middleware->validateCsrfTokens(except: [
             'store/webhook',
             'api/licenses/*',
             'api/registry/github',
+            'federation/inbox',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

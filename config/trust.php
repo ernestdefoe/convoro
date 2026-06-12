@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.12.1',
+            'date' => '2026-06-12',
+            'title' => 'Fix: federation follows from the fediverse',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'Follows from Mastodon and other fediverse servers were being rejected (the ActivityPub inbox was incorrectly subject to CSRF protection), so nobody could actually follow a federated community. Remote follows now go through.'],
+            ],
+        ],
+        [
             'tag' => '1.12.0',
             'date' => '2026-06-12',
             'title' => 'Federation Phase 2 — two-way conversations',
