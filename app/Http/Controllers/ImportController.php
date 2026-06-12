@@ -6,8 +6,10 @@ use App\Jobs\RunFlarumImportJob;
 use App\Support\Importers\DiscourseImporter;
 use App\Support\Importers\InvisionImporter;
 use App\Support\Importers\MybbImporter;
+use App\Support\Importers\NodebbImporter;
 use App\Support\Importers\PhpbbImporter;
 use App\Support\Importers\SmfImporter;
+use App\Support\Importers\VanillaImporter;
 use App\Support\Importers\VbulletinImporter;
 use App\Support\Importers\XenForoImporter;
 use App\Support\FlarumImporter;
@@ -34,6 +36,8 @@ class ImportController extends Controller
         'invision' => InvisionImporter::class,
         'mybb' => MybbImporter::class,
         'smf' => SmfImporter::class,
+        'vanilla' => VanillaImporter::class,
+        'nodebb' => NodebbImporter::class,
     ];
 
     public function index(): Response
@@ -49,6 +53,8 @@ class ImportController extends Controller
                 ['id' => 'invision', 'name' => 'Invision Community', 'db' => 'MySQL', 'prefix' => '', 'tested' => true],
                 ['id' => 'mybb', 'name' => 'MyBB', 'db' => 'MySQL', 'prefix' => 'mybb_', 'tested' => true],
                 ['id' => 'smf', 'name' => 'SMF', 'db' => 'MySQL', 'prefix' => 'smf_', 'tested' => true],
+                ['id' => 'vanilla', 'name' => 'Vanilla Forums', 'db' => 'MySQL', 'prefix' => 'GDN_', 'tested' => true],
+                ['id' => 'nodebb', 'name' => 'NodeBB', 'db' => 'Redis', 'prefix' => '', 'tested' => true],
             ],
         ]);
     }

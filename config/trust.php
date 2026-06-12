@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.7.0',
+            'date' => '2026-06-12',
+            'title' => 'Import from Vanilla Forums & NodeBB',
+            'items' => [
+                ['type' => 'new', 'text' => 'Two more sources in the Import wizard: Vanilla Forums and NodeBB. Vanilla brings across categories, members, discussions and comments — converting each post from whatever format it was written in (HTML, Markdown, BBCode or Rich). NodeBB is unusual in that it stores its data in Redis rather than a SQL database, so connect it with your Redis host/port and Convoro reads it directly, converting Markdown posts to formatting. Members reset their password on first login.'],
+            ],
+        ],
+        [
             'tag' => '1.6.0',
             'date' => '2026-06-12',
             'title' => 'Import from vBulletin 5 & 6',
@@ -617,13 +625,14 @@ return [
             'Invision Community importer (IPS 4 & 5)',
             'MyBB & SMF importers; XenForo & phpBB schema-verified',
             'vBulletin 5 & 6 (node) import + Discourse verified live',
+            'Vanilla Forums & NodeBB (Redis) importers',
         ],
         'now' => [
             'Importer polish from real-world migrations',
             'Advanced analytics & search',
         ],
         'next' => [
-            'More importers (NodeBB, Vanilla, bbPress)',
+            'bbPress / WordPress importer',
         ],
         'later' => [
             'Native mobile wrapper',

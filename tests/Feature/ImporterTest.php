@@ -8,6 +8,7 @@ use App\Support\Importers\InvisionImporter;
 use App\Support\Importers\MybbImporter;
 use App\Support\Importers\PhpbbImporter;
 use App\Support\Importers\SmfImporter;
+use App\Support\Importers\VanillaImporter;
 use App\Support\Importers\VbulletinImporter;
 use App\Support\Importers\XenForoImporter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -405,6 +406,71 @@ class ImporterTest extends TestCase
         $this->assertStringContainsString('<strong>Hello</strong>', $first);
 
         $this->assertSame(1, (int) DB::table('topics')->where('title', 'Locked thread')->value('is_locked'));
+    }
+
+    public function test_vanilla_import(): void
+    {
+        $this->s()->create('GDN_User', function ($t) {
+            $t->integer('UserID'); $t->string('Name'); $t->string('Email'); $t->string('Password')->nullable();
+            $t->string('HashMethod')->nullable(); $t->timestamp('DateInserted')->nullable(); $t->integer('Deleted')->default(0);
+        });
+        $this->s()->create('GDN_Category', function ($t) {
+            $t->integer('CategoryID'); $t->string('Name'); $t->string('UrlCode')->nullable(); $t->text('Description')->nullable();
+            $t->integer('Sort')->default(0); $t->timestamp('DateInserted')->nullable();
+        });
+        $this->s()->create('GDN_Discussion', function ($t) {
+            $t->integer('DiscussionID'); $t->integer('CategoryID'); $t->integer('InsertUserID'); $t->string('Name');
+            $t->text('Body'); $t->string('Format')->nullable(); $t->integer('CountViews')->default(0);
+            $t->integer('Closed')->default(0); $t->integer('Announce')->default(0);
+            $t->timestamp('DateInserted')->nullable(); $t->timestamp('DateLastComment')->nullable();
+        });
+        $this->s()->create('GDN_Comment', function ($t) {
+            $t->integer('CommentID'); $t->integer('DiscussionID'); $t->integer('InsertUserID'); $t->text('Body');
+            $t->string('Format')->nullable(); $t->timestamp('DateInserted')->nullable();
+        });
+
+        $bcrypt = '$2y$10$abcdefghijklmnopqrstuv0123456789012345678901234567890u';
+        $this->src->table('GDN_Category')->insert([
+            ['CategoryID' => -1, 'Name' => 'Root', 'UrlCode' => '', 'Description' => null, 'Sort' => 0, 'DateInserted' => '2021-01-01 00:00:00'], // synthetic root → skipped
+            ['CategoryID' => 1, 'Name' => 'General', 'UrlCode' => 'general', 'Description' => 'Chat', 'Sort' => 1, 'DateInserted' => '2021-01-01 00:00:00'],
+        ]);
+        $this->src->table('GDN_User')->insert([
+            ['UserID' => 1, 'Name' => 'Tina', 'Email' => 'tina@van.test', 'Password' => $bcrypt, 'HashMethod' => 'Vanilla', 'DateInserted' => '2021-01-01 00:00:00', 'Deleted' => 0],
+            ['UserID' => 2, 'Name' => 'Uri', 'Email' => 'uri@van.test', 'Password' => '$P$Boldphpasshashvalue123456', 'HashMethod' => 'Vanilla', 'DateInserted' => '2021-01-02 00:00:00', 'Deleted' => 0],
+            ['UserID' => 3, 'Name' => 'Gone', 'Email' => 'gone@van.test', 'Password' => 'x', 'HashMethod' => 'Vanilla', 'DateInserted' => '2021-01-02 00:00:00', 'Deleted' => 1], // deleted → skipped
+        ]);
+        $this->src->table('GDN_Discussion')->insert([
+            ['DiscussionID' => 10, 'CategoryID' => 1, 'InsertUserID' => 1, 'Name' => 'HTML topic', 'Body' => '<p>hi <b>bold</b></p>', 'Format' => 'Html', 'CountViews' => 9, 'Closed' => 0, 'Announce' => 1, 'DateInserted' => '2021-02-01 00:00:00', 'DateLastComment' => '2021-02-03 00:00:00'],
+            ['DiscussionID' => 11, 'CategoryID' => 1, 'InsertUserID' => 2, 'Name' => 'Markdown topic', 'Body' => "**strong** text", 'Format' => 'Markdown', 'CountViews' => 1, 'Closed' => 1, 'Announce' => 0, 'DateInserted' => '2021-02-02 00:00:00', 'DateLastComment' => '2021-02-02 00:00:00'],
+        ]);
+        $this->src->table('GDN_Comment')->insert([
+            ['CommentID' => 100, 'DiscussionID' => 10, 'InsertUserID' => 2, 'Body' => '[b]bb reply[/b]', 'Format' => 'BBCode', 'DateInserted' => '2021-02-02 00:00:00'],
+            ['CommentID' => 101, 'DiscussionID' => 10, 'InsertUserID' => 1, 'Body' => '[{"insert":"rich reply\n"}]', 'Format' => 'Rich', 'DateInserted' => '2021-02-03 00:00:00'],
+        ]);
+
+        $summary = VanillaImporter::run($this->cfg(['prefix' => 'GDN_']), [], fn () => null);
+
+        $this->assertSame(1, $summary['categories'], 'synthetic Root (-1) skipped');
+        $this->assertSame(2, $summary['users'], 'deleted user skipped');
+        $this->assertSame(2, $summary['topics']);
+        $this->assertSame(4, $summary['posts'], '2 discussion bodies (first posts) + 2 comments');
+
+        $this->assertDatabaseHas('categories', ['name' => 'General']);
+        // bcrypt copies; phpass resets.
+        $this->assertDatabaseHas('users', ['name' => 'Tina', 'email' => 'tina@van.test', 'password' => $bcrypt]);
+        $this->assertStringStartsWith('$2', DB::table('users')->where('email', 'uri@van.test')->value('password'));
+
+        $html = DB::table('topics')->where('title', 'HTML topic')->first();
+        $this->assertSame(1, (int) $html->is_pinned);
+        $this->assertSame(2, (int) $html->reply_count, 'first post + 2 comments');
+        $md = DB::table('topics')->where('title', 'Markdown topic')->first();
+        $this->assertSame(1, (int) $md->is_locked);
+
+        // Per-format body conversion.
+        $this->assertStringContainsString('<b>bold</b>', DB::table('posts')->where('topic_id', $html->id)->where('is_first', true)->value('body_html'));
+        $this->assertStringContainsString('<strong>strong</strong>', DB::table('posts')->where('topic_id', $md->id)->where('is_first', true)->value('body_html'));
+        $bbReply = DB::table('posts')->where('topic_id', $html->id)->where('is_first', false)->orderBy('id')->value('body_html');
+        $this->assertStringContainsString('<strong>bb reply</strong>', $bbReply);
     }
 
     public function test_invision_import(): void

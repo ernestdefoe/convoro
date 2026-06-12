@@ -1,11 +1,12 @@
 {
-    "version": "1.6.0",
-    "download": "https://convoro.co/releases/convoro-1.6.0.zip",
+    "version": "1.7.0",
+    "download": "https://convoro.co/releases/convoro-1.7.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Import from vBulletin 5 & 6",
+    "title": "Import from Vanilla Forums & NodeBB",
     "date": "2026-06-12",
-    "notes": "The vBulletin importer now handles vBulletin 5 and 6 (the node-based database) in addition to 3 and 4 — the wizard auto-detects which generation you're on. Forums, members, threads and posts come across with BBCode converted; members reset their password on first login.",
+    "notes": "Two more sources in the Import wizard. Vanilla Forums brings across categories, members, discussions and comments, converting each post from its stored format (HTML / Markdown / BBCode / Rich). NodeBB stores its data in Redis rather than SQL, so you connect its Redis host/port and Convoro reads it directly, converting Markdown to formatting. Members reset their password on first login.",
     "changelog": [
-        {"type": "added", "text": "vBulletin 5 & 6 import (node architecture) — auto-detected, one wizard option now covers vBulletin 3 through 6."}
+        {"type": "added", "text": "Vanilla Forums importer (MySQL) — handles per-post formats: HTML, Markdown, BBCode and Rich (Quill)."},
+        {"type": "added", "text": "NodeBB importer — reads NodeBB's Redis store directly (connect by Redis host/port/db), converting Markdown posts to formatting."}
     ]
 }
