@@ -25,8 +25,12 @@ class DeliverActivity implements ShouldQueue
 
     public int $timeout = 30;
 
-    /** @param  array<string,mixed>  $activity  @param  string[]|null  $inboxes */
-    public function __construct(public array $activity, public ?array $inboxes = null) {}
+    /**
+     * @param  array<string,mixed>  $activity
+     * @param  string[]|null  $inboxes
+     * @param  int|null  $signerId  Local user id to sign as; null = community actor.
+     */
+    public function __construct(public array $activity, public ?array $inboxes = null, public ?int $signerId = null) {}
 
     public function handle(): void
     {
@@ -41,10 +45,11 @@ class DeliverActivity implements ShouldQueue
         }
 
         $body = json_encode($this->activity, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $signer = $this->signerId ? \App\Models\User::find($this->signerId) : null;
 
         foreach ($inboxes as $inbox) {
             try {
-                $headers = Federation::signHeaders('post', $inbox, $body);
+                $headers = Federation::signHeadersAs($signer, 'post', $inbox, $body);
                 Http::withBody($body, Federation::CTYPE)->withHeaders($headers)->timeout(12)->post($inbox);
             } catch (\Throwable $e) {
                 Log::debug('Federation delivery failed to '.$inbox.': '.$e->getMessage());

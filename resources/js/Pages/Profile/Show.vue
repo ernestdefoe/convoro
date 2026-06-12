@@ -9,7 +9,7 @@ import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import { t as tr } from '@/lib/i18n';
 
 const props = defineProps<{
-  profile: { id: number; name: string; bio: string | null; avatar: string | null; cover: string | null; initials: string; color: number; staff: { name: string; color: string } | null; joined: string; isAdmin: boolean; isSelf: boolean };
+  profile: { id: number; name: string; bio: string | null; avatar: string | null; cover: string | null; initials: string; color: number; staff: { name: string; color: string } | null; joined: string; isAdmin: boolean; isSelf: boolean; fediHandle: string | null; fediUrl: string | null };
   stats: { topics: number; posts: number };
   recentTopics: { title: string; url: string; when: string }[];
   wall: { id: number; html: string; author: any; createdAt: string; canDelete: boolean }[];
@@ -68,6 +68,11 @@ function message() {
             <span><strong class="text-ink">{{ stats.topics }}</strong> {{ tr('topics') }}</span>
             <span><strong class="text-ink">{{ stats.posts }}</strong> {{ tr('posts') }}</span>
           </div>
+          <a v-if="profile.fediHandle" :href="profile.fediUrl || undefined" target="_blank" rel="noopener me"
+             class="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+             :title="tr('Follow on the fediverse')">
+            <span>🌐</span><span>{{ profile.fediHandle }}</span>
+          </a>
         </div>
       </div>
 

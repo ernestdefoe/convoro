@@ -121,4 +121,47 @@ class FederationTest extends TestCase
         $this->assertDatabaseHas('posts', ['topic_id' => $topic->id, 'federated_object' => 'https://remote.test/notes/1']);
         $this->assertSame(1, (int) $topic->fresh()->reply_count);
     }
+
+    public function test_per_user_username_is_stable_and_deduped(): void
+    {
+        Settings::set('federation.enabled', true);
+        $a = User::factory()->create(['name' => 'Jane Doe']);
+        $b = User::factory()->create(['name' => 'Jane Doe']);
+
+        $ua = Federation::userUsername($a);
+        $this->assertSame($ua, Federation::userUsername($a->fresh())); // stable once stored
+        $this->assertNotSame($ua, Federation::userUsername($b));       // clash gets disambiguated
+        $this->assertNotSame(strtolower(Federation::username()), $ua); // never collides with community
+        $this->assertSame($ua, strtolower($ua));                       // stored lowercased
+    }
+
+    public function test_webfinger_routes_to_a_member(): void
+    {
+        Settings::set('federation.enabled', true);
+        $user = User::factory()->create(['name' => 'Federated Member']);
+        $handle = Federation::userUsername($user);
+
+        $this->get('/.well-known/webfinger?resource=acct:'.$handle.'@'.Federation::host())
+            ->assertOk()
+            ->assertJsonPath('subject', 'acct:'.$handle.'@'.Federation::host())
+            ->assertJsonPath('links.0.href', Federation::userActorUrl($user));
+
+        // A federated (remote) user is never resolvable as a local handle.
+        $remote = User::factory()->create(['is_federated' => true]);
+        $remote->forceFill(['ap_username' => 'ghost'])->save();
+        $this->get('/.well-known/webfinger?resource=acct:ghost@'.Federation::host())->assertNotFound();
+    }
+
+    public function test_per_user_actor_document(): void
+    {
+        $this->keysOrSkip();
+        $user = User::factory()->create(['name' => 'Federated Member']);
+
+        $this->get('/u/'.$user->id.'/actor')
+            ->assertOk()
+            ->assertJsonPath('type', 'Person')
+            ->assertJsonPath('id', Federation::userActorUrl($user))
+            ->assertJsonPath('inbox', Federation::base().'/u/'.$user->id.'/inbox')
+            ->assertJsonPath('publicKey.id', Federation::userActorUrl($user).'#main-key');
+    }
 }

@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.13.0',
+            'date' => '2026-06-12',
+            'title' => 'Federation Phase 3 — every member federates as themselves',
+            'items' => [
+                ['type' => 'new', 'text' => 'Each member now has their own fediverse identity — @you@your-community — instead of everything posting from a single community account. People on Mastodon and other servers can follow individual members, and your topics and replies go out attributed to you personally.'],
+                ['type' => 'new', 'text' => 'Your fediverse handle appears on your profile so you can share it, and members can be discovered by handle from any fediverse server.'],
+                ['type' => 'new', 'text' => 'A reply now reaches the right people automatically: the author’s own followers, the community’s followers, and the remote members already taking part in the thread.'],
+            ],
+        ],
+        [
             'tag' => '1.12.2',
             'date' => '2026-06-12',
             'title' => 'Fix: federation handshake with Mastodon',

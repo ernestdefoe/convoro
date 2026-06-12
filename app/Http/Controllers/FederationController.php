@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Topic;
+use App\Models\User;
 use App\Support\Federation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,15 +24,72 @@ class FederationController extends Controller
         return response()->json($doc)->header('Content-Type', Federation::CTYPE);
     }
 
-    /** WebFinger discovery: resolves acct:{user}@{host} to the actor. */
+    /** WebFinger discovery: resolves acct:{user}@{host} to the community or a member. */
     public function webfinger(Request $request): JsonResponse
     {
         $this->guard();
         $resource = (string) $request->query('resource', '');
-        $want = 'acct:'.Federation::username().'@'.Federation::host();
-        abort_unless(strcasecmp($resource, $want) === 0, 404);
+        if (! preg_match('/^acct:([^@]+)@(.+)$/i', $resource, $m) || strcasecmp($m[2], Federation::host()) !== 0) {
+            abort(404);
+        }
+        $resolved = Federation::resolveUsername($m[1]);
+        abort_unless($resolved !== null, 404);
+        $doc = $resolved['type'] === 'user'
+            ? Federation::userWebfinger($resolved['user'])
+            : Federation::webfinger();
 
-        return response()->json(Federation::webfinger())->header('Content-Type', 'application/jrd+json');
+        return response()->json($doc)->header('Content-Type', 'application/jrd+json');
+    }
+
+    // ---- Per-user (Person) actors — Phase 3 ----
+
+    public function userActor(User $user): JsonResponse
+    {
+        $this->guard();
+        abort_if($user->is_federated, 404);
+
+        return $this->ap(Federation::userActor($user));
+    }
+
+    public function userOutbox(User $user): JsonResponse
+    {
+        $this->guard();
+        abort_if($user->is_federated, 404);
+        $base = Federation::base();
+        $topics = Topic::with('firstPost')->where('user_id', $user->id)->latest()->limit(20)->get()
+            ->map(fn (Topic $t) => Federation::createActivityForTopic($t))->all();
+
+        return $this->ap([
+            '@context' => 'https://www.w3.org/ns/activitystreams',
+            'id' => $base.'/u/'.$user->id.'/outbox',
+            'type' => 'OrderedCollection',
+            'totalItems' => Topic::where('user_id', $user->id)->count(),
+            'orderedItems' => $topics,
+        ]);
+    }
+
+    public function userFollowers(User $user): JsonResponse
+    {
+        $this->guard();
+        abort_if($user->is_federated, 404);
+        $items = \Illuminate\Support\Facades\DB::table('federation_followers')
+            ->where('user_id', $user->id)->pluck('actor')->all();
+
+        return $this->ap([
+            '@context' => 'https://www.w3.org/ns/activitystreams',
+            'id' => Federation::base().'/u/'.$user->id.'/followers',
+            'type' => 'OrderedCollection',
+            'totalItems' => count($items),
+            'orderedItems' => $items,
+        ]);
+    }
+
+    public function userInbox(Request $request, User $user): Response
+    {
+        $this->guard();
+        abort_if($user->is_federated, 404);
+
+        return $this->processInbox($request, $user);
     }
 
     public function nodeinfo(): JsonResponse
@@ -98,28 +156,35 @@ class FederationController extends Controller
         ]);
     }
 
-    /** Inbox: verify the signature, then handle Follow / Undo(Follow). */
+    /** Community inbox: verify the signature, then dispatch by activity type. */
     public function inbox(Request $request): Response
     {
         $this->guard();
+
+        return $this->processInbox($request, null);
+    }
+
+    /** Shared inbox processing. $target = the followed member, or null = community. */
+    private function processInbox(Request $request, ?User $target): Response
+    {
         abort_unless(Federation::verifyRequest($request), 401, 'Invalid signature');
 
         $activity = $request->json()->all();
         $type = $activity['type'] ?? null;
 
         match ($type) {
-            'Follow' => $this->handleFollow($activity),
+            'Follow' => $this->handleFollow($activity, $target),
             'Create' => $this->handleCreate($activity),
             'Like' => $this->handleLike($activity),
             'Delete' => $this->handleDelete($activity),
-            'Undo' => $this->handleUndo($activity),
+            'Undo' => $this->handleUndo($activity, $target),
             default => null, // accepted but ignored
         };
 
         return response('', 202);
     }
 
-    private function handleFollow(array $activity): void
+    private function handleFollow(array $activity, ?User $target): void
     {
         $actorUri = (string) ($activity['actor'] ?? '');
         if ($actorUri === '') {
@@ -131,7 +196,7 @@ class FederationController extends Controller
         }
 
         \Illuminate\Support\Facades\DB::table('federation_followers')->updateOrInsert(
-            ['actor' => $actorUri],
+            ['user_id' => $target?->id, 'actor' => $actorUri],
             [
                 'inbox' => $remote['inbox'],
                 'shared_inbox' => $remote['endpoints']['sharedInbox'] ?? null,
@@ -140,23 +205,25 @@ class FederationController extends Controller
             ],
         );
 
-        // Acknowledge the follow.
+        // Acknowledge the follow, signed by whichever actor was followed.
+        $localActor = $target ? Federation::userActorUrl($target) : Federation::actorUrl();
         $accept = [
             '@context' => 'https://www.w3.org/ns/activitystreams',
-            'id' => Federation::actorUrl().'#accept/'.bin2hex(random_bytes(8)),
+            'id' => $localActor.'#accept/'.bin2hex(random_bytes(8)),
             'type' => 'Accept',
-            'actor' => Federation::actorUrl(),
+            'actor' => $localActor,
             'object' => $activity,
         ];
-        \App\Jobs\DeliverActivity::dispatch($accept, [$remote['inbox']])->afterCommit();
+        \App\Jobs\DeliverActivity::dispatch($accept, [$remote['inbox']], $target?->id)->afterCommit();
     }
 
-    private function handleUndo(array $activity): void
+    private function handleUndo(array $activity, ?User $target): void
     {
         if (($activity['object']['type'] ?? null) === 'Follow') {
             $actor = (string) ($activity['actor'] ?? '');
             if ($actor !== '') {
-                \Illuminate\Support\Facades\DB::table('federation_followers')->where('actor', $actor)->delete();
+                \Illuminate\Support\Facades\DB::table('federation_followers')
+                    ->where('user_id', $target?->id)->where('actor', $actor)->delete();
             }
         }
     }

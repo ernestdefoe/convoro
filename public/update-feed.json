@@ -1,11 +1,13 @@
 {
-    "version": "1.12.2",
-    "download": "https://convoro.co/releases/convoro-1.12.2.zip",
+    "version": "1.13.0",
+    "download": "https://convoro.co/releases/convoro-1.13.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Fix: federation handshake with Mastodon",
+    "title": "Federation Phase 3 — every member federates as themselves",
     "date": "2026-06-12",
-    "notes": "Outgoing federation requests signed the content-type header, which Mastodon validates differently — so Mastodon rejected our follow acknowledgements and deliveries. The signature no longer covers content-type, so follows complete and topics/replies reach the fediverse.",
+    "notes": "Members now each have their own fediverse identity (@you@your-community) instead of posting from one shared community account. People can follow individual members, topics and replies go out attributed to their real author, your handle shows on your profile, and replies reach the author's followers, the community's followers, and remote thread participants.",
     "changelog": [
-        {"type": "fixed", "text": "Federation HTTP signatures no longer sign content-type, fixing follow acceptance and delivery to Mastodon."}
+        {"type": "new", "text": "Per-member fediverse identities — each member federates as @you@your-community and can be followed individually."},
+        {"type": "new", "text": "Your fediverse handle is shown on your profile and is discoverable by handle from any fediverse server."},
+        {"type": "new", "text": "Replies are delivered to the author's followers, the community's followers, and remote thread participants."}
     ]
 }

@@ -18,6 +18,11 @@ Route::get('/federation/actor', [App\Http\Controllers\FederationController::clas
 Route::get('/federation/outbox', [App\Http\Controllers\FederationController::class, 'outbox']);
 Route::get('/federation/followers', [App\Http\Controllers\FederationController::class, 'followers']);
 Route::post('/federation/inbox', [App\Http\Controllers\FederationController::class, 'inbox']);
+// Per-user (Person) actors — each member federates as @username@host (Phase 3).
+Route::get('/u/{user}/actor', [App\Http\Controllers\FederationController::class, 'userActor'])->name('federation.user.actor');
+Route::get('/u/{user}/outbox', [App\Http\Controllers\FederationController::class, 'userOutbox']);
+Route::get('/u/{user}/followers', [App\Http\Controllers\FederationController::class, 'userFollowers']);
+Route::post('/u/{user}/inbox', [App\Http\Controllers\FederationController::class, 'userInbox']);
 
 // One-click digest unsubscribe — a permanent signed link from the digest email,
 // no login required. Sets the member's digest to off and shows a confirmation.

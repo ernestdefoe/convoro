@@ -68,6 +68,12 @@ class UserProfileController extends Controller
                 'joined' => optional($user->created_at)->isoFormat('MMMM YYYY'),
                 'isAdmin' => (bool) $user->is_admin,
                 'isSelf' => $actorId === (int) $user->id,
+                'fediHandle' => \App\Support\Federation::enabled()
+                    ? ($user->is_federated ? $user->federated_handle : \App\Support\Federation::userHandle($user))
+                    : null,
+                'fediUrl' => \App\Support\Federation::enabled()
+                    ? ($user->is_federated ? $user->federated_actor : \App\Support\Federation::userActorUrl($user))
+                    : null,
             ],
             'stats' => [
                 'topics' => $user->topics()->count(),

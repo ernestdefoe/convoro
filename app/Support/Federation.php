@@ -84,6 +84,111 @@ class Federation
         return self::keys()['public'];
     }
 
+    // ---- Per-user actors (Phase 3) ----
+
+    /** A member's unique fediverse username (lazy: slug of name, deduped by id). */
+    public static function userUsername(User $user): string
+    {
+        if ($user->ap_username) {
+            return $user->ap_username;
+        }
+        $base = Str::slug(Username::display($user->name, (int) $user->id), '_') ?: 'member';
+        $candidate = $base;
+        // Avoid clashing with the community handle or another member.
+        if ($candidate === self::username() || User::where('ap_username', $candidate)->exists()) {
+            $candidate = $base.$user->id;
+        }
+        $user->forceFill(['ap_username' => $candidate])->save();
+
+        return $candidate;
+    }
+
+    /** @return array{public:string,private:string} a member's own keypair (lazy) */
+    public static function userKeys(User $user): array
+    {
+        if ($user->ap_public_key && $user->ap_private_key) {
+            return ['public' => $user->ap_public_key, 'private' => $user->ap_private_key];
+        }
+        $res = openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]);
+        if ($res === false) {
+            throw new \RuntimeException('Could not generate a user federation keypair (OpenSSL).');
+        }
+        openssl_pkey_export($res, $priv);
+        $pub = (string) openssl_pkey_get_details($res)['key'];
+        $user->forceFill(['ap_public_key' => $pub, 'ap_private_key' => $priv])->save();
+
+        return ['public' => $pub, 'private' => $priv];
+    }
+
+    public static function userActorUrl(User $user): string
+    {
+        return self::base().'/u/'.$user->id.'/actor';
+    }
+
+    public static function userHandle(User $user): string
+    {
+        return '@'.self::userUsername($user).'@'.self::host();
+    }
+
+    /** A member's ActivityPub actor document (a Person). */
+    public static function userActor(User $user): array
+    {
+        $base = self::base();
+        $url = self::userActorUrl($user);
+        $avatar = $user->avatar_path;
+
+        $doc = [
+            '@context' => ['https://www.w3.org/ns/activitystreams', 'https://w3id.org/security/v1'],
+            'id' => $url,
+            'type' => 'Person',
+            'preferredUsername' => self::userUsername($user),
+            'name' => Username::display($user->name, (int) $user->id),
+            'summary' => $user->bio ? e(Str::limit(strip_tags((string) $user->bio), 400)) : '',
+            'manuallyApprovesFollowers' => false,
+            'discoverable' => true,
+            'inbox' => $base.'/u/'.$user->id.'/inbox',
+            'outbox' => $base.'/u/'.$user->id.'/outbox',
+            'followers' => $base.'/u/'.$user->id.'/followers',
+            'url' => $base.'/u/'.$user->id,
+            'publicKey' => [
+                'id' => $url.'#main-key',
+                'owner' => $url,
+                'publicKeyPem' => self::userKeys($user)['public'],
+            ],
+        ];
+        if ($avatar) {
+            $doc['icon'] = ['type' => 'Image', 'url' => str_starts_with($avatar, 'http') ? $avatar : $base.$avatar];
+        }
+
+        return $doc;
+    }
+
+    public static function userWebfinger(User $user): array
+    {
+        $url = self::userActorUrl($user);
+
+        return [
+            'subject' => 'acct:'.self::userUsername($user).'@'.self::host(),
+            'aliases' => [$url, self::base().'/u/'.$user->id],
+            'links' => [
+                ['rel' => 'self', 'type' => self::CTYPE, 'href' => $url],
+                ['rel' => 'http://webfinger.net/rel/profile-page', 'type' => 'text/html', 'href' => self::base().'/u/'.$user->id],
+            ],
+        ];
+    }
+
+    /** Resolve a webfinger username to the community OR a local member. */
+    public static function resolveUsername(string $username): ?array
+    {
+        $username = ltrim(strtolower(trim($username)));
+        if ($username === strtolower(self::username())) {
+            return ['type' => 'community'];
+        }
+        $user = User::where('ap_username', $username)->where('is_federated', false)->first();
+
+        return $user ? ['type' => 'user', 'user' => $user] : null;
+    }
+
     // ---- Documents ----
 
     /** The ActivityPub actor document for the community. */
@@ -128,11 +233,19 @@ class Federation
     }
 
     /** A Create→Note activity announcing a topic (Mastodon renders the Note). */
+    /** The member who authors federated content for a topic, or null = community. */
+    public static function authorOf(?User $user): ?User
+    {
+        return ($user && ! $user->is_federated) ? $user : null;
+    }
+
     public static function createActivityForTopic(Topic $topic): array
     {
         $base = self::base();
         $topicUrl = $base.'/t/'.$topic->slug;
-        $actor = self::actorUrl();
+        $author = self::authorOf($topic->user);
+        $actor = $author ? self::userActorUrl($author) : self::actorUrl();
+        $followers = $author ? $base.'/u/'.$author->id.'/followers' : $base.'/federation/followers';
         $published = ($topic->created_at ?? now())->toAtomString();
         $excerpt = trim(Str::limit(strip_tags((string) optional($topic->firstPost)->body_html), 280));
         $content = '<p><strong>'.e($topic->title).'</strong></p>'
@@ -146,7 +259,7 @@ class Federation
             'actor' => $actor,
             'published' => $published,
             'to' => ['https://www.w3.org/ns/activitystreams#Public'],
-            'cc' => [$base.'/federation/followers'],
+            'cc' => [$followers],
             'object' => [
                 'id' => $topicUrl,
                 'type' => 'Note',
@@ -155,7 +268,7 @@ class Federation
                 'url' => $topicUrl,
                 'published' => $published,
                 'to' => ['https://www.w3.org/ns/activitystreams#Public'],
-                'cc' => [$base.'/federation/followers'],
+                'cc' => [$followers],
             ],
         ];
     }
@@ -231,23 +344,33 @@ class Federation
             if (! self::enabled() || ! \Illuminate\Support\Facades\Schema::hasTable('federation_followers')) {
                 return;
             }
+            $base = self::base();
+            $author = self::authorOf($post->user);
+            $actor = $author ? self::userActorUrl($author) : self::actorUrl();
+            $followers = $author ? $base.'/u/'.$author->id.'/followers' : $base.'/federation/followers';
+            $topicUrl = $base.'/t/'.$topic->slug;
+            $postUrl = $topicUrl.'#post-'.$post->id;
+
             $remoteInboxes = User::whereIn('id', $topic->posts()->pluck('user_id'))
                 ->where('is_federated', true)->pluck('federated_inbox')->filter()->all();
-            $followerInboxes = DB::table('federation_followers')->get()
-                ->map(fn ($f) => $f->shared_inbox ?: $f->inbox)->filter()->all();
+            $followerInboxes = DB::table('federation_followers')
+                ->where(function ($q) use ($author) {
+                    $q->whereNull('user_id');
+                    if ($author) {
+                        $q->orWhere('user_id', $author->id);
+                    }
+                })->get()->map(fn ($f) => $f->shared_inbox ?: $f->inbox)->filter()->all();
             $inboxes = array_values(array_unique(array_merge($followerInboxes, $remoteInboxes)));
             if (! $inboxes) {
                 return;
             }
 
-            $base = self::base();
-            $actor = self::actorUrl();
-            $topicUrl = $base.'/t/'.$topic->slug;
-            $postUrl = $topicUrl.'#post-'.$post->id;
-            $author = \App\Support\Username::display($post->user->name, (int) $post->user->id);
             $published = ($post->created_at ?? now())->toAtomString();
-            $content = '<p><strong>'.e($author).'</strong> '.__('replied').':</p>'.$post->body_html
-                .'<p><a href="'.e($postUrl).'">'.e($topicUrl).'</a></p>';
+            // When the actor IS the author, no "X replied:" prefix is needed.
+            $content = $author
+                ? $post->body_html.'<p><a href="'.e($postUrl).'">'.e($topicUrl).'</a></p>'
+                : '<p><strong>'.e(\App\Support\Username::display($post->user->name, (int) $post->user->id)).'</strong> '.__('replied').':</p>'.$post->body_html
+                    .'<p><a href="'.e($postUrl).'">'.e($topicUrl).'</a></p>';
 
             $activity = [
                 '@context' => 'https://www.w3.org/ns/activitystreams',
@@ -256,7 +379,7 @@ class Federation
                 'actor' => $actor,
                 'published' => $published,
                 'to' => ['https://www.w3.org/ns/activitystreams#Public'],
-                'cc' => [$base.'/federation/followers'],
+                'cc' => [$followers],
                 'object' => [
                     'id' => $postUrl,
                     'type' => 'Note',
@@ -266,10 +389,10 @@ class Federation
                     'url' => $postUrl,
                     'published' => $published,
                     'to' => ['https://www.w3.org/ns/activitystreams#Public'],
-                    'cc' => [$base.'/federation/followers'],
+                    'cc' => [$followers],
                 ],
             ];
-            \App\Jobs\DeliverActivity::dispatch($activity, $inboxes)->afterCommit();
+            \App\Jobs\DeliverActivity::dispatch($activity, $inboxes, $author?->id)->afterCommit();
         } catch (\Throwable $e) {
             Log::debug('Federation reply cross-post skipped: '.$e->getMessage());
         }
@@ -285,7 +408,18 @@ class Federation
             if (DB::table('federation_followers')->doesntExist()) {
                 return;
             }
-            \App\Jobs\DeliverActivity::dispatch(self::createActivityForTopic($topic))->afterCommit();
+            $author = self::authorOf($topic->user);
+            $inboxes = DB::table('federation_followers')
+                ->where(function ($q) use ($author) {
+                    $q->whereNull('user_id');
+                    if ($author) {
+                        $q->orWhere('user_id', $author->id);
+                    }
+                })->get()->map(fn ($f) => $f->shared_inbox ?: $f->inbox)->filter()->unique()->values()->all();
+            if (! $inboxes) {
+                return;
+            }
+            \App\Jobs\DeliverActivity::dispatch(self::createActivityForTopic($topic), $inboxes, $author?->id)->afterCommit();
         } catch (\Throwable $e) {
             Log::debug('Federation announce skipped: '.$e->getMessage());
         }
@@ -293,18 +427,21 @@ class Federation
 
     // ---- HTTP Signatures (draft-cavage, as Mastodon uses) ----
 
-    /** Sign an outgoing request; returns headers to attach. */
+    /** Sign an outgoing request as the community actor. */
     public static function signHeaders(string $method, string $url, ?string $body = null): array
+    {
+        return self::signHeadersAs(null, $method, $url, $body);
+    }
+
+    /** Sign as a member ($signer) or the community ($signer null). */
+    public static function signHeadersAs(?User $signer, string $method, string $url, ?string $body = null): array
     {
         $date = gmdate('D, d M Y H:i:s').' GMT';
         $host = (string) parse_url($url, PHP_URL_HOST);
         $path = (string) (parse_url($url, PHP_URL_PATH) ?: '/');
         $method = strtolower($method);
 
-        $headers = [
-            'Host' => $host,
-            'Date' => $date,
-        ];
+        $headers = ['Host' => $host, 'Date' => $date];
         $signedHeaders = ['(request-target)', 'host', 'date'];
         $lines = [
             '(request-target): '.$method.' '.$path,
@@ -322,10 +459,12 @@ class Federation
             // differently, which makes signature verification fail.
         }
 
-        openssl_sign(implode("\n", $lines), $sig, self::keys()['private'], OPENSSL_ALGO_SHA256);
+        $priv = $signer ? self::userKeys($signer)['private'] : self::keys()['private'];
+        $keyId = ($signer ? self::userActorUrl($signer) : self::actorUrl()).'#main-key';
+        openssl_sign(implode("\n", $lines), $sig, $priv, OPENSSL_ALGO_SHA256);
         $headers['Signature'] = sprintf(
             'keyId="%s",algorithm="rsa-sha256",headers="%s",signature="%s"',
-            self::actorUrl().'#main-key',
+            $keyId,
             implode(' ', $signedHeaders),
             base64_encode((string) $sig),
         );

@@ -37,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/licenses/*',
             'api/registry/github',
             'federation/inbox',
+            'u/*/inbox',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
