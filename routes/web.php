@@ -302,6 +302,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/ai', [App\Http\Controllers\AiController::class, 'updateSettings'])->name('ai.update');
     Route::post('/ai/index/build', [App\Http\Controllers\AiController::class, 'buildIndex'])->name('ai.index.build');
     Route::post('/ai/knowledge/reindex', [App\Http\Controllers\AiController::class, 'reindexKnowledge'])->name('ai.knowledge.reindex');
+
+    // Curated AI knowledge base (admin-authored support articles).
+    Route::get('/knowledge', [App\Http\Controllers\KnowledgeController::class, 'index'])->name('knowledge');
+    Route::post('/knowledge', [App\Http\Controllers\KnowledgeController::class, 'store'])->name('knowledge.store');
+    Route::put('/knowledge/{id}', [App\Http\Controllers\KnowledgeController::class, 'update'])->name('knowledge.update');
+    Route::delete('/knowledge/{id}', [App\Http\Controllers\KnowledgeController::class, 'destroy'])->name('knowledge.destroy');
     Route::get('/ai/index/status', [App\Http\Controllers\AiController::class, 'indexStatus'])->name('ai.index.status');
 
     // Invites — invite codes + invite-only registration.

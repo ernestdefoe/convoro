@@ -158,6 +158,66 @@ class KnowledgeBase
         return self::count();
     }
 
+    // ---- Curated KB articles (Phase 2): admin-authored support knowledge ----
+
+    /** @return array<int, array{id:int,title:string,url:?string,body:string,indexed:bool,updated:string}> */
+    public static function articles(): array
+    {
+        return DB::table('knowledge_sources')->where('kind', 'kb')->orderByDesc('updated_at')
+            ->get(['id', 'title', 'url', 'snippet', 'vector', 'updated_at'])
+            ->map(fn ($r) => [
+                'id' => (int) $r->id,
+                'title' => (string) $r->title,
+                'url' => $r->url,
+                'body' => (string) $r->snippet,
+                'indexed' => $r->vector !== null,
+                'updated' => optional($r->updated_at)->diffForHumans() ?? '',
+            ])->all();
+    }
+
+    /** Create or update a curated KB article; embeds it on save. Returns its id. */
+    public static function saveArticle(?int $id, string $title, string $body, ?string $url = null): int
+    {
+        $title = trim($title);
+        $body = trim($body);
+        $text = mb_substr($title."\n\n".$body, 0, 6000);
+
+        $vec = null;
+        if (AskIndex::configured()) {
+            try {
+                $vec = AskIndex::embed([$text], 'document')[0] ?? null;
+            } catch (\Throwable $e) {
+                report($e);
+            }
+        }
+
+        $data = [
+            'kind' => 'kb',
+            'title' => mb_substr($title, 0, 250),
+            'url' => $url ?: null,
+            'snippet' => mb_substr($body, 0, 6000),
+            'dims' => $vec ? count($vec) : 0,
+            'vector' => $vec ? json_encode($vec) : null,
+            'updated_at' => now(),
+        ];
+
+        if ($id && DB::table('knowledge_sources')->where('id', $id)->where('kind', 'kb')->exists()) {
+            DB::table('knowledge_sources')->where('id', $id)->update($data);
+
+            return $id;
+        }
+
+        $data['ref'] = 'kb-'.bin2hex(random_bytes(8));
+        $data['created_at'] = now();
+
+        return (int) DB::table('knowledge_sources')->insertGetId($data);
+    }
+
+    public static function deleteArticle(int $id): void
+    {
+        DB::table('knowledge_sources')->where('id', $id)->where('kind', 'kb')->delete();
+    }
+
     /**
      * Semantic search over the knowledge base.
      *

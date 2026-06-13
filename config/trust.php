@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.16.1',
+            'date' => '2026-06-13',
+            'title' => 'Curated knowledge base for the AI',
+            'items' => [
+                ['type' => 'new', 'text' => 'A new Admin → Knowledge Base where you can write your own support articles — answers and fixes that aren’t in the official docs. The assistant indexes them and grounds answers in them too, with citations.'],
+            ],
+        ],
+        [
             'tag' => '1.16.0',
             'date' => '2026-06-13',
             'title' => 'Grounded AI answers — Ask from your docs, not just posts',

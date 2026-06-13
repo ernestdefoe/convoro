@@ -1,12 +1,11 @@
 {
-    "version": "1.16.0",
-    "download": "https://convoro.co/releases/convoro-1.16.0.zip",
+    "version": "1.16.1",
+    "download": "https://convoro.co/releases/convoro-1.16.1.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Grounded AI answers — Ask from your docs, not just posts",
+    "title": "Curated knowledge base for the AI",
     "date": "2026-06-13",
-    "notes": "Ask can now answer from your built-in documentation and changelog (the authoritative source of how the software works) and cite the exact guide, instead of paraphrasing forum posts. A new Strict support mode answers only from your knowledge base and says when something isn't documented rather than guessing — ideal for a support site.",
+    "notes": "A new Admin → Knowledge Base lets you write your own support articles — answers and fixes that aren't in the official docs. The assistant indexes them and grounds answers in them too, with citations.",
     "changelog": [
-        {"type": "new", "text": "Ask answers from your documentation + changelog, with citations — not just forum posts."},
-        {"type": "new", "text": "Strict support mode: answer only from the knowledge base; say when something isn't documented."}
+        {"type": "new", "text": "Admin → Knowledge Base: write your own support articles the AI grounds answers in and cites."}
     ]
 }
