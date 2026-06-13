@@ -301,6 +301,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/ai', [App\Http\Controllers\AiController::class, 'settings'])->name('ai');
     Route::post('/ai', [App\Http\Controllers\AiController::class, 'updateSettings'])->name('ai.update');
     Route::post('/ai/index/build', [App\Http\Controllers\AiController::class, 'buildIndex'])->name('ai.index.build');
+    Route::post('/ai/knowledge/reindex', [App\Http\Controllers\AiController::class, 'reindexKnowledge'])->name('ai.knowledge.reindex');
     Route::get('/ai/index/status', [App\Http\Controllers\AiController::class, 'indexStatus'])->name('ai.index.status');
 
     // Invites — invite codes + invite-only registration.

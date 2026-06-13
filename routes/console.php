@@ -19,6 +19,12 @@ Schedule::command('convoro:refresh-registry')->hourly()->withoutOverlapping();
 // Publish scheduled posts the moment their time arrives.
 Schedule::command('convoro:publish-scheduled')->everyMinute()->withoutOverlapping();
 
+// Keep the AI knowledge base (docs + changelog) embeddings fresh — cheap, once
+// daily. The command no-ops when there's no embeddings key.
+Schedule::command('convoro:reindex-knowledge')->dailyAt('04:00')
+    ->when(fn () => rescue(fn () => (bool) \App\Support\KnowledgeBase::enabled() && \App\Support\AskIndex::configured(), false))
+    ->withoutOverlapping();
+
 // Database backups at 03:00 on the admin-chosen cadence. The command no-ops
 // when scheduled backups are off; the ->when guards pick the right cadence.
 // rescue() keeps a pre-migration install from crashing the scheduler.

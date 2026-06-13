@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.16.0',
+            'date' => '2026-06-13',
+            'title' => 'Grounded AI answers — Ask from your docs, not just posts',
+            'items' => [
+                ['type' => 'new', 'text' => '“Ask” can now answer from your built-in documentation and changelog — the authoritative source of how the software works — and cite the exact guide, instead of paraphrasing whatever members happened to write in threads.'],
+                ['type' => 'new', 'text' => 'New “Strict support mode” (Admin → AI): the assistant answers only from your knowledge base and says when something isn’t documented rather than guessing — ideal for a help/support site.'],
+            ],
+        ],
+        [
             'tag' => '1.15.2',
             'date' => '2026-06-13',
             'title' => 'Clear notifications',

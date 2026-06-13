@@ -5,7 +5,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
-  config: { provider: string; model: string; base_url: string; has_key: boolean; ask_enabled: boolean; embed_has_key: boolean; embed_model: string; autoanswer_enabled: boolean; autoanswer_keywords: string; bot_name: string; moderation_enabled: boolean; translate_posts: boolean; price_in: number; price_out: number; monthly_budget: number };
+  config: { provider: string; model: string; base_url: string; has_key: boolean; ask_enabled: boolean; ask_knowledge: boolean; ask_strict: boolean; knowledge_count: number; embed_has_key: boolean; embed_model: string; autoanswer_enabled: boolean; autoanswer_keywords: string; bot_name: string; moderation_enabled: boolean; translate_posts: boolean; price_in: number; price_out: number; monthly_budget: number };
   index: { ready: boolean; count: number; running: boolean; percent: number; status: string | null; builtAt: string | null };
   usage: { spentCents: number; budgetCents: number; overBudget: boolean; calls: number; tokens: number; byFeature: { feature: string; calls: number; tokens: number; cents: number }[] };
 }>();
@@ -19,6 +19,8 @@ const form = reactive({
   base_url: props.config.base_url || '',
   api_key: '',
   ask_enabled: props.config.ask_enabled,
+  ask_knowledge: props.config.ask_knowledge,
+  ask_strict: props.config.ask_strict,
   embed_model: props.config.embed_model || '',
   embed_key: '',
   autoanswer_enabled: props.config.autoanswer_enabled,
@@ -40,6 +42,10 @@ const budgetPct = computed(() => props.usage.budgetCents > 0 ? Math.min(100, Mat
 
 const idx = reactive({ ...props.index });
 let timer: number | null = null;
+function reindexKnowledge() {
+  router.post('/admin/ai/knowledge/reindex', {}, { preserveScroll: true });
+}
+
 function buildIndex() {
   router.post('/admin/ai/index/build', {}, { preserveScroll: true, onSuccess: () => { idx.running = true; poll(); } });
 }
@@ -135,6 +141,26 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
               <p class="mt-1 text-xs text-ink-muted">{{ idx.status }}</p>
             </div>
             <p v-else-if="idx.builtAt" class="mt-1 text-xs text-ink-muted">{{ t('Last built {date}. New posts are indexed automatically.', { date: idx.builtAt }) }}</p>
+          </div>
+        </div>
+
+        <!-- Grounded answers (docs + changelog knowledge base) -->
+        <div class="mt-5 border-t border-line pt-4">
+          <h4 class="text-sm font-bold text-ink">{{ t('Grounded answers') }} <span class="font-normal text-ink-muted">{{ t('— answer from your documentation') }}</span></h4>
+          <p class="mt-1 text-xs text-ink-muted">{{ t('Index your built-in docs and changelog so Ask answers support questions from how the software actually works — with citations — instead of paraphrasing forum posts.') }}</p>
+
+          <label class="mt-3 flex items-center gap-2 text-sm text-ink-2">
+            <input v-model="form.ask_knowledge" type="checkbox" class="rounded border-line text-primary focus:ring-primary" @change="save" />
+            {{ t('Ground answers in the documentation & changelog') }}
+          </label>
+          <label class="mt-2 flex items-center gap-2 text-sm text-ink-2">
+            <input v-model="form.ask_strict" type="checkbox" class="rounded border-line text-primary focus:ring-primary" @change="save" />
+            {{ t('Strict support mode — only answer from the knowledge base; don’t guess') }}
+          </label>
+
+          <div class="mt-3 flex items-center justify-between rounded-xl bg-appbg p-3 text-sm">
+            <span class="text-ink-2">{{ t('Knowledge:') }} <b class="text-ink">{{ config.knowledge_count }}</b> {{ t('sources') }}</span>
+            <button :disabled="!config.embed_has_key" class="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-600 disabled:opacity-50" @click="reindexKnowledge">{{ t('Index knowledge') }}</button>
           </div>
         </div>
       </section>

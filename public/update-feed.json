@@ -1,11 +1,12 @@
 {
-    "version": "1.15.2",
-    "download": "https://convoro.co/releases/convoro-1.15.2.zip",
+    "version": "1.16.0",
+    "download": "https://convoro.co/releases/convoro-1.16.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Clear notifications",
+    "title": "Grounded AI answers — Ask from your docs, not just posts",
     "date": "2026-06-13",
-    "notes": "You can now clear notifications, not just mark them read: dismiss a single one with the × on its row, or use Clear all to empty the whole list.",
+    "notes": "Ask can now answer from your built-in documentation and changelog (the authoritative source of how the software works) and cite the exact guide, instead of paraphrasing forum posts. A new Strict support mode answers only from your knowledge base and says when something isn't documented rather than guessing — ideal for a support site.",
     "changelog": [
-        {"type": "new", "text": "Clear notifications — dismiss one with the × on its row, or Clear all to empty the list."}
+        {"type": "new", "text": "Ask answers from your documentation + changelog, with citations — not just forum posts."},
+        {"type": "new", "text": "Strict support mode: answer only from the knowledge base; say when something isn't documented."}
     ]
 }

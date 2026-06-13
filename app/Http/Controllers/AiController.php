@@ -270,6 +270,9 @@ class AiController extends Controller
                 'base_url' => Settings::get('ai.base_url', ''),
                 'has_key' => Llm::configured(),
                 'ask_enabled' => (bool) Settings::get('ask.enabled', true),
+                'ask_knowledge' => (bool) Settings::get('ask.knowledge', true),
+                'ask_strict' => (bool) Settings::get('ask.strict', false),
+                'knowledge_count' => \App\Support\KnowledgeBase::count(),
                 'embed_has_key' => AskIndex::configured(),
                 'embed_model' => Settings::get('ai.embed_model', ''),
                 'autoanswer_enabled' => (bool) Settings::get('ai.autoanswer_enabled', false),
@@ -318,6 +321,21 @@ class AiController extends Controller
         return response()->json($this->indexState());
     }
 
+    /** Embed the docs + changelog into the knowledge base (small + fast — runs inline). */
+    public function reindexKnowledge(): RedirectResponse
+    {
+        if (! AskIndex::configured()) {
+            return back()->with('status', __('Add a Voyage embeddings key first.'));
+        }
+        try {
+            $n = \App\Support\KnowledgeBase::reindex();
+
+            return back()->with('status', __(':n knowledge sources indexed.', ['n' => $n]));
+        } catch (\Throwable $e) {
+            return back()->with('status', __('Knowledge indexing failed: ').$e->getMessage());
+        }
+    }
+
     public function updateSettings(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -326,6 +344,8 @@ class AiController extends Controller
             'base_url' => ['nullable', 'string', 'max:255'],
             'api_key' => ['nullable', 'string', 'max:255'],
             'ask_enabled' => ['boolean'],
+            'ask_knowledge' => ['boolean'],
+            'ask_strict' => ['boolean'],
             'embed_model' => ['nullable', 'string', 'max:120'],
             'embed_key' => ['nullable', 'string', 'max:255'],
             'autoanswer_enabled' => ['boolean'],
@@ -344,6 +364,8 @@ class AiController extends Controller
             'ai.base_url' => $data['base_url'] ?? '',
             'ai.embed_model' => $data['embed_model'] ?? '',
             'ask.enabled' => $request->boolean('ask_enabled'),
+            'ask.knowledge' => $request->boolean('ask_knowledge'),
+            'ask.strict' => $request->boolean('ask_strict'),
             'ai.autoanswer_enabled' => $request->boolean('autoanswer_enabled'),
             'ai.autoanswer_keywords' => $data['autoanswer_keywords'] ?? '',
             'ai.bot_name' => $data['bot_name'] ?: 'Convoro Assistant',

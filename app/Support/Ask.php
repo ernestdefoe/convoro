@@ -54,22 +54,44 @@ class Ask
             return ['answer' => 'Please ask a longer question.', 'citations' => []];
         }
 
-        $sources = self::retrieve($question);
+        // Authoritative knowledge (docs / changelog / curated KB) first, then
+        // community posts. Docs are the source of truth for "how the software works".
+        $knowledge = KnowledgeBase::enabled() ? KnowledgeBase::search($question, 4) : [];
+        $posts = array_slice(self::retrieve($question), 0, $knowledge ? 4 : 6);
+
+        $sources = [];
+        foreach ($knowledge as $s) {
+            $sources[] = ['kind' => 'doc', 'title' => $s['title'], 'url' => $s['url'], 'snippet' => $s['snippet']];
+        }
+        foreach ($posts as $s) {
+            $sources[] = ['kind' => 'post', 'title' => $s['title'], 'url' => $s['url'], 'snippet' => $s['snippet']];
+        }
 
         $context = '';
         $citations = [];
         foreach ($sources as $i => $s) {
             $n = $i + 1;
-            $context .= "[{$n}] \"{$s['title']}\": {$s['snippet']}\n\n";
+            $tag = $s['kind'] === 'doc' ? 'DOC' : 'POST';
+            $context .= "[{$n}] ({$tag}) \"{$s['title']}\": {$s['snippet']}\n\n";
             $citations[] = ['n' => $n, 'title' => $s['title'], 'url' => $s['url']];
         }
 
         $site = (string) (Settings::get('site.name') ?: config('app.name', 'this community'));
-        $system = "You are the AI assistant for {$site}, a community forum. Answer the member's question "
-            ."clearly and concisely (a few short paragraphs at most). Prefer the COMMUNITY CONTEXT below and cite it "
-            .'inline like [1], [2] matching the numbered sources. If the context does not contain the answer, answer '
-            .'from general knowledge and briefly say it is not based on community posts. Never invent citations or sources.';
-        $user = ($context !== '' ? "COMMUNITY CONTEXT:\n{$context}" : "(No matching community posts were found.)\n\n")
+        $strict = (bool) Settings::get('ask.strict', false);
+
+        if ($strict) {
+            $system = "You are the support assistant for {$site}. Answer the question using ONLY the SOURCES below — "
+                .'DOC sources are the authoritative documentation; POST sources are community threads. Prefer DOC sources '
+                .'when they conflict. Cite inline like [1], [2] matching the numbered sources. If the sources do not '
+                ."contain the answer, say you don't have that documented yet and suggest contacting the team or checking the "
+                .'docs — do NOT guess or answer from outside knowledge. Never invent citations or sources.';
+        } else {
+            $system = "You are the AI assistant for {$site}. Answer clearly and concisely (a few short paragraphs at most). "
+                .'Prefer the SOURCES below — DOC sources are authoritative documentation; POST sources are community threads — '
+                .'and cite inline like [1], [2]. If the sources do not contain the answer, you may answer from general '
+                .'knowledge and briefly say it is not based on the documentation. Never invent citations or sources.';
+        }
+        $user = ($context !== '' ? "SOURCES:\n{$context}" : "(No matching sources were found.)\n\n")
             ."QUESTION: {$question}";
 
         try {
