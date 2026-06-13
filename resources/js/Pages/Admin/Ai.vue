@@ -202,7 +202,7 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
             <div class="mt-1 text-2xl font-bold text-ink">{{ money(usage.spentCents) }}</div>
             <div v-if="usage.budgetCents > 0" class="mt-2">
               <div class="h-1.5 w-full overflow-hidden rounded-full bg-surface-2"><div class="h-full transition-all" :class="usage.overBudget ? 'bg-rose-500' : 'bg-primary'" :style="{ width: budgetPct + '%' }"></div></div>
-              <div class="mt-1 text-[11px] text-ink-muted">{{ t('of :cap cap', { cap: money(usage.budgetCents) }) }}<span v-if="usage.overBudget" class="ml-1 font-semibold text-rose-400">· {{ t('reached — AI paused') }}</span></div>
+              <div class="mt-1 text-[11px] text-ink-muted">{{ t('of {cap} cap', { cap: money(usage.budgetCents) }) }}<span v-if="usage.overBudget" class="ml-1 font-semibold text-rose-400">· {{ t('reached — AI paused') }}</span></div>
             </div>
           </div>
           <div class="rounded-xl bg-appbg p-4">

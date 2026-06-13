@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.16.4',
+            'date' => '2026-06-13',
+            'title' => 'Fix: AI budget cap label',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'The AI Usage & budget card showed a raw ":cap cap" placeholder instead of your actual monthly cap amount.'],
+            ],
+        ],
+        [
             'tag' => '1.16.3',
             'date' => '2026-06-13',
             'title' => 'Tag the assistant to get an answer',

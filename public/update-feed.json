@@ -1,11 +1,11 @@
 {
-    "version": "1.16.3",
-    "download": "https://convoro.co/releases/convoro-1.16.3.zip",
+    "version": "1.16.4",
+    "download": "https://convoro.co/releases/convoro-1.16.4.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Tag the assistant to get an answer",
+    "title": "Fix: AI budget cap label",
     "date": "2026-06-13",
-    "notes": "Mention the AI assistant in any post — a new topic or a reply — and it answers right there in the thread, grounded in your docs and knowledge base, with citations. Previously the assistant only auto-answered brand-new topics. Toggle it in Admin → AI.",
+    "notes": "The AI Usage & budget card showed a raw \":cap cap\" placeholder instead of your actual monthly cap amount. Fixed.",
     "changelog": [
-        {"type": "new", "text": "@mention the AI assistant in any post and it replies in-thread with a grounded, cited answer."}
+        {"type": "fixed", "text": "AI budget card now shows the real monthly cap amount instead of a \":cap cap\" placeholder."}
     ]
 }
