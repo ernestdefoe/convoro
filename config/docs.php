@@ -38,6 +38,17 @@ return [
                     ['code' => "composer install\ncp .env.example .env\nphp artisan key:generate\n# edit .env — set DB_DATABASE / DB_USERNAME / DB_PASSWORD\nphp artisan migrate\nnpm install && npm run build\nphp artisan storage:link", 'lang' => 'bash'],
                 ],
             ],
+            [
+                'h' => 'Option C — Docker',
+                'body' => [
+                    'For container fans, Convoro ships a production-ready Docker setup: one app container (FrankenPHP — Caddy and PHP in a single process), plus MySQL, Redis, a queue worker, the realtime server and the scheduler. No separate nginx or php-fpm to wire up.',
+                    ['code' => "git clone https://github.com/ernestdefoe/convoro.git\ncd convoro\n\ncp docker/env.example .env\n# generate an app key and paste it into APP_KEY in .env:\ndocker compose run --rm app php artisan key:generate --show\n\ndocker compose up -d --build", 'lang' => 'bash'],
+                    'The site comes up on http://localhost:8080 — the first start builds the image, waits for the database, and runs migrations automatically. Put HTTPS in front of it in production (Caddy, nginx, Traefik or a Cloudflare Tunnel).',
+                    'Prefer not to build? The image is published on Docker Hub — pull it and set it in your compose instead of building from source:',
+                    ['code' => "docker pull ernestdefoe/convoro:latest\n\n# in docker-compose.yml, replace \"build: .\" with:\n#   image: ernestdefoe/convoro:latest", 'lang' => 'bash'],
+                    'Full details, the service list and configuration options are in docs/install-docker.md in the repository.',
+                ],
+            ],
         ],
     ],
 

@@ -1,21 +1,32 @@
 <script setup lang="ts">
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { onBeforeUnmount, onMounted, ref, computed, watch } from 'vue';
 import { t } from '@/lib/i18n';
 
-// A reading-progress scrubber. By default it tracks the whole page (e.g. a
-// discussion thread or a long profile). Pass `target` to track an inner
-// scroll container instead (e.g. a DM thread that scrolls within a box).
-// Drag the handle to jump anywhere.
-const props = defineProps<{ target?: HTMLElement | null }>();
+// A reading-progress scrubber for a discussion thread. Tracks the page (or an
+// inner `target` container) and renders a vertical rail with a dot per reply,
+// a "N replies" label up top and the current position below. Drag to jump.
+const props = defineProps<{ target?: HTMLElement | null; count?: number }>();
 
 const progress = ref(0);
 const dragging = ref(false);
 const track = ref<HTMLElement | null>(null);
 
-// Only worth showing once there's a meaningful amount to scroll (skip short
-// posts / brief DM threads where a progress rail is just noise).
+// Only worth showing once there's a meaningful amount to scroll.
 const SHOW_THRESHOLD = 700;
 const visible = ref(false);
+
+const total = computed(() => Math.max(0, props.count ?? 0));
+// One dot per reply, evenly spaced top→bottom (skip when there are too many).
+const dots = computed<number[]>(() => {
+  const n = total.value;
+  if (n < 2 || n > 40) return [];
+  return Array.from({ length: n }, (_, i) => i / (n - 1));
+});
+// Which reply the handle is currently sitting on (1-based).
+const current = computed(() => {
+  if (total.value < 1) return 0;
+  return Math.min(total.value, Math.max(1, Math.round(progress.value * (total.value - 1)) + 1));
+});
 
 function maxScroll() {
   return props.target
@@ -31,9 +42,9 @@ function update() {
   progress.value = Math.min(1, Math.max(0, curScroll() / max));
 }
 function seek(clientY: number) {
-  const t = track.value;
-  if (!t) return;
-  const r = t.getBoundingClientRect();
+  const el = track.value;
+  if (!el) return;
+  const r = el.getBoundingClientRect();
   const frac = Math.min(1, Math.max(0, (clientY - r.top) / r.height));
   const top = frac * maxScroll();
   if (props.target) props.target.scrollTo({ top });
@@ -61,26 +72,49 @@ function unbind() {
 
 onMounted(bind);
 onBeforeUnmount(unbind);
-// Re-bind if the target element appears/changes after mount.
 watch(() => props.target, () => { unbind(); bind(); });
 </script>
 
 <template>
+  <!-- Anchored just past the right edge of the post column (max-w-3xl =
+       24rem half-width, viewport-centered) so it sits beside the posts rather
+       than out by the browser scrollbar. -->
   <div
     v-show="visible"
-    ref="track"
-    class="group fixed right-2 top-1/2 z-30 hidden h-[55vh] w-3 -translate-y-1/2 cursor-pointer md:block"
-    :title="t('Reading progress — drag to jump')"
-    @pointerdown="start" @pointermove="move" @pointerup="end" @pointerleave="end"
+    class="group fixed left-[calc(50%+24.5rem)] top-1/2 z-30 hidden -translate-y-1/2 select-none flex-col items-center rounded-[20px] bg-surface-2/80 px-2.5 py-4 shadow-sm ring-1 ring-line backdrop-blur-sm xl:flex"
   >
-    <div class="absolute left-1/2 h-full w-1 -translate-x-1/2 rounded-full bg-line"></div>
-    <div class="absolute left-1/2 top-0 w-1 -translate-x-1/2 rounded-full bg-primary" :style="{ height: progress * 100 + '%' }"></div>
-    <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2" :style="{ top: progress * 100 + '%' }">
-      <div class="h-3.5 w-3.5 rounded-full border-2 border-primary bg-surface shadow"></div>
-      <div
-        class="absolute right-5 top-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-ink px-1.5 py-0.5 text-[10px] font-bold text-surface transition-opacity"
-        :class="dragging ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'"
-      >{{ Math.round(progress * 100) }}%</div>
+    <!-- Top label: reply count -->
+    <div v-if="total" class="mb-2.5 text-center text-[11px] font-semibold leading-tight text-ink-muted">
+      <div class="text-ink-2">{{ total }}</div>
+      <div>{{ t('replies') }}</div>
     </div>
+
+    <!-- Rail (the draggable hit area) -->
+    <div
+      ref="track"
+      class="relative h-[52vh] w-4 cursor-pointer"
+      :title="t('Reading progress — drag to jump')"
+      @pointerdown="start" @pointermove="move" @pointerup="end" @pointerleave="end"
+    >
+      <!-- Base track -->
+      <div class="absolute left-1/2 top-0 h-full w-px -translate-x-1/2 rounded-full bg-line"></div>
+      <!-- Filled portion (top → handle) -->
+      <div class="absolute left-1/2 top-0 w-[3px] -translate-x-1/2 rounded-full bg-primary" :style="{ height: progress * 100 + '%' }"></div>
+      <!-- Per-reply dots: light nodes sitting on the rail, ringed in the rail's
+           colour (primary once passed) so they read against both segments. -->
+      <div
+        v-for="(d, i) in dots" :key="i"
+        class="absolute left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-surface ring-2 transition-colors"
+        :class="d <= progress + 0.001 ? 'ring-primary' : 'ring-line'"
+        :style="{ top: d * 100 + '%' }"
+      ></div>
+      <!-- Handle -->
+      <div class="absolute left-1/2 -translate-x-1/2 -translate-y-1/2" :style="{ top: progress * 100 + '%' }">
+        <div class="h-3.5 w-3.5 rounded-full bg-primary shadow ring-2 ring-surface transition-transform group-hover:scale-110"></div>
+      </div>
+    </div>
+
+    <!-- Bottom label: current / total -->
+    <div v-if="total" class="mt-2.5 text-[11px] font-bold tabular-nums text-ink-2">{{ current }}/{{ total }}</div>
   </div>
 </template>

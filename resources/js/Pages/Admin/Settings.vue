@@ -7,7 +7,7 @@ import UploadButton from '@/Components/UploadButton.vue';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
-  values: { name: string; tagline: string; logo: string; logo_dark: string; favicon: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string };
+  values: { name: string; tagline: string; logo: string; logo_dark: string; favicon: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string; gif_provider: string; gif_key_set: boolean; trust_enabled: boolean; trust_gate_new_users: boolean; reply_enabled: boolean; reply_domain: string; reply_secret: string; reply_webhook: string };
   mobileNav: { enabled: boolean; tabs: string[]; catalog: string[] };
   federation: { enabled: boolean; username: string; handle: string; followers: number };
 }>();
@@ -68,6 +68,12 @@ const form = useForm({
   fa_kit_url: props.values.fa_kit_url ?? '',
   seo_description: props.values.seo_description ?? '',
   seo_image: props.values.seo_image ?? '',
+  gif_provider: props.values.gif_provider ?? 'none',
+  gif_key: '',
+  trust_enabled: props.values.trust_enabled ?? true,
+  trust_gate_new_users: props.values.trust_gate_new_users ?? true,
+  reply_enabled: props.values.reply_enabled ?? false,
+  reply_domain: props.values.reply_domain ?? '',
 });
 
 const uploadingLogo = ref(false);
@@ -189,6 +195,91 @@ function save() {
         <p class="text-sm text-ink-muted">{{ t('Convoro bundles Font Awesome Free. To use a Pro or custom') }} <a href="https://fontawesome.com/kits" target="_blank" class="text-indigo-400 underline">{{ t('Font Awesome Kit') }}</a>{{ t(', paste its script URL here.') }}</p>
         <input v-model="form.fa_kit_url" type="url" placeholder="https://kit.fontawesome.com/xxxxxxxx.js"
           class="w-full rounded-lg border-line bg-appbg font-mono text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500" />
+
+        <!-- Live check: Free icons always render; Pro-only styles (light/thin/duotone/sharp)
+             only render if a Pro kit is actually loaded — otherwise they stay blank. -->
+        <div class="mt-2 grid gap-3 sm:grid-cols-2">
+          <div class="rounded-xl border border-line bg-appbg p-3">
+            <div class="text-xs font-semibold text-ink-2">{{ t('Free (always available)') }}</div>
+            <div class="mt-2 flex items-center gap-4 text-2xl text-ink">
+              <i class="fa-solid fa-star" :title="t('solid')"></i>
+              <i class="fa-solid fa-heart"></i>
+              <i class="fa-solid fa-rocket"></i>
+              <i class="fa-regular fa-bell"></i>
+              <i class="fa-brands fa-font-awesome"></i>
+            </div>
+          </div>
+          <div class="rounded-xl border border-line bg-appbg p-3">
+            <div class="text-xs font-semibold text-ink-2">{{ t('Pro (only renders if your kit loads)') }}</div>
+            <div class="mt-2 flex min-h-[2rem] items-center gap-4 text-2xl text-ink">
+              <i class="fa-thin fa-star" :title="t('thin')"></i>
+              <i class="fa-light fa-heart" :title="t('light')"></i>
+              <i class="fa-duotone fa-rocket" :title="t('duotone')"></i>
+              <i class="fa-sharp fa-solid fa-bell" :title="t('sharp')"></i>
+            </div>
+            <p class="mt-2 text-xs text-ink-muted">{{ t('If this row is blank, your Pro kit isn’t loading.') }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-line bg-surface p-6 space-y-4">
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('GIF picker') }}</h2>
+        <p class="text-sm text-ink-muted">{{ t('Let members search and insert GIFs in the composer. Pick a provider and paste a free API key — the key stays on the server.') }}</p>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label class="block text-sm font-medium text-ink-2">{{ t('Provider') }}</label>
+            <select v-model="form.gif_provider" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500">
+              <option value="none">{{ t('Off') }}</option>
+              <option value="tenor">{{ t('Tenor (Google)') }}</option>
+              <option value="giphy">{{ t('Giphy') }}</option>
+            </select>
+          </div>
+          <div v-if="form.gif_provider !== 'none'">
+            <label class="block text-sm font-medium text-ink-2">{{ t('API key') }}</label>
+            <input v-model="form.gif_key" type="password" autocomplete="off"
+              :placeholder="props.values.gif_key_set ? t('•••••••• (leave blank to keep current)') : t('Paste your API key')"
+              class="mt-1.5 w-full rounded-lg border-line bg-appbg font-mono text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500" />
+            <p class="mt-1.5 text-xs text-ink-muted">
+              <a v-if="form.gif_provider === 'tenor'" href="https://developers.google.com/tenor/guides/quickstart" target="_blank" class="text-indigo-400 underline">{{ t('Get a Tenor key') }}</a>
+              <a v-else href="https://developers.giphy.com/dashboard/" target="_blank" class="text-indigo-400 underline">{{ t('Get a Giphy key') }}</a>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-line bg-surface p-6 space-y-3">
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('Trust & new members') }}</h2>
+        <p class="text-sm text-ink-muted">{{ t('Members earn trust by participating. New accounts start at “New” and become “Member” automatically; “Leader” is granted by an admin from the Members page.') }}</p>
+        <label class="flex items-center gap-2 text-sm text-ink-2">
+          <input v-model="form.trust_enabled" type="checkbox" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />
+          {{ t('Enable trust levels') }}
+        </label>
+        <label class="flex items-center gap-2 text-sm text-ink-2" :class="{ 'opacity-50': !form.trust_enabled }">
+          <input v-model="form.trust_gate_new_users" type="checkbox" :disabled="!form.trust_enabled" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />
+          {{ t('Strip links & images from brand-new (New-level) accounts’ posts') }}
+        </label>
+      </div>
+
+      <div class="rounded-2xl border border-line bg-surface p-6 space-y-3">
+        <h2 class="text-sm font-bold uppercase tracking-wide text-ink-2">{{ t('Reply by email') }}</h2>
+        <p class="text-sm text-ink-muted">{{ t('Let members reply to a notification email to post their reply. Needs a domain whose mail your server (or an inbound-email provider) can receive.') }}</p>
+        <label class="flex items-center gap-2 text-sm text-ink-2">
+          <input v-model="form.reply_enabled" type="checkbox" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />
+          {{ t('Enable reply by email') }}
+        </label>
+        <div v-if="form.reply_enabled" class="space-y-3">
+          <div>
+            <label class="block text-sm font-medium text-ink-2">{{ t('Reply domain') }}</label>
+            <input v-model="form.reply_domain" type="text" placeholder="convoro.co"
+              class="mt-1.5 w-full rounded-lg border-line bg-appbg font-mono text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500" />
+            <p class="mt-1.5 text-xs text-ink-muted">{{ t('Notification emails will use a Reply-To of') }} <code class="text-ink-2">reply+&lt;token&gt;@{{ form.reply_domain || 'your-domain.com' }}</code></p>
+          </div>
+          <div v-if="props.values.reply_secret" class="rounded-xl border border-line bg-appbg p-3 text-xs">
+            <p class="font-semibold text-ink-2">{{ t('Inbound setup') }}</p>
+            <p class="mt-1 text-ink-muted">{{ t('Self-hosted: pipe reply+*@your-domain mail to') }} <code class="text-ink-2">php artisan convoro:receive-email</code></p>
+            <p class="mt-1 text-ink-muted">{{ t('Provider webhook: POST inbound mail to') }} <code class="break-all text-ink-2">{{ props.values.reply_webhook }}</code> {{ t('with header') }} <code class="text-ink-2">X-Convoro-Mail-Key: {{ props.values.reply_secret }}</code></p>
+          </div>
+        </div>
       </div>
 
       <div class="rounded-2xl border border-line bg-surface p-6 space-y-5">

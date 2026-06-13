@@ -129,6 +129,8 @@ Route::post('/api/ai/assist', [App\Http\Controllers\AiController::class, 'assist
 Route::post('/api/ai/compose', [App\Http\Controllers\AiController::class, 'compose'])->middleware(['auth', 'throttle:30,1'])->name('ai.compose');
 Route::post('/api/ai/suggest-title', [App\Http\Controllers\AiController::class, 'suggestTitle'])->middleware(['auth', 'throttle:30,1'])->name('ai.suggest.title');
 Route::post('/api/ai/suggest-tags', [App\Http\Controllers\AiController::class, 'suggestTags'])->middleware(['auth', 'throttle:30,1'])->name('ai.suggest.tags');
+Route::get('/api/gifs/search', [App\Http\Controllers\GifController::class, 'search'])->middleware(['auth', 'throttle:60,1'])->name('gifs.search');
+Route::post('/mail/inbound', [App\Http\Controllers\MailInboundController::class, 'inbound'])->middleware('throttle:120,1')->name('mail.inbound');
 Route::get('/llms.txt', [App\Http\Controllers\AiSpecController::class, 'llms'])->name('ai.llms');
 Route::get('/api/catalog', [App\Http\Controllers\StoreController::class, 'catalog'])->name('catalog');
 Route::get('/api/catalog/download/{product}', [App\Http\Controllers\StoreController::class, 'freeDownload'])->name('catalog.download');
@@ -256,6 +258,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     Route::get('/members', [App\Http\Controllers\AdminController::class, 'members'])->name('members');
     Route::put('/members/{user}', [App\Http\Controllers\AdminController::class, 'updateMember'])->name('members.update');
+    Route::get('/ip-lookup', [App\Http\Controllers\AdminController::class, 'ipLookup'])->name('ip.lookup');
     Route::post('/onboarding/dismiss', [App\Http\Controllers\AdminController::class, 'dismissOnboarding'])->name('onboarding.dismiss');
     Route::post('/members/{user}/anonymize', [App\Http\Controllers\AdminController::class, 'anonymizeMember'])->name('members.anonymize');
     Route::delete('/members/{user}', [App\Http\Controllers\AdminController::class, 'destroyMember'])->name('members.destroy');

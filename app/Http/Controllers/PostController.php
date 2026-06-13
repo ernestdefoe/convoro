@@ -28,6 +28,10 @@ class PostController extends Controller
         ]);
 
         $html = Content::clean($data['body_html']);
+        // New (trust level 0) accounts have links/images stripped to blunt spam.
+        if (\App\Support\TrustLevels::gatesContent($request->user())) {
+            $html = \App\Support\TrustLevels::stripLinksMedia($html);
+        }
         abort_if(trim(strip_tags($html)) === '', 422, __('Empty post.'));
 
         $post = Post::create([
@@ -56,6 +60,9 @@ class PostController extends Controller
         // Cross-post out to the fediverse (no-op unless federation is on + relevant).
         \App\Support\Federation::announceReply($post, $topic);
 
+        // Posting is participation — re-check whether they've earned a promotion.
+        \App\Support\TrustLevels::evaluate($request->user());
+
         return back();
     }
 
@@ -74,6 +81,9 @@ class PostController extends Controller
             'tags.*' => ['integer', 'exists:tags,id'],
         ]);
         $html = Content::clean($data['body_html']);
+        if (\App\Support\TrustLevels::gatesContent($user)) {
+            $html = \App\Support\TrustLevels::stripLinksMedia($html);
+        }
         abort_if(trim(strip_tags($html)) === '', 422, __('Empty post.'));
 
         $post->update(['body_html' => $html, 'edited_at' => now()]);

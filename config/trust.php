@@ -10,6 +10,114 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.25.0',
+            'date' => '2026-06-13',
+            'title' => 'Install with Docker',
+            'items' => [
+                ['type' => 'new', 'text' => 'Convoro now ships a production-ready Docker setup — a Dockerfile and docker-compose.yml that bring up the app (FrankenPHP), MySQL, Redis, the queue worker, the realtime server and the scheduler with one command. See docs/install-docker.md: copy .env.docker, generate an app key, and run “docker compose up -d --build”.'],
+            ],
+        ],
+        [
+            'tag' => '1.24.0',
+            'date' => '2026-06-13',
+            'title' => 'Colourful store covers & themed scrollbars',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Auto-generated store/extension cover images now use a distinct accent colour per listing across the whole spectrum, instead of all being the same shade of violet.'],
+                ['type' => 'improved', 'text' => 'Scrollbars now match the site theme (in both light and dark) rather than the default grey browser scrollbar.'],
+            ],
+        ],
+        [
+            'tag' => '1.23.0',
+            'date' => '2026-06-13',
+            'title' => 'See & look up member IP addresses',
+            'items' => [
+                ['type' => 'new', 'text' => 'Admin → Members now shows each member’s last-seen and registration IP, with a one-click geolocation look-up (location, ISP, and flags for VPN/proxy/datacenter IPs) and a Ban IP button — so you can spot and block an abusive address right from their profile.'],
+            ],
+        ],
+        [
+            'tag' => '1.22.0',
+            'date' => '2026-06-13',
+            'title' => 'Staff posts, category accents & sharper badges',
+            'items' => [
+                ['type' => 'new', 'text' => 'Posts from staff (admins & moderators) now have a coloured accent bar down the left of the post, so official replies stand out at a glance.'],
+                ['type' => 'new', 'text' => 'Each discussion in the list now has a left-edge accent in its category colour.'],
+                ['type' => 'improved', 'text' => 'Admin & moderator badges are now solid (filled) so they clearly outrank the Leader trust badge.'],
+                ['type' => 'improved', 'text' => 'Store cards each get their own tinted background, not just a coloured cover.'],
+            ],
+        ],
+        [
+            'tag' => '1.21.0',
+            'date' => '2026-06-13',
+            'title' => 'Reply by email',
+            'items' => [
+                ['type' => 'new', 'text' => 'Members can now reply to a notification email and have it posted as their reply — no need to open the site. Notification emails carry a signed Reply-To, quoted history and signatures are stripped automatically, and the same trust-level rules apply.'],
+                ['type' => 'new', 'text' => 'Two inbound paths: a self-hosted Postfix pipe (convoro:receive-email) and a provider webhook (POST /mail/inbound). Turn it on and set your reply domain in Admin → Settings → Reply by email.'],
+            ],
+        ],
+        [
+            'tag' => '1.20.3',
+            'date' => '2026-06-13',
+            'title' => 'Trust badge on the Members directory',
+            'items' => [
+                ['type' => 'improved', 'text' => 'The public Members directory now shows each member’s trust level beside their name, matching the profile and admin views.'],
+            ],
+        ],
+        [
+            'tag' => '1.20.2',
+            'date' => '2026-06-13',
+            'title' => 'Trust level shown on profiles & the Members list',
+            'items' => [
+                ['type' => 'improved', 'text' => 'A member’s trust level (New, Member or Leader) now shows as a badge on their profile — for every level, not just Leader — and beside each member in Admin → Members, with a pin marker when an admin has pinned the level.'],
+            ],
+        ],
+        [
+            'tag' => '1.20.1',
+            'date' => '2026-06-13',
+            'title' => 'Polish: avatars, icon check & store cards',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'The ring behind a profile avatar now follows your avatar shape, so it no longer shows a circle poking out behind rounded or square avatars.'],
+                ['type' => 'improved', 'text' => 'Admin → Settings → Icons now previews Font Awesome Free vs Pro icons live, so you can tell at a glance whether your Pro kit is actually loading.'],
+                ['type' => 'improved', 'text' => 'Store cards now each get their own accent colour, so the directory looks lively instead of a wall of identical tiles.'],
+            ],
+        ],
+        [
+            'tag' => '1.20.0',
+            'date' => '2026-06-13',
+            'title' => 'Trust levels',
+            'items' => [
+                ['type' => 'new', 'text' => 'Members now earn trust by taking part. Everyone starts at New, becomes a Member automatically once they’ve posted and read a little, and admins can grant Leader to veterans — with a celebratory notification when someone levels up.'],
+                ['type' => 'new', 'text' => 'New (level 0) accounts have links and images stripped from their posts by default, which quietly blunts drive-by spam without bothering established members. Toggle it in Admin → Settings.'],
+                ['type' => 'new', 'text' => 'A trust badge appears on Member and Leader profiles, and admins can pin or reset anyone’s level from the Members page.'],
+            ],
+        ],
+        [
+            'tag' => '1.19.2',
+            'date' => '2026-06-13',
+            'title' => 'Polished reading scrubber',
+            'items' => [
+                ['type' => 'improved', 'text' => 'The reading-progress scrubber on a discussion now sits in a tidy panel right beside the posts (instead of out against the browser scrollbar), with a dot per reply and a position counter so you can see where you are in a thread at a glance.'],
+            ],
+        ],
+        [
+            'tag' => '1.19.0',
+            'date' => '2026-06-13',
+            'title' => 'Richer composer — code, spoilers & GIFs',
+            'items' => [
+                ['type' => 'new', 'text' => 'Code blocks now have syntax highlighting for 20+ languages — pick the language from the toolbar and your code is colourised both as you type and in the posted reply.'],
+                ['type' => 'new', 'text' => 'Spoilers: hide plot twists or answers behind a click. Wrap any text in a collapsible spoiler from the composer toolbar.'],
+                ['type' => 'new', 'text' => 'A GIF picker — search and drop in a GIF without leaving the composer. Admins turn it on in Settings by choosing Tenor or Giphy and pasting a free API key.'],
+            ],
+        ],
+        [
+            'tag' => '1.18.0',
+            'date' => '2026-06-13',
+            'title' => 'Bookmarks — save posts to read later',
+            'items' => [
+                ['type' => 'new', 'text' => 'A new free Bookmarks extension lets members save any post to a private reading list, reachable from a Bookmarks item in their account menu. Install it from the Marketplace.'],
+                ['type' => 'changed', 'text' => 'Extensions can now add links to the account (avatar) menu, so personal features like Bookmarks live alongside Settings and Drafts instead of cluttering the header.'],
+            ],
+        ],
+        [
             'tag' => '1.17.1',
             'date' => '2026-06-13',
             'title' => 'Extension nav links sit with the main nav',
@@ -835,19 +943,19 @@ return [
             'Grounded AI — Ask answers from your docs + a curated knowledge base, with citations',
             '@mention the assistant in any post for a grounded answer',
             'Accepted Answers extension — mark a reply as the solution in Q&A categories',
+            'Top-contributors leaderboard extension',
+            'Bookmarks extension — save posts to a reading list, from your account menu',
+            'Richer composer — code blocks with syntax highlighting, spoilers & GIFs',
+            'Trust levels — standing earned through participation (+ new-account spam gating)',
+            'Reply by email — reply to a notification email to post',
         ],
         'now' => [
-            'Bookmarks — save posts to a personal reading list',
-            'Richer composer — code blocks with syntax highlighting, spoilers & GIFs',
+            'Follow members + a personalized feed',
         ],
         'next' => [
-            'Trust levels — earn abilities & standing through participation',
-            'Reply by email — reply to a notification to post',
-            'Follow members + a personalized feed',
             'Events — calendar view, reminders & a finished RSVP experience',
         ],
         'later' => [
-            'Top-contributors leaderboard',
             'Moderation audit log',
             'Slow mode, per-category rate limits & first-post approval for new accounts',
         ],

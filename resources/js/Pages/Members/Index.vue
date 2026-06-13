@@ -53,7 +53,11 @@ function setSort(e: Event) {
           <Avatar :avatar="m" :size="88" />
           <div class="mt-3 flex items-center gap-1.5">
             <span class="font-bold">{{ m.name }}</span>
-            <span v-if="m.isAdmin" class="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">{{ tr('Admin') }}</span>
+            <span v-if="m.isAdmin" class="rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm">{{ tr('Admin') }}</span>
+            <span v-else-if="m.trust" class="rounded px-1.5 py-0.5 text-[10px] font-semibold"
+              :class="m.trust.level >= 4 ? 'bg-amber-400/20 text-amber-500' : m.trust.level >= 1 ? 'bg-primary/15 text-primary' : 'bg-ink/10 text-ink-muted'">
+              {{ m.trust.level >= 4 ? '★ ' : '' }}{{ tr(m.trust.label) }}
+            </span>
           </div>
           <p v-if="m.bio" class="mt-1 line-clamp-2 text-xs text-ink-2">{{ m.bio }}</p>
           <div class="mt-3 flex items-center gap-3 text-xs text-ink-muted">

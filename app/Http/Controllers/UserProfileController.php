@@ -68,6 +68,11 @@ class UserProfileController extends Controller
                 'joined' => optional($user->created_at)->isoFormat('MMMM YYYY'),
                 'isAdmin' => (bool) $user->is_admin,
                 'isSelf' => $actorId === (int) $user->id,
+                // Trust badge — shown for every level on non-admin members
+                // (admins show their Admin badge instead).
+                'trust' => (\App\Support\TrustLevels::enabled() && ! $user->is_admin)
+                    ? ['level' => (int) $user->trust_level, 'label' => \App\Support\TrustLevels::label((int) $user->trust_level)]
+                    : null,
                 'fediHandle' => \App\Support\Federation::enabled()
                     ? ($user->is_federated ? $user->federated_handle : \App\Support\Federation::userHandle($user))
                     : null,

@@ -1,0 +1,16 @@
+{
+  "id": "convoro-bookmarks",
+  "name": "Bookmarks",
+  "version": "1.0.1",
+  "description": "Save posts to a personal reading list. Members bookmark any post with one click and revisit them on a private Bookmarks page. Opt-in — install it only if your community wants it.",
+  "author": "Convoro",
+  "convoro": ">=1.18.0",
+  "type": "extension",
+  "namespace": "Convoro\\Ext\\Bookmarks\\",
+  "provider": "Convoro\\Ext\\Bookmarks\\Extension",
+  "migrations": "migrations",
+  "assets": { "forum": "assets/forum.js" },
+  "icon": "icon.svg",
+  "premium": false,
+  "price": 0
+}

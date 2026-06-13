@@ -821,6 +821,10 @@ class AdminController extends Controller
                 'initials' => Present::avatar($u)['initials'],
                 'color' => Present::avatar($u)['color'],
                 'groups' => $u->groups->map(fn ($g) => ['id' => $g->id, 'name' => $g->name, 'color' => $g->color]),
+                'trust_level' => (int) $u->trust_level,
+                'trust_locked' => (bool) $u->trust_locked,
+                'reg_ip' => $u->registration_ip,
+                'last_ip' => $u->last_ip,
             ]);
 
         return Inertia::render('Admin/Members', [
@@ -828,7 +832,16 @@ class AdminController extends Controller
             'q' => $q,
             'groups' => Group::orderByDesc('priority')->orderBy('name')->get(['id', 'key', 'name', 'color', 'is_staff', 'priority', 'permissions']),
             'permissionCatalog' => Permissions::catalog(),
+            'trustLevels' => \App\Support\TrustLevels::enabled() ? \App\Support\TrustLevels::levels() : null,
         ]);
+    }
+
+    /** Geolocate an IP for the admin "look up" action. */
+    public function ipLookup(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $ip = (string) $request->query('ip', '');
+
+        return response()->json(['info' => \App\Support\IpInfo::lookup($ip)]);
     }
 
     public function updateMember(Request $request, User $user): RedirectResponse
@@ -839,10 +852,21 @@ class AdminController extends Controller
             'is_admin' => ['required', 'boolean'],
             'groups' => ['array'],
             'groups.*' => ['integer', 'exists:groups,id'],
+            // 'auto' lets the ladder manage them; a number pins (locks) the level.
+            'trust' => ['nullable', 'string', 'in:auto,0,1,4'],
         ]);
 
         $user->update(['name' => $data['name'], 'email' => $data['email'], 'is_admin' => (bool) $data['is_admin']]);
         $user->groups()->sync($data['groups'] ?? []);
+
+        if (\App\Support\TrustLevels::enabled() && array_key_exists('trust', $data) && $data['trust'] !== null) {
+            if ($data['trust'] === 'auto') {
+                $user->update(['trust_locked' => false]);
+                \App\Support\TrustLevels::evaluate($user->fresh());
+            } else {
+                \App\Support\TrustLevels::set($user, (int) $data['trust'], lock: true);
+            }
+        }
 
         return back()->with('status', __('Member updated.'));
     }
@@ -980,6 +1004,14 @@ class AdminController extends Controller
                 'fa_kit_url' => Settings::get('fa.kit_url'),
                 'seo_description' => Settings::get('seo.description'),
                 'seo_image' => Settings::get('seo.image'),
+                'gif_provider' => Settings::get('composer.gif_provider', 'none'),
+                'gif_key_set' => (bool) Settings::get('composer.gif_key', ''),
+                'trust_enabled' => (bool) Settings::get('trust.enabled', true),
+                'trust_gate_new_users' => (bool) Settings::get('trust.gate_new_users', true),
+                'reply_enabled' => (bool) Settings::get('mail.reply_enabled', false),
+                'reply_domain' => Settings::get('mail.reply_domain', ''),
+                'reply_secret' => (string) Settings::get('mail.reply_secret', ''),
+                'reply_webhook' => url('/mail/inbound'),
             ],
             'mobileNav' => \App\Support\MobileNav::share(),
             'federation' => [
@@ -1031,7 +1063,25 @@ class AdminController extends Controller
             'fa_kit_url' => ['nullable', 'string', 'max:300', 'regex:#^https://[^\s]+\.js$#'],
             'seo_description' => ['nullable', 'string', 'max:300'],
             'seo_image' => ['nullable', 'string', 'max:2048'],
+            'gif_provider' => ['required', 'in:none,tenor,giphy'],
+            'gif_key' => ['nullable', 'string', 'max:200'],
+            'trust_enabled' => ['required', 'boolean'],
+            'trust_gate_new_users' => ['required', 'boolean'],
+            'reply_enabled' => ['required', 'boolean'],
+            'reply_domain' => ['nullable', 'string', 'max:120', 'regex:/^[a-z0-9.\-]*$/i'],
         ]);
+
+        // Generate the reply-token secret the first time reply-by-email is enabled.
+        if ($data['reply_enabled'] && ! Settings::get('mail.reply_secret')) {
+            Settings::set('mail.reply_secret', bin2hex(random_bytes(16)));
+        }
+
+        // Only overwrite the GIF key when a new value is supplied (the field is
+        // left blank in the UI once a key is stored, so blank means "keep").
+        if (array_key_exists('gif_key', $data) && trim((string) $data['gif_key']) !== '') {
+            Settings::set('composer.gif_key', trim((string) $data['gif_key']));
+        }
+        Settings::set('composer.gif_provider', $data['gif_provider']);
 
         Settings::setMany([
             'site.name' => $data['name'],
@@ -1047,6 +1097,10 @@ class AdminController extends Controller
             'fa.kit_url' => $data['fa_kit_url'] ?? '',
             'seo.description' => $data['seo_description'] ?? '',
             'seo.image' => $data['seo_image'] ?? '',
+            'trust.enabled' => (bool) $data['trust_enabled'],
+            'trust.gate_new_users' => (bool) $data['trust_gate_new_users'],
+            'mail.reply_enabled' => (bool) $data['reply_enabled'],
+            'mail.reply_domain' => strtolower(trim((string) ($data['reply_domain'] ?? ''))),
         ]);
 
         return back();

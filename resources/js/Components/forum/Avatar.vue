@@ -56,8 +56,8 @@ const showBadge = computed(() => props.badge && !!props.avatar.staff);
 
     <span
       v-if="showBadge"
-      class="max-w-full truncate rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none tracking-wide"
-      :style="{ color: avatar.staff?.color, background: (avatar.staff?.color || '') + '22' }"
+      class="max-w-full truncate rounded-full px-2 py-0.5 text-[9px] font-bold uppercase leading-none tracking-wide text-white shadow-sm"
+      :style="{ background: avatar.staff?.color }"
     >{{ avatar.staff?.name }}</span>
   </span>
 </template>

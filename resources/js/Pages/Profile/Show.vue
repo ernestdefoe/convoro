@@ -9,7 +9,7 @@ import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import { t as tr } from '@/lib/i18n';
 
 const props = defineProps<{
-  profile: { id: number; name: string; bio: string | null; avatar: string | null; cover: string | null; initials: string; color: number; staff: { name: string; color: string } | null; joined: string; isAdmin: boolean; isSelf: boolean; fediHandle: string | null; fediUrl: string | null };
+  profile: { id: number; name: string; bio: string | null; avatar: string | null; cover: string | null; initials: string; color: number; staff: { name: string; color: string } | null; joined: string; isAdmin: boolean; isSelf: boolean; fediHandle: string | null; fediUrl: string | null; trust: { level: number; label: string } | null };
   stats: { topics: number; posts: number };
   recentTopics: { title: string; url: string; when: string }[];
   wall: { id: number; html: string; author: any; createdAt: string; canDelete: boolean }[];
@@ -52,7 +52,7 @@ function message() {
         </div>
         <div class="px-6 pb-5">
           <div class="-mt-12 flex items-end justify-between">
-            <div class="rounded-full ring-4 ring-surface">
+            <div class="w-fit ring-4 ring-surface" :style="{ borderRadius: 'var(--c-avatar-radius, 9999px)' }">
               <Avatar :avatar="{ initials: profile.initials, color: profile.color, avatar: profile.avatar, staff: profile.staff }" :size="112" badge />
             </div>
             <Link v-if="profile.isSelf" href="/profile" class="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ tr('Edit profile') }}</Link>
@@ -60,7 +60,11 @@ function message() {
           </div>
           <div class="mt-3 flex items-center gap-2">
             <h1 class="text-2xl font-extrabold tracking-tight">{{ profile.name }}</h1>
-            <span v-if="profile.isAdmin" class="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">{{ tr('Admin') }}</span>
+            <span v-if="profile.isAdmin" class="rounded-full bg-primary px-2.5 py-0.5 text-xs font-bold uppercase tracking-wide text-white shadow-sm">{{ tr('Admin') }}</span>
+            <span v-else-if="profile.trust" class="rounded-full px-2 py-0.5 text-xs font-bold"
+              :class="profile.trust.level >= 4 ? 'bg-amber-400/20 text-amber-500' : profile.trust.level >= 1 ? 'bg-primary/15 text-primary' : 'bg-ink/10 text-ink-muted'">
+              {{ profile.trust.level >= 4 ? '★ ' : '' }}{{ tr(profile.trust.label) }}
+            </span>
           </div>
           <p v-if="profile.bio" class="mt-1 text-ink-2">{{ profile.bio }}</p>
           <div class="mt-3 flex flex-wrap gap-4 text-sm text-ink-muted">

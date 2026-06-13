@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Events\NotificationCreated;
 use App\Mail\NotificationEmail;
+use App\Models\Post;
 use App\Models\User;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Mail;
@@ -51,11 +52,19 @@ class Notifier
         if ($user->wantsNotification($type, 'email')
             && Settings::get('mail.configured')
             && filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+            // For topic replies/mentions, let the member just reply to the email.
+            $replyTo = null;
+            if (EmailReply::enabled() && in_array($type, ['reply', 'mention'], true) && ! empty($data['post_id'])) {
+                if ($topicId = Post::where('id', $data['post_id'])->value('topic_id')) {
+                    $replyTo = EmailReply::addressFor($user, (int) $topicId);
+                }
+            }
             Mail::to($user->email)->locale($locale)->queue(new NotificationEmail(
                 heading: self::label($data, $locale),
                 excerpt: $data['excerpt'] ?? null,
                 url: url($data['url'] ?? '/'),
                 site: (string) (Settings::get('site.name') ?: config('app.name', 'Convoro')),
+                replyToAddress: $replyTo,
             ));
         }
     }
@@ -71,6 +80,7 @@ class Notifier
 
             return match ($data['type'] ?? 'reply') {
                 'badge' => (string) ($data['text'] ?? __('You earned a badge')),
+                'trust_level_up' => __('You reached :level', ['level' => $data['label'] ?? __('a new trust level')]),
                 'mention' => __(':actor mentioned you in :topic', ['actor' => $actor, 'topic' => $topic]),
                 'reaction' => __(':actor reacted :emoji to your post', ['actor' => $actor, 'emoji' => $data['emoji'] ?? '']),
                 'wall' => __(':actor posted on your profile', ['actor' => $actor]),

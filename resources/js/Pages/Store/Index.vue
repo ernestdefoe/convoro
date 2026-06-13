@@ -9,6 +9,35 @@ defineProps<{ products: any[] }>();
 const status = computed(() => (usePage().props as any).flash?.status as string | undefined);
 const loggedIn = computed(() => !!(usePage().props as any).auth?.user);
 
+// Give each card its own accent — a matching cover gradient and a faint
+// full-card tint — so the directory looks varied instead of a wall of
+// identical tiles. Deterministic per product so a card keeps its colour.
+const ACCENTS = [
+  ['#f472b6', '#db2777'],
+  ['#60a5fa', '#2563eb'],
+  ['#34d399', '#059669'],
+  ['#fbbf24', '#d97706'],
+  ['#a78bfa', '#7c3aed'],
+  ['#22d3ee', '#0891b2'],
+  ['#fb7185', '#e11d48'],
+  ['#818cf8', '#4f46e5'],
+];
+function accentIdx(p: any): number {
+  const key = String(p.id ?? p.slug ?? p.name ?? '');
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return h % ACCENTS.length;
+}
+function coverGradient(p: any): string {
+  const [a, b] = ACCENTS[accentIdx(p)];
+  return `linear-gradient(135deg,${a},${b})`;
+}
+function cardStyle(p: any): Record<string, string> {
+  const [, b] = ACCENTS[accentIdx(p)];
+  // ~5% tint background, ~28% border — subtle but clearly distinct per card.
+  return { background: b + '0d', borderColor: b + '47' };
+}
+
 // AI security-review badge for a card.
 function reviewBadge(r: any): { t: string; c: string } | null {
   if (r?.rating === 'safe') return { t: t('✓ Reviewed safe'), c: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' };
@@ -49,10 +78,12 @@ function reviewBadge(r: any): { t: string; c: string } | null {
       </div>
 
       <div v-else class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <Link v-for="p in products" :key="p.slug" :href="`/extensions/${p.slug}`"
-          class="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition hover:-translate-y-0.5 hover:shadow-lg">
+        <Link v-for="p in products" :key="p.slug" :href="`/extensions/${p.slug}`" :style="cardStyle(p)"
+          class="group flex flex-col overflow-hidden rounded-2xl border transition hover:-translate-y-0.5 hover:shadow-lg">
           <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" class="aspect-[2/1] w-full object-cover" />
-          <div v-else class="grid aspect-[2/1] w-full place-items-center bg-primary/10 text-4xl">{{ p.type === 'theme' ? '🎨' : '🧩' }}</div>
+          <div v-else class="grid aspect-[2/1] w-full place-items-center text-4xl text-white/95" :style="{ background: coverGradient(p) }">
+            <span class="text-5xl font-black uppercase opacity-90 drop-shadow-sm">{{ (p.name || '?').slice(0, 2) }}</span>
+          </div>
           <div class="flex flex-1 flex-col p-6">
             <div class="flex items-center gap-2">
               <h3 class="truncate font-bold group-hover:text-primary">{{ p.name }}</h3>

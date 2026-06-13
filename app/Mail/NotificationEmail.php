@@ -22,11 +22,15 @@ class NotificationEmail extends Mailable implements ShouldQueue
         public ?string $excerpt,
         public string $url,
         public string $site,
+        public ?string $replyToAddress = null,
     ) {}
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: $this->heading.' · '.$this->site);
+        return new Envelope(
+            subject: $this->heading.' · '.$this->site,
+            replyTo: $this->replyToAddress ? [new \Illuminate\Mail\Mailables\Address($this->replyToAddress)] : [],
+        );
     }
 
     public function content(): Content

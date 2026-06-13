@@ -23,6 +23,7 @@
     },
     "dependencies": {
         "@fortawesome/fontawesome-free": "^7.2.0",
+        "@tiptap/extension-code-block-lowlight": "^3.26.0",
         "@tiptap/extension-image": "^3.26.0",
         "@tiptap/extension-link": "^3.26.0",
         "@tiptap/extension-placeholder": "^3.26.0",
@@ -31,7 +32,9 @@
         "@tiptap/starter-kit": "^3.26.0",
         "@tiptap/suggestion": "^3.26.0",
         "@tiptap/vue-3": "^3.26.0",
+        "highlight.js": "^11.11.1",
         "laravel-echo": "^2.3.7",
+        "lowlight": "^3.3.0",
         "pusher-js": "^8.5.0"
     }
 }

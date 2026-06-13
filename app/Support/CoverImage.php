@@ -71,10 +71,11 @@ class CoverImage
         $e = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES | ENT_XML1);
         $mono = "'JetBrains Mono', 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace";
 
-        // Brand violet, nudged a little per-slug so covers vary but stay on-brand.
-        $hue = 250 + (crc32($slug) % 26); // 250–275 (indigo → violet)
-        $accent = "hsl({$hue}, 85%, 70%)";
-        $accent2 = 'hsl('.($hue + 12).', 80%, 62%)';
+        // A distinct accent hue per slug across the whole wheel, so each cover
+        // reads as its own colour (same dark, on-brand layout — different accent).
+        $hue = (int) (crc32($slug) % 360);
+        $accent = "hsl({$hue}, 82%, 68%)";
+        $accent2 = 'hsl('.(($hue + 22) % 360).', 80%, 60%)';
 
         // Title: fit size to length, hard-cap to avoid overflow.
         $name = trim(mb_strimwidth($name, 0, 28, '…'));

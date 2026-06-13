@@ -3,13 +3,20 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { reactive, ref, watch } from 'vue';
 import { t as tr } from '@/lib/i18n';
+import { toast } from '@/lib/toast';
 
 const props = defineProps<{
   users: { data: any[]; links: { url: string | null; label: string; active: boolean }[]; prev_page_url: string | null; next_page_url: string | null; total: number };
   q: string;
   groups: { id: number; key: string | null; name: string; color: string; is_staff: boolean; priority: number; permissions: string[] | null }[];
   permissionCatalog: { key: string; label: string; category: string; baseline: boolean }[];
+  trustLevels: Record<number, string> | null;
 }>();
+
+// Trust ladder choices for the editor: Auto (let it self-manage) + each level.
+const trustChoices = props.trustLevels
+  ? [{ value: 'auto', label: tr('Auto') }, ...Object.entries(props.trustLevels).map(([v, l]) => ({ value: v, label: l as string }))]
+  : [];
 
 const assignablePerms = props.permissionCatalog.filter((p) => !p.baseline);
 // The Admin badge follows the (editable) Admin group's color.
@@ -25,10 +32,13 @@ watch(search, (v) => {
 
 // --- edit member ---
 const editing = ref<any>(null);
-const buf = reactive({ name: '', email: '', is_admin: false, groups: [] as number[] });
+const buf = reactive({ name: '', email: '', is_admin: false, groups: [] as number[], trust: 'auto' });
 function edit(u: any) {
   editing.value = u;
-  Object.assign(buf, { name: u.name, email: u.email, is_admin: u.is_admin, groups: u.groups.map((g: any) => g.id) });
+  Object.assign(buf, {
+    name: u.name, email: u.email, is_admin: u.is_admin, groups: u.groups.map((g: any) => g.id),
+    trust: u.trust_locked ? String(u.trust_level) : 'auto',
+  });
 }
 function toggleGroup(id: number) {
   const i = buf.groups.indexOf(id);
@@ -36,6 +46,26 @@ function toggleGroup(id: number) {
 }
 function saveMember() {
   router.put(`/admin/members/${editing.value.id}`, { ...buf }, { ...opts, onSuccess: () => (editing.value = null) });
+}
+
+// --- IP tools (view / look up / ban) ---
+const ipInfo = reactive<Record<string, any>>({});
+const ipBusy = ref('');
+async function lookupIp(ip: string) {
+  if (!ip || ipBusy.value) return;
+  ipBusy.value = ip;
+  try {
+    const r = await fetch('/admin/ip-lookup?ip=' + encodeURIComponent(ip), { headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+    const d = await r.json();
+    ipInfo[ip] = d.info || { error: true };
+  } catch { ipInfo[ip] = { error: true }; }
+  finally { ipBusy.value = ''; }
+}
+function banIp(ip: string) {
+  if (!ip) return;
+  const reason = window.prompt(tr('Ban IP {ip}? Optional reason:', { ip }), tr('Abuse'));
+  if (reason === null) return;
+  router.post('/admin/moderation/ip-bans', { ip_address: ip, reason }, { ...opts, onSuccess: () => toast(tr('IP banned.')) });
 }
 function anonymizeMember() {
   if (!confirm(tr('Anonymize {name}? This permanently erases their name, email, avatar, bio and stored IP addresses, but keeps their posts and topics (shown as “Deleted user”). This cannot be undone.', { name: editing.value.name }))) return;
@@ -78,8 +108,13 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
                 <span class="truncate font-semibold text-ink">{{ u.name }}</span>
-                <span v-if="u.is_admin" class="rounded-full px-1.5 py-0.5 text-[10px] font-bold" :style="{ color: adminColor, background: adminColor + '22' }">{{ tr('ADMIN') }}</span>
-                <span v-for="g in u.groups" :key="g.id" class="rounded-full px-1.5 py-0.5 text-[10px] font-semibold" :style="{ color: g.color, background: g.color + '22' }">{{ g.name }}</span>
+                <span v-if="u.is_admin" class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm" :style="{ background: adminColor }">{{ tr('ADMIN') }}</span>
+                <span v-for="g in u.groups" :key="g.id" class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase text-white shadow-sm" :style="{ background: g.color }">{{ g.name }}</span>
+                <span v-if="trustLevels && !u.is_admin" class="rounded-full px-1.5 py-0.5 text-[10px] font-semibold"
+                  :class="u.trust_level >= 4 ? 'bg-amber-400/20 text-amber-500' : u.trust_level >= 1 ? 'bg-primary/15 text-primary' : 'bg-ink/10 text-ink-muted'"
+                  :title="u.trust_locked ? tr('Trust level pinned by an admin') : tr('Trust level (auto)')">
+                  {{ trustLevels[u.trust_level] || ('L' + u.trust_level) }}<span v-if="u.trust_locked"> 📌</span>
+                </span>
               </div>
               <div class="truncate text-xs text-ink-muted">{{ u.email }} · {{ tr('joined {when}', { when: u.joined }) }}</div>
             </div>
@@ -161,6 +196,37 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
             <span v-if="!groups.length" class="text-xs text-ink-muted">{{ tr('No groups — create one first.') }}</span>
           </div>
         </div>
+        <div v-if="trustChoices.length" class="mt-3">
+          <label class="block text-sm text-ink-2">{{ tr('Trust level') }}</label>
+          <select v-model="buf.trust" :class="inp" class="mt-1 w-full">
+            <option v-for="c in trustChoices" :key="c.value" :value="c.value">{{ c.label }}</option>
+          </select>
+          <p class="mt-1 text-xs text-ink-muted">{{ tr('“Auto” lets the member earn their level by participating. Choosing a level pins it (e.g. grant Leader, or reset a problem account to New).') }}</p>
+        </div>
+
+        <!-- IP addresses: view, look up, ban -->
+        <div class="mt-4 rounded-xl border border-line bg-appbg/60 p-3">
+          <div class="text-sm font-semibold text-ink-2">{{ tr('IP addresses') }}</div>
+          <div v-for="row in [{ label: tr('Last seen'), ip: editing.last_ip }, { label: tr('Registered'), ip: editing.reg_ip }]" :key="row.label" class="mt-2">
+            <template v-if="row.ip">
+              <div class="flex flex-wrap items-center gap-2 text-sm">
+                <span class="text-xs text-ink-muted">{{ row.label }}:</span>
+                <span class="font-mono text-ink">{{ row.ip }}</span>
+                <button type="button" class="rounded-md border border-line px-2 py-0.5 text-xs font-semibold text-ink-2 hover:bg-surface-2 disabled:opacity-50" :disabled="ipBusy === row.ip" @click="lookupIp(row.ip)">{{ ipBusy === row.ip ? tr('…') : tr('Look up') }}</button>
+                <button type="button" class="rounded-md border border-red-500/40 px-2 py-0.5 text-xs font-semibold text-red-500 hover:bg-red-500/10" @click="banIp(row.ip)">{{ tr('Ban IP') }}</button>
+              </div>
+              <div v-if="ipInfo[row.ip]" class="mt-1 ml-1 text-xs text-ink-muted">
+                <template v-if="ipInfo[row.ip].error">{{ tr('Lookup unavailable.') }}</template>
+                <template v-else>
+                  📍 {{ ipInfo[row.ip].location || tr('Unknown') }} · {{ ipInfo[row.ip].isp }}
+                  <span v-if="ipInfo[row.ip].flags?.length" class="font-semibold text-amber-600"> · ⚠ {{ ipInfo[row.ip].flags.join(', ') }}</span>
+                </template>
+              </div>
+            </template>
+            <div v-else class="text-xs text-ink-muted">{{ row.label }}: {{ tr('not recorded') }}</div>
+          </div>
+        </div>
+
         <div class="mt-6 flex items-center gap-2">
           <button class="rounded-lg bg-indigo-500 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="saveMember">{{ tr('Save') }}</button>
           <button class="rounded-lg px-3 py-2 text-sm text-ink-2 hover:text-ink" @click="editing = null">{{ tr('Cancel') }}</button>

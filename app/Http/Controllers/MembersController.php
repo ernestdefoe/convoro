@@ -42,6 +42,9 @@ class MembersController extends Controller
             'posts' => $u->posts_count ?? 0,
             'joined' => optional($u->created_at)->format('M Y'),
             'isAdmin' => (bool) $u->is_admin,
+            'trust' => (\App\Support\TrustLevels::enabled() && ! $u->is_admin)
+                ? ['level' => (int) $u->trust_level, 'label' => \App\Support\TrustLevels::label((int) $u->trust_level)]
+                : null,
         ];
     }
 }

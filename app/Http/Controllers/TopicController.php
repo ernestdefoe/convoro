@@ -60,6 +60,9 @@ class TopicController extends Controller
         ]);
 
         $data['body_html'] = Content::clean($data['body_html']);
+        if (\App\Support\TrustLevels::gatesContent($request->user())) {
+            $data['body_html'] = \App\Support\TrustLevels::stripLinksMedia($data['body_html']);
+        }
         abort_if(trim(strip_tags($data['body_html'])) === '', 422, __('The post body is empty.'));
 
         $topic = \App\Support\TopicPublisher::publish($request->user(), $data, $request->ip());
@@ -68,6 +71,9 @@ class TopicController extends Controller
         if ($request->filled('draft_id')) {
             \App\Models\Draft::where('user_id', $request->user()->id)->whereKey($request->input('draft_id'))->delete();
         }
+
+        // Starting a topic is participation — re-check for a promotion.
+        \App\Support\TrustLevels::evaluate($request->user());
 
         return redirect()->route('topics.show', $topic);
     }

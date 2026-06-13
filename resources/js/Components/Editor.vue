@@ -7,8 +7,11 @@ import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import Image from '@tiptap/extension-image';
 import Placeholder from '@tiptap/extension-placeholder';
+import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight';
 import { uploadImage, isImageFile } from '@/lib/upload';
 import { MentionText } from '@/lib/mentionSuggestion';
+import { Spoiler } from '@/lib/Spoiler';
+import { lowlight, CODE_LANGUAGES } from '@/lib/highlight';
 import Slot from '@/Components/ext/Slot.vue';
 import { t } from '@/lib/i18n';
 
@@ -33,7 +36,9 @@ async function doUpload(file: File) {
 
 const editor = useEditor({
   extensions: [
-    StarterKit,
+    StarterKit.configure({ codeBlock: false }),
+    CodeBlockLowlight.configure({ lowlight, defaultLanguage: 'plaintext' }),
+    Spoiler,
     Underline,
     Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer nofollow', target: '_blank' } }),
     Image,
@@ -160,6 +165,51 @@ function setLink() {
   if (url === '') editor.value?.chain().focus().unsetLink().run();
   else editor.value?.chain().focus().toggleLink({ href: url }).run();
 }
+
+// ---- Code block language picker (shown only inside a code block) ----
+const codeLanguages = CODE_LANGUAGES;
+const codeLang = computed<string>({
+  get: () => (editor.value?.getAttributes('codeBlock')?.language as string) || 'plaintext',
+  set: (lang: string) => editor.value?.chain().focus().updateAttributes('codeBlock', { language: lang }).run(),
+});
+
+// ---- GIFs ----
+const gifsEnabled = computed(() => !!(page.props as any).composer?.gifs);
+const gifOpen = ref(false);
+const gifQuery = ref('');
+const gifBusy = ref(false);
+const gifResults = ref<{ url: string; preview: string; alt: string }[]>([]);
+let gifTimer: ReturnType<typeof setTimeout> | null = null;
+
+function openGifs() {
+  aiMenuOpen.value = false;
+  gifOpen.value = true;
+  gifResults.value = [];
+  gifQuery.value = '';
+  searchGifs(); // load trending
+}
+function onGifInput() {
+  if (gifTimer) clearTimeout(gifTimer);
+  gifTimer = setTimeout(searchGifs, 350);
+}
+async function searchGifs() {
+  gifBusy.value = true;
+  try {
+    const r = await fetch('/api/gifs/search?q=' + encodeURIComponent(gifQuery.value.trim()), {
+      headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+    });
+    const data = await r.json();
+    gifResults.value = Array.isArray(data.results) ? data.results : [];
+  } catch {
+    gifResults.value = [];
+  } finally {
+    gifBusy.value = false;
+  }
+}
+function insertGif(url: string) {
+  editor.value?.chain().focus().setImage({ src: url }).run();
+  gifOpen.value = false;
+}
 function pickImage() {
   fileInput.value?.click();
 }
@@ -186,6 +236,12 @@ function onFile(e: Event) {
       <button type="button" class="tb" :class="{ on: isActive('heading', { level: 2 }) }" :title="t('Heading')" :aria-label="t('Heading')" :data-tip="t('Heading')" @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"><b>H</b></button>
       <button type="button" class="tb" :class="{ on: isActive('blockquote') }" :title="t('Quote')" :aria-label="t('Quote')" :data-tip="t('Quote')" @click="editor.chain().focus().toggleBlockquote().run()">”</button>
       <button type="button" class="tb font-mono text-xs" :class="{ on: isActive('codeBlock') }" :title="t('Code block')" :aria-label="t('Code block')" :data-tip="t('Code block')" @click="editor.chain().focus().toggleCodeBlock().run()">{}</button>
+      <select v-if="isActive('codeBlock')" v-model="codeLang" class="h-[30px] rounded-md border border-line bg-surface py-0 pl-2 pr-6 text-xs font-medium text-ink focus:border-primary focus:ring-0" :title="t('Code language')" :aria-label="t('Code language')">
+        <option v-for="l in codeLanguages" :key="l.value" :value="l.value">{{ l.label }}</option>
+      </select>
+      <button type="button" class="tb" :class="{ on: isActive('spoiler') }" :title="t('Spoiler')" :aria-label="t('Spoiler')" :data-tip="t('Spoiler (hidden until clicked)')" @click="editor.chain().focus().toggleSpoiler().run()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path d="m3 3 18 18"/></svg>
+      </button>
       <button type="button" class="tb" :class="{ on: isActive('bulletList') }" :title="t('Bullet list')" :aria-label="t('Bullet list')" :data-tip="t('Bullet list')" @click="editor.chain().focus().toggleBulletList().run()">•</button>
       <button type="button" class="tb" :class="{ on: isActive('orderedList') }" :title="t('Numbered list')" :aria-label="t('Numbered list')" :data-tip="t('Numbered list')" @click="editor.chain().focus().toggleOrderedList().run()">1.</button>
       <span class="mx-1.5 h-5 w-px bg-line"></span>
@@ -193,6 +249,7 @@ function onFile(e: Event) {
       <button type="button" class="tb" :title="t('Insert image')" :aria-label="t('Insert image')" :data-tip="t('Insert image')" @click="pickImage">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-5-5L5 21" /></svg>
       </button>
+      <button v-if="gifsEnabled" type="button" class="tb w-auto px-1.5 text-[11px] font-bold" :title="t('Insert GIF')" :aria-label="t('Insert GIF')" :data-tip="t('Insert GIF')" @click="openGifs">GIF</button>
       <template v-if="aiEnabled">
         <span class="mx-1.5 h-5 w-px bg-line"></span>
         <div class="relative">
@@ -237,6 +294,30 @@ function onFile(e: Event) {
         </div>
       </div>
     </Teleport>
+
+    <!-- GIF picker modal -->
+    <Teleport to="body">
+      <div v-if="gifOpen" class="fixed inset-0 z-[80] flex items-start justify-center bg-black/40 p-4 pt-[8vh]" @click.self="gifOpen = false">
+        <div class="flex max-h-[78vh] w-full max-w-lg flex-col rounded-c border border-line bg-surface shadow-2xl">
+          <div class="flex items-center gap-2 border-b border-line p-3">
+            <input v-model="gifQuery" type="text" :placeholder="t('Search GIFs…')" autofocus
+              class="flex-1 rounded-lg border-line bg-surface-2 text-sm text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary"
+              @input="onGifInput" />
+            <button type="button" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="gifOpen = false">{{ t('Close') }}</button>
+          </div>
+          <div class="min-h-[160px] flex-1 overflow-y-auto p-3">
+            <div v-if="gifBusy && !gifResults.length" class="py-10 text-center text-sm text-ink-muted">{{ t('Loading…') }}</div>
+            <div v-else-if="!gifResults.length" class="py-10 text-center text-sm text-ink-muted">{{ t('No GIFs found.') }}</div>
+            <div v-else class="columns-2 gap-2 sm:columns-3">
+              <button v-for="(g, i) in gifResults" :key="i" type="button" class="mb-2 block w-full overflow-hidden rounded-lg border border-line hover:border-primary" @click="insertGif(g.url)">
+                <img :src="g.preview" :alt="g.alt" loading="lazy" class="w-full" />
+              </button>
+            </div>
+          </div>
+          <div class="border-t border-line px-3 py-1.5 text-right text-[11px] text-ink-muted">{{ t('Powered by GIF search') }}</div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -261,7 +342,6 @@ function onFile(e: Event) {
 :deep(.prose-q ul) { list-style: disc; padding-left: 22px; }
 :deep(.prose-q ol) { list-style: decimal; padding-left: 22px; }
 :deep(.prose-q h2) { font-size: 1.3em; font-weight: 700; margin: 4px 0 8px; }
-:deep(.prose-q pre) { background: rgb(var(--c-surface-2)); padding: 10px 12px; border-radius: 8px; font-family: monospace; font-size: 13px; overflow: auto; }
 :deep(.prose-q a) { color: rgb(var(--c-primary)); text-decoration: underline; }
 :deep(.prose-q img) { max-width: 100%; height: auto; border-radius: 10px; border: 1px solid rgb(var(--c-border)); margin: 4px 0; }
 </style>

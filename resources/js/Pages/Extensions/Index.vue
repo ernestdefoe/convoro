@@ -33,6 +33,25 @@ function priceLabel(item: Item): string {
   const n = Number(item.price);
   return n > 0 ? `$${n}` : t('Premium');
 }
+
+// Give each card icon-tile its own colour so the grid feels varied while the
+// layout stays identical. Deterministic per item so a card keeps its colour.
+const TILE_ACCENTS = [
+  'bg-rose-500/15 text-rose-500',
+  'bg-sky-500/15 text-sky-500',
+  'bg-emerald-500/15 text-emerald-500',
+  'bg-amber-500/15 text-amber-500',
+  'bg-violet-500/15 text-violet-500',
+  'bg-fuchsia-500/15 text-fuchsia-500',
+  'bg-cyan-500/15 text-cyan-500',
+  'bg-indigo-500/15 text-indigo-500',
+];
+function tileAccent(item: Item): string {
+  const key = String(item.id || item.name || '');
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return TILE_ACCENTS[h % TILE_ACCENTS.length];
+}
 </script>
 
 <template>
@@ -68,8 +87,7 @@ function priceLabel(item: Item): string {
         <article v-for="item in visible" :key="item.id"
           class="flex flex-col rounded-c border border-line bg-surface p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
           <div class="flex items-start gap-3">
-            <div class="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-xl"
-              :class="item.type === 'theme' ? 'bg-fuchsia-500/15 text-fuchsia-500' : 'bg-primary/15 text-primary'">
+            <div class="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-xl" :class="tileAccent(item)">
               {{ item.type === 'theme' ? '🎨' : '🧩' }}
             </div>
             <div class="min-w-0 flex-1">

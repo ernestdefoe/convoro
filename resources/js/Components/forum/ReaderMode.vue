@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue';
 import { t as tr } from '@/lib/i18n';
+import { highlightWithin } from '@/lib/highlight';
 
 const props = defineProps<{ title: string; html: string; byline?: string; cover?: string | null }>();
 
@@ -45,7 +46,7 @@ watch(open, (v) => {
   document.body.style.overflow = v ? 'hidden' : '';
   if (v) {
     progress.value = 0;
-    nextTick(() => { if (scroller.value) scroller.value.scrollTop = 0; });
+    nextTick(() => { if (scroller.value) { scroller.value.scrollTop = 0; highlightWithin(scroller.value); } });
     document.addEventListener('keydown', onKey);
   } else {
     document.removeEventListener('keydown', onKey);

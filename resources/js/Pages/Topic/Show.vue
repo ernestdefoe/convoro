@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue';
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
+import { highlightWithin } from '@/lib/highlight';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import Poll from '@/Components/forum/Poll.vue';
@@ -291,6 +292,14 @@ function autoTranslateAll() {
 onMounted(autoTranslateAll);
 watch(livePosts, autoTranslateAll, { deep: false });
 
+// Colorise code blocks in rendered posts (raw code is stored; highlight.js
+// runs client-side). Re-runs when realtime delivers new posts.
+function highlightAllCode() {
+  nextTick(() => document.querySelectorAll<HTMLElement>('.prose-q').forEach((el) => highlightWithin(el)));
+}
+onMounted(highlightAllCode);
+watch(livePosts, highlightAllCode, { deep: false });
+
 // ---- Realtime (Reverb presence channel) ----
 const hereCount = ref(0);
 const typingName = ref<string | null>(null);
@@ -384,14 +393,14 @@ function submitReply() {
 <template>
   <Head :title="topic.title" />
   <AppLayout>
-    <ReadingScrubber />
+    <ReadingScrubber :count="replies.length" />
     <div class="mx-auto max-w-3xl">
       <Link href="/" class="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted hover:text-ink-2">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6" /></svg> {{ tr('Back to Community') }}
       </Link>
 
       <!-- Blog-style opening post -->
-      <article :id="firstPost ? 'post-' + firstPost.id : undefined" class="q-post scroll-mt-24 rounded-c border border-line bg-surface shadow-sm" :class="menuFor === (firstPost?.id ?? -1) ? 'relative z-30' : 'overflow-hidden'">
+      <article :id="firstPost ? 'post-' + firstPost.id : undefined" class="q-post scroll-mt-24 rounded-c border border-line bg-surface shadow-sm" :class="menuFor === (firstPost?.id ?? -1) ? 'relative z-30' : 'overflow-hidden'" :style="firstPost?.author?.staff ? { borderLeftWidth: '4px', borderLeftColor: firstPost.author.staff.color } : {}">
         <img v-if="topic.cover" :src="topic.cover" alt="" class="h-56 w-full object-cover sm:h-72" />
         <div class="p-6 sm:p-9">
           <div class="flex flex-wrap items-center gap-2">
@@ -516,7 +525,7 @@ function submitReply() {
           <div v-if="firstUnreadId && post.id === firstUnreadId" class="flex items-center gap-3 py-1 text-[11px] font-bold uppercase tracking-wide text-primary">
             <span class="h-px flex-1 bg-primary/30"></span>{{ tr('New') }}<span class="h-px flex-1 bg-primary/30"></span>
           </div>
-          <article :id="'post-' + post.id" class="q-post flex scroll-mt-24 gap-4 rounded-c border border-line bg-surface p-6 shadow-sm" :class="menuFor === post.id ? 'relative z-30' : ''">
+          <article :id="'post-' + post.id" class="q-post flex scroll-mt-24 gap-4 rounded-c border border-line bg-surface p-6 shadow-sm" :class="menuFor === post.id ? 'relative z-30' : ''" :style="post.author?.staff ? { borderLeftWidth: '4px', borderLeftColor: post.author.staff.color } : {}">
             <div class="w-24 shrink-0 text-center">
               <Link :href="post.author.url"><Avatar :avatar="post.author" :size="52" class="mx-auto" badge /></Link>
               <div class="mt-2 text-sm font-bold">{{ post.author.name }}</div>

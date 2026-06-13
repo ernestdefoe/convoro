@@ -6,18 +6,19 @@ import { t } from '@/lib/i18n';
 
 type Note = {
   id: string; read: boolean; time: string; type: string;
-  actor: { name: string; initials: string; color: number };
-  topic: { title: string; slug: string };
-  emoji?: string; excerpt?: string; text?: string; url: string;
+  actor?: { name: string; initials: string; color: number };
+  topic?: { title: string; slug: string };
+  emoji?: string; excerpt?: string; text?: string; label?: string; url: string;
 };
 
 const props = defineProps<{ items: Note[]; unread: number }>();
 
 function label(n: Note): string {
   if (n.type === 'badge') return n.text || t('You earned a badge');
-  if (n.type === 'mention') return t('{name} mentioned you in {topic}', { name: n.actor.name, topic: n.topic.title });
-  if (n.type === 'reaction') return t('{name} reacted {emoji} to your post', { name: n.actor.name, emoji: n.emoji ?? '' });
-  return t('{name} replied in {topic}', { name: n.actor.name, topic: n.topic.title });
+  if (n.type === 'trust_level_up') return t('🎉 You reached {level}!', { level: n.label ?? '' });
+  if (n.type === 'mention') return t('{name} mentioned you in {topic}', { name: n.actor?.name ?? '', topic: n.topic?.title ?? '' });
+  if (n.type === 'reaction') return t('{name} reacted {emoji} to your post', { name: n.actor?.name ?? '', emoji: n.emoji ?? '' });
+  return t('{name} replied in {topic}', { name: n.actor?.name ?? '', topic: n.topic?.title ?? '' });
 }
 
 function go(n: Note) {
@@ -69,7 +70,8 @@ function clearOne(n: Note) {
           :class="!n.read ? 'bg-primary/10' : ''"
           @click="go(n)"
         >
-          <Avatar :avatar="{ initials: n.actor.initials, color: n.actor.color }" :size="40" />
+          <div v-if="!n.actor" class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-xl">🎉</div>
+          <Avatar v-else :avatar="{ initials: n.actor.initials, color: n.actor.color }" :size="40" />
           <div class="min-w-0 flex-1">
             <div class="text-sm leading-snug text-ink">{{ label(n) }}</div>
             <div v-if="n.excerpt" class="mt-1 truncate text-sm text-ink-muted">{{ n.excerpt }}</div>

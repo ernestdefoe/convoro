@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Avatar from '@/Components/forum/Avatar.vue';
+import Slot from '@/Components/ext/Slot.vue';
 import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { t } from '@/lib/i18n';
@@ -45,6 +46,7 @@ function logout() {
       <Link :href="`/u/${user.id}`" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink" @click="open = false">{{ t('Your profile') }}</Link>
       <Link href="/profile" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink" @click="open = false">{{ t('Settings') }}</Link>
       <Link href="/drafts" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink" @click="open = false">{{ t('Drafts') }}</Link>
+      <Slot name="user:menu" />
       <Link v-if="canInvite" href="/invite" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink" @click="open = false">{{ t('Invite friends') }}</Link>
       <a v-if="isAdmin" href="/admin" target="_blank" rel="noopener" class="block px-4 py-2.5 text-sm font-medium text-ink-2 hover:bg-surface-2 hover:text-ink">{{ t('Admin') }} <span class="text-ink-muted">↗</span></a>
 

@@ -12,6 +12,7 @@ defineProps<{ topic: any }>();
     :href="`/t/${topic.slug}`"
     class="q-post relative flex gap-4 rounded-c border bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md"
     :class="topic.isNew ? 'border-primary/40' : 'border-line'"
+    :style="topic.category?.color ? { borderLeftWidth: '4px', borderLeftColor: topic.category.color } : {}"
   >
     <span v-if="topic.isNew" class="absolute -right-1.5 -top-1.5 z-10 inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md shadow-primary/30" :title="t('New posts since your last visit')">{{ t('New') }}</span>
     <Avatar :avatar="topic.author" :size="52" />

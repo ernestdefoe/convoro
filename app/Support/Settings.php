@@ -26,6 +26,10 @@ class Settings
         'pwa.banner' => true,                // show the "install app" banner
         'pwa.short_name' => 'Convoro',       // PWA short name
         'fa.kit_url' => '',                  // optional Font Awesome Kit script URL (Pro/custom icons)
+        'composer.gif_provider' => 'none',   // none | tenor | giphy — GIF picker source
+        'composer.gif_key' => '',            // API key for the chosen GIF provider
+        'trust.enabled' => true,             // trust-level ladder (auto promotion + new-account gating)
+        'trust.gate_new_users' => true,      // strip links/images from New (level 0) accounts' posts
         'seo.description' => '',             // default meta description (falls back to tagline)
         'seo.image' => '',                  // default social share image (falls back to logo)
         'stripe.key' => '',                  // Stripe publishable key (central store)
@@ -38,6 +42,9 @@ class Settings
         // no config) or 'smtp'. When unset, falls back to the .env mailer.
         'mail.configured' => false,          // once true, these override .env
         'mail.transport' => 'sendmail',      // sendmail | smtp
+        'mail.reply_enabled' => false,       // reply-by-email: members reply to notification emails to post
+        'mail.reply_domain' => '',           // domain handling reply+<token>@... mail (e.g. convoro.co)
+        'mail.reply_secret' => '',            // HMAC secret for reply tokens (auto-generated)
         'mail.from_address' => '',           // e.g. community@example.com
         'mail.from_name' => '',              // defaults to site name when blank
         'mail.smtp_host' => '',
