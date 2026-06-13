@@ -4,7 +4,7 @@ import { computed, reactive } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { t } from '@/lib/i18n';
 
-type Article = { id: number; title: string; url: string | null; body: string; indexed: boolean; updated: string };
+type Article = { id: number; title: string; url: string | null; body: string; indexed: boolean; chunks: number; updated: string };
 
 const props = defineProps<{ articles: Article[]; embedReady: boolean; strict: boolean }>();
 
@@ -58,9 +58,11 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
 
         <label class="mt-3 block text-xs font-semibold text-ink-2">{{ t('Answer / body') }}</label>
         <textarea v-model="form.body" rows="9" :class="field" :placeholder="t('Explain the answer or the fix, step by step.')" />
+        <p class="mt-1 text-[11px] text-ink-muted">{{ t('Write as much as you need — long articles are automatically split into passages so the assistant retrieves the relevant part.') }}</p>
 
         <label class="mt-3 block text-xs font-semibold text-ink-2">{{ t('Link (optional)') }}</label>
         <input v-model="form.url" :class="field" placeholder="/docs/federation" />
+        <p class="mt-1 text-[11px] text-ink-muted">{{ t('Where the citation links — a doc, a thread, or an external page. Leave blank for none.') }}</p>
 
         <div class="mt-4 flex items-center gap-2">
           <button type="button" :disabled="!form.title.trim() || !form.body.trim()" class="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white disabled:opacity-50" @click="save">
@@ -79,6 +81,7 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
               <div class="flex items-center gap-2">
                 <span class="truncate text-sm font-semibold text-ink">{{ a.title }}</span>
                 <span v-if="!a.indexed" class="rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-400" :title="t('Not embedded yet')">{{ t('not indexed') }}</span>
+                <span v-else-if="a.chunks > 1" class="rounded-full bg-surface-2 px-1.5 py-0.5 text-[10px] font-bold text-ink-muted" :title="t('Split into passages for retrieval')">{{ t('{n} chunks', { n: a.chunks }) }}</span>
               </div>
               <div class="truncate text-xs text-ink-muted">{{ a.body }}</div>
               <div class="mt-0.5 text-[11px] text-ink-muted">{{ t('Updated {when}', { when: a.updated }) }}</div>

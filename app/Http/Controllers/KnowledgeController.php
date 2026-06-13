@@ -53,7 +53,7 @@ class KnowledgeController extends Controller
     {
         return $request->validate([
             'title' => ['required', 'string', 'max:200'],
-            'body' => ['required', 'string', 'max:6000'],
+            'body' => ['required', 'string', 'max:50000'],
             'url' => ['nullable', 'string', 'max:300'],
         ]);
     }

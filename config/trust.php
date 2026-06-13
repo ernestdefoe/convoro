@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.16.2',
+            'date' => '2026-06-13',
+            'title' => 'Knowledge Base: longer articles + citation links',
+            'items' => [
+                ['type' => 'new', 'text' => 'Knowledge Base articles can now be any length — they’re automatically split into passages so the assistant retrieves and cites the relevant part of a long article.'],
+                ['type' => 'new', 'text' => 'Each article can carry an optional link (a doc, a thread, or an external page) that the assistant uses when it cites the article.'],
+            ],
+        ],
+        [
             'tag' => '1.16.1',
             'date' => '2026-06-13',
             'title' => 'Curated knowledge base for the AI',

@@ -1,11 +1,12 @@
 {
-    "version": "1.16.1",
-    "download": "https://convoro.co/releases/convoro-1.16.1.zip",
+    "version": "1.16.2",
+    "download": "https://convoro.co/releases/convoro-1.16.2.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Curated knowledge base for the AI",
+    "title": "Knowledge Base: longer articles + citation links",
     "date": "2026-06-13",
-    "notes": "A new Admin → Knowledge Base lets you write your own support articles — answers and fixes that aren't in the official docs. The assistant indexes them and grounds answers in them too, with citations.",
+    "notes": "Knowledge Base articles can now be any length — they're automatically split into passages so the assistant retrieves and cites the relevant part of a long article. Each article can also carry an optional link the assistant uses when it cites the article.",
     "changelog": [
-        {"type": "new", "text": "Admin → Knowledge Base: write your own support articles the AI grounds answers in and cites."}
+        {"type": "new", "text": "Knowledge Base articles of any length, auto-split into passages for precise retrieval + citation."},
+        {"type": "new", "text": "Optional per-article link used in citations."}
     ]
 }

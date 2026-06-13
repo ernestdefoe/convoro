@@ -160,62 +160,132 @@ class KnowledgeBase
 
     // ---- Curated KB articles (Phase 2): admin-authored support knowledge ----
 
-    /** @return array<int, array{id:int,title:string,url:?string,body:string,indexed:bool,updated:string}> */
+    /** Target size (chars) per embedded chunk; long articles split on paragraphs. */
+    private const CHUNK = 1500;
+
+    /** @return array<int, array{id:int,title:string,url:?string,body:string,indexed:bool,chunks:int,updated:string}> */
     public static function articles(): array
     {
-        return DB::table('knowledge_sources')->where('kind', 'kb')->orderByDesc('updated_at')
-            ->get(['id', 'title', 'url', 'snippet', 'vector', 'updated_at'])
+        $chunkCounts = DB::table('knowledge_sources')->where('kind', 'kb')->whereNotNull('vector')
+            ->get(['ref'])->groupBy(fn ($r) => self::articleIdFromRef($r->ref))->map->count();
+
+        return DB::table('kb_articles')->orderByDesc('updated_at')
+            ->get(['id', 'title', 'url', 'body', 'updated_at'])
             ->map(fn ($r) => [
                 'id' => (int) $r->id,
                 'title' => (string) $r->title,
                 'url' => $r->url,
-                'body' => (string) $r->snippet,
-                'indexed' => $r->vector !== null,
+                'body' => (string) $r->body,
+                'chunks' => (int) ($chunkCounts[$r->id] ?? 0),
+                'indexed' => (int) ($chunkCounts[$r->id] ?? 0) > 0,
                 'updated' => optional($r->updated_at)->diffForHumans() ?? '',
             ])->all();
     }
 
-    /** Create or update a curated KB article; embeds it on save. Returns its id. */
+    /**
+     * Create or update a curated KB article. The body is split into passages,
+     * each embedded as its own `knowledge_sources` chunk so retrieval can match
+     * (and cite) the relevant part of a long article. Returns the article id.
+     */
     public static function saveArticle(?int $id, string $title, string $body, ?string $url = null): int
     {
         $title = trim($title);
         $body = trim($body);
-        $text = mb_substr($title."\n\n".$body, 0, 6000);
+        $url = $url ?: null;
 
-        $vec = null;
-        if (AskIndex::configured()) {
+        $row = ['title' => mb_substr($title, 0, 250), 'body' => $body, 'url' => $url, 'updated_at' => now()];
+        if ($id && DB::table('kb_articles')->where('id', $id)->exists()) {
+            DB::table('kb_articles')->where('id', $id)->update($row);
+        } else {
+            $row['created_at'] = now();
+            $id = (int) DB::table('kb_articles')->insertGetId($row);
+        }
+
+        // Re-chunk + re-embed. Drop the article's old chunks first.
+        DB::table('knowledge_sources')->where('kind', 'kb')->where('ref', 'like', 'kba-'.$id.'-%')->delete();
+
+        $chunks = self::chunk($body);
+        $vectors = [];
+        if (AskIndex::configured() && $chunks) {
             try {
-                $vec = AskIndex::embed([$text], 'document')[0] ?? null;
+                // Prepend the title to each chunk for retrieval context.
+                $vectors = AskIndex::embed(array_map(fn ($c) => mb_substr($title."\n\n".$c, 0, 8000), $chunks), 'document');
             } catch (\Throwable $e) {
                 report($e);
             }
         }
 
-        $data = [
-            'kind' => 'kb',
-            'title' => mb_substr($title, 0, 250),
-            'url' => $url ?: null,
-            'snippet' => mb_substr($body, 0, 6000),
-            'dims' => $vec ? count($vec) : 0,
-            'vector' => $vec ? json_encode($vec) : null,
-            'updated_at' => now(),
-        ];
-
-        if ($id && DB::table('knowledge_sources')->where('id', $id)->where('kind', 'kb')->exists()) {
-            DB::table('knowledge_sources')->where('id', $id)->update($data);
-
-            return $id;
+        foreach ($chunks as $i => $chunk) {
+            $vec = $vectors[$i] ?? null;
+            DB::table('knowledge_sources')->insert([
+                'kind' => 'kb',
+                'ref' => 'kba-'.$id.'-'.$i,
+                'title' => mb_substr($title, 0, 250),
+                'url' => $url,
+                'snippet' => mb_substr($chunk, 0, 4000),
+                'dims' => $vec ? count($vec) : 0,
+                'vector' => $vec ? json_encode($vec) : null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
         }
 
-        $data['ref'] = 'kb-'.bin2hex(random_bytes(8));
-        $data['created_at'] = now();
-
-        return (int) DB::table('knowledge_sources')->insertGetId($data);
+        return $id;
     }
 
     public static function deleteArticle(int $id): void
     {
-        DB::table('knowledge_sources')->where('id', $id)->where('kind', 'kb')->delete();
+        DB::table('kb_articles')->where('id', $id)->delete();
+        DB::table('knowledge_sources')->where('kind', 'kb')->where('ref', 'like', 'kba-'.$id.'-%')->delete();
+    }
+
+    /** Split text into ~CHUNK-sized passages on paragraph (then sentence) boundaries. */
+    private static function chunk(string $text): array
+    {
+        $text = trim($text);
+        if ($text === '') {
+            return [];
+        }
+        if (mb_strlen($text) <= self::CHUNK) {
+            return [$text];
+        }
+
+        $out = [];
+        $buf = '';
+        foreach (preg_split('/\n{2,}/', $text) as $para) {
+            $para = trim($para);
+            if ($para === '') {
+                continue;
+            }
+            // A single oversized paragraph is hard-split on sentence ends.
+            if (mb_strlen($para) > self::CHUNK) {
+                foreach (preg_split('/(?<=[.!?])\s+/', $para) as $sentence) {
+                    if (mb_strlen($buf) + mb_strlen($sentence) > self::CHUNK && $buf !== '') {
+                        $out[] = trim($buf);
+                        $buf = '';
+                    }
+                    $buf .= ($buf === '' ? '' : ' ').$sentence;
+                }
+
+                continue;
+            }
+            if (mb_strlen($buf) + mb_strlen($para) > self::CHUNK && $buf !== '') {
+                $out[] = trim($buf);
+                $buf = '';
+            }
+            $buf .= ($buf === '' ? '' : "\n\n").$para;
+        }
+        if (trim($buf) !== '') {
+            $out[] = trim($buf);
+        }
+
+        return $out;
+    }
+
+    /** Extract the article id from a chunk ref like "kba-12-3". */
+    private static function articleIdFromRef(string $ref): int
+    {
+        return (int) (explode('-', $ref)[1] ?? 0);
     }
 
     /**
