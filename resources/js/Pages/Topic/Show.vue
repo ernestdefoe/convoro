@@ -31,7 +31,7 @@ function sharePost(post: any) {
   }
 }
 
-const props = defineProps<{ topic: any; posts: any[]; canReply: boolean; categories?: any[]; allTags?: any[]; references?: { title: string; slug: string }[] }>();
+const props = defineProps<{ topic: any; posts: any[]; canReply: boolean; categories?: any[]; allTags?: any[]; references?: { title: string; slug: string }[]; firstUnreadId?: number | null }>();
 const page = usePage();
 const aiEnabled = computed(() => !!(page.props as any).ask?.enabled);
 const summary = ref('');
@@ -336,6 +336,15 @@ const hideQuoteTip = () => (quoteTip.value = null);
 onMounted(() => {
   document.addEventListener('selectionchange', onSelectionChange);
   window.addEventListener('scroll', hideQuoteTip, true);
+
+  // Jump to the first unread reply (where the reader left off), unless the URL
+  // points at a specific post (a permalink) — then respect that.
+  if (props.firstUnreadId && !window.location.hash) {
+    requestAnimationFrame(() => {
+      const el = document.getElementById('post-' + props.firstUnreadId);
+      if (el) el.scrollIntoView({ block: 'start' });
+    });
+  }
 });
 
 onBeforeUnmount(() => {
@@ -503,7 +512,11 @@ function submitReply() {
           <div class="whitespace-pre-wrap text-sm leading-relaxed text-ink-2">{{ summary }}</div>
         </div>
         <div class="space-y-3">
-          <article v-for="post in replies" :key="post.id" :id="'post-' + post.id" class="q-post flex scroll-mt-24 gap-4 rounded-c border border-line bg-surface p-6 shadow-sm" :class="menuFor === post.id ? 'relative z-30' : ''">
+          <template v-for="post in replies" :key="post.id">
+          <div v-if="firstUnreadId && post.id === firstUnreadId" class="flex items-center gap-3 py-1 text-[11px] font-bold uppercase tracking-wide text-primary">
+            <span class="h-px flex-1 bg-primary/30"></span>{{ tr('New') }}<span class="h-px flex-1 bg-primary/30"></span>
+          </div>
+          <article :id="'post-' + post.id" class="q-post flex scroll-mt-24 gap-4 rounded-c border border-line bg-surface p-6 shadow-sm" :class="menuFor === post.id ? 'relative z-30' : ''">
             <div class="w-24 shrink-0 text-center">
               <Link :href="post.author.url"><Avatar :avatar="post.author" :size="52" class="mx-auto" badge /></Link>
               <div class="mt-2 text-sm font-bold">{{ post.author.name }}</div>
@@ -566,6 +579,7 @@ function submitReply() {
               </div>
             </div>
           </article>
+          </template>
         </div>
       </section>
 

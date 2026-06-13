@@ -109,8 +109,21 @@ class TopicController extends Controller
         $actor?->loadMissing('groups');
         $actorId = $actor?->id;
 
-        // Mark this discussion read for the current member (clears its "new" badge).
+        // Work out where the member left off BEFORE we move their read marker,
+        // so the page can jump to the first reply they haven't seen yet.
+        $firstUnreadId = null;
         if ($actor) {
+            $prev = \Illuminate\Support\Facades\DB::table('topic_reads')
+                ->where('user_id', $actor->id)->where('topic_id', $topic->id)->value('last_read_at');
+            if ($prev) {
+                $prev = \Illuminate\Support\Carbon::parse($prev);
+                $firstUnreadId = $topic->posts
+                    ->where('is_first', false)
+                    ->filter(fn ($p) => $p->created_at && $p->created_at->gt($prev))
+                    ->sortBy('created_at')->first()?->id;
+            }
+
+            // Mark this discussion read for the current member (clears its "new" badge).
             \Illuminate\Support\Facades\DB::table('topic_reads')->updateOrInsert(
                 ['user_id' => $actor->id, 'topic_id' => $topic->id],
                 ['last_read_at' => now()],
@@ -144,6 +157,7 @@ class TopicController extends Controller
                 // except moderators and the post's own author (who sees a notice).
                 ->filter(fn ($p) => ! $p->hidden || ($actor && $actor->is_admin) || ($actorId && (int) $p->user_id === (int) $actorId))
                 ->values()->map(fn ($p) => Present::post($p, $actorId, $actor)),
+            'firstUnreadId' => $firstUnreadId,
             'references' => \App\Support\CrossRef::into($topic->id),
             'categories' => Category::orderBy('position')->get(['id', 'name', 'icon', 'color']),
             'allTags' => Tag::orderBy('name')->get(['id', 'name', 'color']),

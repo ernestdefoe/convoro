@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.16.5',
+            'date' => '2026-06-13',
+            'title' => 'Open a discussion at the first unread reply',
+            'items' => [
+                ['type' => 'changed', 'text' => 'Opening a discussion now jumps you to the first new reply since your last visit (with a New divider), instead of always starting from the top. Permalinks to a specific post still go straight there.'],
+            ],
+        ],
+        [
             'tag' => '1.16.4',
             'date' => '2026-06-13',
             'title' => 'Fix: AI budget cap label',

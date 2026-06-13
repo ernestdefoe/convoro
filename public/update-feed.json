@@ -1,11 +1,11 @@
 {
-    "version": "1.16.4",
-    "download": "https://convoro.co/releases/convoro-1.16.4.zip",
+    "version": "1.16.5",
+    "download": "https://convoro.co/releases/convoro-1.16.5.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Fix: AI budget cap label",
+    "title": "Open a discussion at the first unread reply",
     "date": "2026-06-13",
-    "notes": "The AI Usage & budget card showed a raw \":cap cap\" placeholder instead of your actual monthly cap amount. Fixed.",
+    "notes": "Opening a discussion now jumps you to the first new reply since your last visit (with a New divider), instead of always starting from the top. Permalinks to a specific post still go straight there.",
     "changelog": [
-        {"type": "fixed", "text": "AI budget card now shows the real monthly cap amount instead of a \":cap cap\" placeholder."}
+        {"type": "changed", "text": "Discussions open at the first unread reply (where you left off), with a New divider, instead of the top."}
     ]
 }
