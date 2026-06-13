@@ -1,0 +1,17 @@
+{
+  "id": "convoro-solved",
+  "name": "Accepted Answers",
+  "version": "1.0.0",
+  "description": "Turn categories into Q&A. The person who asked (or staff) can mark a reply as the accepted answer — it gets a green check and the thread shows as solved. Perfect for help and support communities.",
+  "author": "Convoro",
+  "convoro": ">=1.14.0",
+  "type": "extension",
+  "namespace": "Convoro\\Ext\\Solved\\",
+  "provider": "Convoro\\Ext\\Solved\\Extension",
+  "migrations": "migrations",
+  "admin_url": "/admin/ext/solved",
+  "assets": { "forum": "assets/forum.js" },
+  "icon": "icon.svg",
+  "premium": false,
+  "price": 0
+}

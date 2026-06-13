@@ -273,7 +273,7 @@ class Present
 
         return [
             'id' => $p->id,
-            'html' => Embeds::render(Mentions::linkify($p->body_html)),
+            'html' => PostRender::render($p->body_html),
             'detectedLocale' => $p->detected_locale,
             'held' => (bool) ($p->hidden ?? false),
             'author' => self::avatar($p->user),

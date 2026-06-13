@@ -1,13 +1,12 @@
 {
-    "version": "1.14.0",
-    "download": "https://convoro.co/releases/convoro-1.14.0.zip",
+    "version": "1.15.0",
+    "download": "https://convoro.co/releases/convoro-1.15.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Database backups from the admin",
+    "title": "Accepted Answers + a leaner extension platform",
     "date": "2026-06-13",
-    "notes": "A new Admin → Backups page lets you back up and download your database, restore from a backup (a safety snapshot is always taken first), and schedule automatic daily/weekly backups with retention. Point Convoro at an S3 bucket to also mirror backups offsite. Category icons were simplified to just the Font Awesome class field.",
+    "notes": "New free Accepted Answers extension in the Marketplace — mark a category as Q&A and let the asker or staff mark a reply as the accepted answer (green check, thread shows solved). It's opt-in: nothing changes unless you install it and flag a category. Under the hood, extensions can now add controls to a post's action row and transform post content, so more features ship as small installable add-ons instead of bloating core.",
     "changelog": [
-        {"type": "new", "text": "Admin → Backups: one-click backup + download, guarded restore with an automatic pre-restore safety snapshot, and scheduled daily/weekly backups with retention."},
-        {"type": "new", "text": "Optional offsite backups to an S3-compatible bucket."},
-        {"type": "changed", "text": "Category icons simplified to the Font Awesome class field (preset picker removed)."}
+        {"type": "new", "text": "Accepted Answers extension (free, opt-in): mark a reply as the solution in Q&A categories."},
+        {"type": "new", "text": "Extension platform: a post-action slot + a content render hook so features can be add-ons, not core."}
     ]
 }

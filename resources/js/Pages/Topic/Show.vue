@@ -445,6 +445,7 @@ function submitReply() {
               <button v-for="e in EMOJIS" :key="e" @click="react(firstPost.id, e)" class="text-xl transition hover:scale-125">{{ e }}</button>
             </div>
             <div class="ml-auto flex items-center gap-1">
+              <Slot name="post:actions" :ctx="{ postId: firstPost.id, topicId: topic.id, isFirst: true, authorId: firstPost.author?.id, topicAuthorId: firstPost.author?.id, categoryId: topic.categoryId }" />
               <button v-if="canReply" @click="replyTo(firstPost)" :title="tr('Reply')" class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[13px] font-semibold text-ink-2 hover:bg-surface-2">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
                 {{ tr('Reply') }}
@@ -541,6 +542,7 @@ function submitReply() {
                   <button v-for="e in EMOJIS" :key="e" @click="react(post.id, e)" class="text-xl transition hover:scale-125">{{ e }}</button>
                 </div>
                 <div class="ml-auto flex items-center gap-1">
+                  <Slot name="post:actions" :ctx="{ postId: post.id, topicId: topic.id, isFirst: false, authorId: post.author?.id, topicAuthorId: firstPost?.author?.id, categoryId: topic.categoryId }" />
                   <button v-if="canReply" @click="replyTo(post)" :title="tr('Reply')" class="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[13px] font-semibold text-ink-2 hover:bg-surface-2">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 17 4 12 9 7"/><path d="M20 18v-2a4 4 0 0 0-4-4H4"/></svg>
                     {{ tr('Reply') }}

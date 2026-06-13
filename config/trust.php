@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.15.0',
+            'date' => '2026-06-13',
+            'title' => 'Accepted Answers + a leaner extension platform',
+            'items' => [
+                ['type' => 'new', 'text' => 'New “Accepted Answers” extension (free, in the Marketplace): mark a category as Q&A, and the asker or your staff can mark a reply as the accepted answer — it gets a green check and the thread reads as solved. It’s opt-in, so nothing changes unless you install it and flag a category.'],
+                ['type' => 'new', 'text' => 'Under the hood: extensions can now add controls to a post’s action row and transform post content, so more features can ship as small, installable add-ons instead of bloating the core.'],
+            ],
+        ],
+        [
             'tag' => '1.14.0',
             'date' => '2026-06-13',
             'title' => 'Database backups from the admin',
@@ -740,8 +749,21 @@ return [
             'Federation (ActivityPub) — followable from Mastodon, Lemmy & the fediverse',
             'Federation Phase 2 — two-way replies, likes & cross-posting',
         ],
-        'now' => [],
-        'next' => [],
-        'later' => [],
+        'now' => [
+            'Accepted answers — mark a reply as the solution in Q&A categories',
+            'Bookmarks — save posts to a personal reading list',
+            'Richer composer — code blocks with syntax highlighting, spoilers & GIFs',
+        ],
+        'next' => [
+            'Trust levels — earn abilities & standing through participation',
+            'Reply by email — reply to a notification to post',
+            'Follow members + a personalized feed',
+            'Events — calendar view, reminders & a finished RSVP experience',
+        ],
+        'later' => [
+            'Top-contributors leaderboard',
+            'Moderation audit log',
+            'Slow mode, per-category rate limits & first-post approval for new accounts',
+        ],
     ],
 ];
