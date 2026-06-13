@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.15.1',
+            'date' => '2026-06-13',
+            'title' => 'Each extension shows its own icon',
+            'items' => [
+                ['type' => 'changed', 'text' => 'Installed extensions now display their own icon in the admin sidebar instead of a shared generic glyph, so each is easy to tell apart.'],
+            ],
+        ],
+        [
             'tag' => '1.15.0',
             'date' => '2026-06-13',
             'title' => 'Accepted Answers + a leaner extension platform',

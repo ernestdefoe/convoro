@@ -79,7 +79,9 @@ const groups = computed(() => [
     { label: 'Marketplace', href: '/admin/marketplace', component: 'Admin/Marketplace', icon: I.market },
     // The seller/store console lives front-facing now (convoro.co/extensions/manage),
     // reached from the forum's "Extensions" nav — no admin Store section.
-    ...extNav.value.map((e) => ({ label: e.name, href: e.href, component: '', icon: extIcon(e) })),
+    // Each extension shows its OWN icon (inline SVG from its manifest); fall back
+    // to the keyword-matched glyph only if it didn't ship one.
+    ...extNav.value.map((e) => ({ label: e.name, href: e.href, component: '', icon: extIcon(e), iconSvg: (e as any).icon || null })),
   ] },
   { label: 'System', items: [
     { label: 'AI', href: '/admin/ai', component: 'Admin/Ai', icon: I.ai },
@@ -115,7 +117,8 @@ function active(item: { component: string; href: string }) {
             class="flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition"
             :class="active(item) ? 'bg-surface-2 text-ink' : 'text-ink-2 hover:bg-surface-2 hover:text-ink'"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path :d="item.icon" /></svg>
+            <span v-if="(item as any).iconSvg" class="inline-flex shrink-0 [&>svg]:h-[18px] [&>svg]:w-[18px]" v-html="(item as any).iconSvg" />
+            <svg v-else width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path :d="item.icon" /></svg>
             {{ item.label }}
           </Link>
         </template>

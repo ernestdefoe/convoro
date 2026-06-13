@@ -189,6 +189,34 @@ class ExtensionManager
         ];
     }
 
+    /**
+     * The extension's own icon as inline SVG markup (for the admin nav, so every
+     * extension shows its own icon instead of a shared fallback glyph). Reads the
+     * manifest `icon` file; returns null if missing/unreadable. Lightly stripped
+     * of <script> and inline event handlers before it's rendered.
+     */
+    public static function iconSvgFor(array $manifest): ?string
+    {
+        $icon = $manifest['icon'] ?? null;
+        $dir = $manifest['_path'] ?? null;
+        if (! $icon || ! $dir) {
+            return null;
+        }
+        $file = $dir.'/'.basename((string) $icon);
+        if (! is_file($file) || ! str_ends_with(strtolower($file), '.svg')) {
+            return null;
+        }
+        $svg = (string) @file_get_contents($file);
+        if ($svg === '' || ! str_contains($svg, '<svg')) {
+            return null;
+        }
+        // Defensive strip — first-party + AI-reviewed, but it's rendered via v-html.
+        $svg = preg_replace('#<script\b[^>]*>.*?</script>#is', '', $svg);
+        $svg = preg_replace('#\son\w+\s*=\s*("[^"]*"|\'[^\']*\')#i', '', $svg);
+
+        return trim($svg);
+    }
+
     /** @return string[] ids of enabled extensions */
     public static function enabledIds(): array
     {

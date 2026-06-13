@@ -62,6 +62,9 @@ class HandleInertiaRequests extends Middleware
                         // extension UI loads in the admin content pane instead of
                         // navigating away to a standalone page.
                         'href' => '/admin/extensions/'.$m['id'],
+                        // The extension's own icon (inline SVG) so each one is
+                        // distinct in the nav rather than a shared fallback glyph.
+                        'icon' => \App\Support\ExtensionManager::iconSvgFor($m),
                     ])->values()->all()
                 : null,
             'seo' => fn () => \App\Support\Seo::make(),
