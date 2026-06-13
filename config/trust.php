@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.15.2',
+            'date' => '2026-06-13',
+            'title' => 'Clear notifications',
+            'items' => [
+                ['type' => 'new', 'text' => 'You can now clear notifications: dismiss a single one with the × on its row, or use “Clear all” to empty the whole list — not just mark them read.'],
+            ],
+        ],
+        [
             'tag' => '1.15.1',
             'date' => '2026-06-13',
             'title' => 'Each extension shows its own icon',

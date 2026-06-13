@@ -1,11 +1,11 @@
 {
-    "version": "1.15.1",
-    "download": "https://convoro.co/releases/convoro-1.15.1.zip",
+    "version": "1.15.2",
+    "download": "https://convoro.co/releases/convoro-1.15.2.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Each extension shows its own icon",
+    "title": "Clear notifications",
     "date": "2026-06-13",
-    "notes": "Installed extensions now display their own icon in the admin sidebar (read from each extension's manifest) instead of a shared generic glyph, so they're easy to tell apart.",
+    "notes": "You can now clear notifications, not just mark them read: dismiss a single one with the × on its row, or use Clear all to empty the whole list.",
     "changelog": [
-        {"type": "changed", "text": "Admin sidebar shows each installed extension's own icon instead of a shared fallback glyph."}
+        {"type": "new", "text": "Clear notifications — dismiss one with the × on its row, or Clear all to empty the list."}
     ]
 }

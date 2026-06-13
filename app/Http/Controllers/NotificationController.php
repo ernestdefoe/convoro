@@ -41,6 +41,22 @@ class NotificationController extends Controller
         return back();
     }
 
+    /** Remove a single notification. */
+    public function clear(Request $request, string $id): RedirectResponse
+    {
+        $request->user()->notifications()->whereKey($id)->delete();
+
+        return back();
+    }
+
+    /** Remove every notification (clears the list). */
+    public function clearAll(Request $request): RedirectResponse
+    {
+        $request->user()->notifications()->delete();
+
+        return back();
+    }
+
     /** Update the digest-email preference (off | daily | weekly). */
     public function preferences(Request $request): RedirectResponse
     {

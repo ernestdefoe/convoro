@@ -219,7 +219,9 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('/notifications/read', [NotificationController::class, 'readAll'])->name('notifications.readAll');
+    Route::delete('/notifications', [NotificationController::class, 'clearAll'])->name('notifications.clearAll');
     Route::post('/notifications/{id}/read', [NotificationController::class, 'read'])->name('notifications.read');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'clear'])->name('notifications.clear');
     Route::post('/notifications/preferences', [NotificationController::class, 'preferences'])->name('notifications.preferences');
     Route::post('/notifications/channel-prefs', [NotificationController::class, 'channelPrefs'])->name('notifications.channel-prefs');
 });
