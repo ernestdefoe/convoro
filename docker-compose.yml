@@ -1,0 +1,76 @@
+# Convoro via Docker Compose.
+#
+#   1. cp docker/env.example .env   (then set APP_KEY — see README / docs)
+#   2. docker compose up -d --build
+#   3. open http://localhost:8080
+#
+# The "app" container serves the site (FrankenPHP) and runs migrations on start.
+# "queue", "reverb" and "scheduler" reuse the same image for background work.
+
+x-app: &app
+  build: .
+  image: convoro:latest
+  restart: unless-stopped
+  env_file: .env
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_started
+  volumes:
+    - storage:/app/storage/app/public
+
+services:
+  app:
+    <<: *app
+    environment:
+      CONTAINER_ROLE: app
+    ports:
+      - "${APP_PORT:-8080}:80"
+
+  queue:
+    <<: *app
+    environment:
+      CONTAINER_ROLE: worker
+    command: ["php", "artisan", "horizon"]
+
+  scheduler:
+    <<: *app
+    environment:
+      CONTAINER_ROLE: worker
+    command: ["php", "artisan", "schedule:work"]
+
+  reverb:
+    <<: *app
+    environment:
+      CONTAINER_ROLE: worker
+    command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
+    ports:
+      - "${REVERB_PORT:-8081}:8080"
+
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: "${DB_DATABASE:-convoro}"
+      MYSQL_USER: "${DB_USERNAME:-convoro}"
+      MYSQL_PASSWORD: "${DB_PASSWORD:-convoro}"
+      MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD:-convoro_root}"
+    volumes:
+      - db:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${DB_ROOT_PASSWORD:-convoro_root}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis:/data
+
+volumes:
+  db:
+  redis:
+  storage:

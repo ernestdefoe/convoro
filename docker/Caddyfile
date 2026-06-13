@@ -1,0 +1,17 @@
+{
+	# FrankenPHP runs PHP inside the Caddy web server.
+	frankenphp
+	order php_server before file_server
+	auto_https off
+}
+
+:80 {
+	root * /app/public
+	encode zstd br gzip
+
+	# Long-cache the fingerprinted build assets.
+	@assets path /build/* /storage/*
+	header @assets Cache-Control "public, max-age=31536000, immutable"
+
+	php_server
+}
