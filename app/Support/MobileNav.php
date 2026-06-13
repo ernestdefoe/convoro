@@ -10,7 +10,7 @@ namespace App\Support;
 class MobileNav
 {
     /** Every tab the admin can switch on. */
-    public const CATALOG = ['home', 'search', 'compose', 'notifications', 'messages', 'members', 'leaderboard', 'account'];
+    public const CATALOG = ['home', 'search', 'compose', 'notifications', 'messages', 'members', 'account'];
 
     /** Sensible out-of-the-box bar. */
     public const DEFAULTS = ['home', 'search', 'compose', 'notifications', 'account'];

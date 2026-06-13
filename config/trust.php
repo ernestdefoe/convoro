@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.17.0',
+            'date' => '2026-06-13',
+            'title' => 'Leaderboard is now an opt-in extension',
+            'items' => [
+                ['type' => 'changed', 'text' => 'The top-contributors leaderboard moved out of core into a free, opt-in Marketplace extension, so communities that do not want it are not carrying it. Install the “Leaderboard” extension from the Marketplace to keep it (and its header link).'],
+            ],
+        ],
+        [
             'tag' => '1.16.5',
             'date' => '2026-06-13',
             'title' => 'Open a discussion at the first unread reply',
@@ -814,9 +822,13 @@ return [
             'Translate forum content (titles, excerpts, categories) + pull-to-refresh',
             'Federation (ActivityPub) — followable from Mastodon, Lemmy & the fediverse',
             'Federation Phase 2 — two-way replies, likes & cross-posting',
+            'Federation Phase 3 — every member federates as their own fediverse identity',
+            'Database backups — one-click, scheduled & offsite (S3)',
+            'Grounded AI — Ask answers from your docs + a curated knowledge base, with citations',
+            '@mention the assistant in any post for a grounded answer',
+            'Accepted Answers extension — mark a reply as the solution in Q&A categories',
         ],
         'now' => [
-            'Accepted answers — mark a reply as the solution in Q&A categories',
             'Bookmarks — save posts to a personal reading list',
             'Richer composer — code blocks with syntax highlighting, spoilers & GIFs',
         ],

@@ -178,7 +178,6 @@ Route::post('/t/{topic}/heartbeat', [TopicController::class, 'heartbeat'])->midd
 Route::get('/u/{user}', [App\Http\Controllers\UserProfileController::class, 'show'])->name('profiles.show');
 Route::get('/extensions', [App\Http\Controllers\ExtensionsPageController::class, 'index'])->middleware('store.owner')->name('extensions.index');
 Route::get('/members', [App\Http\Controllers\MembersController::class, 'index'])->name('members.index');
-Route::get('/leaderboard', [App\Http\Controllers\MembersController::class, 'leaderboard'])->name('leaderboard');
 
 Route::get('/welcome', fn () => Inertia::render('Welcome', [
     'canLogin' => Route::has('login'),

@@ -25,7 +25,7 @@ function saveFederation() {
 // ---- Mobile bottom tab bar ----
 const TAB_LABELS: Record<string, string> = {
   home: t('Home'), search: t('Search'), compose: t('Post (compose)'), notifications: t('Notifications'),
-  messages: t('Messages'), members: t('Members'), leaderboard: t('Leaderboard'), account: t('Account / You'),
+  messages: t('Messages'), members: t('Members'), account: t('Account / You'),
 };
 const mEnabled = ref(props.mobileNav.enabled);
 // Rows in display order: enabled tabs first (in saved order), then the rest (off).

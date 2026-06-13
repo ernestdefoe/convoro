@@ -1,11 +1,11 @@
 {
-    "version": "1.16.5",
-    "download": "https://convoro.co/releases/convoro-1.16.5.zip",
+    "version": "1.17.0",
+    "download": "https://convoro.co/releases/convoro-1.17.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Open a discussion at the first unread reply",
+    "title": "Leaderboard is now an opt-in extension",
     "date": "2026-06-13",
-    "notes": "Opening a discussion now jumps you to the first new reply since your last visit (with a New divider), instead of always starting from the top. Permalinks to a specific post still go straight there.",
+    "notes": "The top-contributors leaderboard moved out of core into a free, opt-in Marketplace extension, so communities that don't want it aren't carrying it. Install the Leaderboard extension from the Marketplace to keep it (and its header link).",
     "changelog": [
-        {"type": "changed", "text": "Discussions open at the first unread reply (where you left off), with a New divider, instead of the top."}
+        {"type": "changed", "text": "The top-contributors leaderboard is now a free opt-in Marketplace extension instead of a built-in page."}
     ]
 }

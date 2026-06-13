@@ -1,0 +1,15 @@
+{
+  "id": "convoro-leaderboard",
+  "name": "Leaderboard",
+  "version": "1.0.0",
+  "description": "A top-contributors leaderboard. Ranks members by reputation — posts, topics started, and reactions received — on a themed /leaderboard page, with a link in the header. Opt-in: install it only if your community wants the friendly competition.",
+  "author": "Convoro",
+  "convoro": ">=1.15.0",
+  "type": "extension",
+  "namespace": "Convoro\\Ext\\Leaderboard\\",
+  "provider": "Convoro\\Ext\\Leaderboard\\Extension",
+  "assets": { "forum": "assets/forum.js" },
+  "icon": "icon.svg",
+  "premium": false,
+  "price": 0
+}

@@ -39,7 +39,6 @@ const CATALOG: Record<string, Tab> = {
   notifications: { key: 'notifications', label: t('Alerts'), href: '/notifications', icon: I.notifications, auth: true, badge: 'notif', active: (c) => c.startsWith('Notifications') },
   messages: { key: 'messages', label: t('Messages'), href: '/messages', icon: I.messages, auth: true, badge: 'dm', active: (c) => c.startsWith('Messages') },
   members: { key: 'members', label: t('Members'), href: '/members', icon: I.members, active: (c) => c === 'Members/Index' },
-  leaderboard: { key: 'leaderboard', label: t('Top'), href: '/leaderboard', icon: I.leaderboard, active: (c) => c === 'Members/Leaderboard' },
   account: { key: 'account', label: t('You'), icon: I.account, active: (c) => c.startsWith('Profile') || c === 'Settings' },
 };
 

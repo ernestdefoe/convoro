@@ -19,7 +19,6 @@ class SitemapController extends Controller
         $add(url('/'), null, 'hourly', '1.0');
         $add(url('/extensions'), null, 'weekly', '0.6');
         $add(url('/members'), null, 'weekly', '0.4');
-        $add(url('/leaderboard'), null, 'weekly', '0.4');
 
         foreach (Category::all() as $c) {
             $add(url('/?category='.$c->slug), null, 'daily', '0.6');
