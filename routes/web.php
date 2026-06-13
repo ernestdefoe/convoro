@@ -324,6 +324,15 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/languages/default', [App\Http\Controllers\Admin\LanguagesController::class, 'setDefault'])->name('languages.default');
     Route::delete('/languages', [App\Http\Controllers\Admin\LanguagesController::class, 'destroy'])->name('languages.destroy');
 
+    // Database backups — download/restore + scheduled offsite backups.
+    Route::get('/backups', [App\Http\Controllers\BackupController::class, 'index'])->name('backups');
+    Route::get('/backups/status', [App\Http\Controllers\BackupController::class, 'status'])->name('backups.status');
+    Route::post('/backups/run', [App\Http\Controllers\BackupController::class, 'run'])->name('backups.run');
+    Route::post('/backups/restore', [App\Http\Controllers\BackupController::class, 'restore'])->name('backups.restore');
+    Route::post('/backups/settings', [App\Http\Controllers\BackupController::class, 'updateSettings'])->name('backups.settings');
+    Route::get('/backups/{name}/download', [App\Http\Controllers\BackupController::class, 'download'])->name('backups.download');
+    Route::delete('/backups/{name}', [App\Http\Controllers\BackupController::class, 'destroy'])->name('backups.destroy');
+
     // System moved into the Dashboard; keep the URL working as a redirect.
     Route::get('/system', fn () => redirect('/admin'))->name('system');
     Route::post('/system/run', [App\Http\Controllers\AdminController::class, 'runMaintenance'])->name('system.run');

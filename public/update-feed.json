@@ -1,11 +1,13 @@
 {
-    "version": "1.13.1",
-    "download": "https://convoro.co/releases/convoro-1.13.1.zip",
+    "version": "1.14.0",
+    "download": "https://convoro.co/releases/convoro-1.14.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Tidy up the discussion list",
-    "date": "2026-06-12",
-    "notes": "Staff badges no longer show under avatars in the discussion list. They're still shown inside a discussion and on profiles — just not in the list, so it stays clean.",
+    "title": "Database backups from the admin",
+    "date": "2026-06-13",
+    "notes": "A new Admin → Backups page lets you back up and download your database, restore from a backup (a safety snapshot is always taken first), and schedule automatic daily/weekly backups with retention. Point Convoro at an S3 bucket to also mirror backups offsite. Category icons were simplified to just the Font Awesome class field.",
     "changelog": [
-        {"type": "changed", "text": "Staff badges no longer appear under avatars in the discussion list (kept inside discussions and on profiles)."}
+        {"type": "new", "text": "Admin → Backups: one-click backup + download, guarded restore with an automatic pre-restore safety snapshot, and scheduled daily/weekly backups with retention."},
+        {"type": "new", "text": "Optional offsite backups to an S3-compatible bucket."},
+        {"type": "changed", "text": "Category icons simplified to the Font Awesome class field (preset picker removed)."}
     ]
 }

@@ -18,3 +18,15 @@ Schedule::command('convoro:refresh-registry')->hourly()->withoutOverlapping();
 
 // Publish scheduled posts the moment their time arrives.
 Schedule::command('convoro:publish-scheduled')->everyMinute()->withoutOverlapping();
+
+// Database backups at 03:00 on the admin-chosen cadence. The command no-ops
+// when scheduled backups are off; the ->when guards pick the right cadence.
+// rescue() keeps a pre-migration install from crashing the scheduler.
+Schedule::command('convoro:backup --prune')->dailyAt('03:00')
+    ->when(fn () => rescue(fn () => (bool) \App\Support\Settings::get('backups.enabled', false)
+        && \App\Support\Settings::get('backups.frequency', 'daily') === 'daily', false))
+    ->withoutOverlapping();
+Schedule::command('convoro:backup --prune')->weeklyOn(1, '03:00')
+    ->when(fn () => rescue(fn () => (bool) \App\Support\Settings::get('backups.enabled', false)
+        && \App\Support\Settings::get('backups.frequency', 'daily') === 'weekly', false))
+    ->withoutOverlapping();

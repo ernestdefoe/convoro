@@ -30,6 +30,7 @@ const I = {
   invite: 'M4 4h16v16H4zM4 7l8 6 8-6',
   ai: 'M12 2a2 2 0 012 2v1h2a2 2 0 012 2v2h1a2 2 0 010 4h-1v2a2 2 0 01-2 2h-2v1a2 2 0 01-4 0v-1H6a2 2 0 01-2-2v-2H3a2 2 0 010-4h1V7a2 2 0 012-2h2V4a2 2 0 012-2zM9 10h.01M15 10h.01M9 15h6',
   globe: 'M12 2a10 10 0 100 20 10 10 0 000-20M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20',
+  database: 'M12 3c4.42 0 8 1.34 8 3s-3.58 3-8 3-8-1.34-8-3 3.58-3 8-3z M4 6v6c0 1.66 3.58 3 8 3s8-1.34 8-3V6 M4 12v6c0 1.66 3.58 3 8 3s8-1.34 8-3v-6',
 };
 
 // Distinct icons for extension nav entries, matched on the extension's id/name so
@@ -83,6 +84,7 @@ const groups = computed(() => [
   { label: 'System', items: [
     { label: 'AI', href: '/admin/ai', component: 'Admin/Ai', icon: I.ai },
     { label: 'Import', href: '/admin/import', component: 'Admin/Import', icon: I.import },
+    { label: 'Backups', href: '/admin/backups', component: 'Admin/Backups', icon: I.database },
   ] },
 ]);
 

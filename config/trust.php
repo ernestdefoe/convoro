@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.14.0',
+            'date' => '2026-06-13',
+            'title' => 'Database backups from the admin',
+            'items' => [
+                ['type' => 'new', 'text' => 'A new Admin → Backups page: back up your database with one click and download it, restore from a backup (a safety snapshot of the current database is always taken first), and schedule automatic daily or weekly backups with a retention limit.'],
+                ['type' => 'new', 'text' => 'Optional offsite backups — point Convoro at an S3-compatible bucket and scheduled backups are mirrored there, so they survive losing the server.'],
+                ['type' => 'changed', 'text' => 'Category icons: simplified to just the Font Awesome class field (the preset icon picker was removed).'],
+            ],
+        ],
+        [
             'tag' => '1.13.1',
             'date' => '2026-06-12',
             'title' => 'Tidy up the discussion list',
