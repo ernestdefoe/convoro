@@ -1,13 +1,11 @@
 {
-    "version": "1.13.0",
-    "download": "https://convoro.co/releases/convoro-1.13.0.zip",
+    "version": "1.13.1",
+    "download": "https://convoro.co/releases/convoro-1.13.1.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Federation Phase 3 — every member federates as themselves",
+    "title": "Tidy up the discussion list",
     "date": "2026-06-12",
-    "notes": "Members now each have their own fediverse identity (@you@your-community) instead of posting from one shared community account. People can follow individual members, topics and replies go out attributed to their real author, your handle shows on your profile, and replies reach the author's followers, the community's followers, and remote thread participants.",
+    "notes": "Staff badges no longer show under avatars in the discussion list. They're still shown inside a discussion and on profiles — just not in the list, so it stays clean.",
     "changelog": [
-        {"type": "new", "text": "Per-member fediverse identities — each member federates as @you@your-community and can be followed individually."},
-        {"type": "new", "text": "Your fediverse handle is shown on your profile and is discoverable by handle from any fediverse server."},
-        {"type": "new", "text": "Replies are delivered to the author's followers, the community's followers, and remote thread participants."}
+        {"type": "changed", "text": "Staff badges no longer appear under avatars in the discussion list (kept inside discussions and on profiles)."}
     ]
 }

@@ -14,7 +14,7 @@ defineProps<{ topic: any }>();
     :class="topic.isNew ? 'border-primary/40' : 'border-line'"
   >
     <span v-if="topic.isNew" class="absolute -right-1.5 -top-1.5 z-10 inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md shadow-primary/30" :title="t('New posts since your last visit')">{{ t('New') }}</span>
-    <Avatar :avatar="topic.author" :size="52" badge />
+    <Avatar :avatar="topic.author" :size="52" />
     <div class="min-w-0 flex-1">
       <div class="flex items-center gap-2">
         <svg v-if="topic.isPinned" width="14" height="14" viewBox="0 0 24 24" fill="#e8830c"><path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z" /></svg>

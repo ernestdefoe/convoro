@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.13.1',
+            'date' => '2026-06-12',
+            'title' => 'Tidy up the discussion list',
+            'items' => [
+                ['type' => 'changed', 'text' => 'Staff badges no longer appear under avatars in the discussion list — they’re kept for the places they matter (inside a discussion and on profiles), so the list stays clean.'],
+            ],
+        ],
+        [
             'tag' => '1.13.0',
             'date' => '2026-06-12',
             'title' => 'Federation Phase 3 — every member federates as themselves',
