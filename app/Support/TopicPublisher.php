@@ -30,7 +30,7 @@ class TopicPublisher
             'last_post_at' => now(),
         ]);
 
-        $topic->posts()->create([
+        $firstPost = $topic->posts()->create([
             'user_id' => $user->id,
             'ip_address' => $ip,
             'body_html' => $data['body_html'],
@@ -56,7 +56,13 @@ class TopicPublisher
             }
         }
 
-        if (Ask::enabled() && Settings::get('ai.autoanswer_enabled', false)) {
+        // If the opening post @mentions the assistant, answer that explicitly
+        // (grounded, no keyword gate). Otherwise fall back to the new-topic
+        // auto-answer when enabled — never both.
+        $mentionedIds = \App\Support\Mentions::parse(strip_tags($data['body_html']))->pluck('id')->all();
+        if (\App\Jobs\AnswerMentionJob::shouldAnswer($firstPost, $mentionedIds)) {
+            \App\Jobs\AnswerMentionJob::dispatch($firstPost->id)->afterCommit();
+        } elseif (Ask::enabled() && Settings::get('ai.autoanswer_enabled', false)) {
             $delay = max(0, (int) Settings::get('ai.autoanswer_delay_minutes', 0));
             AutoAnswerTopicJob::dispatch($topic->id)->delay(now()->addMinutes($delay))->afterCommit();
         }

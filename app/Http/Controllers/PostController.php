@@ -47,6 +47,12 @@ class PostController extends Controller
 
         $this->notifyParticipants($request, $topic, $post, $html);
 
+        // If the member @mentioned the assistant, have it reply with a grounded answer.
+        $mentionedIds = Mentions::parse(strip_tags($html))->pluck('id')->all();
+        if (\App\Jobs\AnswerMentionJob::shouldAnswer($post, $mentionedIds)) {
+            \App\Jobs\AnswerMentionJob::dispatch($post->id)->afterCommit();
+        }
+
         // Cross-post out to the fediverse (no-op unless federation is on + relevant).
         \App\Support\Federation::announceReply($post, $topic);
 

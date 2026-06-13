@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.16.3',
+            'date' => '2026-06-13',
+            'title' => 'Tag the assistant to get an answer',
+            'items' => [
+                ['type' => 'new', 'text' => 'Mention the AI assistant (e.g. @Convoro Bot) in any post — a topic or a reply — and it answers right there in the thread, grounded in your docs and knowledge base, with citations. Toggle it in Admin → AI.'],
+            ],
+        ],
+        [
             'tag' => '1.16.2',
             'date' => '2026-06-13',
             'title' => 'Knowledge Base: longer articles + citation links',

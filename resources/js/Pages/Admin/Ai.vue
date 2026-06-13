@@ -5,7 +5,7 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
-  config: { provider: string; model: string; base_url: string; has_key: boolean; ask_enabled: boolean; ask_knowledge: boolean; ask_strict: boolean; knowledge_count: number; embed_has_key: boolean; embed_model: string; autoanswer_enabled: boolean; autoanswer_keywords: string; bot_name: string; moderation_enabled: boolean; translate_posts: boolean; price_in: number; price_out: number; monthly_budget: number };
+  config: { provider: string; model: string; base_url: string; has_key: boolean; ask_enabled: boolean; mention_reply: boolean; ask_knowledge: boolean; ask_strict: boolean; knowledge_count: number; embed_has_key: boolean; embed_model: string; autoanswer_enabled: boolean; autoanswer_keywords: string; bot_name: string; moderation_enabled: boolean; translate_posts: boolean; price_in: number; price_out: number; monthly_budget: number };
   index: { ready: boolean; count: number; running: boolean; percent: number; status: string | null; builtAt: string | null };
   usage: { spentCents: number; budgetCents: number; overBudget: boolean; calls: number; tokens: number; byFeature: { feature: string; calls: number; tokens: number; cents: number }[] };
 }>();
@@ -19,6 +19,7 @@ const form = reactive({
   base_url: props.config.base_url || '',
   api_key: '',
   ask_enabled: props.config.ask_enabled,
+  mention_reply: props.config.mention_reply,
   ask_knowledge: props.config.ask_knowledge,
   ask_strict: props.config.ask_strict,
   embed_model: props.config.embed_model || '',
@@ -110,6 +111,10 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
         <label class="flex items-center gap-2 text-sm text-ink-2">
           <input v-model="form.ask_enabled" type="checkbox" class="rounded border-line text-primary focus:ring-primary" @change="save" />
           {{ t('Show the “Ask Convoro” bar on the community page') }}
+        </label>
+        <label class="mt-2 flex items-center gap-2 text-sm text-ink-2">
+          <input v-model="form.mention_reply" type="checkbox" class="rounded border-line text-primary focus:ring-primary" @change="save" />
+          {{ t('Reply when a member @mentions the assistant in a post') }}
         </label>
 
         <p v-if="!config.has_key" class="mt-4 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-300">
