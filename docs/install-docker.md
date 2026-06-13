@@ -24,7 +24,21 @@ docker compose up -d --build
 ```
 
 Open <http://localhost:8080>. The first start builds the image, waits for the
-database, and runs migrations automatically. To seed demo content:
+database, and runs migrations automatically.
+
+### Skip the build — use the published image
+
+The image is on Docker Hub, so you don't have to build it. Pull it and point
+compose at it instead of building from source:
+
+```bash
+docker pull ernestdefoe/convoro:latest
+# in docker-compose.yml, replace "build: ." with:
+#   image: ernestdefoe/convoro:latest
+docker compose up -d
+```
+
+To seed demo content:
 
 ```bash
 docker compose exec app php artisan db:seed
