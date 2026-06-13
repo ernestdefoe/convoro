@@ -1,12 +1,12 @@
 /*
  * Convoro Leaderboard — forum bundle (vanilla JS).
- * Adds a "Leaderboard" link to the header (the header:end slot). The page
- * itself is served at /leaderboard by the extension's PHP provider.
+ * Adds a "Leaderboard" link to the primary header nav (the header:nav slot,
+ * next to Members). The page itself is served at /leaderboard by the PHP provider.
  */
 (function () {
   if (!window.Convoro || typeof window.Convoro.registerSlot !== 'function') return;
 
-  window.Convoro.registerSlot('header:end', {
+  window.Convoro.registerSlot('header:nav', {
     ext: 'convoro-leaderboard',
     order: 5,
     mount: function (el) {

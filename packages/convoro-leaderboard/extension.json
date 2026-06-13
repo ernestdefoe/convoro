@@ -1,7 +1,7 @@
 {
   "id": "convoro-leaderboard",
   "name": "Leaderboard",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A top-contributors leaderboard. Ranks members by reputation — posts, topics started, and reactions received — on a themed /leaderboard page, with a link in the header. Opt-in: install it only if your community wants the friendly competition.",
   "author": "Convoro",
   "convoro": ">=1.15.0",

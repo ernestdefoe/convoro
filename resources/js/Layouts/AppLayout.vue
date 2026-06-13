@@ -85,6 +85,7 @@ function goMobile(href: string) {
           <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Forum') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Community') }}</Link>
           <Link v-if="storeOwner" href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Extensions') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Extensions') }}</Link>
           <Link href="/members" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component === 'Members/Index' ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Members') }}</Link>
+          <Slot name="header:nav" />
         </nav>
         <div class="ml-auto flex items-center gap-3">
           <form class="hidden items-center gap-2 rounded-full border border-line bg-surface-2 px-4 py-2 text-ink-muted sm:flex" @submit.prevent="goSearch">

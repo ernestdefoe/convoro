@@ -1,11 +1,11 @@
 {
-    "version": "1.17.0",
-    "download": "https://convoro.co/releases/convoro-1.17.0.zip",
+    "version": "1.17.1",
+    "download": "https://convoro.co/releases/convoro-1.17.1.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Leaderboard is now an opt-in extension",
+    "title": "Extension nav links sit with the main nav",
     "date": "2026-06-13",
-    "notes": "The top-contributors leaderboard moved out of core into a free, opt-in Marketplace extension, so communities that don't want it aren't carrying it. Install the Leaderboard extension from the Marketplace to keep it (and its header link).",
+    "notes": "Extensions can now add links to the primary header navigation (next to Community and Members) instead of off to the side. The Leaderboard link now sits with the other nav links.",
     "changelog": [
-        {"type": "changed", "text": "The top-contributors leaderboard is now a free opt-in Marketplace extension instead of a built-in page."}
+        {"type": "changed", "text": "Extensions can add primary-nav links (header:nav slot); the Leaderboard link now sits with the other nav links."}
     ]
 }

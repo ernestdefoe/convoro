@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.17.1',
+            'date' => '2026-06-13',
+            'title' => 'Extension nav links sit with the main nav',
+            'items' => [
+                ['type' => 'changed', 'text' => 'Extensions can now add links to the primary header navigation (next to Community and Members) rather than off to the side. The Leaderboard link now sits with the other nav links.'],
+            ],
+        ],
+        [
             'tag' => '1.17.0',
             'date' => '2026-06-13',
             'title' => 'Leaderboard is now an opt-in extension',
