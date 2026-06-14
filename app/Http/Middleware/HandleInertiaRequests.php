@@ -107,9 +107,32 @@ class HandleInertiaRequests extends Middleware
             return ['items' => [], 'unread' => 0];
         }
 
+        $items = $user->notifications()->latest()->limit(12)->get()
+            ->map(fn ($n) => Present::notification($n))->all();
+
+        // Show previews in the READER's language when they have auto-translate
+        // on — otherwise a message/reply notification stays in the sender's
+        // language. translateTexts caches forever, so this is ~free after the
+        // first time a given snippet is seen.
+        if ($user->auto_translate && \App\Support\ContentTranslator::enabled()) {
+            $locale = $user->locale ?: app()->getLocale();
+            $excerpts = \App\Support\ContentTranslator::translateTexts(
+                array_map(fn ($i) => (string) ($i['excerpt'] ?? ''), $items), $locale);
+            $titles = \App\Support\ContentTranslator::translateTexts(
+                array_map(fn ($i) => (string) ($i['topic']['title'] ?? ''), $items), $locale);
+            foreach ($items as $i => &$it) {
+                if (! empty($it['excerpt'])) {
+                    $it['excerpt'] = $excerpts[$i] ?? $it['excerpt'];
+                }
+                if (! empty($it['topic']['title'])) {
+                    $it['topic']['title'] = $titles[$i] ?? $it['topic']['title'];
+                }
+            }
+            unset($it);
+        }
+
         return [
-            'items' => $user->notifications()->latest()->limit(12)->get()
-                ->map(fn ($n) => Present::notification($n))->all(),
+            'items' => $items,
             'unread' => $user->unreadNotifications()->count(),
         ];
     }

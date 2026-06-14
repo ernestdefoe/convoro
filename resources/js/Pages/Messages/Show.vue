@@ -86,6 +86,53 @@ function send() {
   });
 }
 
+// ---- Reply + quoting (client-side blockquote, mirrors the forum) ----
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+function stripQuotes(html: string): string {
+  const d = document.createElement('div');
+  d.innerHTML = html;
+  d.querySelectorAll('blockquote').forEach((b) => b.remove());
+  return d.innerHTML.trim();
+}
+function insertQuote(author: string, innerHtml: string) {
+  if (!editor.value) return;
+  const inner = stripQuotes(innerHtml);
+  const html = `<blockquote><p><strong>${escapeHtml(author)}</strong> ${t('said:')}</p>${inner}</blockquote><p></p>`;
+  editor.value.insertContent(html);
+  editor.value.focus();
+}
+function replyTo(m: any) {
+  insertQuote(m.author?.name ?? '', displayHtml(m));
+}
+
+// Floating "Quote" button when text inside a message is selected.
+const quoteTip = ref<{ x: number; y: number; author: string; html: string } | null>(null);
+function onSelectionChange() {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.toString().trim()) { quoteTip.value = null; return; }
+  const anchor = sel.anchorNode;
+  const el = anchor && anchor.nodeType === 3 ? anchor.parentElement : (anchor as HTMLElement | null);
+  const bubble = el?.closest('[data-msg-id]') as HTMLElement | null;
+  if (!bubble) { quoteTip.value = null; return; }
+  const rect = sel.getRangeAt(0).getBoundingClientRect();
+  const div = document.createElement('div');
+  div.appendChild(sel.getRangeAt(0).cloneContents());
+  quoteTip.value = {
+    x: rect.left + rect.width / 2,
+    y: rect.top - 6,
+    author: bubble.getAttribute('data-msg-author') || '',
+    html: div.innerHTML || escapeHtml(sel.toString()),
+  };
+}
+function quoteSelection() {
+  if (!quoteTip.value) return;
+  insertQuote(quoteTip.value.author, quoteTip.value.html);
+  quoteTip.value = null;
+  window.getSelection()?.removeAllRanges();
+}
+
 // Add people (turn a DM into a group / grow a group)
 const adding = ref(false);
 const addQuery = ref('');
@@ -114,6 +161,7 @@ let channel: any = null;
 onMounted(() => {
   scrollDown();
   autoTranslateAll();
+  document.addEventListener('selectionchange', onSelectionChange);
   if (!Echo()) return;
   channel = Echo().private(`conversation.${props.conversation.id}`).listen('.MessageCreated', (e: any) => {
     if (e?.message && !live.value.some((m) => m.id === e.message.id)) {
@@ -123,14 +171,19 @@ onMounted(() => {
     }
   });
 });
-onBeforeUnmount(() => { if (Echo()) Echo().leave(`conversation.${props.conversation.id}`); });
+onBeforeUnmount(() => {
+  document.removeEventListener('selectionchange', onSelectionChange);
+  if (Echo()) Echo().leave(`conversation.${props.conversation.id}`);
+});
 </script>
 
 <template>
   <Head :title="conversation.title" />
   <AppLayout>
     <ReadingScrubber :target="thread" />
-    <div class="mx-auto flex h-[calc(100vh-140px)] max-w-[760px] flex-col">
+    <!-- dvh + a taller mobile offset (header + bottom tab bar) so only the
+         message list scrolls, never the page, on phones. -->
+    <div class="mx-auto flex max-w-[760px] flex-col h-[calc(100dvh-13rem)] md:h-[calc(100vh-140px)]">
       <div class="mb-3 flex items-center gap-3">
         <Link href="/messages" class="text-ink-muted hover:text-ink" :aria-label="t('Back to messages')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6" /></svg>
@@ -162,15 +215,16 @@ onBeforeUnmount(() => { if (Echo()) Echo().leave(`conversation.${props.conversat
         </div>
       </div>
 
-      <div ref="thread" class="flex-1 space-y-3 overflow-y-auto rounded-c border border-line bg-surface p-4">
+      <div ref="thread" class="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-c border border-line bg-surface p-4">
         <div v-for="m in live" :key="m.id" class="flex gap-2.5" :class="mine(m) ? 'flex-row-reverse' : ''">
           <Avatar :avatar="m.author" :size="32" />
           <div class="max-w-[75%]">
             <div class="rounded-2xl px-3.5 py-2 text-sm" :class="mine(m) ? 'bg-primary text-white' : 'bg-surface-2 text-ink'">
-              <div class="prose-q" :class="mine(m) ? 'prose-onprimary' : ''" v-html="displayHtml(m)"></div>
+              <div class="prose-q" :class="mine(m) ? 'prose-onprimary' : ''" :data-msg-id="m.id" :data-msg-author="m.author?.name" v-html="displayHtml(m)"></div>
             </div>
             <div class="mt-0.5 flex items-center gap-2 text-[11px] text-ink-muted" :class="mine(m) ? 'flex-row-reverse text-right' : ''">
               <span>{{ m.createdAt }}</span>
+              <button type="button" class="font-semibold text-ink-muted hover:text-primary" @click="replyTo(m)">{{ t('Reply') }}</button>
               <button
                 v-if="translateEnabled && (needsTranslation(m) || tx[m.id]?.html)"
                 type="button"
@@ -186,7 +240,7 @@ onBeforeUnmount(() => { if (Echo()) Echo().leave(`conversation.${props.conversat
         <p v-if="!live.length" class="py-10 text-center text-sm text-ink-muted">{{ t('Say hello 👋') }}</p>
       </div>
 
-      <div class="mt-3">
+      <div class="mt-3 shrink-0">
         <Editor ref="editor" :placeholder="t('Write a message…')" />
         <div class="mt-2 flex justify-end">
           <button type="button" :disabled="posting" class="rounded-c bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-60" @click="send">
@@ -195,6 +249,17 @@ onBeforeUnmount(() => { if (Echo()) Echo().leave(`conversation.${props.conversat
         </div>
       </div>
     </div>
+
+    <!-- Floating "Quote" button shown over a text selection inside a message. -->
+    <button
+      v-if="quoteTip"
+      type="button"
+      class="fixed z-50 -translate-x-1/2 -translate-y-full rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white shadow-lg hover:bg-ink/90"
+      :style="{ left: quoteTip.x + 'px', top: quoteTip.y + 'px' }"
+      @mousedown.prevent="quoteSelection"
+    >
+      {{ t('Quote') }}
+    </button>
   </AppLayout>
 </template>
 

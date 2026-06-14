@@ -30,6 +30,7 @@ function label(n: Note): string {
   // Generic/extension notifications carry their own pre-rendered text.
   if ((n as any).text) return (n as any).text;
   if (n.type === 'badge') return n.text || t('You earned a badge');
+  if (n.type === 'message') return t('{actor} sent you a message', { actor: n.actor?.name ?? '' });
   if (n.type === 'mention') return t('{actor} mentioned you in {topic}', { actor: n.actor?.name ?? '', topic: n.topic?.title ?? '' });
   if (n.type === 'reaction') return t('{actor} reacted {emoji} to your post', { actor: n.actor?.name ?? '', emoji: n.emoji ?? '' });
   return t('{actor} replied in {topic}', { actor: n.actor?.name ?? '', topic: n.topic?.title ?? '' });

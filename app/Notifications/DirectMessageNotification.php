@@ -22,7 +22,10 @@ class DirectMessageNotification extends Notification
         return [
             'type' => 'message',
             'actor' => Present::avatar($m->user),
-            'topic' => ['title' => __('a message'), 'slug' => ''],
+            // No stored title: the dropdown renders a localized "X sent you a
+            // message" in the VIEWER's language. (A translated title here would
+            // freeze the sender's locale into the notification.)
+            'topic' => ['title' => '', 'slug' => ''],
             'post_id' => $m->id,
             'excerpt' => Present::excerpt($m->body_html, 100),
             'url' => '/messages/'.$m->conversation_id,

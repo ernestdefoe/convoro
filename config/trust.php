@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.0',
+            'date' => '2026-06-14',
+            'title' => 'Messages: reply, quote & translated notifications',
+            'items' => [
+                ['type' => 'new', 'text' => 'Reply and quote in direct messages — tap Reply on any message to quote it, or select text in a message to get a one-tap Quote button, just like the forum.'],
+                ['type' => 'fixed', 'text' => 'Message notifications now read “{name} sent you a message” and show the preview in YOUR language when auto-translate is on — previously the title and preview were stuck in the sender’s language.'],
+                ['type' => 'fixed', 'text' => 'Fixed scrolling in direct messages on mobile — the message list now scrolls smoothly on its own without the page jumping, and the composer stays in view.'],
+            ],
+        ],
+        [
             'tag' => '1.37.1',
             'date' => '2026-06-14',
             'title' => 'Faster marketing pages',
