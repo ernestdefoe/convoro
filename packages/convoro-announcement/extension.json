@@ -1,18 +1,26 @@
 {
-  "id": "convoro-announcement",
-  "name": "Announcement Bar",
-  "version": "1.0.0",
-  "description": "Shows a dismissible announcement on discussion pages. First-party sample demonstrating the Convoro extension system (provider + migration + permission + frontend slot).",
-  "author": "Convoro",
-  "convoro": ">=0.1.0",
-  "namespace": "Convoro\\Ext\\Announcement\\",
-  "provider": "Convoro\\Ext\\Announcement\\Extension",
-  "migrations": "migrations",
-  "permissions": [
-    { "key": "announcement.view", "label": "See announcements", "category": "Announcements", "baseline": true }
-  ],
-  "admin_url": "/admin/ext/announcements",
-  "assets": { "forum": "assets/forum.js" },
-  "premium": false,
-  "price": 0
+    "id": "convoro-announcement",
+    "name": "Announcement Bar",
+    "version": "1.0.0",
+    "description": "Shows a dismissible announcement on discussion pages. First-party sample demonstrating the Convoro extension system (provider + migration + permission + frontend slot).",
+    "author": "Convoro",
+    "convoro": ">=0.1.0",
+    "namespace": "Convoro\\Ext\\Announcement\\",
+    "provider": "Convoro\\Ext\\Announcement\\Extension",
+    "migrations": "migrations",
+    "permissions": [
+        {
+            "key": "announcement.view",
+            "label": "See announcements",
+            "category": "Announcements",
+            "baseline": true
+        }
+    ],
+    "admin_url": "/admin/ext/announcements",
+    "assets": {
+        "forum": "assets/forum.js"
+    },
+    "premium": false,
+    "price": 0,
+    "icon": "icon.svg"
 }

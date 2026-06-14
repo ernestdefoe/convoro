@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.4',
+            'date' => '2026-06-14',
+            'title' => 'Real icons on extension cards + Facebook Auto Post unbundled',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Extension & theme cards (in the Marketplace and the public directory) now show each add-on’s own icon instead of an initials monogram, so they’re easier to recognize at a glance.'],
+                ['type' => 'improved', 'text' => 'Facebook Auto Post is now an installable first-party extension from the store rather than bundled into core, matching the other first-party add-ons.'],
+            ],
+        ],
+        [
             'tag' => '1.38.3',
             'date' => '2026-06-14',
             'title' => 'Leaner pages — every response ~25KB smaller',

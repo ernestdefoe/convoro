@@ -1,14 +1,15 @@
 {
-  "id": "convoro-horizon",
-  "name": "Horizon — Queue Dashboard",
-  "version": "1.0.0",
-  "description": "Laravel Horizon dashboard for monitoring your queue (jobs, throughput, failures, retries). For VPS deployments running Redis + a Horizon worker. Adds an admin-only /horizon dashboard link.",
-  "author": "Convoro",
-  "convoro": ">=0.1.0",
-  "namespace": "Convoro\\Ext\\Horizon\\",
-  "provider": "Convoro\\Ext\\Horizon\\Extension",
-  "permissions": [],
-  "admin_url": "/horizon",
-  "premium": false,
-  "price": 0
+    "id": "convoro-horizon",
+    "name": "Horizon — Queue Dashboard",
+    "version": "1.0.0",
+    "description": "Laravel Horizon dashboard for monitoring your queue (jobs, throughput, failures, retries). For VPS deployments running Redis + a Horizon worker. Adds an admin-only /horizon dashboard link.",
+    "author": "Convoro",
+    "convoro": ">=0.1.0",
+    "namespace": "Convoro\\Ext\\Horizon\\",
+    "provider": "Convoro\\Ext\\Horizon\\Extension",
+    "permissions": [],
+    "admin_url": "/horizon",
+    "premium": false,
+    "price": 0,
+    "icon": "icon.svg"
 }

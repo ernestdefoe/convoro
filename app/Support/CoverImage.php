@@ -26,6 +26,7 @@ class CoverImage
             premium: ! $product->isFree(),
             slug: $product->slug,
             repo: $product->repo ?: ('ernestdefoe/'.$product->slug),
+            icon: self::iconInner((string) $product->package),
         );
 
         $path = 'covers/'.$product->slug.'.svg';
@@ -66,7 +67,31 @@ class CoverImage
         }
     }
 
-    private static function svg(string $name, string $tagline, string $type, bool $premium, string $slug, string $repo): string
+    /**
+     * Inner SVG markup of an installed extension's icon (so the cover can show
+     * a real glyph instead of an initials monogram). Returns null when the
+     * extension ships no icon or isn't installed → caller falls back to the
+     * monogram. currentColor in the icon is resolved to the cover accent.
+     */
+    private static function iconInner(string $package): ?string
+    {
+        if ($package === '') {
+            return null;
+        }
+        $manifest = \App\Support\ExtensionManager::all()[$package] ?? null;
+        $svg = $manifest ? \App\Support\ExtensionManager::iconSvgFor($manifest) : null;
+        if (! $svg) {
+            return null;
+        }
+        // Keep the icon's own fill/stroke (line-art vs filled differ) and its
+        // 24x24 viewBox; just size it to 150px. The caller wraps it in a group
+        // whose `color` resolves the icon's currentColor to the cover accent.
+        $svg = (string) preg_replace('#\s(width|height)="[^"]*"#i', '', $svg);
+
+        return (string) preg_replace('#<svg\b#i', '<svg width="150" height="150"', $svg, 1);
+    }
+
+    private static function svg(string $name, string $tagline, string $type, bool $premium, string $slug, string $repo, ?string $icon = null): string
     {
         $e = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES | ENT_XML1);
         $mono = "'JetBrains Mono', 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace";
@@ -87,6 +112,11 @@ class CoverImage
         $cmd = $e('$ composer require '.$repo);
         $pascal = self::pascal($name);
         $mono2 = self::monogram($name);
+
+        // Prefer the extension's real icon; fall back to an initials monogram.
+        $glyph = $icon
+            ? '<g transform="translate(890,225)" color="'.$accent.'">'.$icon.'</g>'
+            : '<text x="965" y="300" text-anchor="middle" dominant-baseline="central" font-size="150" font-weight="800" font-family="Georgia, \'Times New Roman\', serif" fill="'.$accent.'">'.$mono2.'</text>';
 
         // Description, wrapped to ≤2 lines.
         $descSvg = '';
@@ -129,7 +159,7 @@ class CoverImage
   <text x="64" y="558" font-size="24" font-family="{$mono}" fill="rgba(255,255,255,0.16)">&lt;/convoro.co&gt;<tspan fill="{$accent}"> ▌</tspan></text>
 
   <circle cx="965" cy="300" r="150" fill="url(#rglow)"/>
-  <text x="965" y="300" text-anchor="middle" dominant-baseline="central" font-size="150" font-weight="800" font-family="Georgia, 'Times New Roman', serif" fill="{$accent}">{$mono2}</text>
+  {$glyph}
   <rect x="888" y="392" width="154" height="11" rx="5.5" fill="{$accent}" opacity="0.85"/>
   <rect x="888" y="418" width="100" height="11" rx="5.5" fill="{$accent}" opacity="0.5"/>
 </svg>
