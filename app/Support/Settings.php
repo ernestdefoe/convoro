@@ -70,6 +70,21 @@ class Settings
         'theme.custom_css' => '',            // raw CSS appended after tokens (admin-trusted)
         'site.favicon' => '',                // favicon URL (empty = generated PWA icon / default)
         'widgets.sidebar' => '[]',           // JSON: ordered forum sidebar widgets
+        // Spam, flood & abuse controls (see App\Support\PostGuard). Admins are
+        // always exempt; trusted members skip the flood rules when enabled.
+        'spam.enabled' => true,                       // master switch
+        'spam.exempt_trusted' => true,                // Member+ skip flood/slow/duplicate/first-post
+        'spam.min_seconds_between_posts' => 15,       // global slow-mode floor (0 = off)
+        'spam.new_user_seconds_between_posts' => 30,  // stricter floor for New (level 0) accounts
+        'spam.max_posts_per_hour' => 30,              // hourly reply/post cap (0 = off)
+        'spam.max_topics_per_hour' => 6,              // hourly new-topic cap (0 = off)
+        'spam.duplicate_minutes' => 60,               // block identical reposts within N min (0 = off)
+        'spam.max_links' => 0,                        // max links per post (0 = unlimited)
+        'spam.banned_words' => '',                    // newline/comma list — blocked or held
+        'spam.banned_domains' => '',                  // newline/comma list of link domains
+        'spam.content_action' => 'block',             // block | hold — for banned words/domains/links
+        'spam.first_post_approval' => false,          // hold a new member's first posts for review
+        'spam.first_post_count' => 1,                 // how many initial posts to hold
     ];
 
     /** @return array<string, mixed> */

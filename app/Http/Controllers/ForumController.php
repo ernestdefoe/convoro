@@ -49,7 +49,7 @@ class ForumController extends Controller
         $sort = in_array($request->query('sort'), ['recent', 'popular', 'title']) ? $request->query('sort') : 'recent';
         $categorySlug = $request->query('category');
 
-        $query = Topic::query()
+        $query = Topic::query()->visible()
             ->with(['user.groups', 'category', 'tags', 'firstPost.reactions'])
             ->when($categorySlug, fn ($q) => $q->whereHas('category', fn ($c) => $c->where('slug', $categorySlug)));
 
@@ -124,12 +124,12 @@ class ForumController extends Controller
 
         // Trending: most-active topics by replies; fall back to most-viewed so an
         // early forum (nothing replied to yet) still shows something.
-        $trending = Topic::query()->with('category')
+        $trending = Topic::query()->visible()->with('category')
             ->where('reply_count', '>', 0)
             ->orderByDesc('reply_count')->orderByDesc('view_count')
             ->limit(5)->get();
         if ($trending->isEmpty()) {
-            $trending = Topic::query()->with('category')->orderByDesc('view_count')->limit(5)->get();
+            $trending = Topic::query()->visible()->with('category')->orderByDesc('view_count')->limit(5)->get();
         }
 
         return [

@@ -24,7 +24,7 @@ class SitemapController extends Controller
             $add(url('/?category='.$c->slug), null, 'daily', '0.6');
         }
 
-        Topic::query()->latest('last_post_at')->limit(5000)->get(['slug', 'updated_at'])
+        Topic::query()->visible()->latest('last_post_at')->limit(5000)->get(['slug', 'updated_at'])
             ->each(fn (Topic $t) => $add(url('/t/'.$t->slug), optional($t->updated_at)->toAtomString(), 'weekly', '0.7'));
 
         User::query()->limit(5000)->get(['id', 'updated_at'])

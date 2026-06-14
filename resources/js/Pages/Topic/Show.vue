@@ -469,6 +469,11 @@ function submitReply() {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6" /></svg> {{ tr('Back to Community') }}
       </Link>
 
+      <div v-if="topic.pending" class="mb-4 flex items-center gap-2 rounded-c border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm font-semibold text-amber-700 dark:text-amber-400">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>
+        {{ tr('Awaiting moderator approval — only you and the moderators can see this for now.') }}
+      </div>
+
       <!-- Blog-style opening post -->
       <article :id="firstPost ? 'post-' + firstPost.id : undefined" class="q-post scroll-mt-24 rounded-c border border-line bg-surface shadow-sm" :class="menuFor === (firstPost?.id ?? -1) ? 'relative z-30' : 'overflow-hidden'" :style="firstPost?.author?.staff ? { borderLeftWidth: '4px', borderLeftColor: firstPost.author.staff.color } : {}">
         <img v-if="topic.cover" :src="topic.cover" alt="" class="h-56 w-full object-cover sm:h-72" />

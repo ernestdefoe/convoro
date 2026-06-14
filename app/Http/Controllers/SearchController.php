@@ -52,7 +52,7 @@ class SearchController extends Controller
         // Run the search when there's a query OR at least one filter (filters alone
         // turn the page into a browse-by-category/author/date tool).
         if ($rankedIds !== null || $hasFilters) {
-            $query = Topic::with(['user', 'category', 'tags', 'firstPost.reactions'])
+            $query = Topic::query()->visible()->with(['user', 'category', 'tags', 'firstPost.reactions'])
                 ->when($rankedIds !== null, fn ($qq) => $qq->whereIn('id', $rankedIds ?: [0]))
                 ->when($category !== '', fn ($qq) => $qq->whereHas('category', fn ($c) => $c->where('slug', $category)))
                 ->when($author !== '', function ($qq) use ($author) {

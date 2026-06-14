@@ -47,7 +47,7 @@ class UserProfileController extends Controller
     {
         $actorId = $request->user()?->id;
 
-        $recentTopics = $user->topics()->latest()->limit(8)->get()
+        $recentTopics = $user->topics()->visible()->latest()->limit(8)->get()
             ->map(fn ($t) => ['title' => $t->title, 'url' => '/t/'.$t->slug, 'when' => optional($t->created_at)->diffForHumans()]);
 
         $wall = $user->profilePosts()->with('author')->latest()->limit(30)->get()

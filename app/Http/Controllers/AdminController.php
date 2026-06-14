@@ -711,6 +711,7 @@ class AdminController extends Controller
                 ->map(fn ($c) => [
                     'id' => $c->id, 'name' => $c->name, 'slug' => $c->slug, 'description' => $c->description,
                     'icon' => $c->icon, 'color' => $c->color, 'position' => $c->position, 'topics' => $c->topics_count,
+                    'slow_mode' => (int) ($c->slow_mode ?? 0),
                 ]),
             'tags' => Tag::orderBy('name')->withCount('topics')->get()
                 ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'slug' => $t->slug, 'color' => $t->color, 'topics' => $t->topics_count]),
@@ -736,7 +737,9 @@ class AdminController extends Controller
             'description' => ['nullable', 'string', 'max:200'],
             'icon' => ['nullable', 'string', 'max:40'],
             'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'slow_mode' => ['nullable', 'integer', 'min:0', 'max:86400'],
         ]);
+        $data['slow_mode'] = (int) ($data['slow_mode'] ?? 0);
         $data['slug'] = $this->uniqueSlug(Category::class, $data['name']);
         $data['position'] = (int) (Category::max('position') ?? 0) + 1;
         Category::create($data);
@@ -752,7 +755,9 @@ class AdminController extends Controller
             'icon' => ['nullable', 'string', 'max:40'],
             'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'position' => ['nullable', 'integer', 'min:0'],
+            'slow_mode' => ['nullable', 'integer', 'min:0', 'max:86400'],
         ]);
+        $data['slow_mode'] = (int) ($data['slow_mode'] ?? 0);
         $data['slug'] = $this->uniqueSlug(Category::class, $data['name'], $category->id);
         $category->update($data);
 
@@ -1128,6 +1133,67 @@ class AdminController extends Controller
             'trust.gate_new_users' => (bool) $data['trust_gate_new_users'],
             'mail.reply_enabled' => (bool) $data['reply_enabled'],
             'mail.reply_domain' => strtolower(trim((string) ($data['reply_domain'] ?? ''))),
+        ]);
+
+        return back();
+    }
+
+    /** Spam, flood & abuse controls. */
+    public function spamFlood(): Response
+    {
+        return Inertia::render('Admin/SpamFlood', [
+            'values' => [
+                'enabled' => (bool) Settings::get('spam.enabled', true),
+                'exempt_trusted' => (bool) Settings::get('spam.exempt_trusted', true),
+                'min_seconds' => (int) Settings::get('spam.min_seconds_between_posts', 15),
+                'new_user_seconds' => (int) Settings::get('spam.new_user_seconds_between_posts', 30),
+                'max_posts_per_hour' => (int) Settings::get('spam.max_posts_per_hour', 30),
+                'max_topics_per_hour' => (int) Settings::get('spam.max_topics_per_hour', 6),
+                'duplicate_minutes' => (int) Settings::get('spam.duplicate_minutes', 60),
+                'max_links' => (int) Settings::get('spam.max_links', 0),
+                'banned_words' => (string) Settings::get('spam.banned_words', ''),
+                'banned_domains' => (string) Settings::get('spam.banned_domains', ''),
+                'content_action' => (string) Settings::get('spam.content_action', 'block'),
+                'first_post_approval' => (bool) Settings::get('spam.first_post_approval', false),
+                'first_post_count' => (int) Settings::get('spam.first_post_count', 1),
+            ],
+            'pending' => \App\Models\Topic::query()->where('hidden', true)->count()
+                + \App\Models\Post::where('hidden', true)->where('is_first', false)->count(),
+        ]);
+    }
+
+    public function updateSpamFlood(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'enabled' => ['required', 'boolean'],
+            'exempt_trusted' => ['required', 'boolean'],
+            'min_seconds' => ['required', 'integer', 'min:0', 'max:3600'],
+            'new_user_seconds' => ['required', 'integer', 'min:0', 'max:3600'],
+            'max_posts_per_hour' => ['required', 'integer', 'min:0', 'max:1000'],
+            'max_topics_per_hour' => ['required', 'integer', 'min:0', 'max:500'],
+            'duplicate_minutes' => ['required', 'integer', 'min:0', 'max:1440'],
+            'max_links' => ['required', 'integer', 'min:0', 'max:100'],
+            'banned_words' => ['nullable', 'string', 'max:10000'],
+            'banned_domains' => ['nullable', 'string', 'max:10000'],
+            'content_action' => ['required', 'in:block,hold'],
+            'first_post_approval' => ['required', 'boolean'],
+            'first_post_count' => ['required', 'integer', 'min:1', 'max:50'],
+        ]);
+
+        Settings::setMany([
+            'spam.enabled' => (bool) $data['enabled'],
+            'spam.exempt_trusted' => (bool) $data['exempt_trusted'],
+            'spam.min_seconds_between_posts' => (int) $data['min_seconds'],
+            'spam.new_user_seconds_between_posts' => (int) $data['new_user_seconds'],
+            'spam.max_posts_per_hour' => (int) $data['max_posts_per_hour'],
+            'spam.max_topics_per_hour' => (int) $data['max_topics_per_hour'],
+            'spam.duplicate_minutes' => (int) $data['duplicate_minutes'],
+            'spam.max_links' => (int) $data['max_links'],
+            'spam.banned_words' => trim((string) ($data['banned_words'] ?? '')),
+            'spam.banned_domains' => trim((string) ($data['banned_domains'] ?? '')),
+            'spam.content_action' => $data['content_action'],
+            'spam.first_post_approval' => (bool) $data['first_post_approval'],
+            'spam.first_post_count' => (int) $data['first_post_count'],
         ]);
 
         return back();

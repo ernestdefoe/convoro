@@ -81,7 +81,19 @@ class TopicController extends Controller
         }
         abort_if(trim(strip_tags($data['body_html'])) === '', 422, __('The post body is empty.'));
 
-        $topic = \App\Support\TopicPublisher::publish($request->user(), $data, $request->ip());
+        // Spam, flood & slow-mode controls.
+        $category = ! empty($data['category_id']) ? \App\Models\Category::find($data['category_id']) : null;
+        $guard = \App\Support\PostGuard::inspect($request->user(), $data['body_html'], 'topic', $category);
+        abort_if($guard['block'], 422, $guard['message'] ?? __('Your topic was blocked.'));
+
+        $topic = \App\Support\TopicPublisher::publish($request->user(), $data, $request->ip(), $guard['hold']);
+
+        // Held for review — file it to the mod queue and tell the author.
+        if ($guard['hold']) {
+            \App\Support\PostGuard::report($topic->firstPost, $guard['reason']);
+
+            return redirect()->route('forum.index')->with('status', $guard['message']);
+        }
 
         // Publishing from a saved draft removes it; the rolling autosave is
         // always cleared once the topic is live.
@@ -129,11 +141,16 @@ class TopicController extends Controller
 
     public function show(Topic $topic): Response
     {
-        $topic->increment('view_count');
-        $topic->load(['user', 'category', 'tags', 'posts.user.groups', 'posts.reactions', 'poll.options']);
         $actor = auth()->user();
         $actor?->loadMissing('groups');
         $actorId = $actor?->id;
+
+        // A topic held for moderator approval is visible only to its author and
+        // admins (who see a "pending review" banner); everyone else gets a 404.
+        abort_if($topic->hidden && ! ($actor && ($actor->is_admin || (int) $actorId === (int) $topic->user_id)), 404);
+
+        $topic->increment('view_count');
+        $topic->load(['user', 'category', 'tags', 'posts.user.groups', 'posts.reactions', 'poll.options']);
 
         // Work out where the member left off BEFORE we move their read marker,
         // so the page can jump to the first reply they haven't seen yet.
@@ -177,6 +194,7 @@ class TopicController extends Controller
                 'tagIds' => $topic->tags->pluck('id'),
                 'replyCount' => $topic->reply_count,
                 'viewCount' => $topic->view_count,
+                'pending' => (bool) $topic->hidden,
             ],
             'posts' => $topic->posts->sortBy('created_at')
                 // Posts held by the AI moderation copilot are hidden from everyone

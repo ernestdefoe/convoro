@@ -112,6 +112,13 @@ class ModerationController extends Controller
     public function approvePost(Post $post): RedirectResponse
     {
         $post->forceFill(['hidden' => false])->saveQuietly();
+
+        // Approving a held opening post also publishes its (held) topic so it
+        // re-enters the listings, and bumps the activity timestamp.
+        if ($post->is_first && $post->topic && $post->topic->hidden) {
+            $post->topic->forceFill(['hidden' => false, 'last_post_at' => now()])->saveQuietly();
+        }
+
         Report::where('reportable_type', 'post')->where('reportable_id', $post->id)
             ->where('status', 'open')
             ->update(['status' => 'resolved', 'resolved_by' => request()->user()->id, 'resolved_at' => now()]);

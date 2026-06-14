@@ -56,14 +56,14 @@ class FederationController extends Controller
         $this->guard();
         abort_if($user->is_federated, 404);
         $base = Federation::base();
-        $topics = Topic::with('firstPost')->where('user_id', $user->id)->latest()->limit(20)->get()
+        $topics = Topic::query()->visible()->with('firstPost')->where('user_id', $user->id)->latest()->limit(20)->get()
             ->map(fn (Topic $t) => Federation::createActivityForTopic($t))->all();
 
         return $this->ap([
             '@context' => 'https://www.w3.org/ns/activitystreams',
             'id' => $base.'/u/'.$user->id.'/outbox',
             'type' => 'OrderedCollection',
-            'totalItems' => Topic::where('user_id', $user->id)->count(),
+            'totalItems' => Topic::query()->visible()->where('user_id', $user->id)->count(),
             'orderedItems' => $topics,
         ]);
     }
@@ -130,7 +130,7 @@ class FederationController extends Controller
     public function outbox(): JsonResponse
     {
         $this->guard();
-        $items = Topic::with('firstPost')->latest()->limit(20)->get()
+        $items = Topic::query()->visible()->with('firstPost')->latest()->limit(20)->get()
             ->map(fn (Topic $t) => Federation::createActivityForTopic($t))->all();
 
         return $this->ap([

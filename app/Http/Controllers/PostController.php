@@ -34,13 +34,26 @@ class PostController extends Controller
         }
         abort_if(trim(strip_tags($html)) === '', 422, __('Empty post.'));
 
+        // Spam, flood & slow-mode controls.
+        $guard = \App\Support\PostGuard::inspect($request->user(), $html, 'reply', $topic->category);
+        abort_if($guard['block'], 422, $guard['message'] ?? __('Your post was blocked.'));
+
         $post = Post::create([
             'topic_id' => $topic->id,
             'user_id' => $request->user()->id,
             'ip_address' => $request->ip(),
             'body_html' => $html,
             'body_json' => $data['body_json'] ?? null,
+            'hidden' => $guard['hold'],
         ]);
+
+        // A held post is invisible until a moderator approves it — log it for the
+        // mod queue and skip the counters, broadcast, notifications and fedi-out.
+        if ($guard['hold']) {
+            \App\Support\PostGuard::report($post, $guard['reason']);
+
+            return back()->with('status', $guard['message']);
+        }
 
         $topic->increment('reply_count');
         $topic->update(['last_post_at' => now()]);

@@ -294,6 +294,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/moderation/ip-bans', [App\Http\Controllers\ModerationController::class, 'banIp'])->name('moderation.ip.ban');
     Route::delete('/moderation/ip-bans/{ipBan}', [App\Http\Controllers\ModerationController::class, 'unbanIp'])->name('moderation.ip.unban');
 
+    // Spam, flood & abuse controls
+    Route::get('/spam-flood', [App\Http\Controllers\AdminController::class, 'spamFlood'])->name('spam-flood');
+    Route::post('/spam-flood', [App\Http\Controllers\AdminController::class, 'updateSpamFlood'])->name('spam-flood.update');
+
     Route::get('/settings', [App\Http\Controllers\AdminController::class, 'settings'])->name('settings');
     Route::post('/settings', [App\Http\Controllers\AdminController::class, 'updateSettings'])->name('settings.update');
     Route::post('/settings/mobile-nav', [App\Http\Controllers\AdminController::class, 'updateMobileNav'])->name('settings.mobile-nav');

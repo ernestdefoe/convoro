@@ -5,24 +5,24 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { t as tr } from '@/lib/i18n';
 
 defineProps<{
-  categories: { id: number; name: string; slug: string; description: string | null; icon: string | null; color: string; position: number; topics: number }[];
+  categories: { id: number; name: string; slug: string; description: string | null; icon: string | null; color: string; position: number; topics: number; slow_mode: number }[];
   tags: { id: number; name: string; slug: string; color: string; topics: number }[];
 }>();
 
 const opts = { preserveScroll: true };
 
 // --- Categories ---
-const newCat = reactive({ name: '', icon: '', color: '#5b5bd6', description: '' });
+const newCat = reactive({ name: '', icon: '', color: '#5b5bd6', description: '', slow_mode: 0 });
 const editCatId = ref<number | null>(null);
-const catBuf = reactive({ name: '', icon: '', color: '#5b5bd6', description: '' });
+const catBuf = reactive({ name: '', icon: '', color: '#5b5bd6', description: '', slow_mode: 0 });
 
 function addCategory() {
   if (!newCat.name.trim()) return;
-  router.post('/admin/categories', { ...newCat }, { ...opts, onSuccess: () => Object.assign(newCat, { name: '', icon: '', color: '#5b5bd6', description: '' }) });
+  router.post('/admin/categories', { ...newCat }, { ...opts, onSuccess: () => Object.assign(newCat, { name: '', icon: '', color: '#5b5bd6', description: '', slow_mode: 0 }) });
 }
 function startCat(c: any) {
   editCatId.value = c.id;
-  Object.assign(catBuf, { name: c.name, icon: c.icon ?? '', color: c.color, description: c.description ?? '' });
+  Object.assign(catBuf, { name: c.name, icon: c.icon ?? '', color: c.color, description: c.description ?? '', slow_mode: c.slow_mode ?? 0 });
 }
 function saveCat() {
   router.put(`/admin/categories/${editCatId.value}`, { ...catBuf }, { ...opts, onSuccess: () => (editCatId.value = null) });
@@ -87,6 +87,10 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
               </div>
               <input v-model="catBuf.icon" :class="inp" class="mt-2 w-full font-mono" :placeholder="tr('Font Awesome class — e.g. fa-solid fa-rocket')" />
               <input v-model="catBuf.description" :class="inp" class="mt-2 w-full" :placeholder="tr('Description (optional)')" />
+              <label class="mt-2 flex items-center gap-2 text-xs text-ink-muted">
+                <span>{{ tr('Slow mode — seconds between posts in this category (0 = off)') }}</span>
+                <input v-model.number="catBuf.slow_mode" type="number" min="0" max="86400" :class="inp" class="w-24" />
+              </label>
             </template>
             <div v-else class="flex items-center gap-3">
               <span class="flex h-8 w-8 items-center justify-center rounded-lg text-base" :style="{ color: c.color, background: c.color + '22' }">

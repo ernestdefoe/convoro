@@ -16,8 +16,11 @@ class TopicPublisher
 {
     /**
      * @param  array{title:string,body_html:string,body_json?:?string,category_id?:?int,tags?:array,cover?:?string,poll?:?array}  $data
+     * @param  bool  $hold  Hold the new topic for moderator approval — it's hidden
+     *                      from every listing and skips all outbound side effects
+     *                      (notifications, federation, auto-answer) until approved.
      */
-    public static function publish(User $user, array $data, ?string $ip = null): Topic
+    public static function publish(User $user, array $data, ?string $ip = null, bool $hold = false): Topic
     {
         $slug = (Str::slug($data['title']) ?: 'topic').'-'.Str::lower(Str::random(6));
 
@@ -28,6 +31,7 @@ class TopicPublisher
             'category_id' => $data['category_id'] ?? null,
             'cover_image' => $data['cover'] ?? null,
             'last_post_at' => now(),
+            'hidden' => $hold,
         ]);
 
         $firstPost = $topic->posts()->create([
@@ -36,6 +40,7 @@ class TopicPublisher
             'body_html' => $data['body_html'],
             'body_json' => $data['body_json'] ?? null,
             'is_first' => true,
+            'hidden' => $hold,
         ]);
 
         if (! empty($data['tags'])) {
@@ -54,6 +59,12 @@ class TopicPublisher
                 ]);
                 $options->each(fn ($text, $i) => $pollModel->options()->create(['text' => $text, 'position' => $i]));
             }
+        }
+
+        // A held topic is invisible pending approval — don't notify anyone,
+        // auto-answer, federate or fire the published hook until it's approved.
+        if ($hold) {
+            return $topic;
         }
 
         // If the opening post @mentions the assistant, answer that explicitly

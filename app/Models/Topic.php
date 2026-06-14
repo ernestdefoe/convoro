@@ -14,7 +14,10 @@ class Topic extends Model {
         'is_pinned' => 'boolean',
         'is_locked' => 'boolean',
         'is_live' => 'boolean',
+        'hidden' => 'boolean',
     ];
+    /** Exclude topics held for moderator approval from public listings. */
+    public function scopeVisible($q) { return $q->where($this->getTable().'.hidden', false); }
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function category(): BelongsTo { return $this->belongsTo(Category::class); }
     public function posts(): HasMany { return $this->hasMany(Post::class); }

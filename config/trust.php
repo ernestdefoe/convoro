@@ -10,6 +10,18 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.37.0',
+            'date' => '2026-06-14',
+            'title' => 'Spam, flood & abuse controls',
+            'items' => [
+                ['type' => 'new', 'text' => 'Slow mode — set a minimum gap between a member’s posts site-wide, with a stricter gap for brand-new accounts, plus a per-category cooldown you set when editing a category. Great for keeping busy threads readable.'],
+                ['type' => 'new', 'text' => 'Flood protection — hourly caps on posts and new topics, and automatic blocking of identical reposts within a window you choose.'],
+                ['type' => 'new', 'text' => 'Content filters — a banned words/phrases list and a banned link-domains list (subdomains included), plus an optional max-links-per-post limit. Choose whether a match is blocked outright or quietly held for a moderator.'],
+                ['type' => 'new', 'text' => 'First-post approval — hold a new member’s first post(s) for review. Held posts and topics are hidden from everyone but their author and the moderators, and appear in Moderation to approve in one click.'],
+                ['type' => 'new', 'text' => 'A new admin “Spam & flood” page brings it all together. Administrators are always exempt, and you can exempt trusted members from the flood limits too.'],
+            ],
+        ],
+        [
             'tag' => '1.36.6',
             'date' => '2026-06-14',
             'title' => 'Extension icons & covers refresh themselves',
@@ -1126,15 +1138,10 @@ return [
             'Grounded “support mode” — the assistant answers strictly from your knowledge base, with inline citations',
             'Expanded audit log — extension install/enable/disable and group changes are now recorded too',
             'Reply auto-save — replies are kept as you type too, and restored if you come back',
+            'Spam, flood & abuse controls — slow mode, per-category cooldowns, hourly limits, duplicate-post blocking, banned words & link domains, and first-post approval',
         ],
-        'now' => [
-            'Spam & abuse controls — first-post approval & per-category rate limits',
-        ],
-        'next' => [
-            'Slow mode & flood protection for busy threads',
-        ],
-        'later' => [
-            'Managed hosting — spin up a fully-managed Convoro community without running a server',
-        ],
+        'now' => [],
+        'next' => [],
+        'later' => [],
     ],
 ];
