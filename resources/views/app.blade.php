@@ -68,6 +68,7 @@
         <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'Convoro') }}">
         @php($iconRev = \App\Support\Settings::get('icons.rev', config('convoro.version', '1')))
         <link rel="icon" href="/favicon.ico?v={{ $iconRev }}" sizes="any">
+        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v={{ $iconRev }}">
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v={{ $iconRev }}">
         <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png?v={{ $iconRev }}">
 

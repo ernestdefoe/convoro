@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.12',
+            'date' => '2026-06-14',
+            'title' => 'Matching favicon + app icons',
+            'items' => [
+                ['type' => 'improved', 'text' => 'The browser tab favicon and installed-app (PWA) icons now use the Convoro speech-bubble mark, matching the logo across the marketing site and the forum.'],
+            ],
+        ],
+        [
             'tag' => '1.38.11',
             'date' => '2026-06-14',
             'title' => 'Refreshed Convoro logo',
