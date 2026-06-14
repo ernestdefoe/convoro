@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.3',
+            'date' => '2026-06-14',
+            'title' => 'Leaner pages — every response ~25KB smaller',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Every page was shipping the full list of ~360 internal routes (~26KB) in its HTML; now only the handful the frontend actually uses are included (~1KB). Pages are smaller and a little quicker to build and parse, across every install.'],
+            ],
+        ],
+        [
             'tag' => '1.38.2',
             'date' => '2026-06-14',
             'title' => 'Icon & quote-button polish',
