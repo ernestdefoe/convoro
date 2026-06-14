@@ -7,23 +7,32 @@ withDefaults(defineProps<{ size?: number; showWord?: boolean }>(), {
 
 <template>
   <span class="inline-flex items-center gap-2.5 font-extrabold tracking-tight text-ink">
-    <!-- Brand mark: indigo→violet tile with a white speech bubble + typing dots. -->
-    <span
-      class="q-grad grid shrink-0 place-items-center rounded-[28%] shadow-lg shadow-primary/40"
-      :style="{ width: size + 'px', height: size + 'px' }"
+    <!-- Brand mark: an indigo→violet speech bubble with a pointed tail and three
+         white "typing" dots. Matches the Convoro logo artwork. The gradient uses
+         userSpaceOnUse so it stays continuous across the bubble + tail. -->
+    <svg
+      :width="size * 1.04"
+      :height="size"
+      viewBox="0 0 40 40"
+      fill="none"
+      aria-hidden="true"
+      class="shrink-0"
     >
-      <svg viewBox="0 0 24 24" fill="none" :width="size * 0.64" :height="size * 0.64" aria-hidden="true">
-        <!-- Rounded speech bubble with a tail at the bottom-left -->
-        <path
-          d="M5 4.5 h14 a3 3 0 0 1 3 3 v6 a3 3 0 0 1 -3 3 h-8.4 l-4.6 3.5 v-3.5 h-1 a3 3 0 0 1 -3 -3 v-6 a3 3 0 0 1 3 -3 z"
-          fill="#ffffff"
-        />
-        <!-- Typing-indicator dots -->
-        <circle cx="8.6" cy="10.5" r="1.35" fill="#4f46e5" />
-        <circle cx="12" cy="10.5" r="1.35" fill="#4f46e5" />
-        <circle cx="15.4" cy="10.5" r="1.35" fill="#4f46e5" />
-      </svg>
-    </span>
+      <defs>
+        <linearGradient id="convoro-bubble" gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="36" y2="38">
+          <stop offset="0" stop-color="#6E5DEA" />
+          <stop offset="1" stop-color="#4632C6" />
+        </linearGradient>
+      </defs>
+      <!-- Rounded bubble body -->
+      <rect x="2" y="3" width="36" height="24" rx="8.5" fill="url(#convoro-bubble)" />
+      <!-- Pointed tail, bottom-left -->
+      <path d="M11 25.5 H20 L8.5 38 Z" fill="url(#convoro-bubble)" />
+      <!-- Typing-indicator dots -->
+      <circle cx="13" cy="15" r="2.8" fill="#ffffff" />
+      <circle cx="20" cy="15" r="2.8" fill="#ffffff" />
+      <circle cx="27" cy="15" r="2.8" fill="#ffffff" />
+    </svg>
     <span v-if="showWord" class="text-[1.25rem]">Convoro</span>
   </span>
 </template>

@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.11',
+            'date' => '2026-06-14',
+            'title' => 'Refreshed Convoro logo',
+            'items' => [
+                ['type' => 'improved', 'text' => 'The Convoro logo is now the indigo speech-bubble mark with the pointed tail, used consistently across the header, footer, sign-in and onboarding screens.'],
+            ],
+        ],
+        [
             'tag' => '1.38.10',
             'date' => '2026-06-14',
             'title' => 'Extension detail page shows the real icon',
