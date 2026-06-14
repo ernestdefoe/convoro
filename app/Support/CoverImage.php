@@ -17,6 +17,13 @@ class CoverImage
     /** Build + store the cover, set $product->image, and persist. Returns the URL. */
     public static function generate(Product $product): ?string
     {
+        // Respect a custom cover an extension ships itself (its own branded
+        // /ext-asset SVG, e.g. Facebook Auto Post) — never overwrite it with a
+        // generated one, even from the admin "Generate covers" button.
+        if (is_string($product->image) && str_starts_with($product->image, '/ext-asset/')) {
+            return $product->image;
+        }
+
         $meta = self::githubMeta($product);
 
         $svg = self::svg(
@@ -33,8 +40,11 @@ class CoverImage
         Storage::disk('public')->put($path, $svg, 'public');
 
         // Store a HOST-RELATIVE url so covers work on any domain (the absolute
-        // url baked in whatever APP_URL happened to be at generation time).
-        $url = '/storage/'.$path;
+        // url baked in whatever APP_URL happened to be at generation time). The
+        // ?v=<content-hash> busts the browser cache when a cover changes (the
+        // path stays the same on regenerate, so cards would otherwise show a
+        // stale icon/colour).
+        $url = '/storage/'.$path.'?v='.substr(md5($svg), 0, 8);
         $product->forceFill(['image' => $url])->save();
 
         return $url;
