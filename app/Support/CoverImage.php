@@ -94,11 +94,17 @@ class CoverImage
             return null;
         }
         // Keep the icon's own fill/stroke (line-art vs filled differ) and its
-        // 24x24 viewBox; just size it to 150px. The caller wraps it in a group
-        // whose `color` resolves the icon's currentColor to the cover accent.
-        $svg = (string) preg_replace('#\s(width|height)="[^"]*"#i', '', $svg);
+        // 24x24 viewBox; just size it to 150px. Only touch the OPENING <svg>
+        // tag — stripping width/height globally would also wipe them off every
+        // <rect> in the icon, collapsing rectangles to zero size (they'd vanish;
+        // a server/grid icon would render as nothing or a stray dot). The caller
+        // wraps the result in a group whose `color` resolves currentColor to the
+        // cover accent.
+        return (string) preg_replace_callback('#<svg\b[^>]*>#i', function ($m) {
+            $tag = preg_replace('#\s(width|height)="[^"]*"#i', '', $m[0]);
 
-        return (string) preg_replace('#<svg\b#i', '<svg width="150" height="150"', $svg, 1);
+            return (string) preg_replace('#<svg\b#i', '<svg width="150" height="150"', $tag, 1);
+        }, $svg, 1);
     }
 
     private static function svg(string $name, string $tagline, string $type, bool $premium, string $slug, string $repo, ?string $icon = null): string
