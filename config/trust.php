@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.6',
+            'date' => '2026-06-14',
+            'title' => 'Extension card icons & covers cleanup',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'Facebook Auto Post’s card is its branded blue cover again, and the cover generator no longer overwrites an extension’s own custom cover.'],
+                ['type' => 'fixed', 'text' => 'Added icons to the Member Badges and RSS cards, and cover images now refresh correctly after a change (no more stale cached card showing the old initials).'],
+            ],
+        ],
+        [
             'tag' => '1.38.5',
             'date' => '2026-06-14',
             'title' => 'Fix: admin Members page error',
