@@ -104,17 +104,36 @@ class ExtensionManager
         return base_path('bootstrap/cache/convoro-extensions.php');
     }
 
-    /** Cheap fingerprint of the extension roots — changes when one is added/removed. */
+    /**
+     * Fingerprint of the extension roots. Changes when an extension is added or
+     * removed (root dir mtime) AND when files change *inside* an existing
+     * extension — its dir mtime catches added/removed assets (icon.svg,
+     * cover.svg, bundles) and its extension.json mtime catches manifest edits
+     * (a new icon/cover/version field). This keeps the compiled cache truly
+     * self-healing: a deploy that drops a new icon into an existing extension
+     * invalidates it on the very next request, with no manual cache clear.
+     *
+     * Stat-only (no file reads / JSON parsing), so it stays cheap enough to run
+     * on every request while still skipping the expensive manifest re-scan.
+     */
     private static function signature(): string
     {
         $parts = [];
         foreach (self::roots() as $root) {
-            $parts[] = is_dir($root) ? (string) @filemtime($root) : '0';
+            if (! is_dir($root)) {
+                $parts[] = '0';
+
+                continue;
+            }
+            $parts[] = (string) @filemtime($root);
+            foreach (File::directories($root) as $dir) {
+                $parts[] = basename($dir).':'.(@filemtime($dir) ?: '0').':'.(@filemtime($dir.'/extension.json') ?: '0');
+            }
         }
         $installed = base_path('vendor/composer/installed.json');
         $parts[] = is_file($installed) ? (string) @filemtime($installed) : '0';
 
-        return implode('-', $parts);
+        return md5(implode('|', $parts));
     }
 
     /** Best-effort write of the compiled manifest. Silently no-ops if not writable. */

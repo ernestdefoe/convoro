@@ -62,6 +62,11 @@ sudo chown -R www-data:www-data \
 [ -d "$APP/lang" ] && sudo chown -R www-data:www-data "$APP/lang" || true
 cd "$APP"
 sudo -u www-data php artisan migrate --force
+# Drop the compiled extension manifest so newly-shipped extension files (icons,
+# covers, manifest edits) are picked up immediately — tar restores old mtimes,
+# which can otherwise leave the mtime-keyed cache looking fresh. Rebuilt lazily
+# on the next request.
+sudo -u www-data rm -f bootstrap/cache/convoro-extensions.php
 sudo -u www-data php artisan config:cache
 sudo -u www-data php artisan route:cache
 sudo -u www-data php artisan view:cache

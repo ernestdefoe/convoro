@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.36.6',
+            'date' => '2026-06-14',
+            'title' => 'Extension icons & covers refresh themselves',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'When an extension ships a new icon, cover, or updated details, the admin shows them immediately — the extension cache now notices changes inside an extension, not just when one is added or removed. No more manual cache clear after an update.'],
+            ],
+        ],
+        [
             'tag' => '1.36.5',
             'date' => '2026-06-14',
             'title' => 'Connect several accounts + extension covers',
