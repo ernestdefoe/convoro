@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link, usePage } from '@inertiajs/vue3';
+import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import MarketingLayout from '@/Layouts/MarketingLayout.vue';
 import { t } from '@/lib/i18n';
@@ -11,11 +11,10 @@ const getStartedUrl = computed(() => props.getStartedUrl ?? '/get-started');
 function planUrl(id?: string) { return getStartedUrl.value + (id ? `?plan=${id}` : ''); }
 function selfHostUrl() { return getStartedUrl.value + '?mode=self'; }
 
-// When on-demand demos are enabled, the CTA invites a personal demo request;
-// otherwise it links to the shared one-click demo.
-const demoRequests = computed(() => Boolean((usePage().props as any).demoRequests));
-const demoHref = computed(() => (demoRequests.value ? '/request-demo' : 'https://demo.convoro.co/demo'));
-const demoLabel = computed(() => (demoRequests.value ? t('Request a demo') : t('Try the live demo')));
+// The CTA always invites a personal, on-demand demo request — the old shared
+// one-click demo (demo.convoro.co) was retired in favour of per-request demos.
+const demoHref = computed(() => '/request-demo');
+const demoLabel = computed(() => t('Request a demo'));
 
 // Duplicate the list so the marquee can scroll seamlessly (only when there's
 // enough to scroll); a short list just centers.
