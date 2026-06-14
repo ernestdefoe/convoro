@@ -669,6 +669,9 @@ class AdminController extends Controller
                 'settings' => $m['settings'],
                 'values' => \App\Support\ExtensionManager::settingValues($m['id']),
                 'adminUrl' => $m['admin_url'],
+                // The extension's own icon (inline SVG) — shown instead of a
+                // generic puzzle tile; null → monogram-initial fallback.
+                'icon' => \App\Support\ExtensionManager::iconSvgFor($m),
             ],
         ]);
     }

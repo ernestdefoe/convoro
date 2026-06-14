@@ -205,7 +205,7 @@ const stack = [
           <Link v-for="(p, i) in loop" :key="p.slug + '-' + i" :href="`/extensions/${p.slug}`"
             class="marquee-card group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition hover:shadow-lg hover:shadow-black/5">
             <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" class="aspect-[2/1] w-full object-cover" />
-            <div v-else class="grid aspect-[2/1] w-full place-items-center bg-primary/10 text-4xl">{{ p.type === 'theme' ? '🎨' : '🧩' }}</div>
+            <div v-else class="grid aspect-[2/1] w-full place-items-center bg-primary/10 text-4xl font-extrabold text-primary">{{ (p.name || '?').charAt(0).toUpperCase() }}</div>
             <div class="flex flex-1 flex-col p-5">
               <div class="flex items-center gap-2">
                 <h3 class="truncate font-bold group-hover:text-primary">{{ p.name }}</h3>

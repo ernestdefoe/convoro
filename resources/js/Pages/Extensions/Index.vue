@@ -4,7 +4,7 @@ import { computed, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import { t } from '@/lib/i18n';
 
-interface Item { id: string; name: string; version: string; description: string; author: string; type: string; premium: boolean; price: number | string; active: boolean }
+interface Item { id: string; name: string; version: string; description: string; author: string; type: string; premium: boolean; price: number | string; active: boolean; icon?: string | null }
 const props = defineProps<{ items: Item[] }>();
 
 const filter = ref<'all' | 'extension' | 'theme'>('all');
@@ -87,8 +87,9 @@ function tileAccent(item: Item): string {
         <article v-for="item in visible" :key="item.id"
           class="flex flex-col rounded-c border border-line bg-surface p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
           <div class="flex items-start gap-3">
-            <div class="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-xl" :class="tileAccent(item)">
-              {{ item.type === 'theme' ? '🎨' : '🧩' }}
+            <div class="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-xl font-extrabold [&>svg]:h-6 [&>svg]:w-6" :class="tileAccent(item)">
+              <span v-if="item.icon" v-html="item.icon"></span>
+              <span v-else>{{ (item.name || '?').charAt(0).toUpperCase() }}</span>
             </div>
             <div class="min-w-0 flex-1">
               <h3 class="truncate text-lg font-bold leading-tight">{{ item.name }}</h3>

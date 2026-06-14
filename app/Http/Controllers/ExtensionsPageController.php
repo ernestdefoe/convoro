@@ -29,6 +29,10 @@ class ExtensionsPageController extends Controller
                 'premium' => $m['premium'],
                 'price' => $m['price'],
                 'active' => in_array($m['id'], $enabled, true),
+                // The extension's own icon (inline SVG) so the card shows a real
+                // glyph instead of a generic puzzle tile. Null → card falls back
+                // to a monogram initial.
+                'icon' => ExtensionManager::iconSvgFor($m),
             ]);
 
         return Inertia::render('Extensions/Index', [

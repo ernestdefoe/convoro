@@ -223,7 +223,7 @@ function reviewBadge(r: any): { t: string; c: string } | null {
           <div v-else class="space-y-2.5">
             <div v-for="p in products" :key="p.id" class="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-surface-2 p-4">
               <img v-if="p.image" :src="p.image" :alt="p.name" class="h-10 w-16 rounded object-cover" />
-              <div v-else class="grid h-10 w-10 place-items-center rounded-lg bg-primary/15 text-lg">{{ p.type === 'theme' ? '🎨' : '🧩' }}</div>
+              <div v-else class="grid h-10 w-10 place-items-center rounded-lg bg-primary/15 text-lg font-extrabold text-primary">{{ (p.name || '?').charAt(0).toUpperCase() }}</div>
               <div class="min-w-0 flex-1">
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="font-semibold text-ink">{{ p.name }}</span>
@@ -292,7 +292,7 @@ function reviewBadge(r: any): { t: string; c: string } | null {
         <div v-else class="mt-8 space-y-5">
           <div v-for="p in products" :key="p.slug" class="rounded-2xl border border-line bg-surface p-6">
             <div class="flex items-center gap-3">
-              <div class="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-xl">{{ p.type === 'theme' ? '🎨' : '🧩' }}</div>
+              <div class="grid h-11 w-11 place-items-center rounded-xl bg-primary/10 text-xl font-extrabold text-primary">{{ (p.name || '?').charAt(0).toUpperCase() }}</div>
               <div class="min-w-0 flex-1">
                 <h3 class="truncate font-bold">{{ p.name }}</h3>
                 <span class="text-xs font-semibold uppercase tracking-wide" :class="p.published ? 'text-emerald-500' : 'text-amber-500'">

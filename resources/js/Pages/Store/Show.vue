@@ -36,7 +36,7 @@ function buy() {
       <div class="mt-6 grid gap-10 md:grid-cols-[1fr_320px]">
         <div>
           <div class="flex items-center gap-4">
-            <div class="grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-3xl">{{ product.type === 'theme' ? '🎨' : '🧩' }}</div>
+            <div class="grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-3xl font-extrabold text-primary">{{ (product.name || '?').charAt(0).toUpperCase() }}</div>
             <div>
               <h1 class="text-3xl font-black tracking-tight">{{ product.name }}</h1>
               <p class="text-ink-muted">{{ product.tagline }}</p>

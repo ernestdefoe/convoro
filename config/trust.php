@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.9',
+            'date' => '2026-06-14',
+            'title' => 'No more generic puzzle tiles on extension cards',
+            'items' => [
+                ['type' => 'improved', 'text' => 'The public Extensions directory and every product/extension card now show the add-on’s own icon (or a clean lettered tile) instead of a generic puzzle/palette emoji.'],
+            ],
+        ],
+        [
             'tag' => '1.38.8',
             'date' => '2026-06-14',
             'title' => 'Fix: grid/server icons missing on extension cards',

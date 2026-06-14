@@ -144,7 +144,8 @@ function uploadFile(p: any, e: Event) {
 
       <div v-else class="space-y-2.5">
         <div v-for="p in products" :key="p.id" class="flex flex-wrap items-center gap-3 rounded-xl border border-line bg-appbg p-4">
-          <div class="grid h-10 w-10 place-items-center rounded-lg bg-indigo-500/15 text-lg">{{ p.type === 'theme' ? '🎨' : '🧩' }}</div>
+          <img v-if="p.image" :src="p.image" :alt="p.name" class="h-10 w-16 rounded object-cover" />
+          <div v-else class="grid h-10 w-10 place-items-center rounded-lg bg-indigo-500/15 text-lg font-extrabold text-indigo-300">{{ (p.name || '?').charAt(0).toUpperCase() }}</div>
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
               <span class="font-semibold text-ink">{{ p.name }}</span>
