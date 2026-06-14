@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.13',
+            'date' => '2026-06-14',
+            'title' => 'Cleaner extension icons',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Extension icons now sit on their own, without the tinted rounded box behind them, so icons that ship their own coloured tile no longer look like a box inside a box.'],
+            ],
+        ],
+        [
             'tag' => '1.38.12',
             'date' => '2026-06-14',
             'title' => 'Matching favicon + app icons',

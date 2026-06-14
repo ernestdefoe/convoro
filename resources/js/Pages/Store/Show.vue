@@ -36,8 +36,8 @@ function buy() {
       <div class="mt-6 grid gap-10 md:grid-cols-[1fr_320px]">
         <div>
           <div class="flex items-center gap-4">
-            <div class="grid h-16 w-16 place-items-center rounded-2xl bg-primary/10 text-3xl font-extrabold text-primary [&_svg]:h-9 [&_svg]:w-9">
-              <span v-if="product.icon" class="grid place-items-center" v-html="product.icon"></span>
+            <div class="grid h-16 w-16 shrink-0 place-items-center text-3xl font-extrabold text-primary [&_svg]:h-16 [&_svg]:w-16 [&_svg]:rounded-2xl">
+              <span v-if="product.icon" class="grid h-16 w-16 place-items-center" v-html="product.icon"></span>
               <span v-else>{{ (product.name || '?').charAt(0).toUpperCase() }}</span>
             </div>
             <div>

@@ -37,14 +37,14 @@ function priceLabel(item: Item): string {
 // Give each card icon-tile its own colour so the grid feels varied while the
 // layout stays identical. Deterministic per item so a card keeps its colour.
 const TILE_ACCENTS = [
-  'bg-rose-500/15 text-rose-500',
-  'bg-sky-500/15 text-sky-500',
-  'bg-emerald-500/15 text-emerald-500',
-  'bg-amber-500/15 text-amber-500',
-  'bg-violet-500/15 text-violet-500',
-  'bg-fuchsia-500/15 text-fuchsia-500',
-  'bg-cyan-500/15 text-cyan-500',
-  'bg-indigo-500/15 text-indigo-500',
+  'text-rose-500',
+  'text-sky-500',
+  'text-emerald-500',
+  'text-amber-500',
+  'text-violet-500',
+  'text-fuchsia-500',
+  'text-cyan-500',
+  'text-indigo-500',
 ];
 function tileAccent(item: Item): string {
   const key = String(item.id || item.name || '');
@@ -87,8 +87,8 @@ function tileAccent(item: Item): string {
         <article v-for="item in visible" :key="item.id"
           class="flex flex-col rounded-c border border-line bg-surface p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
           <div class="flex items-start gap-3">
-            <div class="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-xl font-extrabold [&_svg]:h-6 [&_svg]:w-6" :class="tileAccent(item)">
-              <span v-if="item.icon" class="grid place-items-center" v-html="item.icon"></span>
+            <div class="grid h-12 w-12 shrink-0 place-items-center text-xl font-extrabold [&_svg]:h-12 [&_svg]:w-12 [&_svg]:rounded-xl" :class="tileAccent(item)">
+              <span v-if="item.icon" class="grid h-12 w-12 place-items-center" v-html="item.icon"></span>
               <span v-else>{{ (item.name || '?').charAt(0).toUpperCase() }}</span>
             </div>
             <div class="min-w-0 flex-1">
