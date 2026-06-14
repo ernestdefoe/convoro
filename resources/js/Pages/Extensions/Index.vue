@@ -87,8 +87,8 @@ function tileAccent(item: Item): string {
         <article v-for="item in visible" :key="item.id"
           class="flex flex-col rounded-c border border-line bg-surface p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
           <div class="flex items-start gap-3">
-            <div class="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-xl font-extrabold [&>svg]:h-6 [&>svg]:w-6" :class="tileAccent(item)">
-              <span v-if="item.icon" v-html="item.icon"></span>
+            <div class="grid h-12 w-12 shrink-0 place-items-center rounded-xl text-xl font-extrabold [&_svg]:h-6 [&_svg]:w-6" :class="tileAccent(item)">
+              <span v-if="item.icon" class="grid place-items-center" v-html="item.icon"></span>
               <span v-else>{{ (item.name || '?').charAt(0).toUpperCase() }}</span>
             </div>
             <div class="min-w-0 flex-1">

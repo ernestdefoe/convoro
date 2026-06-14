@@ -142,9 +142,9 @@ onBeforeUnmount(() => { ro?.disconnect(); ro = null; });
     <div v-else class="max-w-2xl space-y-5">
       <div class="rounded-2xl border border-line bg-surface p-5">
         <div class="flex items-start gap-3">
-          <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg font-extrabold [&>svg]:h-6 [&>svg]:w-6"
+          <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg font-extrabold [&_svg]:h-6 [&_svg]:w-6"
             :class="ext.type === 'theme' ? 'bg-fuchsia-500/15 text-fuchsia-300' : 'bg-indigo-500/15 text-indigo-300'">
-            <span v-if="ext.icon" v-html="ext.icon"></span>
+            <span v-if="ext.icon" class="grid place-items-center" v-html="ext.icon"></span>
             <span v-else>{{ (ext.name || '?').charAt(0).toUpperCase() }}</span>
           </div>
           <div class="min-w-0 flex-1">
