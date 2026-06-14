@@ -2,7 +2,11 @@
 
 return [
     // Current installed version of the software.
-    'version' => '1.37.0',
+    'version' => '1.37.1',
+
+    // Cache the Inertia SSR render of the static marketing pages (homepage,
+    // changelog, roadmap, etc.). Self-invalidates on deploy + content change.
+    'ssr_cache' => env('CONVORO_SSR_CACHE', true),
 
     // Optional URL returning JSON {"version": "x.y.z", "url": "...", "notes": "..."}
     // used by the admin "check for updates" feature. Null = update checks disabled.

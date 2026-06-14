@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.37.1',
+            'date' => '2026-06-14',
+            'title' => 'Faster marketing pages',
+            'items' => [
+                ['type' => 'improved', 'text' => 'The homepage, changelog, roadmap and other public pages now serve their server-rendered HTML from a cache, cutting their render time dramatically. The cache refreshes itself automatically on every update, so you never see stale content.'],
+            ],
+        ],
+        [
             'tag' => '1.37.0',
             'date' => '2026-06-14',
             'title' => 'Spam, flood & abuse controls',
