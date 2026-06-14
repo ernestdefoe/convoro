@@ -103,6 +103,12 @@
 
         @if ($faKit = \App\Support\Settings::get('fa.kit_url'))
             <script src="{{ $faKit }}" crossorigin="anonymous" defer></script>
+        @else
+            {{-- No Pro kit configured → load free Font Awesome so `fa-` icons
+                 (e.g. category icons) render on any domain, no kit/allowlist.
+                 Non-blocking: icons swap in once the stylesheet loads. --}}
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" media="print" onload="this.media='all'">
+            <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css"></noscript>
         @endif
 
         @inertiaHead

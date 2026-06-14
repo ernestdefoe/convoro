@@ -272,14 +272,17 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
-    <!-- Floating "Quote" button shown over a text selection inside a message. -->
+    <!-- Floating "Quote" button shown over a text selection inside a message.
+         Uses the same theme tokens as the forum tooltip (text-surface inverts
+         correctly in light/dark) — not a hard-coded colour. -->
     <button
       v-if="quoteTip"
       type="button"
-      class="fixed z-50 -translate-x-1/2 -translate-y-full rounded-lg bg-ink px-3 py-1.5 text-xs font-semibold text-white shadow-lg hover:bg-ink/90"
-      :style="{ left: quoteTip.x + 'px', top: quoteTip.y + 'px' }"
+      class="inline-flex -translate-x-1/2 -translate-y-full items-center gap-1.5 rounded-lg bg-ink px-3 py-1.5 text-xs font-bold text-surface shadow-xl hover:opacity-90"
+      :style="{ position: 'fixed', left: quoteTip.x + 'px', top: quoteTip.y + 'px', zIndex: 60 }"
       @mousedown.prevent="quoteSelection"
     >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M7 7H4v6h3l-2 4h3l2-4V7H7zm10 0h-3v6h3l-2 4h3l2-4V7h-3z" /></svg>
       {{ t('Quote') }}
     </button>
   </AppLayout>

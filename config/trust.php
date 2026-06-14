@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.2',
+            'date' => '2026-06-14',
+            'title' => 'Icon & quote-button polish',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'Category icons now load free Font Awesome automatically when no Pro kit is configured, so they render on any domain — no more broken icons or “Forbidden” console errors from a domain-locked kit.'],
+                ['type' => 'fixed', 'text' => 'The floating “Quote” button in messages now uses theme colours so it stays readable in both light and dark mode.'],
+            ],
+        ],
+        [
             'tag' => '1.38.1',
             'date' => '2026-06-14',
             'title' => 'Realtime fixed: live notifications, messages & typing',
