@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.1',
+            'date' => '2026-06-14',
+            'title' => 'Realtime fixed: live notifications, messages & typing',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'New notifications and direct messages now appear instantly, without refreshing — the realtime connection was pointing at the wrong address in the published build and now reads your site’s own address at runtime. (Realtime must be enabled in Admin → Settings.)'],
+                ['type' => 'new', 'text' => 'Typing indicator in direct messages — see when the other person is typing, just like in the forum.'],
+            ],
+        ],
+        [
             'tag' => '1.38.0',
             'date' => '2026-06-14',
             'title' => 'Messages: reply, quote & translated notifications',

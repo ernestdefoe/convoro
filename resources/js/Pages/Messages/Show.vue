@@ -158,18 +158,38 @@ function addPerson(u: any) {
 // realtime
 const Echo = () => (window as any).Echo;
 let channel: any = null;
+
+// Typing indicator (client-event whisper on the conversation channel).
+const typingName = ref<string | null>(null);
+let typingTimer: any = null;
+let whisperThrottle = 0;
+function onTyping() {
+  const now = Date.now();
+  if (channel && user.value && now - whisperThrottle > 1200) {
+    whisperThrottle = now;
+    channel.whisper('typing', { name: user.value.name });
+  }
+}
+
 onMounted(() => {
   scrollDown();
   autoTranslateAll();
   document.addEventListener('selectionchange', onSelectionChange);
   if (!Echo()) return;
-  channel = Echo().private(`conversation.${props.conversation.id}`).listen('.MessageCreated', (e: any) => {
-    if (e?.message && !live.value.some((m) => m.id === e.message.id)) {
-      live.value.push(e.message);
-      scrollDown();
-      if (needsTranslation(e.message)) translateMessage(e.message);
-    }
-  });
+  channel = Echo().private(`conversation.${props.conversation.id}`)
+    .listen('.MessageCreated', (e: any) => {
+      if (e?.message && !live.value.some((m) => m.id === e.message.id)) {
+        live.value.push(e.message);
+        scrollDown();
+        if (needsTranslation(e.message)) translateMessage(e.message);
+      }
+    })
+    .listenForWhisper('typing', (e: any) => {
+      if (user.value && e.name === user.value.name) return;
+      typingName.value = e.name;
+      clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => (typingName.value = null), 2800);
+    });
 });
 onBeforeUnmount(() => {
   document.removeEventListener('selectionchange', onSelectionChange);
@@ -240,8 +260,10 @@ onBeforeUnmount(() => {
         <p v-if="!live.length" class="py-10 text-center text-sm text-ink-muted">{{ t('Say hello 👋') }}</p>
       </div>
 
-      <div class="mt-3 shrink-0">
-        <Editor ref="editor" :placeholder="t('Write a message…')" />
+      <p v-if="typingName" class="h-4 shrink-0 px-1 text-xs italic text-ink-muted">{{ t('{name} is typing…', { name: typingName }) }}</p>
+
+      <div class="mt-1 shrink-0">
+        <Editor ref="editor" :placeholder="t('Write a message…')" @typing="onTyping" />
         <div class="mt-2 flex justify-end">
           <button type="button" :disabled="posting" class="rounded-c bg-primary px-5 py-2 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-60" @click="send">
             {{ posting ? t('Sending…') : t('Send') }}

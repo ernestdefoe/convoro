@@ -5,6 +5,16 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
+        {{-- Realtime (Reverb) connection, read at runtime by resources/js/echo.ts.
+             Emitted only when realtime is enabled AND a Reverb key is set, so the
+             ONE prebuilt bundle connects to each install's own domain (over the
+             /app path the web server proxies to Reverb) — never a baked-in host. --}}
+        @if (\App\Support\Settings::get('realtime.enabled') && config('broadcasting.connections.reverb.key'))
+            <meta name="reverb-key" content="{{ config('broadcasting.connections.reverb.key') }}">
+            <meta name="reverb-host" content="{{ request()->getHost() }}">
+            <meta name="reverb-scheme" content="{{ request()->isSecure() ? 'https' : 'http' }}">
+        @endif
+
         {{-- Apply the visitor's saved light/dark choice before paint (no flash).
              Reads a domain-scoped cookie so the choice carries across
              convoro.co and community.convoro.co; falls back to localStorage. --}}
