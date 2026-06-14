@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Support\Settings;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -215,44 +216,109 @@ class Extension extends ServiceProvider
     {
         $user = Auth::user();
 
-        $takenBy = User::query()
-            ->where('oauth_provider', $provider)
-            ->where('oauth_id', $profile['id'])
-            ->where('id', '!=', $user->id)
+        // Block hijacking an identity already owned by a different member.
+        $takenBy = DB::table('social_accounts')
+            ->where('provider', $provider)
+            ->where('provider_id', (string) $profile['id'])
+            ->where('user_id', '!=', $user->id)
             ->exists();
         if ($takenBy) {
             return redirect('/profile')->with('authError', 'That '.ucfirst($provider).' account is already linked to another member.');
         }
 
-        $user->forceFill([
-            'oauth_provider' => $provider,
-            'oauth_id' => $profile['id'],
-            'oauth_avatar' => $profile['avatar'] ?: $user->oauth_avatar,
-        ])->save();
-
+        self::linkIdentity($user, $provider, $profile);
         self::maybeStoreGithubToken($provider, $user, $token);
 
         return redirect('/profile')->with('status', ucfirst($provider).' connected.');
     }
 
-    /** Current member's linked provider + which providers are available. */
+    /**
+     * Record (or refresh) a provider identity for a member. One row per
+     * (user, provider) — re-linking the same provider replaces the old id —
+     * and the legacy users.oauth_* columns track the most-recent identity so
+     * the displayed avatar keeps working.
+     */
+    private static function linkIdentity(User $user, string $provider, array $profile): void
+    {
+        if (! $user->exists) {
+            $user->save();
+        }
+
+        $pid = (string) $profile['id'];
+        $avatar = $profile['avatar'] ?: null;
+
+        // A member links each provider at most once — drop any stale row first.
+        DB::table('social_accounts')
+            ->where('user_id', $user->id)
+            ->where('provider', $provider)
+            ->where('provider_id', '!=', $pid)
+            ->delete();
+
+        $existing = DB::table('social_accounts')
+            ->where('provider', $provider)
+            ->where('provider_id', $pid)
+            ->first();
+
+        if ($existing) {
+            DB::table('social_accounts')->where('id', $existing->id)->update([
+                'user_id' => $user->id,
+                'avatar' => $avatar,
+                'updated_at' => now(),
+            ]);
+        } else {
+            DB::table('social_accounts')->insert([
+                'user_id' => $user->id,
+                'provider' => $provider,
+                'provider_id' => $pid,
+                'avatar' => $avatar,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        $user->forceFill([
+            'oauth_provider' => $provider,
+            'oauth_id' => $pid,
+            'oauth_avatar' => $avatar ?: $user->oauth_avatar,
+        ])->save();
+    }
+
+    /** Current member's linked providers + which providers are available. */
     public static function status(Request $request): array
     {
         $u = $request->user();
+        $linked = $u
+            ? DB::table('social_accounts')->where('user_id', $u->id)->orderBy('id')->pluck('provider')->all()
+            : [];
 
         return [
-            'provider' => $u?->oauth_provider,
+            'provider' => $u?->oauth_provider,     // legacy: the most-recent identity
+            'linked' => array_values(array_unique($linked)), // every connected provider
             'avatar' => $u?->oauth_avatar,
             'providers' => self::configured(),
         ];
     }
 
-    /** Unlink the current member's provider identity. */
+    /** Unlink one of the current member's connected providers. */
     public static function disconnect(Request $request, string $provider)
     {
         $u = $request->user();
-        if ($u && $u->oauth_provider === $provider) {
-            $u->forceFill(['oauth_provider' => null, 'oauth_id' => null, 'oauth_avatar' => null])->save();
+        if ($u) {
+            DB::table('social_accounts')
+                ->where('user_id', $u->id)
+                ->where('provider', $provider)
+                ->delete();
+
+            // If the legacy "primary" pointed here, repoint it to a remaining
+            // link (or clear it) so the displayed avatar stays consistent.
+            if ($u->oauth_provider === $provider) {
+                $next = DB::table('social_accounts')->where('user_id', $u->id)->orderBy('id')->first();
+                $u->forceFill([
+                    'oauth_provider' => $next->provider ?? null,
+                    'oauth_id' => $next->provider_id ?? null,
+                    'oauth_avatar' => $next->avatar ?? null,
+                ])->save();
+            }
         }
 
         return response()->json(['ok' => true]);
@@ -376,15 +442,19 @@ class Extension extends ServiceProvider
     /** Find the linked account, link by verified email, or create a new user. */
     private static function findOrCreateUser(string $provider, array $profile): User
     {
-        $user = User::query()
-            ->where('oauth_provider', $provider)
-            ->where('oauth_id', $profile['id'])
+        // 1) An existing link in the join table wins.
+        $link = DB::table('social_accounts')
+            ->where('provider', $provider)
+            ->where('provider_id', (string) $profile['id'])
             ->first();
+        $user = $link ? User::find($link->user_id) : null;
 
+        // 2) Otherwise adopt a local account with the same (verified) email.
         if (! $user && ! empty($profile['email'])) {
             $user = User::query()->where('email', $profile['email'])->first();
         }
 
+        // 3) Otherwise create a fresh member.
         if (! $user) {
             $user = new User;
             $user->forceFill([
@@ -395,13 +465,10 @@ class Extension extends ServiceProvider
             if (! empty($profile['verified'])) {
                 $user->email_verified_at = now();
             }
+            $user->save();
         }
 
-        $user->forceFill([
-            'oauth_provider' => $provider,
-            'oauth_id' => $profile['id'],
-            'oauth_avatar' => $profile['avatar'] ?: $user->oauth_avatar,
-        ])->save();
+        self::linkIdentity($user, $provider, $profile);
 
         return $user;
     }

@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" font-family="Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a0e1a"/>
+      <stop offset="1" stop-color="#0d1424"/>
+    </linearGradient>
+    <radialGradient id="rglow" cx="0.78" cy="0.42" r="0.55">
+      <stop offset="0" stop-color="rgba(24,119,242,0.45)"/>
+      <stop offset="1" stop-color="rgba(24,119,242,0)"/>
+    </radialGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1877F2"/>
+      <stop offset="1" stop-color="#3b9bff"/>
+    </linearGradient>
+    <linearGradient id="fmark" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b9bff"/>
+      <stop offset="1" stop-color="#1877F2"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#rglow)"/>
+  <rect x="24" y="24" width="1152" height="582" rx="26" fill="none" stroke="rgba(255,255,255,0.09)" stroke-width="1.5"/>
+
+  <text x="64" y="112" font-size="26" font-family="'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace" fill="rgba(255,255,255,0.16)">$ convoro ext install facebook-autopost</text>
+
+  <text x="64" y="214" font-size="22" font-weight="700" letter-spacing="5" font-family="'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace" fill="#3b9bff">CONVORO EXTENSION  ·  FREE</text>
+  <text x="62" y="312" font-size="72" font-weight="800" fill="#ffffff">Facebook Auto Post</text>
+  <rect x="64" y="340" width="148" height="7" rx="3.5" fill="url(#acc)"/>
+
+  <text x="64" y="412" font-size="27" font-family="'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace" fill="rgba(233,233,245,0.62)">Share every new topic to your Facebook Page —</text>
+  <text x="64" y="452" font-size="27" font-family="'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace" fill="rgba(233,233,245,0.62)">automatically, via the Graph API.</text>
+
+  <text x="64" y="548" font-size="24" font-family="'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace" fill="rgba(255,255,255,0.16)">&lt;/convoro.co&gt;<tspan fill="#1877F2"> ▌</tspan></text>
+
+  <circle cx="965" cy="300" r="160" fill="url(#rglow)"/>
+  <g transform="translate(905,220) scale(5)">
+    <path fill="url(#fmark)" d="M24 12.07C24 5.4 18.63 0 12 0S0 5.4 0 12.07c0 6.02 4.39 11.01 10.13 11.93v-8.44H7.08v-3.49h3.05V9.41c0-3.02 1.79-4.69 4.53-4.69 1.31 0 2.68.24 2.68.24v2.97h-1.51c-1.49 0-1.95.93-1.95 1.88v2.26h3.32l-.53 3.49h-2.79v8.44C19.61 23.08 24 18.09 24 12.07Z"/>
+  </g>
+</svg>

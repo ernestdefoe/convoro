@@ -153,6 +153,10 @@ Route::get('/robots.txt', [App\Http\Controllers\SitemapController::class, 'robot
 // PWA
 Route::get('/manifest.webmanifest', [App\Http\Controllers\PwaController::class, 'manifest'])->name('pwa.manifest');
 
+// Extension marketplace cover image (must precede the generic {surface} route).
+Route::get('/ext-asset/{id}/cover', [App\Http\Controllers\ExtAssetController::class, 'cover'])
+    ->where('id', '[A-Za-z0-9._-]+')->name('ext.cover');
+
 // Enabled extensions' prebuilt frontend bundles (served from storage/).
 Route::get('/ext-asset/{id}/{surface}', [App\Http\Controllers\ExtAssetController::class, 'show'])
     ->where('id', '[A-Za-z0-9._-]+')->name('ext.asset');

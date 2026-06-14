@@ -191,6 +191,7 @@ class ExtensionManager
                 'auth' => (bool) ($raw['nav']['auth'] ?? false),
             ] : null,
             'icon' => $raw['icon'] ?? null,
+            'cover' => $raw['cover'] ?? null,
             '_path' => $dir,
             '_writable' => is_writable($dir),
         ];
@@ -478,5 +479,38 @@ class ExtensionManager
         }
 
         return null;
+    }
+
+    /**
+     * Absolute path to an extension's manifest `cover` image (an SVG/PNG shown
+     * as the marketplace card cover). Unlike asset bundles this isn't gated on
+     * the enable toggle — covers should show for installed-but-not-yet-enabled
+     * extensions too. Path traversal is blocked.
+     */
+    public static function coverPath(string $id): ?string
+    {
+        $m = self::all()[$id] ?? null;
+        $file = $m['cover'] ?? null;
+        if (! $m || ! is_string($file)) {
+            return null;
+        }
+        $path = realpath($m['_path'].'/'.$file);
+        if ($path && str_starts_with($path, realpath($m['_path']).DIRECTORY_SEPARATOR) && is_file($path)) {
+            return $path;
+        }
+
+        return null;
+    }
+
+    /** Host-relative URL for an extension's cover image, or null if it ships none. */
+    public static function coverUrl(string $id): ?string
+    {
+        $m = self::all()[$id] ?? null;
+        if (! $m || ! is_string($m['cover'] ?? null)) {
+            return null;
+        }
+        $v = rawurlencode((string) config('convoro.version').'.'.($m['version'] ?? '1'));
+
+        return "/ext-asset/{$id}/cover?v={$v}";
     }
 }

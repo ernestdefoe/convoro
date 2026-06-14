@@ -1,8 +1,8 @@
 {
   "id": "convoro-social-login",
   "name": "Social Login",
-  "version": "1.1.0",
-  "description": "Let members sign in with GitHub, Google, Facebook, or X. Dependency-free OAuth2 — no Composer packages required. Configure each provider's keys from the admin settings page and the buttons appear automatically. Signed-in members can link/unlink providers from their Settings page. Optionally grant the store owner access to private GitHub repositories.",
+  "version": "1.2.0",
+  "description": "Let members sign in with GitHub, Google, Facebook, or X. Dependency-free OAuth2 — no Composer packages required. Configure each provider's keys from the admin settings page and the buttons appear automatically. Signed-in members can link several providers to one account and unlink them from their Settings page. Optionally grant the store owner access to private GitHub repositories.",
   "author": "Convoro",
   "convoro": ">=0.2.0",
   "namespace": "Convoro\\Ext\\SocialLogin\\",
@@ -10,6 +10,7 @@
   "migrations": "migrations",
   "admin_url": "/admin/ext/social-login",
   "assets": { "forum": "assets/forum.js" },
+  "icon": "icon.svg",
   "premium": false,
   "price": 0
 }

@@ -9,6 +9,8 @@
   "provider": "Convoro\\Ext\\FacebookAutopost\\Extension",
   "migrations": "migrations",
   "admin_url": "/admin/ext/facebook-autopost",
+  "icon": "icon.svg",
+  "cover": "cover.svg",
   "premium": false,
   "price": 0
 }

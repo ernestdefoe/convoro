@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.36.5',
+            'date' => '2026-06-14',
+            'title' => 'Connect several accounts + extension covers',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Social Login now lets a member link several providers to one account at once — sign in with GitHub today and Facebook tomorrow, both landing on the same profile. Connect and disconnect each provider independently from your Settings page.'],
+                ['type' => 'improved', 'text' => 'Facebook Auto Post now shows its own Facebook icon in the admin sidebar and a branded cover in the Marketplace, so it’s easy to spot.'],
+                ['type' => 'improved', 'text' => 'Bundled extensions can ship their own Marketplace cover image (a “cover” in the manifest), giving first-party add-ons a polished listing.'],
+            ],
+        ],
+        [
             'tag' => '1.36.4',
             'date' => '2026-06-14',
             'title' => 'Facebook auto-post + import from a database file',

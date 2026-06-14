@@ -81,13 +81,17 @@ function renderSettings(el, status) {
   h.textContent = 'Connected accounts';
   h.style.cssText = 'font-size:18px;font-weight:800;margin:0;color:rgb(var(--c-text,27 32 48))';
   const sub = document.createElement('p');
-  sub.textContent = 'Link a provider to sign in with one click.';
+  sub.textContent = 'Link one or more providers to sign in with one click.';
   sub.style.cssText = 'font-size:13px;margin:4px 0 8px;color:rgb(var(--c-muted,138 144 166))';
   card.appendChild(h);
   card.appendChild(sub);
 
+  // Every connected provider — a member may link several at once. Falls back to
+  // the legacy single `provider` field if talking to an older server.
+  const linkedSet = new Set(status.linked || (status.provider ? [status.provider] : []));
+
   providers.forEach((p) => {
-    const linked = status.provider === p;
+    const linked = linkedSet.has(p);
     const row = document.createElement('div');
     row.style.cssText =
       'display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-top:1px solid rgb(var(--c-border,230 232 240))';

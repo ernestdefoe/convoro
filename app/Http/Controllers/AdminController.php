@@ -529,7 +529,9 @@ class AdminController extends Controller
                 'settings' => $m['settings'],
                 'values' => \App\Support\ExtensionManager::settingValues($m['id']),
                 'adminUrl' => $m['admin_url'],
-                'image' => $covers[$m['id']] ?? null,
+                // Store-generated cover wins; otherwise fall back to a cover the
+                // extension ships in its own manifest ("cover": "cover.svg").
+                'image' => $covers[$m['id']] ?? \App\Support\ExtensionManager::coverUrl($m['id']),
             ]);
 
         // Browsable catalog from the central store (free items install directly;
