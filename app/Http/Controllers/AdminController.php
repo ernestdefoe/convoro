@@ -823,7 +823,7 @@ class AdminController extends Controller
                 'name' => $u->name,
                 'email' => $u->email,
                 'is_admin' => (bool) $u->is_admin,
-                'joined' => optional($u->created_at)->isoFormat('MMM D, YYYY'),
+                'joined' => optional($u->created_at)?->format('M j, Y'),
                 'avatar' => $u->avatar_path,
                 'initials' => Present::avatar($u)['initials'],
                 'color' => Present::avatar($u)['color'],

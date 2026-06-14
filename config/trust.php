@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.5',
+            'date' => '2026-06-14',
+            'title' => 'Fix: admin Members page error',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'The admin Members page (and member profiles) could fail to load with a date-formatting error under some languages. Join dates now use a locale-independent format that can’t trip it.'],
+            ],
+        ],
+        [
             'tag' => '1.38.4',
             'date' => '2026-06-14',
             'title' => 'Real icons on extension cards + Facebook Auto Post unbundled',

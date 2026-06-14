@@ -65,7 +65,7 @@ class UserProfileController extends Controller
                 'initials' => $a['initials'],
                 'color' => $a['color'],
                 'staff' => $a['staff'],
-                'joined' => optional($user->created_at)->isoFormat('MMMM YYYY'),
+                'joined' => optional($user->created_at)?->format('F Y'),
                 'isAdmin' => (bool) $user->is_admin,
                 'isSelf' => $actorId === (int) $user->id,
                 // Trust badge — shown for every level on non-admin members
