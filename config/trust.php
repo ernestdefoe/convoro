@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.8',
+            'date' => '2026-06-14',
+            'title' => 'Fix: grid/server icons missing on extension cards',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'Extension icons drawn from rectangles — Projects’ grid, Horizon’s server stack, Giveaways’ box — now render in full on their cards. The cover generator was resizing the icon in a way that flattened those shapes, so Horizon showed only a stray “:”.'],
+            ],
+        ],
+        [
             'tag' => '1.38.7',
             'date' => '2026-06-14',
             'title' => 'Categories icon + cleaner Marketplace cards',

@@ -2,7 +2,7 @@
 
 return [
     // Current installed version of the software.
-    'version' => '1.38.7',
+    'version' => '1.38.8',
 
     // Cache the Inertia SSR render of the static marketing pages (homepage,
     // changelog, roadmap, etc.). Self-invalidates on deploy + content change.
