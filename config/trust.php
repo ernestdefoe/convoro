@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.7',
+            'date' => '2026-06-14',
+            'title' => 'Categories icon + cleaner Marketplace cards',
+            'items' => [
+                ['type' => 'improved', 'text' => 'The Categories add-on has its own distinct icon (it previously shared the Projects grid), and the Marketplace cards dropped the generic puzzle tile since each card already shows the extension’s own cover.'],
+            ],
+        ],
+        [
             'tag' => '1.38.6',
             'date' => '2026-06-14',
             'title' => 'Extension card icons & covers cleanup',

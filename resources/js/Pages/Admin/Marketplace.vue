@@ -186,12 +186,8 @@ function uninstall(ext: { id: string; name: string }) {
           class="flex flex-col overflow-hidden rounded-2xl border bg-appbg p-5 transition"
           :class="ext.enabled ? 'border-indigo-500/30' : 'border-line'">
           <img v-if="ext.image" :src="ext.image" :alt="ext.name" class="-mx-5 -mt-5 mb-3 aspect-[2/1] w-[calc(100%+2.5rem)] max-w-none object-cover" />
-          <!-- Header: icon + name + version -->
+          <!-- Header: name + version (the cover above already shows the icon) -->
           <div class="flex items-start gap-3">
-            <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg font-bold"
-              :class="ext.type === 'theme' ? 'bg-fuchsia-500/15 text-fuchsia-300' : 'bg-indigo-500/15 text-indigo-300'">
-              {{ ext.type === 'theme' ? '🎨' : '🧩' }}
-            </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-1.5">
                 <span class="truncate font-bold text-ink">{{ ext.name }}</span>
@@ -248,10 +244,6 @@ function uninstall(ext: { id: string; name: string }) {
         <div v-for="item in catalog" :key="item.slug" class="flex flex-col overflow-hidden rounded-2xl border border-line bg-appbg p-5">
           <img v-if="item.image" :src="item.image" :alt="item.name" class="-mx-5 -mt-5 mb-3 aspect-[2/1] w-[calc(100%+2.5rem)] max-w-none object-cover" />
           <div class="flex items-start gap-3">
-            <div class="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-lg"
-              :class="item.type === 'theme' ? 'bg-fuchsia-500/15 text-fuchsia-300' : 'bg-indigo-500/15 text-indigo-300'">
-              {{ item.type === 'theme' ? '🎨' : '🧩' }}
-            </div>
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-1.5">
                 <span class="truncate font-bold text-ink">{{ item.name }}</span>
