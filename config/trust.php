@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.38.10',
+            'date' => '2026-06-14',
+            'title' => 'Extension detail page shows the real icon',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'An extension’s detail page now shows its own icon in the header instead of a single-letter initial.'],
+            ],
+        ],
+        [
             'tag' => '1.38.9',
             'date' => '2026-06-14',
             'title' => 'No more generic puzzle tiles on extension cards',
