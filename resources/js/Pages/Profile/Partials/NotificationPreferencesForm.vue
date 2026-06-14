@@ -12,6 +12,7 @@ const TYPES = [
   { key: 'reaction', label: t('Reactions to your posts') },
   { key: 'wall', label: t('Posts on your profile') },
   { key: 'badge', label: t('Badges you earn') },
+  { key: 'event', label: t('Event reminders') },
 ];
 
 // Clone so the form owns its own state, filling any missing keys.

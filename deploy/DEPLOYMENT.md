@@ -68,14 +68,45 @@ User=www-data
 * * * * * www-data cd /var/www/convoro && php artisan schedule:run >> /dev/null 2>&1
 ```
 
-## 4. After each deploy
+## 4. After each deploy — **clearing caches so new code is served**
+
+Production runs with **PHP OPcache enabled** (Convoro has its own FPM pool —
+`/etc/php/8.5/fpm/pool.d/convoro.conf`, socket `/run/php/convoro8.5-fpm.sock` —
+with `opcache.enable=1`, JIT, and `opcache.validate_timestamps=1` /
+`revalidate_freq=2`). OPcache keeps compiled bytecode in shared memory, so when
+PHP files change you **must reset it or the old code keeps being served.**
+
+**The standard deploy already does all of this** — just run:
+
+```bash
+bash scripts/deploy.sh        # builds client+SSR, ships, migrates, caches,
+                              # reloads php-fpm (resets OPcache), restarts SSR
+```
+
+If you change files **by hand** on the server, run the equivalent:
 
 ```bash
 php artisan migrate --force
-php artisan config:cache && php artisan route:cache
-# bust PHP opcache so updated code/extension pages take effect:
-sudo systemctl reload php8.x-fpm
+php artisan optimize:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache
+php artisan convoro:cache-bust          # clears app+extension caches; resets OPcache if run in FPM
+sudo systemctl reload php8.5-fpm        # ← resets the FPM OPcache (validate_timestamps also self-heals in ~2s)
+sudo systemctl restart convoro-ssr      # ← only if you changed FRONTEND code (client/SSR bundle)
 ```
 
-That's the whole reliability checklist. Items 1 and 2 are the ones that actually
-keep the lights on.
+### Extensions clear caches automatically
+
+Installing, enabling, disabling, updating or removing an extension through the
+admin **Marketplace** runs in the web request and calls
+`App\Support\Caches::bust()` (clear caches + `opcache_reset()`), so the new
+extension code/routes/pages take effect immediately — no shell step needed.
+Extension authors don't reimplement this; if your extension writes generated
+PHP/config at runtime, call `\App\Support\Caches::bust()` afterwards.
+
+> **Why OPcache reset is required:** `opcache_reset()` only resets the OPcache of
+> the SAPI it runs in. The in-app paths run under FPM (✅). The CLI/queue and
+> shell deploys reset OPcache by **reloading php-fpm** instead. As a backstop,
+> `validate_timestamps=1` makes FPM re-check file mtimes every 2s, so a missed
+> reset self-heals within seconds rather than serving stale code forever.
+
+That's the whole reliability checklist. Items 1, 2 and 4 are the ones that
+actually keep the lights on.

@@ -8,6 +8,7 @@ use App\Models\Post;
 use App\Models\Report;
 use App\Models\Topic;
 use App\Models\User;
+use App\Support\AuditLog;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -79,6 +80,7 @@ class ModerationController extends Controller
     public function resolveReport(Report $report): RedirectResponse
     {
         $report->update(['status' => 'resolved', 'resolved_by' => request()->user()->id, 'resolved_at' => now()]);
+        AuditLog::record('report.resolve', $report);
 
         return back()->with('status', __('Report resolved.'));
     }
@@ -86,6 +88,7 @@ class ModerationController extends Controller
     public function dismissReport(Report $report): RedirectResponse
     {
         $report->update(['status' => 'dismissed', 'resolved_by' => request()->user()->id, 'resolved_at' => now()]);
+        AuditLog::record('report.dismiss', $report);
 
         return back()->with('status', __('Report dismissed.'));
     }
@@ -97,6 +100,7 @@ class ModerationController extends Controller
         if ($topic && ! $post->is_first && $topic->reply_count > 0) {
             $topic->decrement('reply_count');
         }
+        AuditLog::record('post.delete', $post, subject: $post->user);
         $post->delete();
         Report::where('reportable_type', 'post')->where('reportable_id', $post->id)
             ->update(['status' => 'resolved', 'resolved_at' => now()]);
@@ -111,6 +115,7 @@ class ModerationController extends Controller
         Report::where('reportable_type', 'post')->where('reportable_id', $post->id)
             ->where('status', 'open')
             ->update(['status' => 'resolved', 'resolved_by' => request()->user()->id, 'resolved_at' => now()]);
+        AuditLog::record('post.approve', $post, subject: $post->user);
 
         return back()->with('status', __('Post approved.'));
     }
@@ -139,12 +144,18 @@ class ModerationController extends Controller
         Report::where('reportable_type', 'user')->where('reportable_id', $user->id)
             ->update(['status' => 'resolved', 'resolved_at' => now()]);
 
+        AuditLog::record('user.ban', $user, subject: $user, reason: $data['reason'] ?? null, meta: array_filter([
+            'ban_ip' => (bool) ($data['ban_ip'] ?? false),
+            'deleted_posts' => (bool) ($data['delete_posts'] ?? false),
+        ]));
+
         return back()->with('status', __('“:name” has been banned.', ['name' => $user->name]));
     }
 
     public function unbanUser(User $user): RedirectResponse
     {
         $user->forceFill(['banned_at' => null, 'ban_reason' => null])->save();
+        AuditLog::record('user.unban', $user, subject: $user);
 
         return back()->with('status', __('“:name” has been reinstated.', ['name' => $user->name]));
     }
@@ -156,6 +167,7 @@ class ModerationController extends Controller
             'reason' => ['nullable', 'string', 'max:255'],
         ]);
         $this->addIpBan($data['ip_address'], $data['reason'] ?? null, $request->user()->id);
+        AuditLog::record('ip.ban', target: ['ip', $data['ip_address'], $data['ip_address']], reason: $data['reason'] ?? null);
 
         return back()->with('status', __('Banned :ip.', ['ip' => $data['ip_address']]));
     }
@@ -165,6 +177,7 @@ class ModerationController extends Controller
         $ip = $ipBan->ip_address;
         $ipBan->delete();
         IpBan::flush($ip);
+        AuditLog::record('ip.unban', target: ['ip', $ip, $ip]);
 
         return back()->with('status', __('Unbanned :ip.', ['ip' => $ip]));
     }
@@ -173,7 +186,9 @@ class ModerationController extends Controller
     public function moveTopic(Request $request, Topic $topic): RedirectResponse
     {
         $data = $request->validate(['category_id' => ['nullable', 'integer', 'exists:categories,id']]);
+        $from = $topic->category_id;
         $topic->update(['category_id' => $data['category_id'] ?? null]);
+        AuditLog::record('topic.move', $topic, meta: ['from_category_id' => $from, 'to_category_id' => $data['category_id'] ?? null]);
 
         return back()->with('status', __('Topic moved.'));
     }
@@ -204,6 +219,7 @@ class ModerationController extends Controller
             $from->decrement('reply_count');
         }
         Topic::where('id', $data['topic_id'])->increment('reply_count');
+        AuditLog::record('post.move', $post, subject: $post->user, meta: ['from_topic_id' => $from?->id, 'to_topic_id' => $data['topic_id']]);
 
         return back()->with('status', __('Post moved.'));
     }

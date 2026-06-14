@@ -161,7 +161,14 @@ Route::get('/ext-asset/{id}/{surface}', [App\Http\Controllers\ExtAssetController
 // drops the visitor into the community. Disabled when CONVORO_DEMO_EMAIL is blank.
 Route::get('/demo', function () {
     $email = (string) config('convoro.demo_email');
-    $user = $email !== '' ? \App\Models\User::where('email', $email)->where('is_admin', false)->first() : null;
+    // The public demo logs in a NON-admin account by default so a one-click login
+    // can never hand out admin. A dedicated demo install can set
+    // CONVORO_DEMO_ADMIN=true to let visitors explore admin features too.
+    $query = $email !== '' ? \App\Models\User::where('email', $email) : null;
+    if ($query && ! config('convoro.demo_admin')) {
+        $query->where('is_admin', false);
+    }
+    $user = $query?->first();
     if (! $user) {
         return redirect('/');
     }
@@ -170,12 +177,32 @@ Route::get('/demo', function () {
     return redirect('/')->with('status', 'You\'re exploring the Convoro demo — post, react, and try the live theme editor freely.');
 })->middleware('throttle:60,1')->name('demo.login');
 
+// POC — public "request a demo" flow (gated). Each request provisions an
+// isolated, time-boxed demo and emails the requester their login.
+if (config('convoro.demo_requests')) {
+    Route::get('/request-demo', [App\Http\Controllers\DemoController::class, 'show'])->name('demo.request');
+    Route::post('/request-demo', [App\Http\Controllers\DemoController::class, 'request'])
+        ->middleware('throttle:5,10')->name('demo.request.submit');
+}
+
+// Get-started / order flow — sign up for managed hosting (provisions a community
+// + support account) or a free self-host support account. Guests only; only
+// when managed hosting is offered on this install.
+if (config('convoro.hosting')) {
+    Route::middleware('guest')->group(function () {
+        Route::get('/get-started', [App\Http\Controllers\OnboardController::class, 'show'])->name('onboard');
+        Route::post('/get-started', [App\Http\Controllers\OnboardController::class, 'store'])
+            ->middleware('throttle:10,10')->name('onboard.store');
+    });
+}
+
 // Community (forum)
 Route::get('/', [ForumController::class, 'index'])->name('forum.index');
 Route::get('/search', [App\Http\Controllers\SearchController::class, 'index'])->name('search');
 Route::get('/t/{topic}', [TopicController::class, 'show'])->name('topics.show');
 // Live viewers — fresh "LIVE" badges driven by who's reading right now.
 Route::get('/api/live-topics', [App\Http\Controllers\ForumController::class, 'liveTopics'])->name('topics.live');
+Route::get('/api/presence', [App\Http\Controllers\ForumController::class, 'presence'])->name('users.presence');
 Route::post('/t/{topic}/heartbeat', [TopicController::class, 'heartbeat'])->middleware(['auth', 'throttle:40,1'])->name('topics.heartbeat');
 Route::get('/u/{user}', [App\Http\Controllers\UserProfileController::class, 'show'])->name('profiles.show');
 Route::get('/extensions', [App\Http\Controllers\ExtensionsPageController::class, 'index'])->middleware('store.owner')->name('extensions.index');
@@ -193,9 +220,27 @@ Route::middleware('auth')->group(function () {
     Route::get('/new', [TopicController::class, 'create'])->name('topics.create');
     Route::post('/topics', [TopicController::class, 'store'])->name('topics.store');
 
+    // POC ONLY — managed-hosting panel. Gated off in production (config flag).
+    if (config('convoro.hosting')) {
+        Route::get('/panel', [App\Http\Controllers\PanelController::class, 'index'])->name('panel');
+        Route::post('/panel/communities', [App\Http\Controllers\PanelController::class, 'store'])->name('panel.communities.store');
+        Route::post('/panel/communities/{tenant}/enter', [App\Http\Controllers\PanelController::class, 'enter'])->name('panel.communities.enter');
+        Route::get('/panel/communities/{tenant}/manage', [App\Http\Controllers\PanelController::class, 'manage'])->name('panel.communities.manage');
+        Route::get('/panel/communities/{tenant}/metrics', [App\Http\Controllers\PanelController::class, 'metrics'])->name('panel.communities.metrics');
+        Route::put('/panel/communities/{tenant}', [App\Http\Controllers\PanelController::class, 'update'])->name('panel.communities.update');
+        Route::put('/panel/communities/{tenant}/domain', [App\Http\Controllers\PanelController::class, 'setDomain'])->name('panel.communities.domain');
+        Route::post('/panel/communities/{tenant}/domain/verify', [App\Http\Controllers\PanelController::class, 'verifyDomain'])->name('panel.communities.domain.verify');
+        Route::post('/panel/communities/{tenant}/billing-portal', [App\Http\Controllers\PanelController::class, 'billingPortal'])->name('panel.communities.billing');
+        Route::delete('/panel/communities/{tenant}', [App\Http\Controllers\PanelController::class, 'destroy'])->name('panel.communities.destroy');
+        Route::post('/panel/exit', [App\Http\Controllers\PanelController::class, 'exit'])->name('panel.exit');
+        Route::get('/panel/order', [App\Http\Controllers\PanelController::class, 'order'])->name('panel.order');
+    }
+
     // Drafts + scheduled posts.
     Route::get('/drafts', [App\Http\Controllers\DraftController::class, 'index'])->name('drafts.index');
     Route::post('/drafts', [App\Http\Controllers\DraftController::class, 'store'])->name('drafts.store');
+    Route::post('/drafts/autosave', [App\Http\Controllers\DraftController::class, 'autosave'])->name('drafts.autosave');
+    Route::delete('/drafts/autosave', [App\Http\Controllers\DraftController::class, 'discardAutosave'])->name('drafts.autosave.discard');
     Route::post('/drafts/{draft}/publish', [App\Http\Controllers\DraftController::class, 'publish'])->name('drafts.publish');
     Route::delete('/drafts/{draft}', [App\Http\Controllers\DraftController::class, 'destroy'])->name('drafts.destroy');
     Route::post('/t/{topic}/posts', [PostController::class, 'store'])->name('posts.store');
@@ -232,6 +277,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
     // Moderation suite
     Route::get('/moderation', [App\Http\Controllers\ModerationController::class, 'index'])->name('moderation');
+    Route::get('/audit-log', [App\Http\Controllers\AuditLogController::class, 'index'])->name('audit-log');
     Route::post('/moderation/reports/{report}/resolve', [App\Http\Controllers\ModerationController::class, 'resolveReport'])->name('moderation.reports.resolve');
     Route::post('/moderation/reports/{report}/dismiss', [App\Http\Controllers\ModerationController::class, 'dismissReport'])->name('moderation.reports.dismiss');
     Route::delete('/moderation/posts/{post}', [App\Http\Controllers\ModerationController::class, 'deletePost'])->name('moderation.posts.delete');
@@ -322,6 +368,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Import wizard — migrate from other forum software (Flarum in v1).
     Route::get('/import', [App\Http\Controllers\ImportController::class, 'index'])->name('import');
     Route::post('/import/test', [App\Http\Controllers\ImportController::class, 'test'])->name('import.test');
+    Route::post('/import/upload', [App\Http\Controllers\ImportController::class, 'upload'])->name('import.upload');
     Route::post('/import/start', [App\Http\Controllers\ImportController::class, 'start'])->name('import.start');
     Route::get('/import/progress', [App\Http\Controllers\ImportController::class, 'progress'])->name('import.progress');
 

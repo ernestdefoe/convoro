@@ -10,6 +10,158 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.36.4',
+            'date' => '2026-06-14',
+            'title' => 'Facebook auto-post + import from a database file',
+            'items' => [
+                ['type' => 'new', 'text' => 'New first-party Facebook Auto Post extension — automatically share every new topic to your Facebook Page, with a customizable message, an optional excerpt and per-category control. Enable it from the Marketplace and add your Page access token (there’s a one-click “Send a test post” to confirm it’s working).'],
+                ['type' => 'new', 'text' => 'The importer can now read a database FILE, not just a live connection: upload a MySQL dump (.sql or .sql.gz) or a SQLite file. Perfect for managed hosts that only give you your database — it’s loaded and read exactly like a live import, with the same one-click scan and background run.'],
+            ],
+        ],
+        [
+            'tag' => '1.36.3',
+            'date' => '2026-06-13',
+            'title' => 'Reply auto-save',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Replies are now auto-saved as you type, just like new topics, with a live “Saving… / Draft saved” indicator. If you refresh, crash or navigate away mid-reply, it’s waiting for you when you return — and it clears automatically once you post.'],
+            ],
+        ],
+        [
+            'tag' => '1.36.1',
+            'date' => '2026-06-13',
+            'title' => 'Wider audit coverage',
+            'items' => [
+                ['type' => 'improved', 'text' => 'The staff audit log now also records extension changes (install, enable, disable, remove) and member-group changes (create, edit, delete), alongside the content-moderation actions it already tracked.'],
+            ],
+        ],
+        [
+            'tag' => '1.36.0',
+            'date' => '2026-06-13',
+            'title' => 'Auto-saving drafts',
+            'items' => [
+                ['type' => 'new', 'text' => 'The topic composer now auto-saves your work as you type, so a crash, refresh or accidental tab-close never loses a post. When you come back, Convoro offers to restore your unsaved draft in one tap — and a subtle “Draft saved” indicator shows when your work is safely stored.'],
+            ],
+        ],
+        [
+            'tag' => '1.35.0',
+            'date' => '2026-06-13',
+            'title' => 'Staff audit log',
+            'items' => [
+                ['type' => 'new', 'text' => 'Every moderation and admin action is now recorded in a new Audit log (Admin → Audit log): who did what, to whom, when — with the reason and the staff member’s IP. Covers deleting and approving posts, banning and reinstating members, IP bans, moving posts and topics, pinning and locking, resolving reports, role and group changes, and GDPR anonymize/erase. It’s searchable and filterable by action, and each entry keeps a snapshot so it stays readable even after the target is deleted.'],
+            ],
+        ],
+        [
+            'tag' => '1.34.3',
+            'date' => '2026-06-13',
+            'title' => 'Faster first loads & smoother updates',
+            'items' => [
+                ['type' => 'improved', 'text' => 'A big speed-up across the whole site: enabled HTTP/2 and a server-side bytecode cache so pages respond in roughly half the time, and made web fonts load without blocking the first paint.'],
+                ['type' => 'fixed', 'text' => 'Fixed a service-worker behaviour that forced every brand-new visitor through a full second page load on their very first visit — first loads are now fast too.'],
+                ['type' => 'improved', 'text' => 'Installing, enabling or updating an extension now clears the right caches automatically, so new extension code and pages take effect immediately.'],
+            ],
+        ],
+        [
+            'tag' => '1.34.0',
+            'date' => '2026-06-13',
+            'title' => 'Server-side rendering — instant first paint & better SEO',
+            'items' => [
+                ['type' => 'new', 'text' => 'Convoro now renders pages on the server, so the forum appears fully formed on first load instead of only after scripts run. First paint is faster, and search-engine crawlers receive the complete page.'],
+            ],
+        ],
+        [
+            'tag' => '1.33.0',
+            'date' => '2026-06-13',
+            'title' => 'A much faster forum, site-wide',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Site-wide performance pass: JavaScript and CSS are now compressed (around 70% smaller over the wire) and cached long-term, so first loads are quicker and repeat visits are near-instant.'],
+                ['type' => 'improved', 'text' => 'The icon library now loads deferred, fonts no longer block the first paint, and the admin theme editor is split out of the main bundle so regular visitors don’t download it.'],
+            ],
+        ],
+        [
+            'tag' => '1.32.0',
+            'date' => '2026-06-13',
+            'title' => 'Recurring events, visitor counts & SEO hardening',
+            'items' => [
+                ['type' => 'new', 'text' => 'Events can now repeat — daily, weekly, every two weeks or monthly, with an optional end date. Recurring events expand across the calendar, show their next occurrence in the list, remind attendees before each occurrence, and add to Apple/Outlook/Google calendars with a proper recurrence rule.'],
+                ['type' => 'new', 'text' => 'The “Online now” widget now also shows how many logged-out visitors are browsing.'],
+                ['type' => 'improved', 'text' => 'Hardened the topic structured data (DiscussionForumPosting) against Google Search Console issues — every posting and comment now always has an author, date and content (text or image), so image- and emoji-only replies no longer disqualify a thread from rich results.'],
+            ],
+        ],
+        [
+            'tag' => '1.31.0',
+            'date' => '2026-06-13',
+            'title' => 'Instant extension nav links + Google structured data',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Extension nav links (Leaderboard, Events, Feed) now render instantly with the page instead of popping in a moment later — extensions can declare a header link in their manifest that’s rendered server-side.'],
+                ['type' => 'new', 'text' => 'Added Google-friendly JSON-LD structured data: a site-wide WebSite (with sitelinks search) and Organization, plus DiscussionForumPosting on every topic — the schema Google recommends for forum threads.'],
+                ['type' => 'fixed', 'text' => 'Tidied the event detail page: Edit and Delete are now grouped in a single “Manage event” card so the delete button no longer looks out of place.'],
+            ],
+        ],
+        [
+            'tag' => '1.30.0',
+            'date' => '2026-06-13',
+            'title' => 'Events categories, editing & timezones — plus nicer quotes',
+            'items' => [
+                ['type' => 'new', 'text' => 'Events now supports admin-managed coloured categories (with filtering), editing an event after you create it, a community timezone, and a calendar date badge in the upcoming-events widget. There’s also a new “Event reminders” notification toggle in your preferences.'],
+                ['type' => 'improved', 'text' => 'Quoted replies now render as a tidy quote card — an “{name} said:” header with a jump-to-post link and a quote glyph — instead of a plain indented block.'],
+                ['type' => 'fixed', 'text' => 'Fixed a crash in the notification bell when an extension sent a notification without an author (such as an event reminder).'],
+            ],
+        ],
+        [
+            'tag' => '1.29.0',
+            'date' => '2026-06-13',
+            'title' => 'First-party extension pages use the real forum shell',
+            'items' => [
+                ['type' => 'improved', 'text' => 'The Leaderboard, Events, Bookmarks and Feed pages now render inside the exact same header, footer and theme as the rest of the forum — full navigation, notifications, theme toggle and account menu — instead of a lookalike chrome, so they no longer feel out of place. Update those extensions from the Marketplace to get it.'],
+            ],
+        ],
+        [
+            'tag' => '1.28.1',
+            'date' => '2026-06-13',
+            'title' => 'Translation reliability fix',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'Fixed UI translations silently failing to save when the language directory wasn’t writable — the translator now detects this, stops retrying instead of looping, and shows a clear error on the admin Languages page so it’s obvious what to fix.'],
+            ],
+        ],
+        [
+            'tag' => '1.28.0',
+            'date' => '2026-06-13',
+            'title' => 'Events 2.0 — calendar, RSVPs & reminders',
+            'items' => [
+                ['type' => 'new', 'text' => 'The free Events extension got a major upgrade: a month calendar and list view, rich event pages with attendee lists, going / maybe / can’t-go RSVPs with optional capacity, one-tap add-to-calendar (Apple/Outlook .ics and Google Calendar), and automatic reminders to attendees a day and an hour before each event. Plus an “Events” header link and an upcoming-events sidebar widget. Install or update it from the Marketplace.'],
+                ['type' => 'improved', 'text' => 'Extensions can now send their own rich notifications (with custom text and links) through the notification bell, email and push — used by the new event reminders.'],
+            ],
+        ],
+        [
+            'tag' => '1.27.0',
+            'date' => '2026-06-13',
+            'title' => 'Online indicators on posts & footer polish',
+            'items' => [
+                ['type' => 'new', 'text' => 'Posts now show an online/offline presence dot on the author’s avatar (green when they’ve been active in the last few minutes), refreshed live while you read the thread.'],
+                ['type' => 'improved', 'text' => 'The Footer Builder now autosaves as you edit (no more lost changes), the accent line runs full-width to clearly separate the footer, and links from other extensions (RSS, Privacy choices) are tucked neatly into the footer’s bottom bar instead of floating loose.'],
+                ['type' => 'improved', 'text' => 'Extension pages now always use the community’s assigned logo in the header, including the dark-mode variant.'],
+            ],
+        ],
+        [
+            'tag' => '1.26.0',
+            'date' => '2026-06-13',
+            'title' => 'Footer builder, redesigned leaderboard & search above the list',
+            'items' => [
+                ['type' => 'new', 'text' => 'A new free “Footer Builder” extension lets you design a site-wide footer — a brand column with logo and social buttons, up to four link columns, a copyright bar and a back-to-top button — with a live preview in the admin editor. It matches your active theme automatically. Install it from the Marketplace.'],
+                ['type' => 'improved', 'text' => 'The Leaderboard has been completely redesigned: a podium for the top three, a card grid for the next contenders, an honorable-mentions list, and time-period filters (All Time, Yearly, Quarterly, Monthly, Weekly, Daily).'],
+                ['type' => 'improved', 'text' => 'Extension pages (Leaderboard, Bookmarks, Feed) now show the full site header — logo and navigation — instead of a bare back link, so they feel like part of the community.'],
+                ['type' => 'improved', 'text' => 'The search box has moved out of the header and now sits prominently above the discussion list, where it’s easier to find and use.'],
+            ],
+        ],
+        [
+            'tag' => '1.25.1',
+            'date' => '2026-06-13',
+            'title' => 'Follow members & a personal feed',
+            'items' => [
+                ['type' => 'new', 'text' => 'A new free “Follow & Feed” extension lets members follow each other — a Follow button on profiles (with a follower count) and a Feed page showing the latest topics and replies from the people you follow. Install it from the Marketplace.'],
+            ],
+        ],
+        [
             'tag' => '1.25.0',
             'date' => '2026-06-13',
             'title' => 'Install with Docker',
@@ -948,16 +1100,23 @@ return [
             'Richer composer — code blocks with syntax highlighting, spoilers & GIFs',
             'Trust levels — standing earned through participation (+ new-account spam gating)',
             'Reply by email — reply to a notification email to post',
+            'Follow members + a personalized feed (extension)',
+            'Events 2.0 — calendar & list views, RSVPs, reminders, categories, timezones & recurring events',
+            'Server-side rendering + a site-wide performance pass (HTTP/2, asset compression & long-term caching, OPcache)',
+            'Staff audit log — every moderation & admin action recorded, searchable & filterable',
+            'Auto-saving drafts — the composer saves as you type and offers to restore unsaved work',
+            'Grounded “support mode” — the assistant answers strictly from your knowledge base, with inline citations',
+            'Expanded audit log — extension install/enable/disable and group changes are now recorded too',
+            'Reply auto-save — replies are kept as you type too, and restored if you come back',
         ],
         'now' => [
-            'Follow members + a personalized feed',
+            'Spam & abuse controls — first-post approval & per-category rate limits',
         ],
         'next' => [
-            'Events — calendar view, reminders & a finished RSVP experience',
+            'Slow mode & flood protection for busy threads',
         ],
         'later' => [
-            'Moderation audit log',
-            'Slow mode, per-category rate limits & first-post approval for new accounts',
+            'Managed hosting — spin up a fully-managed Convoro community without running a server',
         ],
     ],
 ];

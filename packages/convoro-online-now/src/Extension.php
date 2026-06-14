@@ -17,6 +17,7 @@ class Extension extends ServiceProvider
 
             return response()->json([
                 'count' => $users->count(),
+                'guests' => \App\Support\Presence::guestCount(),
                 'users' => $users->map(fn (User $u) => Present::avatar($u))->values(),
             ]);
         });

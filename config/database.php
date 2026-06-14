@@ -44,6 +44,21 @@ return [
             'transaction_mode' => 'DEFERRED',
         ],
 
+        // Isolated per-demo databases (the "request a demo" POC). Always sqlite,
+        // independent of the central connection, so a demo works even when the
+        // forum runs on mysql. The `database` path is set at runtime to the
+        // specific demo's file by DemoProvisioner / the HostTenant middleware.
+        'demo' => [
+            'driver' => 'sqlite',
+            'database' => database_path('tenants/placeholder.sqlite'),
+            'prefix' => '',
+            'foreign_key_constraints' => true,
+            'busy_timeout' => null,
+            'journal_mode' => null,
+            'synchronous' => null,
+            'transaction_mode' => 'DEFERRED',
+        ],
+
         'mysql' => [
             'driver' => 'mysql',
             'url' => env('DB_URL'),

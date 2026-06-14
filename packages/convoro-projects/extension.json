@@ -1,10 +1,10 @@
 {
   "id": "convoro-projects",
   "name": "Projects",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A showcase where members publish their projects — title, link, image and description — shown as cards on a /projects page, with a latest-projects sidebar widget and admin moderation.",
   "author": "Convoro",
-  "convoro": ">=0.1.0",
+  "convoro": ">=1.29.0",
   "namespace": "Convoro\\Ext\\Projects\\",
   "provider": "Convoro\\Ext\\Projects\\Extension",
   "migrations": "migrations",

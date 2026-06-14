@@ -19,6 +19,17 @@ Schedule::command('convoro:refresh-registry')->hourly()->withoutOverlapping();
 // Publish scheduled posts the moment their time arrives.
 Schedule::command('convoro:publish-scheduled')->everyMinute()->withoutOverlapping();
 
+// On-demand demo lifecycle (POC): hourly send 24h reminders, destroy expired
+// demos, and promote the waitlist into freed slots. No-op when the flag is off.
+Schedule::command('convoro:reap-demos')->hourly()
+    ->when(fn () => (bool) config('convoro.demo_requests'))
+    ->withoutOverlapping();
+
+// Managed-hosting: sample per-tenant resource usage for the dashboard graphs.
+Schedule::command('convoro:sample-metrics')->everyFiveMinutes()
+    ->when(fn () => (bool) config('convoro.hosting'))
+    ->withoutOverlapping();
+
 // Keep the AI knowledge base (docs + changelog) embeddings fresh — cheap, once
 // daily. The command no-ops when there's no embeddings key.
 Schedule::command('convoro:reindex-knowledge')->dailyAt('04:00')

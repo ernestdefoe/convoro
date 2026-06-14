@@ -48,8 +48,12 @@ if (c && typeof c.registerSlot === 'function') {
           body.innerHTML = '';
           const count = document.createElement('div');
           count.style.cssText = `display:flex;align-items:center;gap:7px;font-size:13px;color:${T.ink}`;
-          count.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${T.ok};display:inline-block"></span> <b style="color:${T.ok}">${d.count}</b> online now`;
+          const g = d.guests || 0;
+          const members = `<b style="color:${T.ok}">${d.count}</b> member${d.count === 1 ? '' : 's'}`;
+          const guests = g > 0 ? ` · <b style="color:${T.ink}">${g}</b> guest${g === 1 ? '' : 's'}` : '';
+          count.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${T.ok};display:inline-block"></span> ${members}${guests} online`;
           body.appendChild(count);
+          if (!d.users.length && g === 0) return;
           if (!d.users.length) return;
           const grid = document.createElement('div');
           grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:7px;margin-top:12px';

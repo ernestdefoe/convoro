@@ -1,0 +1,14 @@
+{
+  "id": "convoro-facebook-autopost",
+  "name": "Facebook Auto Post",
+  "version": "1.0.0",
+  "description": "Automatically share every new topic to your Facebook Page. When a member publishes a topic, Convoro posts a link to your Page via the Graph API — with a customizable message, optional excerpt, and per-category control. Dependency-free (uses Laravel's HTTP client only). Configure your Page ID and Page Access Token from the admin settings page.",
+  "author": "Convoro",
+  "convoro": ">=1.0.0",
+  "namespace": "Convoro\\Ext\\FacebookAutopost\\",
+  "provider": "Convoro\\Ext\\FacebookAutopost\\Extension",
+  "migrations": "migrations",
+  "admin_url": "/admin/ext/facebook-autopost",
+  "premium": false,
+  "price": 0
+}

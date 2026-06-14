@@ -85,6 +85,8 @@ class Translator
                 'rtl' => I18n::isRtl($code),
                 'exists' => true,
                 'source' => false,
+                'translating' => (bool) Settings::get('i18n.translating.'.$code, false),
+                'error' => Settings::get('i18n.error.'.$code) ?: null,
             ];
         }
 

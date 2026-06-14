@@ -22,6 +22,21 @@ class ForumController extends Controller
         return response()->json(['live' => $ids ? LiveTopics::liveIds($ids) : []]);
     }
 
+    /** Which of the given user ids are online now (seen in the last 5 min) — polled to keep presence dots fresh. */
+    public function presence(Request $request): JsonResponse
+    {
+        $ids = collect(explode(',', (string) $request->query('ids', '')))
+            ->map(fn ($i) => (int) trim($i))->filter()->unique()->take(100)->all();
+
+        $online = $ids
+            ? \App\Models\User::whereIn('id', $ids)
+                ->where('last_seen_at', '>=', now()->subMinutes(5))
+                ->pluck('id')->all()
+            : [];
+
+        return response()->json(['online' => $online]);
+    }
+
     public function index(Request $request): Response
     {
         // View preference: explicit ?view wins, else the visitor's saved choice
@@ -119,6 +134,7 @@ class ForumController extends Controller
 
         return [
             'onlineNow' => (clone $onlineQuery)->count(),
+            'onlineGuests' => \App\Support\Presence::guestCount(),
             'onlineUsers' => (clone $onlineQuery)->latest('last_seen_at')->limit(12)->get()
                 ->map(fn ($u) => Present::avatar($u))->all(),
             'newestMembers' => \App\Models\User::latest()->limit(6)->get()

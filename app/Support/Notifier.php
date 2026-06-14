@@ -75,6 +75,11 @@ class Notifier
         $prev = app()->getLocale();
         app()->setLocale($locale);
         try {
+            // Generic/extension notifications carry their own pre-rendered copy.
+            if (! empty($data['text'])) {
+                return (string) $data['text'];
+            }
+
             $actor = $data['actor']['name'] ?? __('Someone');
             $topic = $data['topic']['title'] ?? __('a topic');
 

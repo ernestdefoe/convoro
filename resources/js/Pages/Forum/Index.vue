@@ -26,6 +26,13 @@ function startTopic() {
   loggedIn.value ? router.visit('/new') : auth.open('register');
 }
 
+// Search moved out of the header and surfaced prominently above the discussion list.
+const search = ref('');
+function goSearch() {
+  const q = search.value.trim();
+  if (q) router.visit('/search?q=' + encodeURIComponent(q));
+}
+
 const props = defineProps<{
   view: 'feed' | 'grid';
   sort: string;
@@ -76,6 +83,7 @@ watchEffect(() => {
   convoro.setData({
     stats: props.stats ?? {},
     online: props.widgetData?.onlineNow ?? 0,
+    onlineGuests: props.widgetData?.onlineGuests ?? 0,
     onlineUsers: props.widgetData?.onlineUsers ?? [],
     newestMembers: props.widgetData?.newestMembers ?? [],
     topPosters: props.widgetData?.topPosters ?? [],
@@ -125,6 +133,11 @@ function go(params: Record<string, string | null>) {
 
       <!-- Main -->
       <section>
+        <form class="mb-4 flex items-center gap-2.5 rounded-c border border-line bg-surface px-4 py-2.5 shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20" @submit.prevent="goSearch">
+          <svg class="text-ink-muted" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
+          <input v-model="search" type="search" class="w-full border-0 bg-transparent p-0 text-sm text-ink placeholder:text-ink-muted focus:ring-0" :placeholder="tr('Search discussions…')" />
+          <button v-if="search" type="submit" class="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-600">{{ tr('Search') }}</button>
+        </form>
         <AskBar v-if="askEnabled" class="mb-5" />
         <div class="mb-4 flex items-center gap-3">
           <h1 class="text-2xl font-extrabold tracking-tight">{{ tr('Community') }}</h1>

@@ -41,6 +41,13 @@
             @if (!empty($seo['description']))
                 <meta name="twitter:description" content="{{ $seo['description'] }}">
             @endif
+
+            {{-- Google structured data (JSON-LD) --}}
+            @if (!empty($seo['jsonLd']))
+                @foreach ($seo['jsonLd'] as $ld)
+                    <script type="application/ld+json">{!! json_encode($ld, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
+                @endforeach
+            @endif
         @endif
 
         <!-- PWA -->
@@ -57,11 +64,18 @@
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        {{-- Load font CSS non-render-blocking: fonts use display=swap, so text
+             paints immediately in the fallback and swaps in when ready. Inter is
+             the brand default (was a render-blocking @import in app.css). --}}
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+        <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" /></noscript>
         @if ($href = \App\Support\Theme::googleFontHref())
-            <link href="{{ $href }}" rel="stylesheet" />
+            <link href="{{ $href }}" rel="stylesheet" media="print" onload="this.media='all'" />
+            <noscript><link href="{{ $href }}" rel="stylesheet" /></noscript>
         @endif
         @if ($hfHref = \App\Support\Theme::headingFontHref())
-            <link href="{{ $hfHref }}" rel="stylesheet" />
+            <link href="{{ $hfHref }}" rel="stylesheet" media="print" onload="this.media='all'" />
+            <noscript><link href="{{ $hfHref }}" rel="stylesheet" /></noscript>
         @endif
         @if ($favicon = \App\Support\Settings::get('site.favicon'))
             <link rel="icon" href="{{ $favicon }}" />
@@ -78,7 +92,7 @@
         @endif
 
         @if ($faKit = \App\Support\Settings::get('fa.kit_url'))
-            <script src="{{ $faKit }}" crossorigin="anonymous"></script>
+            <script src="{{ $faKit }}" crossorigin="anonymous" defer></script>
         @endif
 
         @inertiaHead

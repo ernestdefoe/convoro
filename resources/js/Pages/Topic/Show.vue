@@ -165,6 +165,27 @@ watch(() => props.posts, (val) => { livePosts.value = [...val]; });
 const firstPost = computed(() => livePosts.value.find((p) => p.isFirst) ?? livePosts.value[0] ?? null);
 const replies = computed(() => livePosts.value.filter((p) => p.id !== firstPost.value?.id));
 
+// ── Author presence (online/offline dot on each post) ───────────────────────
+// Seed from the server snapshot, then poll so the dots stay fresh while reading.
+const onlineIds = ref<Set<number>>(new Set(
+  props.posts.filter((p) => p.author?.online && p.author?.id).map((p) => p.author.id),
+));
+const presenceFor = (author: any): 'online' | 'offline' | null =>
+  author?.id ? (onlineIds.value.has(author.id) ? 'online' : 'offline') : null;
+let presenceTimer: any = null;
+async function pollPresence() {
+  const ids = [...new Set(livePosts.value.map((p) => p.author?.id).filter(Boolean))];
+  if (!ids.length) return;
+  try {
+    const r = await fetch('/api/presence?ids=' + ids.join(','), { headers: { Accept: 'application/json' } });
+    if (!r.ok) return;
+    const d = await r.json();
+    onlineIds.value = new Set<number>((d.online as number[]) || []);
+  } catch { /* ignore */ }
+}
+onMounted(() => { presenceTimer = setInterval(pollPresence, 45000); });
+onBeforeUnmount(() => { if (presenceTimer) clearInterval(presenceTimer); });
+
 // Sequential post number within the topic (#1 = opening post). Doubles as a permalink.
 function postNumber(post: any): number | null {
   const i = livePosts.value.findIndex((p) => p.id === post?.id);
@@ -225,7 +246,7 @@ function quoteSelection() {
   div.appendChild(sel.getRangeAt(0).cloneContents());
   const inner = stripQuotes(div.innerHTML) || escapeHtml(sel.toString());
   const link = `${window.location.origin}/t/${props.topic.slug}#post-${tip.postId}`;
-  const html = `<blockquote><p><a href="${link}"><strong>${escapeHtml(tip.author)}</strong></a> ${tr('wrote:')}</p>${inner}</blockquote><p></p>`;
+  const html = `<blockquote><p><a href="${link}"><strong>${escapeHtml(tip.author)}</strong></a> ${tr('said:')} <a href="${link}" title="${tr('Go to quoted post')}">↑</a></p>${inner}</blockquote><p></p>`;
   editor.value?.insertContent(html);
   sel.removeAllRanges();
   quoteTip.value = null;
@@ -369,7 +390,56 @@ function onTyping() {
     whisperThrottle = now;
     channel.whisper('typing', { name: user.value.name });
   }
+  scheduleReplyAutosave();
 }
+
+// ---- Reply auto-save ----
+// Keeps an in-progress reply in localStorage so a refresh, crash or accidental
+// navigation never loses it. Restored when you return to the topic; cleared
+// once the reply posts.
+const replyRestored = ref(false);
+const replySaveState = ref<'idle' | 'saving' | 'saved'>('idle');
+const replyKey = () => `convoro:reply:${props.topic.id}`;
+let replyAutoTimer: number | null = null;
+function scheduleReplyAutosave() {
+  replyRestored.value = false; // they're editing now — drop the "restored" framing
+  const hasText = !(editor.value?.isEmpty() ?? true);
+  if (hasText) replySaveState.value = 'saving';
+  if (replyAutoTimer) clearTimeout(replyAutoTimer);
+  replyAutoTimer = window.setTimeout(() => {
+    try {
+      const html = editor.value?.getHTML() ?? '';
+      if (html.replace(/<[^>]+>/g, '').trim()) {
+        localStorage.setItem(replyKey(), html);
+        replySaveState.value = 'saved';
+      } else {
+        localStorage.removeItem(replyKey());
+        replySaveState.value = 'idle';
+      }
+    } catch { /* private mode / quota — ignore */ }
+  }, 1500);
+}
+function clearReplyDraft() {
+  if (replyAutoTimer) clearTimeout(replyAutoTimer);
+  try { localStorage.removeItem(replyKey()); } catch { /* ignore */ }
+  replyRestored.value = false;
+  replySaveState.value = 'idle';
+}
+function discardReplyDraft() {
+  editor.value?.clear();
+  clearReplyDraft();
+}
+onMounted(() => {
+  nextTick(() => {
+    try {
+      const saved = localStorage.getItem(replyKey());
+      if (saved && editor.value && editor.value.isEmpty()) {
+        editor.value.setHTML(saved);
+        replyRestored.value = true;
+      }
+    } catch { /* ignore */ }
+  });
+});
 
 function react(postId: number, emoji: string) {
   pickerFor.value = null;
@@ -384,7 +454,7 @@ function submitReply() {
     { body_html: editor.value.getHTML(), body_json: editor.value.getJSON() },
     {
       preserveScroll: true,
-      onSuccess: () => editor.value?.clear(),
+      onSuccess: () => { editor.value?.clear(); clearReplyDraft(); },
       onFinish: () => (posting.value = false),
     });
 }
@@ -421,7 +491,7 @@ function submitReply() {
           </h1>
 
           <div v-if="firstPost" class="mt-5 flex items-center gap-3">
-            <Link :href="firstPost.author.url"><Avatar :avatar="firstPost.author" :size="56" badge /></Link>
+            <Link :href="firstPost.author.url"><Avatar :avatar="firstPost.author" :size="56" badge :presence="presenceFor(firstPost.author)" /></Link>
             <div>
               <Link :href="firstPost.author.url" class="font-bold hover:underline">{{ firstPost.author.name }}</Link>
               <a v-if="firstPost.author.fedi" :href="firstPost.author.fediUrl" target="_blank" rel="noopener" class="ml-1.5 inline-flex items-center gap-1 rounded-full bg-surface-2 px-1.5 py-0.5 align-middle text-[11px] font-medium text-ink-muted hover:text-primary" :title="tr('From the fediverse')">🌐 {{ firstPost.author.fedi }}</a>
@@ -527,7 +597,7 @@ function submitReply() {
           </div>
           <article :id="'post-' + post.id" class="q-post flex scroll-mt-24 gap-4 rounded-c border border-line bg-surface p-6 shadow-sm" :class="menuFor === post.id ? 'relative z-30' : ''" :style="post.author?.staff ? { borderLeftWidth: '4px', borderLeftColor: post.author.staff.color } : {}">
             <div class="w-24 shrink-0 text-center">
-              <Link :href="post.author.url"><Avatar :avatar="post.author" :size="52" class="mx-auto" badge /></Link>
+              <Link :href="post.author.url"><Avatar :avatar="post.author" :size="52" class="mx-auto" badge :presence="presenceFor(post.author)" /></Link>
               <div class="mt-2 text-sm font-bold">{{ post.author.name }}</div>
               <a v-if="post.author.fedi" :href="post.author.fediUrl" target="_blank" rel="noopener" class="mt-0.5 block truncate text-[11px] text-ink-muted hover:text-primary" :title="tr('From the fediverse')">🌐 {{ post.author.fedi }}</a>
               <span v-if="post.isAi" class="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">✦ AI</span>
@@ -595,7 +665,22 @@ function submitReply() {
       <div v-if="typingName" class="mt-3 text-sm italic text-ink-muted">{{ tr('{name} is typing…', { name: typingName }) }}</div>
 
       <div v-if="canReply" id="reply-composer" class="mt-5 scroll-mt-24">
-        <div class="mb-2.5 text-sm font-bold">{{ tr('Reply') }}</div>
+        <div class="mb-2.5 flex items-center gap-2">
+          <span class="text-sm font-bold">{{ tr('Reply') }}</span>
+          <span v-if="replyRestored" class="inline-flex items-center gap-1.5 text-xs text-ink-muted">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg>
+            {{ tr('Restored your unsent reply') }}
+            <button type="button" class="font-semibold text-primary hover:underline" @click="discardReplyDraft">{{ tr('Discard') }}</button>
+          </span>
+          <span v-else-if="replySaveState === 'saving'" class="inline-flex items-center gap-1 text-xs text-ink-muted" aria-live="polite">
+            <svg class="animate-spin" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.2-8.5" stroke-linecap="round"/></svg>
+            {{ tr('Saving…') }}
+          </span>
+          <span v-else-if="replySaveState === 'saved'" class="inline-flex items-center gap-1 text-xs text-ink-muted" aria-live="polite">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-emerald-500"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            {{ tr('Draft saved') }}
+          </span>
+        </div>
         <Editor ref="editor" :placeholder="tr('Share your thoughts… (rich text — no markdown needed)')" @typing="onTyping" />
         <div class="mt-3 flex items-center">
           <span class="text-xs text-ink-muted">{{ tr('Rich text · drag, drop or paste images — auto-converted to WebP') }}</span>

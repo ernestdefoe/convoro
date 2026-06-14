@@ -17,7 +17,7 @@ class DraftController extends Controller
 {
     public function index(Request $request): Response
     {
-        $drafts = Draft::where('user_id', $request->user()->id)->latest('updated_at')->get()
+        $drafts = Draft::where('user_id', $request->user()->id)->where('is_auto', false)->latest('updated_at')->get()
             ->map(fn (Draft $d) => [
                 'id' => $d->id,
                 'title' => trim((string) $d->title) ?: __('Untitled draft'),
@@ -66,8 +66,66 @@ class DraftController extends Controller
             Draft::create($attrs);
         }
 
+        // The content now lives in an explicit draft — drop the rolling autosave.
+        $this->clearAutosave($request->user()->id);
+
         return redirect()->route('drafts.index')
             ->with('status', ! empty($data['scheduled_at']) ? __('Post scheduled.') : __('Draft saved.'));
+    }
+
+    /**
+     * Background autosave from the composer: upserts a single rolling draft per
+     * member (is_auto = true) without redirecting. Returns lightweight JSON.
+     */
+    public function autosave(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $data = $request->validate([
+            'title' => ['nullable', 'string', 'max:160'],
+            'category_id' => ['nullable', 'integer', 'exists:categories,id'],
+            'tags' => ['array'],
+            'tags.*' => ['integer'],
+            'body_html' => ['nullable', 'string', 'max:120000'],
+            'body_json' => ['nullable', 'string', 'max:200000'],
+            'cover' => ['nullable', 'string', 'max:2048'],
+            'poll' => ['nullable', 'array'],
+        ]);
+
+        // Nothing worth keeping yet — clear any stale autosave and bail.
+        $hasContent = trim((string) ($data['title'] ?? '')) !== ''
+            || trim(strip_tags((string) ($data['body_html'] ?? ''))) !== '';
+        if (! $hasContent) {
+            $this->clearAutosave($request->user()->id);
+
+            return response()->json(['saved' => false]);
+        }
+
+        $draft = Draft::updateOrCreate(
+            ['user_id' => $request->user()->id, 'is_auto' => true],
+            [
+                'title' => $data['title'] ?? null,
+                'body_html' => $data['body_html'] ?? null,
+                'body_json' => $data['body_json'] ?? null,
+                'category_id' => $data['category_id'] ?? null,
+                'tags' => $data['tags'] ?? [],
+                'cover' => $data['cover'] ?? null,
+                'poll' => $data['poll'] ?? null,
+            ],
+        );
+
+        return response()->json(['saved' => true, 'id' => $draft->id, 'at' => $draft->updated_at->toIso8601String()]);
+    }
+
+    /** Discard the member's rolling autosave draft (called on publish / restore-dismiss). */
+    public function clearAutosave(int $userId): void
+    {
+        Draft::where('user_id', $userId)->where('is_auto', true)->delete();
+    }
+
+    public function discardAutosave(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $this->clearAutosave($request->user()->id);
+
+        return response()->json(['ok' => true]);
     }
 
     public function publish(Request $request, Draft $draft): RedirectResponse

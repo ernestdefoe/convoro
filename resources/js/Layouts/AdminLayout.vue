@@ -26,6 +26,7 @@ const I = {
   system: 'M12 15a3 3 0 100-6 3 3 0 000 6z M4 12h2M18 12h2M12 4v2M12 18v2',
   puzzle: 'M4 7h3a2 2 0 002-2 2 2 0 114 0 2 2 0 002 2h3v3a2 2 0 002 2 2 2 0 110 4 2 2 0 00-2 2v3h-3',
   shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  log: 'M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2 M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2 M9 12h6 M9 16h4',
   import: 'M12 3v12M8 11l4 4 4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2',
   invite: 'M4 4h16v16H4zM4 7l8 6 8-6',
   ai: 'M12 2a2 2 0 012 2v1h2a2 2 0 012 2v2h1a2 2 0 010 4h-1v2a2 2 0 01-2 2h-2v1a2 2 0 01-4 0v-1H6a2 2 0 01-2-2v-2H3a2 2 0 010-4h1V7a2 2 0 012-2h2V4a2 2 0 012-2zM9 10h.01M15 10h.01M9 15h6',
@@ -67,6 +68,7 @@ const groups = computed(() => [
     { label: 'Members', href: '/admin/members', component: 'Admin/Members', icon: I.members },
     { label: 'Categories & Tags', href: '/admin/content', component: 'Admin/Content', icon: I.tags },
     { label: 'Moderation', href: '/admin/moderation', component: 'Admin/Moderation', icon: I.shield },
+    { label: 'Audit log', href: '/admin/audit-log', component: 'Admin/AuditLog', icon: I.log },
     { label: 'Invites', href: '/admin/invites', component: 'Admin/Invites', icon: I.invite },
   ] },
   { label: 'Configuration', items: [

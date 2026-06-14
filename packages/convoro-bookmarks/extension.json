@@ -1,10 +1,10 @@
 {
   "id": "convoro-bookmarks",
   "name": "Bookmarks",
-  "version": "1.0.1",
+  "version": "1.2.0",
   "description": "Save posts to a personal reading list. Members bookmark any post with one click and revisit them on a private Bookmarks page. Opt-in — install it only if your community wants it.",
   "author": "Convoro",
-  "convoro": ">=1.18.0",
+  "convoro": ">=1.29.0",
   "type": "extension",
   "namespace": "Convoro\\Ext\\Bookmarks\\",
   "provider": "Convoro\\Ext\\Bookmarks\\Extension",

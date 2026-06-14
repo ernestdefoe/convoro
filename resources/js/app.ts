@@ -36,11 +36,16 @@ createInertiaApp({
 
 // Register the PWA service worker (installability + push). Safe no-op if unsupported.
 if ('serviceWorker' in navigator) {
-    // When a new worker takes control, reload once so a client that was stuck on
-    // a stale worker/shell rescues itself automatically (guarded against loops).
+    // When an UPDATED worker takes control, reload once so a client stuck on a
+    // stale worker/shell rescues itself (guarded against loops). Crucially we
+    // only do this when a controller ALREADY existed at startup — on a first
+    // visit the initial install also fires `controllerchange`, and reloading
+    // there forces every new visitor (and Lighthouse/PSI) through a full second
+    // page load, destroying first-load performance.
     let refreshing = false;
+    const hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-        if (refreshing) return;
+        if (refreshing || !hadController) return;
         refreshing = true;
         window.location.reload();
     });

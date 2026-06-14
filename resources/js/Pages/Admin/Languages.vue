@@ -7,6 +7,7 @@ import { t } from '@/lib/i18n';
 interface Row {
   code: string; label: string; translated: number; total: number;
   percent: number; missing: number; rtl: boolean; source?: boolean;
+  error?: string | null;
 }
 
 const props = defineProps<{
@@ -140,6 +141,7 @@ const field = 'rounded-lg border-line bg-appbg text-ink placeholder:text-ink-mut
                   <span class="text-xs text-ink-2">{{ row.percent }}%</span>
                   <span v-if="row.missing > 0" class="text-xs text-ink-muted">· {{ t('{n} missing', { n: row.missing }) }}</span>
                 </div>
+                <p v-if="row.error" class="mt-1 text-xs text-rose-400">⚠ {{ row.error }}</p>
               </td>
               <td class="px-4 py-3">
                 <input type="radio" name="default" :checked="siteLocale === row.code" class="text-primary focus:ring-primary" @change="setDefault(row.code)" />

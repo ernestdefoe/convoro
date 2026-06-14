@@ -1,0 +1,66 @@
+# Convoro
+
+> Convoro is forum software: Laravel 13 + Inertia/Vue 3 + TypeScript, with
+> server-side rendering (Inertia SSR), a first-party extension system, and a
+> live theme editor. Production runs at community.convoro.co. This file orients
+> an LLM or new contributor; see ARCHITECTURE.md and deploy/DEPLOYMENT.md for depth.
+
+## ⚠️ Deploying / serving new code — READ THIS FIRST
+
+Production runs with **PHP OPcache ON** (own FPM pool `convoro.conf`, socket
+`/run/php/convoro8.5-fpm.sock`) **and an Inertia SSR Node sidecar**
+(`convoro-ssr.service`, `node bootstrap/ssr/ssr.js`, :13714). Two things bite if
+you forget them when shipping changed code:
+
+1. **OPcache serves stale PHP bytecode** until it's reset. Reset it by reloading
+   php-fpm (`sudo systemctl reload php8.5-fpm`) or, from a web/FPM request,
+   `\App\Support\Caches::bust()` / `php artisan convoro:cache-bust`.
+   Backstop: `opcache.validate_timestamps=1` (revalidate every 2s) self-heals.
+2. **The SSR sidecar serves a stale Vue tree** against a new client bundle →
+   hydration mismatch. After any FRONTEND change, rebuild **both** bundles and
+   `sudo systemctl restart convoro-ssr`.
+
+**Just use the deploy script — it does all of the above correctly:**
+
+```bash
+bash scripts/deploy.sh      # build client+SSR → ship (never .env/storage/vendor)
+                            # → migrate + caches → reload php-fpm (OPcache) → restart SSR
+```
+
+Manual/by-hand server edits: `php artisan optimize:clear && php artisan config:cache && php artisan route:cache && php artisan view:cache`, then `php artisan convoro:cache-bust`, then `sudo systemctl reload php8.5-fpm` (+ `restart convoro-ssr` if frontend changed).
+
+## Extensions
+
+- First-party extensions live in `packages/` and `extensions/`; third-party
+  install via the admin **Marketplace** into `storage/app/extensions/{id}`.
+- **Cache busting is automatic and centralized:** every install / enable /
+  disable / update / uninstall goes through `App\Support\ExtensionInstaller`,
+  which calls `App\Support\Caches::bust()` (clear app+extension caches +
+  `opcache_reset()`). Extension authors do **not** add their own cache-clear
+  logic. If an extension writes generated PHP/config at runtime, it may call
+  `\App\Support\Caches::bust()` itself.
+- Extension frontend assets load client-side at runtime (`extAssets`), NOT in
+  the core SSR bundle — so installing an extension does **not** require an SSR
+  restart. Only CORE frontend changes do.
+- Manifest = `extension.json`; runtime wiring = `App\Support\ExtensionManager`.
+
+## Key files
+
+- `app/Support/Caches.php` — central cache-bust + OPcache reset helper.
+- `app/Support/ExtensionInstaller.php` / `ExtensionManager.php` — extension lifecycle.
+- `app/Support/Updater.php` — in-app core updater (already busts OPcache).
+- `scripts/deploy.sh` — the standard deploy.
+- `resources/js/ssr.ts` + `config/inertia.php` — SSR entry + config.
+- `app/Console/Commands/CacheBust.php` — `php artisan convoro:cache-bust`.
+
+## Docs
+
+- ARCHITECTURE.md — stack, data model, extension system, conventions.
+- deploy/DEPLOYMENT.md — nginx/cache/queue + the after-deploy checklist.
+- README.md — quick start.
+
+## Conventions
+
+- No markdown in content — TipTap WYSIWYG, WebP uploads. CSS var prefix `--c-`.
+- User-facing strings are translatable (no hardcoded English).
+- Brand: indigo `#5B5BD6`, Inter font.

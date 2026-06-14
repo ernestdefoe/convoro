@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { computed, ref, watchEffect } from 'vue';
+import { computed, defineAsyncComponent, ref, watchEffect } from 'vue';
 import ConvoroLogo from '@/Components/ConvoroLogo.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import NotificationBell from '@/Components/forum/NotificationBell.vue';
@@ -10,7 +10,8 @@ import PullToRefresh from '@/Components/PullToRefresh.vue';
 import PwaBanner from '@/Components/PwaBanner.vue';
 import ThemeToggle from '@/Components/ThemeToggle.vue';
 import AuthModal from '@/Components/AuthModal.vue';
-import ThemeEditor from '@/Components/ThemeEditor.vue';
+// Admin-only live theme builder — lazy so guests never download its chunk.
+const ThemeEditor = defineAsyncComponent(() => import('@/Components/ThemeEditor.vue'));
 import Toast from '@/Components/Toast.vue';
 import CommandPalette from '@/Components/CommandPalette.vue';
 import Slot from '@/Components/ext/Slot.vue';
@@ -25,7 +26,15 @@ const auth = useAuthModal();
 const page = usePage();
 const user = computed(() => (page.props as any).auth?.user ?? null);
 const isAdmin = computed(() => !!(page.props as any).auth?.isAdmin);
+const activeTenant = computed(() => (page.props as any).activeTenant ?? null);
 const storeOwner = computed(() => !!(page.props as any).storeOwner);
+// Server-rendered extension nav links (instant, no async-bundle flash).
+const extNav = computed(() => ((page.props as any).extNav ?? []) as { label: string; href: string; auth: boolean }[]);
+const visibleExtNav = computed(() => extNav.value.filter((n) => !n.auth || !!user.value));
+function navActive(href: string) {
+  const url = String((page as any).url ?? '').split(/[?#]/)[0];
+  return url === href || url.startsWith(href + '/');
+}
 const dmUnread = computed(() => Number((page.props as any).dmUnread ?? 0));
 const mobileBar = computed(() => !!(page.props as any).mobileNav?.enabled && ((page.props as any).mobileNav?.tabs?.length ?? 0) >= 2);
 const siteLogo = computed(() => (page.props as any).site?.logo || '');
@@ -54,11 +63,6 @@ watchEffect(() => {
     document.documentElement.dir = (page.props as any).i18n?.rtl ? 'rtl' : 'ltr';
   }
 });
-const headerSearch = ref('');
-function goSearch() {
-  const q = headerSearch.value.trim();
-  if (q) router.visit('/search?q=' + encodeURIComponent(q));
-}
 function startTopic() {
   mobileOpen.value = false;
   user.value ? router.visit('/new') : auth.open('register');
@@ -71,6 +75,12 @@ function goMobile(href: string) {
 
 <template>
   <div class="min-h-screen bg-appbg text-ink">
+    <!-- POC — you've stepped into one of your hosted communities -->
+    <!-- Hosting-panel banner only — demos have no panel to exit to. -->
+    <div v-if="activeTenant && activeTenant.kind !== 'demo'" class="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-primary px-4 py-1.5 text-center text-sm font-medium text-white">
+      <span>{{ t('You’re inside your hosted community') }}: <b>{{ activeTenant.name }}</b> — {{ t('its own database, you’re the admin.') }}</span>
+      <button type="button" class="rounded bg-white/20 px-2 py-0.5 text-xs font-bold hover:bg-white/30" @click="router.post('/panel/exit')">{{ t('Exit to panel') }}</button>
+    </div>
     <a href="#main" class="skip-link">Skip to content</a>
     <header class="q-header sticky top-0 z-40 border-b border-line backdrop-blur">
       <div class="mx-auto flex h-[60px] max-w-[var(--c-container)] items-center gap-5 px-6">
@@ -85,13 +95,10 @@ function goMobile(href: string) {
           <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Forum') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Community') }}</Link>
           <Link v-if="storeOwner" href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Extensions') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Extensions') }}</Link>
           <Link href="/members" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component === 'Members/Index' ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Members') }}</Link>
+          <Link v-for="n in visibleExtNav" :key="n.href" :href="n.href" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="navActive(n.href) ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t(n.label) }}</Link>
           <Slot name="header:nav" />
         </nav>
         <div class="ml-auto flex items-center gap-3">
-          <form class="hidden items-center gap-2 rounded-full border border-line bg-surface-2 px-4 py-2 text-ink-muted sm:flex" @submit.prevent="goSearch">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-            <input v-model="headerSearch" type="search" class="w-40 border-0 bg-transparent p-0 text-sm text-ink placeholder:text-ink-muted focus:ring-0" :placeholder="t('Search…')" />
-          </form>
           <select v-if="Object.keys(locales).length > 1" :value="currentLocale" @change="setLocale" :aria-label="t('Language')"
             class="hidden rounded-lg border-line bg-surface-2 py-1.5 pl-2 pr-7 text-xs font-semibold text-ink-2 focus:border-primary focus:ring-primary sm:block">
             <option v-for="(label, code) in locales" :key="code" :value="code">{{ label }}</option>
@@ -134,6 +141,7 @@ function goMobile(href: string) {
             <button type="button" @click="goMobile('/')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Community') }}</button>
             <button v-if="storeOwner" type="button" @click="goMobile('/extensions')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Extensions') }}</button>
             <button type="button" @click="goMobile('/members')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Members') }}</button>
+            <button v-for="n in visibleExtNav" :key="n.href" type="button" @click="goMobile(n.href)" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t(n.label) }}</button>
 
             <!-- Language + content auto-translate (the header controls are desktop-only). -->
             <div v-if="Object.keys(locales).length > 1 || user" class="!mt-3 space-y-2.5 border-t border-line pt-3">
@@ -175,7 +183,7 @@ function goMobile(href: string) {
     <PullToRefresh />
     <PwaBanner />
     <AuthModal />
-    <ThemeEditor />
+    <ThemeEditor v-if="isAdmin" />
     <Toast />
     <CommandPalette />
   </div>

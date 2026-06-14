@@ -15,9 +15,13 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(prepend: [
             \App\Http\Middleware\EnsureInstalled::class,
+            // Must run before StartSession so a demo subdomain gets its own
+            // session cookie + database before either is touched.
+            \App\Http\Middleware\HostTenant::class,
         ]);
 
         $middleware->web(append: [
+            \App\Http\Middleware\EnterTenant::class,
             \App\Http\Middleware\BlockBanned::class,
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
@@ -38,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api/registry/github',
             'federation/inbox',
             'u/*/inbox',
+            'mail/inbound',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

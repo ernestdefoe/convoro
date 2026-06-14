@@ -122,6 +122,90 @@ class Theme
         return ":root{{$body}}";
     }
 
+    /**
+     * The baked surface palette (light + dark) for server-rendered standalone
+     * extension pages, which live outside the SPA shell and therefore can't read
+     * the compiled app.css surface tokens. Pair with css() (brand tokens).
+     */
+    public static function surfacePalette(): string
+    {
+        return ':root,html[data-theme="light"]{--c-bg:243 244 249;--c-surface:255 255 255;--c-surface-2:248 249 252;--c-border:230 232 240;--c-text:27 32 48;--c-text-2:74 81 104;--c-muted:138 144 166}'
+            .'html[data-theme="dark"]{--c-bg:16 18 30;--c-surface:22 25 41;--c-surface-2:28 32 52;--c-border:42 47 70;--c-text:233 235 243;--c-text-2:174 180 208;--c-muted:120 127 152}';
+    }
+
+    /**
+     * CSS for the shared site header (see siteHeader()). Drop into a standalone
+     * extension page's <style> block. Assumes surfacePalette() + css() are present.
+     */
+    public static function chromeCss(): string
+    {
+        return '.c-head{position:sticky;top:0;z-index:40;border-bottom:1px solid rgb(var(--c-border));background:rgb(var(--c-surface));backdrop-filter:saturate(1.1) blur(8px)}'
+            .'.c-head .in{max-width:var(--c-container,1240px);margin:0 auto;display:flex;align-items:center;gap:20px;height:60px;padding:0 24px}'
+            .'.c-head .brand{display:flex;align-items:center;font-weight:800;font-size:19px;letter-spacing:-.02em;color:rgb(var(--c-text))}'
+            .'.c-head .brand img{height:32px;width:auto;max-width:180px;display:block}'
+            .'.c-head nav{display:flex;align-items:center;gap:4px}'
+            .'.c-head nav a{padding:8px 12px;border-radius:10px;font-size:14px;font-weight:600;color:rgb(var(--c-text-2));white-space:nowrap}'
+            .'.c-head nav a:hover{background:rgb(var(--c-surface-2))}'
+            .'.c-head nav a.on{background:rgb(var(--c-primary)/.14);color:rgb(var(--c-primary))}'
+            .'.c-head .end{margin-left:auto;display:flex;align-items:center;gap:12px}'
+            .'.c-head .acct{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;color:rgb(var(--c-text-2))}'
+            .'.c-head .acct .av{width:32px;height:32px;border-radius:999px;display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}'
+            .'.c-head .login{padding:8px 16px;border-radius:10px;font-weight:700;font-size:14px;background:rgb(var(--c-primary));color:#fff}'
+            .'@media(max-width:640px){.c-head nav a.opt{display:none}.c-head .acct b{display:none}}';
+    }
+
+    /**
+     * The site header (logo + primary nav + account chip) as HTML, so standalone
+     * extension pages carry the same chrome as the SPA. $active highlights the
+     * extension's own nav entry; pass [$label => $href] for it.
+     *
+     * @param  array<string,string>  $active  e.g. ['Leaderboard' => '/leaderboard']
+     */
+    public static function siteHeader(array $active = []): string
+    {
+        $e = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES);
+        $name = (string) Settings::get('site.name', 'Convoro');
+        // Always use the community's assigned logo; prefer the dark variant on a
+        // dark page, mirroring the SPA header. Falls back to the wordmark.
+        $logo = trim((string) Settings::get('site.logo', ''));
+        $logoDark = trim((string) Settings::get('site.logo_dark', ''));
+        $isDark = (string) Settings::get('theme.mode', 'light') === 'dark';
+        $chosen = $isDark ? ($logoDark ?: $logo) : ($logo ?: $logoDark);
+        $brand = $chosen !== ''
+            ? '<img src="'.$e($chosen).'" alt="'.$e($name).'">'
+            : $e($name);
+
+        $links = ['Community' => '/', 'Members' => '/members'];
+        foreach ($active as $label => $href) {
+            $links[$label] = $href;
+        }
+        $activeHref = $active ? reset($active) : '';
+
+        $nav = '';
+        foreach ($links as $label => $href) {
+            $on = $href === $activeHref ? ' on' : '';
+            $opt = $href === '/members' ? ' opt' : '';
+            $nav .= '<a class="'.trim($on.$opt).'" href="'.$e($href).'">'.$e($label).'</a>';
+        }
+
+        $user = \Illuminate\Support\Facades\Auth::user();
+        if ($user) {
+            $initial = strtoupper(\Illuminate\Support\Str::substr(trim((string) $user->name), 0, 1));
+            $grads = ['#f472b6,#db2777', '#60a5fa,#2563eb', '#34d399,#059669', '#fbbf24,#d97706', '#a78bfa,#7c3aed', '#f87171,#dc2626'];
+            $bg = 'linear-gradient(135deg,'.$grads[((int) $user->id) % 6].')';
+            $end = '<a class="acct" href="/u/'.((int) $user->id).'"><b>'.$e($user->name).'</b>'
+                .'<span class="av" style="background:'.$bg.'">'.$e($initial).'</span></a>';
+        } else {
+            $end = '<a class="login" href="/">'.$e('Sign in').'</a>';
+        }
+
+        return '<header class="c-head"><div class="in">'
+            .'<a class="brand" href="/">'.$brand.'</a>'
+            .'<nav>'.$nav.'</nav>'
+            .'<div class="end">'.$end.'</div>'
+            .'</div></header>';
+    }
+
     /** Admin custom CSS, sanitised so it can't break out of the <style> block. */
     public static function customCss(): string
     {

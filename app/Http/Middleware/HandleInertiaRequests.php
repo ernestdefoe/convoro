@@ -39,8 +39,14 @@ class HandleInertiaRequests extends Middleware
                 'canInvite' => (bool) $request->user() && (bool) Settings::get('invites.members_enabled', true),
             ],
             'site' => fn () => Settings::public(),
+            'extNav' => fn () => \App\Support\ExtensionManager::navLinks(),
             'mobileNav' => fn () => \App\Support\MobileNav::share(),
             'storeOwner' => (bool) config('convoro.store_owner'),
+            'hostingPanel' => (bool) config('convoro.hosting'),
+            // POC — when the owner has stepped into one of their hosted communities.
+            'activeTenant' => fn () => app()->bound('currentTenant')
+                ? ['name' => app('currentTenant')->name, 'slug' => app('currentTenant')->slug, 'kind' => app('currentTenant')->kind]
+                : null,
             'appVersion' => config('convoro.version'),
             'ask' => fn () => ['enabled' => \App\Support\Ask::enabled(), 'suggestions' => \App\Support\Ask::suggestions()],
             'composer' => fn () => ['gifs' => \App\Support\Gifs::enabled()],
@@ -73,6 +79,9 @@ class HandleInertiaRequests extends Middleware
             'notifications' => fn () => $this->notifications($request),
             'dmUnread' => fn () => $this->dmUnread($request),
             'pushKey' => config('webpush.vapid.public_key'),
+            // Marketing CTA switches to "Request a demo" when on-demand demos
+            // are enabled; otherwise the one-click shared demo link is shown.
+            'demoRequests' => (bool) config('convoro.demo_requests'),
             'flash' => [
                 'status' => fn () => $request->session()->get('status'),
                 'mailTest' => fn () => $request->session()->get('mailTest'),

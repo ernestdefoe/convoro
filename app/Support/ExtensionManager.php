@@ -183,6 +183,13 @@ class ExtensionManager
             'premium' => (bool) ($raw['premium'] ?? false),
             'price' => $raw['price'] ?? 0,
             'admin_url' => isset($raw['admin_url']) && is_string($raw['admin_url']) ? $raw['admin_url'] : null,
+            // Server-rendered header nav link {label, href, auth?} so it appears
+            // instantly with the page instead of popping in after the JS bundle.
+            'nav' => is_array($raw['nav'] ?? null) && ! empty($raw['nav']['href']) && ! empty($raw['nav']['label']) ? [
+                'label' => (string) $raw['nav']['label'],
+                'href' => (string) $raw['nav']['href'],
+                'auth' => (bool) ($raw['nav']['auth'] ?? false),
+            ] : null,
             'icon' => $raw['icon'] ?? null,
             '_path' => $dir,
             '_writable' => is_writable($dir),
@@ -244,6 +251,24 @@ class ExtensionManager
         return array_values(array_filter(
             array_map(fn ($id) => $all[$id] ?? null, self::enabledIds())
         ));
+    }
+
+    /**
+     * Header nav links contributed by enabled extensions (manifest `nav`), so
+     * they render server-side and appear instantly — no async-bundle flash.
+     *
+     * @return array<int,array{label:string,href:string,auth:bool}>
+     */
+    public static function navLinks(): array
+    {
+        $out = [];
+        foreach (self::enabled() as $m) {
+            if (! empty($m['nav'])) {
+                $out[] = $m['nav'];
+            }
+        }
+
+        return $out;
     }
 
     public static function setEnabled(string $id, bool $on): void

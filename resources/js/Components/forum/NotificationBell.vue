@@ -9,9 +9,9 @@ const user = computed(() => (page.props as any).auth?.user ?? null);
 
 type Note = {
   id: string; read: boolean; time: string; type: string;
-  actor: { name: string; initials: string; color: number };
-  topic: { title: string; slug: string };
-  emoji?: string; excerpt?: string; text?: string; url: string;
+  actor?: { name: string; initials: string; color: number };
+  topic?: { title: string; slug: string };
+  emoji?: string; excerpt?: string; text?: string; url: string; icon?: string;
 };
 
 const open = ref(false);
@@ -27,10 +27,12 @@ syncFromProps();
 watch(() => (page.props as any).notifications, syncFromProps, { deep: true });
 
 function label(n: Note): string {
+  // Generic/extension notifications carry their own pre-rendered text.
+  if ((n as any).text) return (n as any).text;
   if (n.type === 'badge') return n.text || t('You earned a badge');
-  if (n.type === 'mention') return t('{actor} mentioned you in {topic}', { actor: n.actor.name, topic: n.topic.title });
-  if (n.type === 'reaction') return t('{actor} reacted {emoji} to your post', { actor: n.actor.name, emoji: n.emoji ?? '' });
-  return t('{actor} replied in {topic}', { actor: n.actor.name, topic: n.topic.title });
+  if (n.type === 'mention') return t('{actor} mentioned you in {topic}', { actor: n.actor?.name ?? '', topic: n.topic?.title ?? '' });
+  if (n.type === 'reaction') return t('{actor} reacted {emoji} to your post', { actor: n.actor?.name ?? '', emoji: n.emoji ?? '' });
+  return t('{actor} replied in {topic}', { actor: n.actor?.name ?? '', topic: n.topic?.title ?? '' });
 }
 
 function toggle() {
@@ -41,6 +43,11 @@ function go(n: Note) {
   open.value = false;
   if (!n.read) {
     router.post(`/notifications/${n.id}/read`, {}, { preserveScroll: true, preserveState: true, only: ['notifications'] });
+  }
+  // Standalone (non-Inertia) targets — e.g. extension pages — need a full visit.
+  if ((n as any).external) {
+    window.location.href = n.url;
+    return;
   }
   router.visit(n.url);
 }
@@ -116,7 +123,8 @@ function onDocClick(e: MouseEvent) {
           :class="!n.read ? 'bg-primary/10' : ''"
           @click="go(n)"
         >
-          <Avatar :avatar="{ initials: n.actor.initials, color: n.actor.color }" :size="34" />
+          <Avatar v-if="n.actor" :avatar="{ initials: n.actor.initials, color: n.actor.color }" :size="34" />
+          <span v-else class="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-surface-2 text-lg">{{ (n as any).icon || '🔔' }}</span>
           <span class="min-w-0 flex-1">
             <span class="block text-sm leading-snug text-ink">{{ label(n) }}</span>
             <span v-if="n.excerpt" class="mt-0.5 block truncate text-xs text-ink-muted">{{ n.excerpt }}</span>

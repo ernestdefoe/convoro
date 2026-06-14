@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Jobs\RunFlarumImportJob;
+use App\Support\Importers\MysqlDumpToSqlite;
 use App\Support\Importers\DiscourseImporter;
 use App\Support\Importers\InvisionImporter;
 use App\Support\Importers\MybbImporter;
@@ -17,6 +18,8 @@ use App\Support\Settings;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -73,6 +76,61 @@ class ImportController extends Controller
         return response()->json($result);
     }
 
+    /**
+     * Upload a database FILE instead of connecting live — for managed hosts that
+     * only give you your DB. A SQLite file is used directly; a MySQL dump
+     * (.sql / .sql.gz) is loaded into a scratch SQLite database. Either way the
+     * existing importers run against it unchanged.
+     */
+    public function upload(Request $request): JsonResponse
+    {
+        $request->validate([
+            'source' => ['required', Rule::in(array_keys(self::IMPORTERS))],
+            'file' => ['required', 'file', 'max:1048576'],   // up to 1 GB (subject to php.ini upload limits)
+            'prefix' => ['nullable', 'string', 'max:64'],
+            'source_url' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $source = $request->input('source');
+        $file = $request->file('file');
+        $ext = strtolower($file->getClientOriginalExtension());
+
+        self::cleanupScratch();
+        $dir = storage_path('app/imports');
+        File::ensureDirectoryExists($dir);
+        $sqlitePath = $dir.'/scratch-'.Str::random(8).'.sqlite';
+
+        try {
+            if (in_array($ext, ['sqlite', 'sqlite3', 'db'], true)) {
+                $file->move($dir, basename($sqlitePath));   // already a SQLite DB
+            } else {
+                MysqlDumpToSqlite::convert($file->getRealPath(), $sqlitePath);   // SQL dump → SQLite
+            }
+        } catch (\Throwable $e) {
+            return response()->json(['ok' => false, 'message' => __('Could not read that file: :err', ['err' => $e->getMessage()])], 422);
+        }
+
+        $cfg = [
+            'source' => $source, 'driver' => 'sqlite', 'database' => $sqlitePath,
+            'host' => '', 'port' => null, 'username' => '', 'password' => '',
+            'prefix' => (string) $request->input('prefix', ''),
+            'source_url' => (string) $request->input('source_url', ''),
+            'flarum_url' => (string) $request->input('source_url', ''),
+        ];
+
+        try {
+            $result = self::IMPORTERS[$source]::test($cfg);
+        } catch (\Throwable $e) {
+            @unlink($sqlitePath);
+
+            return response()->json(['ok' => false, 'message' => __('File loaded, but it doesn’t look like a :name database: :err', ['name' => $source, 'err' => $e->getMessage()])], 422);
+        }
+
+        Settings::set('import.file_cfg', $cfg);
+
+        return response()->json($result + ['file' => true]);
+    }
+
     /** Kick off the import in the background (wizard step 3). */
     public function start(Request $request): RedirectResponse
     {
@@ -80,7 +138,14 @@ class ImportController extends Controller
             return back()->with('status', __('An import is already running.'));
         }
 
-        $cfg = $this->validateCfg($request);
+        if ($request->input('mode') === 'file') {
+            $cfg = Settings::get('import.file_cfg');
+            if (! $cfg) {
+                return back()->with('status', __('Upload a database file first.'));
+            }
+        } else {
+            $cfg = $this->validateCfg($request);
+        }
         $opts = ['tags' => $request->boolean('import_tags', true)];
 
         Settings::setMany([
@@ -126,6 +191,18 @@ class ImportController extends Controller
             'source_url' => $sourceUrl,
             'flarum_url' => $sourceUrl, // back-compat for the Flarum importer
         ];
+    }
+
+    /** Remove any prior scratch SQLite databases from earlier uploads. */
+    private static function cleanupScratch(): void
+    {
+        $dir = storage_path('app/imports');
+        if (is_dir($dir)) {
+            foreach (glob($dir.'/scratch-*.sqlite') ?: [] as $f) {
+                @unlink($f);
+            }
+        }
+        Settings::set('import.file_cfg', null);
     }
 
     private function state(): array

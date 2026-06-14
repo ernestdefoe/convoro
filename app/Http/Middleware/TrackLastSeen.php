@@ -17,9 +17,14 @@ class TrackLastSeen
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        if ($user && Cache::add('seen:'.$user->id, true, 60)) {
-            // updateQuietly to avoid touching updated_at / firing events.
-            $user->forceFill(['last_seen_at' => now(), 'last_ip' => $request->ip()])->saveQuietly();
+        if ($user) {
+            if (Cache::add('seen:'.$user->id, true, 60)) {
+                // updateQuietly to avoid touching updated_at / firing events.
+                $user->forceFill(['last_seen_at' => now(), 'last_ip' => $request->ip()])->saveQuietly();
+            }
+        } elseif ($request->hasSession() && ! $request->isMethod('POST')) {
+            // Track logged-out visitors for the "Online now" widget.
+            \App\Support\Presence::pingGuest(sha1($request->session()->getId()));
         }
 
         return $next($request);

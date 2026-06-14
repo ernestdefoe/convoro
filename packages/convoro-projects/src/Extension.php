@@ -22,7 +22,7 @@ class Extension extends ServiceProvider
     public function boot(): void
     {
         Route::middleware('web')->group(function () {
-            Route::get('/projects', fn (Request $r) => response(self::page($r)));
+            Route::get('/projects', fn (Request $r) => self::page($r));
 
             Route::get('/api/ext/projects/latest', function () {
                 $rows = DB::table('projects')->join('users', 'users.id', '=', 'projects.user_id')
@@ -66,14 +66,10 @@ class Extension extends ServiceProvider
         Route::middleware(['web', 'auth', 'admin'])->get('/admin/ext/projects', fn () => response(self::adminPage()));
     }
 
-    private static function page(Request $request): string
+    private static function page(Request $request)
     {
         $user = Auth::user();
         $isAdmin = (bool) ($user?->is_admin);
-        $csrf = csrf_token();
-        $theme = \App\Support\Theme::css();
-        $font = \App\Support\Theme::fontStack((string) Settings::get('theme.font', 'Inter'));
-        $name = htmlspecialchars((string) Settings::get('site.name', 'Convoro'), ENT_QUOTES);
         $e = fn ($v) => htmlspecialchars((string) $v, ENT_QUOTES);
 
         $rows = DB::table('projects')->join('users', 'users.id', '=', 'projects.user_id')
@@ -115,16 +111,9 @@ FORM;
             $form = '<p class="signin">Log in on the community to share your own project.</p>';
         }
 
-        return <<<HTML
-<!DOCTYPE html><html lang="en" data-theme="{$e(Settings::get('theme.mode', 'light'))}"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="csrf-token" content="{$csrf}"><title>Projects · {$name}</title>
-<style>{$theme}
-*{box-sizing:border-box}body{margin:0;font-family:{$font};background:rgb(var(--c-bg));color:rgb(var(--c-text))}
-a{color:rgb(var(--c-primary))}
-.bar{position:sticky;top:0;display:flex;align-items:center;gap:14px;padding:14px 20px;background:rgb(var(--c-surface));border-bottom:1px solid rgb(var(--c-border));z-index:10}
-.bar b{font-weight:800}.bar .sp{flex:1}
-.wrap{max-width:1040px;margin:0 auto;padding:32px 20px}
+        $css = <<<'CSS'
+.ext-frame a{color:rgb(var(--c-primary));text-decoration:none}
+.wrap{max-width:1040px;margin:0 auto}
 h1{font-size:28px;margin:0 0 4px}.sub{color:rgb(var(--c-muted));margin:0 0 24px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px}
 .card{position:relative;background:rgb(var(--c-surface));border:1px solid rgb(var(--c-border));border-radius:var(--c-radius,12px);overflow:hidden;transition:transform .15s,box-shadow .15s}
@@ -144,38 +133,35 @@ h1{font-size:28px;margin:0 0 4px}.sub{color:rgb(var(--c-muted));margin:0 0 24px}
 .upbtn{cursor:pointer;background:rgb(var(--c-surface-2));border:1px solid rgb(var(--c-border));border-radius:9px;padding:8px 14px;font-size:13px;font-weight:600}
 .btn{border:0;border-radius:var(--c-radius-btn,9px);padding:10px 18px;font-weight:700;cursor:pointer;background:rgb(var(--c-primary));color:#fff}
 .msg{margin-left:10px;color:rgb(var(--c-muted));font-size:13px}.signin{color:rgb(var(--c-muted))}
-</style></head><body>
-<div class="bar"><b>{$name}</b><span class="sp"></span><a href="/">← Community</a></div>
-<div class="wrap">
-<h1>Projects</h1><p class="sub">What our members are building.</p>
-{$form}
-<div class="grid">{$cards}</div>
-</div>
-<script>
-const csrf=document.querySelector('meta[name=csrf-token]').content;
-const h={'X-CSRF-TOKEN':csrf,'Content-Type':'application/json','Accept':'application/json'};
-document.querySelectorAll('.del').forEach(b=>b.addEventListener('click',async()=>{
+CSS;
+
+        $bodyHtml = '<div class="wrap"><h1>Projects</h1><p class="sub">What our members are building.</p>'
+            .$form.'<div class="grid">'.$cards.'</div></div>';
+
+        $js = <<<'JS'
+function val(id){return document.getElementById(id).value.trim();}
+document.querySelectorAll('.del').forEach(function(b){b.addEventListener('click',function(){
   if(!confirm('Delete this project?'))return;
-  await fetch('/projects/'+b.dataset.id,{method:'DELETE',headers:h});location.reload();
-}));
-const file=document.getElementById('p_file');
+  fetch('/projects/'+b.dataset.id,{method:'DELETE',headers:H}).then(function(){location.reload();});
+});});
+var file=document.getElementById('p_file');
 if(file){
-  file.addEventListener('change',async e=>{
-    const f=e.target.files[0];if(!f)return;
-    const fd=new FormData();fd.append('file',f);
-    const r=await fetch('/uploads/image',{method:'POST',headers:{'X-CSRF-TOKEN':csrf,'Accept':'application/json'},body:fd});
-    const d=await r.json();if(d.url){document.getElementById('p_image').value=d.url;document.getElementById('p_prev').style.backgroundImage="url('"+d.url+"')";}
+  file.addEventListener('change',function(e){
+    var f=e.target.files[0];if(!f)return;
+    var fd=new FormData();fd.append('file',f);
+    fetch('/uploads/image',{method:'POST',headers:{'X-CSRF-TOKEN':csrf,'Accept':'application/json'},body:fd})
+      .then(function(r){return r.json();}).then(function(d){if(d.url){document.getElementById('p_image').value=d.url;document.getElementById('p_prev').style.backgroundImage="url('"+d.url+"')";}});
   });
-  document.getElementById('p_submit').addEventListener('click',async()=>{
-    const body={title:val('p_title'),tagline:val('p_tagline'),url:val('p_url')||null,description:val('p_desc'),image:document.getElementById('p_image').value||null};
+  document.getElementById('p_submit').addEventListener('click',function(){
+    var body={title:val('p_title'),tagline:val('p_tagline'),url:val('p_url')||null,description:val('p_desc'),image:document.getElementById('p_image').value||null};
     if(!body.title){document.getElementById('p_msg').textContent='Title is required';return;}
-    const r=await fetch('/projects',{method:'POST',headers:h,body:JSON.stringify(body)});
-    if(r.ok||r.redirected)location.href='/projects';
+    fetch('/projects',{method:'POST',headers:H,body:JSON.stringify(body)})
+      .then(function(r){if(r.ok||r.redirected)location.href='/projects';});
   });
 }
-function val(id){return document.getElementById(id).value.trim();}
-</script></body></html>
-HTML;
+JS;
+
+        return \App\Support\ExtPage::render('Projects', $bodyHtml, $css, $js);
     }
 
     private static function adminPage(): string

@@ -12,6 +12,7 @@ const props = defineProps<{
   categories: { id: number; name: string; icon: string | null; color: string }[];
   tags: { id: number; name: string; color: string }[];
   draft?: any;
+  autosave?: any;
 }>();
 
 const editor = ref<any>(null);
@@ -63,6 +64,80 @@ function saveDraft(schedule = false) {
   draftForm.poll = pollPayload();
   draftForm.scheduled_at = schedule ? scheduledAt.value : null;
   draftForm.post('/drafts');
+}
+
+// ---- Auto draft save -------------------------------------------------------
+// Quietly persists the in-progress topic to a rolling per-user autosave draft
+// so a crash, refresh or accidental navigation never loses work. Cleared
+// server-side once the topic is published.
+const saveState = ref<'idle' | 'saving' | 'saved'>('idle');
+const savedAt = ref<string | null>(props.autosave?.savedAt ?? null);
+const savedAgo = ref<string>(props.autosave?.savedAgo ?? '');
+let autoTimer: number | null = null;
+let lastSig = '';
+
+function autoPayload() {
+  return {
+    title: form.title,
+    category_id: form.category_id,
+    tags: form.tags,
+    cover: form.cover,
+    body_html: editor.value?.getHTML() ?? '',
+    body_json: editor.value?.getJSON() ?? '',
+    poll: pollPayload(),
+  };
+}
+function isBlank(p: any) {
+  return !String(p.title || '').trim() && !String(p.body_html || '').replace(/<[^>]+>/g, '').trim();
+}
+function scheduleAutosave() {
+  if (autoTimer) clearTimeout(autoTimer);
+  autoTimer = window.setTimeout(doAutosave, 2500);
+}
+async function doAutosave() {
+  const payload = autoPayload();
+  const sig = JSON.stringify(payload);
+  if (sig === lastSig || isBlank(payload)) return;
+  lastSig = sig;
+  saveState.value = 'saving';
+  try {
+    const r = await fetch('/drafts/autosave', {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': csrf() },
+      body: sig,
+    });
+    const d = await r.json();
+    if (d.saved) { savedAt.value = d.at; savedAgo.value = tr('just now'); saveState.value = 'saved'; }
+    else saveState.value = 'idle';
+  } catch { saveState.value = 'idle'; }
+}
+watch(() => [form.title, form.category_id, form.tags.slice(), form.cover,
+  poll.enabled, poll.question, poll.options.slice(), poll.multiple, poll.closes_days],
+  scheduleAutosave, { deep: true });
+
+// Restore banner (offered when returning to a fresh composer).
+const showRestore = ref(!!props.autosave);
+function restoreAutosave() {
+  const a = props.autosave;
+  form.title = a.title ?? '';
+  if (a.category_id != null) form.category_id = a.category_id;
+  form.tags = (a.tags ?? []).slice();
+  form.cover = a.cover ?? '';
+  editor.value?.setHTML(a.body_html ?? '');
+  if (a.poll?.question) {
+    poll.enabled = true;
+    poll.question = a.poll.question ?? '';
+    poll.options = a.poll.options?.length >= 2 ? [...a.poll.options] : ['', ''];
+    poll.multiple = !!a.poll.multiple;
+    poll.closes_days = a.poll.closes_days ?? null;
+  }
+  showRestore.value = false;
+}
+async function discardAutosave() {
+  showRestore.value = false;
+  try {
+    await fetch('/drafts/autosave', { method: 'DELETE', credentials: 'include', headers: { Accept: 'application/json', 'X-CSRF-TOKEN': csrf() } });
+  } catch { /* ignore */ }
 }
 
 // "Asked before?" — surface existing discussions as the member types a title.
@@ -138,6 +213,7 @@ async function pickCover(file: File) {
 }
 
 function submit() {
+  if (autoTimer) clearTimeout(autoTimer); // don't autosave after we navigate away
   if (!editor.value || editor.value.isEmpty()) { form.setError('body_html', tr('Write something first.')); return; }
   form.body_html = editor.value.getHTML();
   form.body_json = editor.value.getJSON();
@@ -158,6 +234,17 @@ function submit() {
   <AppLayout>
     <div class="mx-auto max-w-[760px]">
       <h1 class="mb-5 text-2xl font-extrabold tracking-tight">{{ tr('Start a topic') }}</h1>
+
+      <!-- Restore an unsaved draft recovered from a previous session -->
+      <div v-if="showRestore" class="mb-5 flex flex-wrap items-center gap-3 rounded-c border border-primary/30 bg-primary/[0.06] px-4 py-3">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="shrink-0 text-primary"><path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg>
+        <div class="min-w-0 flex-1 text-sm">
+          <span class="font-semibold text-ink">{{ tr('You have an unsaved draft') }}</span>
+          <span class="text-ink-2"> · {{ tr('autosaved {ago}', { ago: props.autosave?.savedAgo ?? tr('recently') }) }}</span>
+        </div>
+        <button type="button" class="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-600" @click="restoreAutosave">{{ tr('Restore') }}</button>
+        <button type="button" class="rounded-lg border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-ink-2 hover:bg-surface-2" @click="discardAutosave">{{ tr('Discard') }}</button>
+      </div>
 
       <form class="space-y-5" @submit.prevent="submit">
         <div class="rounded-c border border-line bg-surface p-5">
@@ -240,7 +327,7 @@ function submit() {
 
         <div>
           <label class="mb-1.5 block text-sm font-semibold text-ink-2">{{ tr('Post') }}</label>
-          <Editor ref="editor" :content="draftBody" :placeholder="tr('Write your post… (rich text, drag images in)')" />
+          <Editor ref="editor" :content="draftBody" :placeholder="tr('Write your post… (rich text, drag images in)')" @typing="scheduleAutosave" />
           <p v-if="form.errors.body_html" class="mt-1 text-sm text-red-500">{{ form.errors.body_html }}</p>
         </div>
 
@@ -262,7 +349,17 @@ function submit() {
           <button type="button" class="rounded-c border border-line bg-surface px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="showSchedule = !showSchedule">
             🕑 {{ tr('Schedule') }}
           </button>
-          <Link href="/drafts" class="ml-auto text-sm font-semibold text-ink-2 hover:text-ink">{{ tr('My drafts') }}</Link>
+          <span class="ml-auto inline-flex items-center gap-1.5 text-xs text-ink-muted" aria-live="polite">
+            <template v-if="saveState === 'saving'">
+              <svg class="animate-spin" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 12a9 9 0 1 1-6.2-8.5" stroke-linecap="round"/></svg>
+              {{ tr('Saving…') }}
+            </template>
+            <template v-else-if="saveState === 'saved'">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="text-emerald-500"><path d="M20 6 9 17l-5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              {{ tr('Draft saved') }}
+            </template>
+          </span>
+          <Link href="/drafts" class="text-sm font-semibold text-ink-2 hover:text-ink">{{ tr('My drafts') }}</Link>
         </div>
       </form>
     </div>

@@ -42,6 +42,32 @@ const testing = ref(false);
 const testError = ref<string | null>(null);
 const counts = ref<Record<string, number> | null>(null);
 
+// Connect to a live DB, or upload a database file (managed hosts that only give
+// you the DB). File mode loads a SQLite file directly or a MySQL dump into one.
+const mode = ref<'connect' | 'file'>('connect');
+const fileEl = ref<HTMLInputElement | null>(null);
+const fileName = ref('');
+const uploading = ref(false);
+function setMode(m: 'connect' | 'file') { mode.value = m; counts.value = null; testError.value = null; }
+function onFile() { fileName.value = fileEl.value?.files?.[0]?.name ?? ''; counts.value = null; testError.value = null; }
+
+async function uploadFile() {
+  const f = fileEl.value?.files?.[0];
+  if (!f) { testError.value = t('Choose a database file first.'); return; }
+  uploading.value = true; testError.value = null; counts.value = null;
+  try {
+    const fd = new FormData();
+    fd.append('file', f);
+    fd.append('source', form.source);
+    fd.append('prefix', form.prefix);
+    fd.append('source_url', form.source_url);
+    const r = await fetch('/admin/import/upload', { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf(), Accept: 'application/json' }, body: fd });
+    const d = await r.json();
+    if (!r.ok || !d.ok) testError.value = d.message || t('Could not read the file.');
+    else counts.value = d.counts;
+  } catch { testError.value = t('Upload failed.'); } finally { uploading.value = false; }
+}
+
 const live = reactive({ ...props.state });
 let timer: number | null = null;
 
@@ -71,7 +97,7 @@ async function testConnection() {
 
 function startImport() {
   if (!confirm(t('Start importing from {name} into Convoro? This adds content to your community. Back up your database first.', { name: current.value.name }))) return;
-  router.post('/admin/import/start', { ...form }, {
+  router.post('/admin/import/start', { ...form, mode: mode.value }, {
     preserveScroll: true,
     onSuccess: () => { live.running = true; poll(); },
   });
@@ -124,7 +150,14 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
           {{ t('{name} import is newer — its mapping is automatically tested against the {name} schema, but real forums vary. Back up your Convoro database first and review the result.', { name: current.name }) }}
         </p>
 
-        <div class="mt-4 grid grid-cols-2 gap-3">
+        <!-- connect to a live DB, or upload a database file -->
+        <div class="mt-4 flex w-max rounded-lg border border-line p-0.5">
+          <button type="button" class="rounded-md px-3 py-1.5 text-xs font-bold" :class="mode === 'connect' ? 'bg-primary text-white' : 'text-ink-muted hover:text-ink'" @click="setMode('connect')">{{ t('Connect to database') }}</button>
+          <button type="button" class="rounded-md px-3 py-1.5 text-xs font-bold" :class="mode === 'file' ? 'bg-primary text-white' : 'text-ink-muted hover:text-ink'" @click="setMode('file')">{{ t('Upload database file') }}</button>
+        </div>
+
+        <!-- connect mode -->
+        <div v-show="mode === 'connect'" class="mt-4 grid grid-cols-2 gap-3">
           <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('DB host') }}</label><input v-model="form.host" :class="field" /></div>
           <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('Port') }}</label><input v-model.number="form.port" type="number" :class="field" /></div>
           <div class="col-span-2"><label class="text-xs font-semibold text-ink-2">{{ t('Database name') }}</label><input v-model="form.database" :class="field" /></div>
@@ -134,14 +167,33 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
           <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('Old forum URL') }} <span class="font-normal text-ink-muted">{{ t('(avatars & images)') }}</span></label><input v-model="form.source_url" :class="field" placeholder="https://old.forum" /></div>
         </div>
 
+        <!-- file mode -->
+        <div v-show="mode === 'file'" class="mt-4 space-y-3">
+          <p class="rounded-lg border border-line bg-appbg px-3 py-2 text-xs text-ink-muted">
+            {{ t('Only have your database file? Upload a SQLite file, or a MySQL dump (.sql or .sql.gz) — common when a managed host only gives you the database. We load it and read it the same way as a live connection.') }}
+          </p>
+          <label class="flex cursor-pointer items-center justify-between gap-3 rounded-lg border border-dashed border-line bg-appbg px-4 py-3 hover:border-primary/50">
+            <span class="truncate text-sm" :class="fileName ? 'text-ink' : 'text-ink-muted'">{{ fileName || t('Choose a .sql, .sql.gz or .sqlite file…') }}</span>
+            <span class="shrink-0 rounded-md bg-surface-2 px-3 py-1.5 text-xs font-bold text-ink">{{ t('Browse') }}</span>
+            <input ref="fileEl" type="file" accept=".sql,.gz,.sqlite,.sqlite3,.db" class="hidden" @change="onFile" />
+          </label>
+          <div class="grid grid-cols-2 gap-3">
+            <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('Table prefix') }} <span class="font-normal text-ink-muted">{{ t('(optional)') }}</span></label><input v-model="form.prefix" :class="field" /></div>
+            <div class="col-span-2 sm:col-span-1"><label class="text-xs font-semibold text-ink-2">{{ t('Old forum URL') }} <span class="font-normal text-ink-muted">{{ t('(avatars & images)') }}</span></label><input v-model="form.source_url" :class="field" placeholder="https://old.forum" /></div>
+          </div>
+        </div>
+
         <label v-if="form.source === 'flarum'" class="mt-4 flex items-center gap-2 text-sm text-ink-2">
           <input v-model="form.import_tags" type="checkbox" class="rounded border-line text-primary focus:ring-primary" />
           {{ t('Import tags as categories') }}
         </label>
 
         <div class="mt-4 flex flex-wrap items-center gap-3">
-          <button :disabled="testing || !form.database || !form.username" class="rounded-lg bg-surface-2 px-3 py-2 text-sm font-semibold text-ink hover:bg-appbg disabled:opacity-50" @click="testConnection">
+          <button v-if="mode === 'connect'" :disabled="testing || !form.database || !form.username" class="rounded-lg bg-surface-2 px-3 py-2 text-sm font-semibold text-ink hover:bg-appbg disabled:opacity-50" @click="testConnection">
             {{ testing ? t('Testing…') : t('Test connection') }}
+          </button>
+          <button v-else :disabled="uploading || !fileName" class="rounded-lg bg-surface-2 px-3 py-2 text-sm font-semibold text-ink hover:bg-appbg disabled:opacity-50" @click="uploadFile">
+            {{ uploading ? t('Reading file…') : t('Upload &amp; scan') }}
           </button>
           <button v-if="counts" :disabled="live.running" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-50" @click="startImport">
             {{ t('Start import') }}

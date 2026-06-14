@@ -70,6 +70,10 @@ class TopicPublisher
         // Broadcast to the fediverse (no-op unless federation is enabled + has followers).
         \App\Support\Federation::announceTopic($topic);
 
+        // Reusable hook for extensions reacting to genuinely-published topics
+        // (e.g. Facebook auto-post) — not fired for imports/seeds/demos.
+        event(new \App\Events\TopicPublished($topic));
+
         return $topic;
     }
 }

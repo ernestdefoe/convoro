@@ -1,10 +1,21 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import MarketingLayout from '@/Layouts/MarketingLayout.vue';
 import { t } from '@/lib/i18n';
 
-const props = defineProps<{ catalog: any[] }>();
+const props = defineProps<{ catalog: any[]; plans?: any[]; getStartedUrl?: string }>();
+
+const plans = computed(() => props.plans ?? []);
+const getStartedUrl = computed(() => props.getStartedUrl ?? '/get-started');
+function planUrl(id?: string) { return getStartedUrl.value + (id ? `?plan=${id}` : ''); }
+function selfHostUrl() { return getStartedUrl.value + '?mode=self'; }
+
+// When on-demand demos are enabled, the CTA invites a personal demo request;
+// otherwise it links to the shared one-click demo.
+const demoRequests = computed(() => Boolean((usePage().props as any).demoRequests));
+const demoHref = computed(() => (demoRequests.value ? '/request-demo' : 'https://demo.convoro.co/demo'));
+const demoLabel = computed(() => (demoRequests.value ? t('Request a demo') : t('Try the live demo')));
 
 // Duplicate the list so the marquee can scroll seamlessly (only when there's
 // enough to scroll); a short list just centers.
@@ -51,8 +62,9 @@ const stack = [
           {{ t("Convoro puts AI at the core of community. Members ask a question and get an instant answer drawn from your community's own threads — with citations. Every discussion makes the forum smarter. Batteries-included, beautiful, and runnable on cheap shared hosting.") }}
         </p>
         <div class="mt-9 flex flex-wrap justify-center gap-3.5">
-          <a href="/docs/install" class="rounded-xl bg-primary px-6 py-3.5 font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary-600">{{ t('Install in minutes →') }}</a>
-          <a href="https://demo.convoro.co/demo" class="rounded-xl border border-line bg-surface px-6 py-3.5 font-bold text-ink-2 hover:bg-surface-2">{{ t('Try the live demo') }}</a>
+          <a v-if="plans.length" :href="planUrl()" class="rounded-xl bg-primary px-6 py-3.5 font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary-600">{{ t('Start your community →') }}</a>
+          <a v-else href="/docs/install" class="rounded-xl bg-primary px-6 py-3.5 font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary-600">{{ t('Install in minutes →') }}</a>
+          <a :href="demoHref" class="rounded-xl border border-line bg-surface px-6 py-3.5 font-bold text-ink-2 hover:bg-surface-2">{{ demoLabel }}</a>
         </div>
       </div>
       <div class="mx-auto max-w-5xl px-6 pb-8">
@@ -215,6 +227,34 @@ const stack = [
       </div>
     </section>
 
+    <!-- Pricing (managed hosting) -->
+    <section v-if="plans.length" id="pricing" class="mx-auto max-w-6xl px-6 py-16">
+      <div class="text-center">
+        <h2 class="text-3xl font-extrabold tracking-tight sm:text-4xl">{{ t('Let us host it for you') }}</h2>
+        <p class="mx-auto mt-3 max-w-2xl text-lg text-ink-2">{{ t('Every plan includes unlimited members and unlimited bandwidth — you only pick how much storage you need. Migrate your existing forum in minutes.') }}</p>
+      </div>
+      <div class="mt-10 grid gap-5 sm:grid-cols-3">
+        <div v-for="(p, i) in plans" :key="p.id" class="relative rounded-3xl border bg-surface p-6" :class="i === 1 ? 'border-primary shadow-xl shadow-primary/10' : 'border-line'">
+          <div v-if="i === 1" class="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-primary px-3 py-0.5 text-xs font-bold text-white">{{ t('Most popular') }}</div>
+          <div class="text-sm font-black uppercase tracking-wide text-ink-2">{{ p.name }}</div>
+          <div class="mt-2"><span class="text-4xl font-black text-ink">{{ p.price }}</span><span class="text-ink-muted">/mo</span></div>
+          <div class="mt-1 text-sm font-bold text-primary">{{ p.storageGb }} GB storage</div>
+          <p class="mt-2 text-sm text-ink-2">{{ p.blurb }}</p>
+          <ul class="mt-4 space-y-1.5 text-sm text-ink-2">
+            <li class="flex gap-2"><span class="text-primary">✓</span> {{ t('Unlimited members') }}</li>
+            <li class="flex gap-2"><span class="text-primary">✓</span> {{ t('Unlimited bandwidth') }}</li>
+            <li class="flex gap-2"><span class="text-primary">✓</span> {{ t('Custom domain + HTTPS') }}</li>
+            <li class="flex gap-2"><span class="text-primary">✓</span> {{ t('Import from any forum') }}</li>
+          </ul>
+          <a :href="planUrl(p.id)" class="mt-5 block rounded-xl px-4 py-2.5 text-center font-bold" :class="i === 1 ? 'bg-primary text-white hover:bg-primary-600' : 'border border-line text-ink hover:bg-surface-2'">{{ t('Get started') }}</a>
+        </div>
+      </div>
+      <p class="mt-6 text-center text-sm text-ink-muted">
+        {{ t('Prefer to host it yourself?') }}
+        <a :href="selfHostUrl()" class="font-semibold text-primary hover:underline">{{ t('Self-host Convoro for free →') }}</a>
+      </p>
+    </section>
+
     <!-- CTA -->
     <section class="mx-auto max-w-6xl px-6 pb-24 pt-4">
       <div class="rounded-3xl bg-gradient-to-br from-indigo-600 to-fuchsia-500 px-8 py-16 text-center text-white">
@@ -222,7 +262,7 @@ const stack = [
         <p class="mt-3 text-lg text-white/90">{{ t('Download Convoro and be online in minutes.') }}</p>
         <div class="mt-8 flex flex-wrap justify-center gap-3.5">
           <a href="/docs/install.html" class="rounded-xl bg-white px-6 py-3.5 font-bold text-indigo-600 hover:bg-indigo-50">{{ t('Read the install guide') }}</a>
-          <a href="https://demo.convoro.co/demo" class="rounded-xl border border-white/40 px-6 py-3.5 font-bold text-white hover:bg-white/10">{{ t('Try it live') }}</a>
+          <a :href="demoHref" class="rounded-xl border border-white/40 px-6 py-3.5 font-bold text-white hover:bg-white/10">{{ demoLabel }}</a>
         </div>
       </div>
     </section>

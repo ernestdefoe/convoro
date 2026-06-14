@@ -70,6 +70,11 @@ class ExtensionInstaller
             File::moveDirectory($pkgDir, $dest);
 
             ExtensionManager::flushCache();
+            // New PHP files just landed on disk — drop their stale bytecode
+            // from OPcache so the running FPM workers load the new code.
+            Caches::resetOpcache();
+
+            AuditLog::record('extension.install', ['extension', $id, $manifest['name'] ?? $id]);
 
             return $id;
         } finally {
@@ -109,12 +114,15 @@ class ExtensionInstaller
 
         ExtensionManager::setEnabled($id, true);
         self::recache();
+        AuditLog::record('extension.enable', ['extension', $id, $m['name'] ?? $id]);
     }
 
     public static function disable(string $id): void
     {
+        $m = ExtensionManager::all()[$id] ?? null;
         ExtensionManager::setEnabled($id, false);
         self::recache();
+        AuditLog::record('extension.disable', ['extension', $id, $m['name'] ?? $id]);
     }
 
     /**
@@ -150,6 +158,7 @@ class ExtensionInstaller
 
         ExtensionManager::flushCache();
         self::recache();
+        AuditLog::record('extension.uninstall', ['extension', $id, $m['name'] ?? $id]);
     }
 
     private static function migrate(array $m): void
@@ -163,14 +172,14 @@ class ExtensionInstaller
         }
     }
 
-    /** Rebuild caches so newly (de)activated providers/routes take effect. */
+    /**
+     * Clear caches + reset OPcache so newly (de)activated providers, routes and
+     * views take effect immediately. Centralised in Caches::bust() so every
+     * extension lifecycle action (and core updates) busts the same way.
+     */
     private static function recache(): void
     {
-        try {
-            Artisan::call('optimize:clear');
-        } catch (\Throwable) {
-            // ignore in environments where caching isn't configured
-        }
+        Caches::bust();
     }
 
     /** Throw unless the extension's `convoro` constraint matches the running version. */

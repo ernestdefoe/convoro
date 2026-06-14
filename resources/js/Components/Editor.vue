@@ -74,6 +74,7 @@ defineExpose({
   clear: () => editor.value?.commands.clearContent(true),
   focus: () => editor.value?.commands.focus('end'),
   insertContent: (html: string) => editor.value?.chain().focus().insertContent(html).run(),
+  setHTML: (html: string) => editor.value?.commands.setContent(html || ''),
 });
 
 // ---- AI writing assistant ----

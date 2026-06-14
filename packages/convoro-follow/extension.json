@@ -1,0 +1,17 @@
+{
+  "id": "convoro-follow",
+  "name": "Follow & Feed",
+  "version": "1.3.0",
+  "description": "Follow members and get a personal feed of their latest topics and replies. Adds a Follow button to profiles and a Feed page. Opt-in.",
+  "author": "Convoro",
+  "convoro": ">=1.31.0",
+  "type": "extension",
+  "namespace": "Convoro\\Ext\\Follow\\",
+  "provider": "Convoro\\Ext\\Follow\\Extension",
+  "migrations": "migrations",
+  "assets": { "forum": "assets/forum.js" },
+  "nav": { "label": "Feed", "href": "/feed", "auth": true },
+  "icon": "icon.svg",
+  "premium": false,
+  "price": 0
+}

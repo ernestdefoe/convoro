@@ -14,12 +14,16 @@ const props = withDefaults(
       color: number;
       avatar?: string | null;
       staff?: { name: string; color: string } | null;
+      online?: boolean;
     };
     size?: number;
     /** When true, show the staff badge (if any) beneath the avatar. */
     badge?: boolean;
+    /** When set, overlay an online/offline presence dot on the avatar.
+        'auto' uses the avatar's own `online` flag. */
+    presence?: 'online' | 'offline' | 'auto' | null;
   }>(),
-  { size: 40, badge: false },
+  { size: 40, badge: false, presence: null },
 );
 
 const gradients = [
@@ -32,6 +36,17 @@ const gradients = [
 ];
 const bg = computed(() => gradients[(props.avatar.color - 1) % 6]);
 const showBadge = computed(() => props.badge && !!props.avatar.staff);
+
+const hasPresence = computed(() => props.presence != null);
+const isOnline = computed(() =>
+  props.presence === 'online' || (props.presence === 'auto' && !!props.avatar.online),
+);
+const glyphStyle = computed(() => ({
+  width: props.size + 'px',
+  height: props.size + 'px',
+  borderRadius: 'var(--c-avatar-radius, 9999px)',
+}));
+const dotSize = computed(() => Math.max(9, Math.round(props.size * 0.26)));
 </script>
 
 <template>
@@ -39,8 +54,31 @@ const showBadge = computed(() => props.badge && !!props.avatar.staff);
        below carries all passed attrs, so it behaves exactly like a bare avatar.
        Badge: a real centered column stacks the avatar + badge. -->
   <span :class="showBadge ? 'inline-flex flex-col items-center gap-1' : 'contents'">
+    <!-- Presence variant: a relative wrapper holds the glyph + a status dot. -->
+    <span v-if="hasPresence" v-bind="$attrs" class="relative inline-flex shrink-0">
+      <img
+        v-if="avatar.avatar"
+        :src="avatar.avatar"
+        :alt="avatar.initials"
+        class="block object-cover"
+        :style="glyphStyle"
+      />
+      <span
+        v-else
+        class="grid place-items-center font-bold text-white"
+        :style="{ ...glyphStyle, fontSize: size * 0.38 + 'px', background: bg }"
+      >{{ avatar.initials || '?' }}</span>
+      <span
+        class="absolute bottom-0 right-0 rounded-full ring-2 ring-surface"
+        :class="isOnline ? 'bg-emerald-500' : 'bg-ink-muted'"
+        :style="{ width: dotSize + 'px', height: dotSize + 'px' }"
+        :title="isOnline ? 'Online' : 'Offline'"
+      ></span>
+    </span>
+
+    <!-- Default variant: unchanged — glyph carries the passed attrs. -->
     <img
-      v-if="avatar.avatar"
+      v-else-if="avatar.avatar"
       v-bind="$attrs"
       :src="avatar.avatar"
       :alt="avatar.initials"

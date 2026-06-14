@@ -856,8 +856,18 @@ class AdminController extends Controller
             'trust' => ['nullable', 'string', 'in:auto,0,1,4'],
         ]);
 
+        $wasAdmin = (bool) $user->is_admin;
+        $oldGroups = $user->groups->pluck('id')->sort()->values()->all();
+
         $user->update(['name' => $data['name'], 'email' => $data['email'], 'is_admin' => (bool) $data['is_admin']]);
         $user->groups()->sync($data['groups'] ?? []);
+
+        $newGroups = collect($data['groups'] ?? [])->map(fn ($g) => (int) $g)->sort()->values()->all();
+        \App\Support\AuditLog::record('member.update', $user, subject: $user, meta: array_filter([
+            'admin' => $wasAdmin !== (bool) $data['is_admin'] ? ((bool) $data['is_admin'] ? 'promoted' : 'demoted') : null,
+            'groups_changed' => $oldGroups !== $newGroups ? ['from' => $oldGroups, 'to' => $newGroups] : null,
+            'trust' => $data['trust'] ?? null,
+        ]));
 
         if (\App\Support\TrustLevels::enabled() && array_key_exists('trust', $data) && $data['trust'] !== null) {
             if ($data['trust'] === 'auto') {
@@ -875,7 +885,9 @@ class AdminController extends Controller
     public function anonymizeMember(Request $request, User $user): RedirectResponse
     {
         abort_if($user->id === $request->user()->id, 422, __('You can’t anonymize your own account here.'));
+        [$id, $name] = [$user->id, $user->name];
         $c = \App\Support\Gdpr::anonymize($user);
+        \App\Support\AuditLog::record('member.anonymize', target: ['user', $id, $name], subject: $user, meta: $c);
 
         return back()->with('status', __('Member anonymized — personal data erased; :posts posts and :topics topics kept.', ['posts' => $c['posts'], 'topics' => $c['topics']]));
     }
@@ -884,7 +896,9 @@ class AdminController extends Controller
     public function destroyMember(Request $request, User $user): RedirectResponse
     {
         abort_if($user->id === $request->user()->id, 422, __('You cannot delete your own account here.'));
+        [$id, $name] = [$user->id, $user->name];
         $c = \App\Support\Gdpr::erase($user);
+        \App\Support\AuditLog::record('member.delete', target: ['user', $id, $name], meta: $c);
 
         return back()->with('status', __('Member deleted along with their content (:posts posts, :topics topics).', ['posts' => $c['posts'], 'topics' => $c['topics']]));
     }
@@ -903,12 +917,16 @@ class AdminController extends Controller
     public function storeGroup(Request $request): RedirectResponse
     {
         $data = $request->validate($this->groupRules());
-        Group::create([
+        $group = Group::create([
             'name' => $data['name'],
             'color' => $data['color'],
             'is_staff' => $request->boolean('is_staff'),
             'permissions' => array_values($data['permissions'] ?? []),
         ]);
+        \App\Support\AuditLog::record('group.create', $group, meta: array_filter([
+            'is_staff' => $request->boolean('is_staff'),
+            'permissions' => count($data['permissions'] ?? []),
+        ]));
 
         return back();
     }
@@ -916,12 +934,17 @@ class AdminController extends Controller
     public function updateGroup(Request $request, Group $group): RedirectResponse
     {
         $data = $request->validate($this->groupRules());
+        $before = ['name' => $group->name, 'permissions' => count($group->permissions ?? [])];
         $group->update([
             'name' => $data['name'],
             'color' => $data['color'],
             'is_staff' => $request->boolean('is_staff'),
             'permissions' => array_values($data['permissions'] ?? []),
         ]);
+        \App\Support\AuditLog::record('group.update', $group, meta: array_filter([
+            'renamed_from' => $before['name'] !== $data['name'] ? $before['name'] : null,
+            'permissions' => $before['permissions'] !== count($data['permissions'] ?? []) ? count($data['permissions'] ?? []) : null,
+        ]));
 
         return back();
     }
@@ -930,7 +953,9 @@ class AdminController extends Controller
     {
         // System groups (Admin/Moderator) are recolorable but not deletable.
         abort_if($group->key !== null, 422, __('System groups can’t be deleted.'));
+        [$id, $name] = [$group->id, $group->name];
         $group->delete();
+        \App\Support\AuditLog::record('group.delete', ['group', $id, $name]);
 
         return back();
     }

@@ -49,21 +49,42 @@ class TranslateLocaleJob implements ShouldQueue
         Settings::set('i18n.translating.'.$this->locale, true);
 
         $deadline = microtime(true) + self::RUN_SECONDS;
+        // Clear any prior error from a previous run.
+        Settings::set('i18n.error.'.$this->locale, null);
+
         $runFilled = 0;
         $remaining = count(Translator::missing($this->locale));
+        $stalled = false;
 
         // Translate one batch at a time until we run out of time or strings, or a
         // batch makes no progress (LLM/budget failure — don't spin).
         do {
+            $before = $remaining;
             $filled = Translator::translateMissing($this->locale, Translator::BATCH);
             $runFilled += $filled;
             $remaining = count(Translator::missing($this->locale));
+
+            // Strings were translated but the missing count didn't drop — they
+            // aren't persisting (e.g. an unwritable lang/ directory). Stop now
+            // instead of re-dispatching forever and burning LLM calls.
+            if ($filled > 0 && $remaining >= $before) {
+                $stalled = true;
+                break;
+            }
         } while ($filled > 0 && $remaining > 0 && microtime(true) < $deadline);
 
         Settings::set('i18n.last_translated.'.$this->locale, [
             'filled' => $runFilled,
             'remaining' => $remaining,
         ]);
+
+        if ($stalled) {
+            Settings::set('i18n.error.'.$this->locale,
+                'Translations could not be saved — the lang/ directory is not writable by the web server.');
+            Settings::set('i18n.translating.'.$this->locale, false);
+
+            return;
+        }
 
         if ($remaining > 0 && $runFilled > 0) {
             // Progress made but more to do → continue in a fresh, short job.

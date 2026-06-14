@@ -47,6 +47,7 @@
         el.innerHTML = '';
         var d = (window.Convoro && window.Convoro.data) || {};
         var count = d.online || 0;
+        var guests = d.onlineGuests || 0;
         var users = d.onlineUsers || [];
         var box = card(tr('Online now'));
 
@@ -60,6 +61,18 @@
         lbl.textContent = tr(count === 1 ? 'member online' : 'members online'); lbl.style.cssText = 'font-size:13px;color:' + T.muted;
         head.appendChild(dot); head.appendChild(big); head.appendChild(lbl);
         box.appendChild(head);
+
+        if (guests > 0) {
+          var grow = document.createElement('div');
+          grow.style.cssText = 'display:flex;align-items:center;gap:9px;padding:0 16px ' + (users.length ? '8px' : '14px') + ';color:' + T.muted;
+          var gdot = document.createElement('span');
+          gdot.style.cssText = 'width:10px;height:10px;border-radius:50%;background:' + T.muted + ';flex:0 0 auto';
+          var gtxt = document.createElement('span');
+          gtxt.textContent = fmt(guests) + ' ' + tr(guests === 1 ? 'guest browsing' : 'guests browsing');
+          gtxt.style.cssText = 'font-size:13px';
+          grow.appendChild(gdot); grow.appendChild(gtxt);
+          box.appendChild(grow);
+        }
 
         if (users.length) {
           var wrap = document.createElement('div');

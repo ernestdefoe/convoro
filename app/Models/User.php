@@ -106,7 +106,7 @@ class User extends Authenticatable
     }
 
     /** Notification types a member can tune per channel. */
-    public const NOTIFY_TYPES = ['reply', 'mention', 'message', 'reaction', 'wall', 'badge'];
+    public const NOTIFY_TYPES = ['reply', 'mention', 'message', 'reaction', 'wall', 'badge', 'event'];
 
     /**
      * Does this member want a notification of $type over $channel ('email'|'push')?

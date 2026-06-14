@@ -3,20 +3,28 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Support\Plans;
 use App\Support\Seo;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 /** The convoro.co marketing landing (app-served so it shares login). */
 class MarketingController extends Controller
 {
-    public function home(): Response
+    public function home(Request $request): Response
     {
+        // The order/onboarding flow lives on the community/app host so its
+        // session + provisioning land there; link to it absolutely.
+        $base = $request->getScheme().'://'.config('convoro.community_domain', 'community.convoro.co');
+
         return Inertia::render('Marketing/Home', [
             // Whole published catalog — the homepage scrolls through all of them.
             'catalog' => Product::where('published', true)
                 ->orderByDesc('featured')->orderBy('name')->get()
                 ->map(fn (Product $p) => self::card($p)),
+            'plans' => config('convoro.hosting') ? Plans::all() : [],
+            'getStartedUrl' => $base.'/get-started',
             'seo' => Seo::make([
                 'title' => __('Convoro — the AI-native community platform'),
                 'description' => __('The forum that answers itself. Convoro puts AI at the core of community: members ask a question and get an instant answer drawn from your forum’s own threads, with citations. Batteries-included, beautiful, and runnable on shared hosting.'),

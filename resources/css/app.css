@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+/* Inter (brand default font) is loaded as a non-blocking <link> in app.blade.php
+   — importing it here made it a render-blocking serial chain (css → @import →
+   font css → font) that delayed first paint. */
 @import '@fortawesome/fontawesome-free/css/all.min.css';
 
 @tailwind base;
@@ -125,17 +127,43 @@ main.q-main { padding-top: calc(1.5rem * var(--c-density, 1)); padding-bottom: c
 }
 .prose-q blockquote p { margin: 0 0 8px; }
 .prose-q blockquote > :last-child { margin-bottom: 0; }
-/* The "Author wrote:" attribution line we generate as the first paragraph. */
-.prose-q blockquote > p:first-child {
-  margin-bottom: 8px;
-  font-size: 0.82em;
-  font-weight: 600;
-  color: rgb(var(--c-muted));
-}
 .prose-q blockquote a { color: rgb(var(--c-primary)); text-decoration: none; font-weight: 700; }
 .prose-q blockquote a:hover { text-decoration: underline; }
 /* Nested quotes get progressively quieter. */
 .prose-q blockquote blockquote { opacity: 0.85; }
+
+/* Reply-with-quote cards. The first paragraph is an "Author said:" attribution
+   (it carries an author link), so render these as a titled quote card with a
+   header bar and a big quote glyph — like XenForo/Invision quotes. */
+.prose-q blockquote:has(> p:first-child a) {
+  position: relative;
+  padding: 0;
+  border: 1px solid rgb(var(--c-border));
+  border-left: 1px solid rgb(var(--c-border));
+  border-radius: 12px;
+  background: rgb(var(--c-surface));
+  overflow: hidden;
+}
+.prose-q blockquote:has(> p:first-child a) > p:first-child {
+  margin: 0;
+  padding: 9px 16px;
+  background: rgb(var(--c-primary) / 0.10);
+  border-bottom: 1px solid rgb(var(--c-border));
+  font-size: 0.9em;
+  font-weight: 700;
+  color: rgb(var(--c-text-2));
+}
+.prose-q blockquote:has(> p:first-child a) > *:not(:first-child) { margin: 0; padding: 0 18px 0 46px; }
+.prose-q blockquote:has(> p:first-child a) > *:nth-child(2) { position: relative; padding-top: 14px; }
+.prose-q blockquote:has(> p:first-child a) > *:last-child { padding-bottom: 14px; }
+.prose-q blockquote:has(> p:first-child a) > *:nth-child(2)::before {
+  content: '\201C';
+  position: absolute;
+  left: 12px;
+  top: 6px;
+  font: 800 34px/1 Georgia, "Times New Roman", serif;
+  color: rgb(var(--c-primary) / 0.4);
+}
 
 /* @mentions rendered as profile chips (Mentions::linkify). */
 .prose-q .mention,

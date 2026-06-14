@@ -32,10 +32,26 @@ class TopicController extends Controller
             }
         }
 
+        // The rolling autosave draft, offered for one-tap restore when the
+        // member returns to a fresh composer (not while resuming a saved draft).
+        $autosave = null;
+        if (! $draft && $request->user()) {
+            $a = \App\Models\Draft::where('user_id', $request->user()->id)->where('is_auto', true)->first();
+            if ($a && (trim((string) $a->title) !== '' || trim(strip_tags((string) $a->body_html)) !== '')) {
+                $autosave = [
+                    'title' => $a->title, 'body_html' => $a->body_html, 'body_json' => $a->body_json,
+                    'category_id' => $a->category_id, 'tags' => $a->tags ?? [], 'cover' => $a->cover, 'poll' => $a->poll,
+                    'savedAt' => optional($a->updated_at)->toIso8601String(),
+                    'savedAgo' => optional($a->updated_at)->diffForHumans(),
+                ];
+            }
+        }
+
         return Inertia::render('Topic/Create', [
             'categories' => Category::orderBy('position')->get(['id', 'name', 'icon', 'color']),
             'tags' => Tag::orderBy('name')->get(['id', 'name', 'color']),
             'draft' => $draft,
+            'autosave' => $autosave,
         ]);
     }
 
@@ -67,10 +83,12 @@ class TopicController extends Controller
 
         $topic = \App\Support\TopicPublisher::publish($request->user(), $data, $request->ip());
 
-        // Publishing from a saved draft removes it.
+        // Publishing from a saved draft removes it; the rolling autosave is
+        // always cleared once the topic is live.
         if ($request->filled('draft_id')) {
             \App\Models\Draft::where('user_id', $request->user()->id)->whereKey($request->input('draft_id'))->delete();
         }
+        \App\Models\Draft::where('user_id', $request->user()->id)->where('is_auto', true)->delete();
 
         // Starting a topic is participation — re-check for a promotion.
         \App\Support\TrustLevels::evaluate($request->user());
@@ -83,6 +101,7 @@ class TopicController extends Controller
     {
         abort_unless((bool) $request->user()?->hasPermission('topic.pin'), 403);
         $topic->update(['is_pinned' => ! $topic->is_pinned]);
+        \App\Support\AuditLog::record($topic->is_pinned ? 'topic.pin' : 'topic.unpin', $topic);
 
         return back()->with('status', $topic->is_pinned ? __('Topic pinned.') : __('Topic unpinned.'));
     }
@@ -92,6 +111,7 @@ class TopicController extends Controller
     {
         abort_unless((bool) $request->user()?->hasPermission('topic.lock'), 403);
         $topic->update(['is_locked' => ! $topic->is_locked]);
+        \App\Support\AuditLog::record($topic->is_locked ? 'topic.lock' : 'topic.unlock', $topic);
 
         return back()->with('status', $topic->is_locked ? __('Topic locked.') : __('Topic unlocked.'));
     }
@@ -173,6 +193,27 @@ class TopicController extends Controller
                 'description' => \App\Support\Seo::clean(optional($topic->firstPost)->body_html),
                 'image' => $topic->cover_image,
                 'type' => 'article',
+                'jsonLd' => \App\Support\Seo::forumPosting([
+                    'title' => $topic->title,
+                    'url' => url('/t/'.$topic->slug),
+                    'text' => optional($topic->firstPost)->body_html,
+                    'image' => $topic->cover_image ?: \App\Support\Seo::firstImage(optional($topic->firstPost)->body_html),
+                    'datePublished' => optional(optional($topic->firstPost)->created_at)->toAtomString(),
+                    'dateModified' => optional($topic->last_posted_at ?? $topic->updated_at)->toAtomString(),
+                    'author' => ($f = $topic->firstPost) && $f->user
+                        ? ['name' => $f->user->name, 'url' => url('/u/'.$f->user->id)] : null,
+                    'replyCount' => (int) $topic->reply_count,
+                    'viewCount' => (int) $topic->view_count,
+                    'comments' => $topic->posts->where('is_first', false)->sortBy('created_at')->take(10)
+                        ->map(fn ($p) => [
+                            'text' => $p->body_html,
+                            'image' => \App\Support\Seo::firstImage($p->body_html),
+                            'date' => optional($p->created_at)->toAtomString(),
+                            'author' => optional($p->user)->name,
+                            'authorUrl' => $p->user ? url('/u/'.$p->user->id) : null,
+                            'url' => url('/t/'.$topic->slug.'#post-'.$p->id),
+                        ])->values()->all(),
+                ]),
             ]),
         ]);
     }
