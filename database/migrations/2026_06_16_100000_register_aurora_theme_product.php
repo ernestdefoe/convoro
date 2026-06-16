@@ -24,7 +24,11 @@ return new class extends Migration
             'price_cents' => 0,
             'published' => true,
             'featured' => true,
-            'source' => 'manual',
+            // Not bundled — installed on demand from its own repo via the
+            // Marketplace (downloads into storage/app/extensions). No core deploy
+            // is needed to ship or update the theme itself.
+            'source' => 'github',
+            'repo' => 'ernestdefoe/convoro-aurora',
             'package' => 'convoro-aurora',
             'created_at' => now(),
             'updated_at' => now(),
