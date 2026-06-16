@@ -53,9 +53,21 @@ class MarketingController extends Controller
             'type' => $p->type,
             'tagline' => $p->tagline,
             'image' => $p->image,
+            'icon' => self::iconSvg($p->package),
             'price' => $p->priceLabel(),
             'free' => $p->isFree(),
             'review' => ['rating' => $p->review_rating, 'score' => $p->review_score],
         ];
+    }
+
+    /** Inline icon SVG for a product whose package is an installed extension. */
+    private static function iconSvg(?string $package): ?string
+    {
+        if (! $package) {
+            return null;
+        }
+        $manifest = \App\Support\ExtensionManager::all()[$package] ?? null;
+
+        return $manifest ? \App\Support\ExtensionManager::iconSvgFor($manifest) : null;
     }
 }

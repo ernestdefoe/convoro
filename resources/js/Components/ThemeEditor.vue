@@ -383,7 +383,7 @@ const labelCls = 'mb-2 block text-xs font-bold uppercase tracking-wide text-ink-
   <div v-if="isAdmin">
     <!-- Launcher -->
     <button v-if="!open" type="button" @click="toggle"
-      class="fixed bottom-5 left-5 z-[70] hidden h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-xl shadow-primary/40 hover:bg-primary-600 md:flex"
+      class="fixed bottom-24 left-5 z-[70] hidden h-12 w-12 items-center justify-center rounded-full bg-primary text-white shadow-xl shadow-primary/40 hover:bg-primary-600 md:flex"
       :title="tr('Theme editor')" :aria-label="tr('Open theme editor')">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2a10 10 0 1 0 0 20 2 2 0 0 0 2-2 1.5 1.5 0 0 1 1.5-1.5H18a4 4 0 0 0 4-4 10 10 0 0 0-10-10z"/></svg>
     </button>
