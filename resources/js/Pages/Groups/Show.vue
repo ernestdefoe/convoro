@@ -118,11 +118,14 @@ function timeAgo(iso: string | null) {
       <div class="overflow-hidden rounded-[var(--c-radius)] border border-line bg-surface">
         <div class="h-32 w-full sm:h-40" :style="g.cover ? { backgroundImage: `url(${g.cover})`, backgroundSize: 'cover', backgroundPosition: 'center' } : tile()"></div>
         <div class="p-5">
-          <div class="-mt-14 flex flex-wrap items-end gap-4">
+          <!-- Only the avatar overlaps the banner; the name row sits clear below it. -->
+          <div class="-mt-14 flex">
             <div class="grid h-20 w-20 shrink-0 place-items-center rounded-2xl border-4 border-surface text-2xl font-extrabold text-white shadow" :style="tile()">
               <img v-if="g.avatar" :src="g.avatar" alt="" class="h-full w-full rounded-xl object-cover" />
               <span v-else>{{ initials(g.name) }}</span>
             </div>
+          </div>
+          <div class="mt-3 flex flex-wrap items-start gap-4">
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-2">
                 <h1 class="text-2xl font-extrabold text-ink">{{ g.name }}</h1>
