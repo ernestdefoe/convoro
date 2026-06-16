@@ -3,6 +3,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Editor from '@/Components/Editor.vue';
+import { uploadImage } from '@/lib/upload';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
@@ -96,7 +97,24 @@ const maxSeries = computed(() => Math.max(1, ...((stats.value?.series ?? []).map
 // -- edit modal --
 const showEdit = ref(false);
 const edit = ref<any>({});
-function openEdit() { edit.value = { name: g.value.name, description: g.value.description, color: g.value.color, is_private: g.value.isPrivate, membership_type: g.value.membershipType }; showEdit.value = true; }
+const uploadingAvatar = ref(false);
+const uploadingCover = ref(false);
+async function pickImage(e: Event, field: 'avatar' | 'cover') {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  (e.target as HTMLInputElement).value = '';
+  if (!file) return;
+  const flag = field === 'avatar' ? uploadingAvatar : uploadingCover;
+  flag.value = true;
+  try {
+    const { url } = await uploadImage(file);
+    edit.value[field] = url;
+  } catch {
+    alert(t('Image upload failed.'));
+  } finally {
+    flag.value = false;
+  }
+}
+function openEdit() { edit.value = { name: g.value.name, description: g.value.description, color: g.value.color, is_private: g.value.isPrivate, membership_type: g.value.membershipType, avatar: g.value.avatar, cover: g.value.cover }; showEdit.value = true; }
 function saveEdit() { router.put(`/groups/${g.value.slug}`, edit.value, { onSuccess: () => (showEdit.value = false), preserveScroll: true }); }
 function destroyGroup() { if (confirm(t('Delete this group and all its discussions? This cannot be undone.'))) router.delete(`/groups/${g.value.slug}`); }
 
@@ -282,6 +300,21 @@ function timeAgo(iso: string | null) {
           <div class="space-y-4">
             <input v-model="edit.name" type="text" maxlength="120" class="w-full rounded-lg border-line bg-surface-2 px-3 py-2 text-sm text-ink focus:border-primary focus:ring-primary" />
             <textarea v-model="edit.description" rows="3" maxlength="2000" class="w-full rounded-lg border-line bg-surface-2 px-3 py-2 text-sm text-ink focus:border-primary focus:ring-primary"></textarea>
+            <div>
+              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ t('Icon & banner') }}</span>
+              <div class="flex items-center gap-3">
+                <label class="grid h-14 w-14 shrink-0 cursor-pointer place-items-center overflow-hidden rounded-xl border border-line text-white" :style="{ background: edit.color }" :title="t('Group icon')">
+                  <img v-if="edit.avatar" :src="edit.avatar" alt="" class="h-full w-full object-cover" />
+                  <span v-else class="text-lg">{{ uploadingAvatar ? '…' : '+' }}</span>
+                  <input type="file" accept="image/*" class="hidden" @change="(e) => pickImage(e, 'avatar')" />
+                </label>
+                <label class="flex h-14 flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-line bg-surface-2 text-xs font-semibold text-ink-muted" :style="edit.cover ? { backgroundImage: `url(${edit.cover})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}" :title="t('Banner image')">
+                  <span v-if="!edit.cover" class="px-2 text-center">{{ uploadingCover ? t('Uploading…') : t('Upload banner') }}</span>
+                  <input type="file" accept="image/*" class="hidden" @change="(e) => pickImage(e, 'cover')" />
+                </label>
+                <button v-if="edit.avatar || edit.cover" type="button" class="shrink-0 text-xs font-bold text-ink-muted hover:text-rose-500" @click="edit.avatar = ''; edit.cover = ''" :title="t('Clear images')">✕</button>
+              </div>
+            </div>
             <div class="flex items-center gap-4">
               <input v-model="edit.color" type="color" class="h-8 w-10 cursor-pointer rounded border-line" />
               <select v-model="edit.membership_type" class="flex-1 rounded-lg border-line bg-surface-2 px-3 py-2 text-sm text-ink focus:border-primary focus:ring-primary">

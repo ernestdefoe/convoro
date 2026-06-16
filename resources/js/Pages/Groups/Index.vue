@@ -2,6 +2,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import { uploadImage } from '@/lib/upload';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
@@ -35,12 +36,32 @@ function loadMore() {
 // -- create modal --
 const showCreate = ref(false);
 const posting = ref(false);
-const form = ref({ name: '', description: '', color: '#5B5BD6', is_private: false, membership_type: 'open' });
+const blank = () => ({ name: '', description: '', color: '#5B5BD6', is_private: false, membership_type: 'open', avatar: '', cover: '' });
+const form = ref(blank());
+const uploadingAvatar = ref(false);
+const uploadingCover = ref(false);
+
+async function pickImage(e: Event, field: 'avatar' | 'cover') {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  (e.target as HTMLInputElement).value = '';
+  if (!file) return;
+  const flag = field === 'avatar' ? uploadingAvatar : uploadingCover;
+  flag.value = true;
+  try {
+    const { url } = await uploadImage(file);
+    form.value[field] = url;
+  } catch {
+    alert(t('Image upload failed.'));
+  } finally {
+    flag.value = false;
+  }
+}
+
 function create() {
   if (posting.value || !form.value.name.trim()) return;
   posting.value = true;
   router.post('/groups', form.value, {
-    onSuccess: () => { showCreate.value = false; form.value = { name: '', description: '', color: '#5B5BD6', is_private: false, membership_type: 'open' }; },
+    onSuccess: () => { showCreate.value = false; form.value = blank(); },
     onFinish: () => (posting.value = false),
   });
 }
@@ -135,6 +156,20 @@ function initials(name: string) {
               <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ t('Description') }}</span>
               <textarea v-model="form.description" rows="3" maxlength="2000" class="w-full rounded-lg border-line bg-surface-2 px-3 py-2 text-sm text-ink focus:border-primary focus:ring-primary"></textarea>
             </label>
+            <div>
+              <span class="mb-1 block text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ t('Icon & banner') }}</span>
+              <div class="flex items-center gap-3">
+                <label class="grid h-14 w-14 shrink-0 cursor-pointer place-items-center overflow-hidden rounded-xl border border-line text-white" :style="{ background: form.color }" :title="t('Group icon')">
+                  <img v-if="form.avatar" :src="form.avatar" alt="" class="h-full w-full object-cover" />
+                  <span v-else class="text-lg">{{ uploadingAvatar ? '…' : '+' }}</span>
+                  <input type="file" accept="image/*" class="hidden" @change="(e) => pickImage(e, 'avatar')" />
+                </label>
+                <label class="flex h-14 flex-1 cursor-pointer items-center justify-center overflow-hidden rounded-xl border border-dashed border-line bg-surface-2 text-xs font-semibold text-ink-muted" :style="form.cover ? { backgroundImage: `url(${form.cover})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}" :title="t('Banner image')">
+                  <span v-if="!form.cover" class="px-2 text-center">{{ uploadingCover ? t('Uploading…') : t('Upload banner') }}</span>
+                  <input type="file" accept="image/*" class="hidden" @change="(e) => pickImage(e, 'cover')" />
+                </label>
+              </div>
+            </div>
             <div class="flex flex-wrap items-center gap-4">
               <label class="flex items-center gap-2">
                 <span class="text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ t('Color') }}</span>

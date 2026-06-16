@@ -58,9 +58,14 @@ class PostController extends Controller
         $topic->increment('reply_count');
         $topic->update(['last_post_at' => now()]);
 
-        // Live-broadcast the new post to everyone viewing this topic.
+        // Live-broadcast the new post to everyone viewing this topic. A realtime
+        // outage (Reverb down) must never 500 the post — it's a best-effort push.
         $post->load(['user', 'reactions']);
-        broadcast(new PostCreated(Present::post($post, null), $topic->id));
+        try {
+            broadcast(new PostCreated(Present::post($post, null), $topic->id));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         $this->notifyParticipants($request, $topic, $post, $html);
 
