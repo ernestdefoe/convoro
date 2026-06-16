@@ -2,6 +2,7 @@
 import { Head } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
+import ProductCard from '@/Components/store/ProductCard.vue';
 import { t } from '@/lib/i18n';
 
 interface Item { id: string; name: string; version: string; description: string; author: string; type: string; premium: boolean; price: number | string; active: boolean; icon?: string | null }
@@ -34,24 +35,19 @@ function priceLabel(item: Item): string {
   return n > 0 ? `$${n}` : t('Premium');
 }
 
-// Give each card icon-tile its own colour so the grid feels varied while the
-// layout stays identical. Deterministic per item so a card keeps its colour.
-const TILE_ACCENTS = [
-  'text-rose-500',
-  'text-sky-500',
-  'text-emerald-500',
-  'text-amber-500',
-  'text-violet-500',
-  'text-fuchsia-500',
-  'text-cyan-500',
-  'text-indigo-500',
-];
-function tileAccent(item: Item): string {
-  const key = String(item.id || item.name || '');
-  let h = 0;
-  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
-  return TILE_ACCENTS[h % TILE_ACCENTS.length];
-}
+// Map to the shared ProductCard shape so this directory matches the Marketplace.
+const cards = computed(() => visible.value.map((e) => ({
+  name: e.name,
+  type: e.type,
+  description: e.description,
+  meta: `${e.author || 'Convoro'} · ${t('v{version}', { version: e.version })}`,
+  icon: e.icon ?? null,
+  image: null,
+  priceLabel: priceLabel(e),
+  free: !e.premium,
+  active: e.active,
+  accentKey: e.id,
+})));
 </script>
 
 <template>
@@ -80,32 +76,11 @@ function tileAccent(item: Item): string {
       </div>
 
       <!-- Grid -->
-      <div v-if="!visible.length" class="rounded-c border border-dashed border-line bg-surface p-12 text-center text-ink-muted">
+      <div v-if="!cards.length" class="rounded-c border border-dashed border-line bg-surface p-12 text-center text-ink-muted">
         {{ t('Nothing here yet — check back soon.') }}
       </div>
       <div v-else class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <article v-for="item in visible" :key="item.id"
-          class="flex flex-col rounded-c border border-line bg-surface p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-          <div class="flex items-start gap-3">
-            <div class="grid h-12 w-12 shrink-0 place-items-center text-xl font-extrabold [&_svg]:h-12 [&_svg]:w-12 [&_svg]:rounded-xl" :class="tileAccent(item)">
-              <span v-if="item.icon" class="grid h-12 w-12 place-items-center" v-html="item.icon"></span>
-              <span v-else>{{ (item.name || '?').charAt(0).toUpperCase() }}</span>
-            </div>
-            <div class="min-w-0 flex-1">
-              <h3 class="truncate text-lg font-bold leading-tight">{{ item.name }}</h3>
-              <p class="text-xs text-ink-muted">{{ item.author || 'Convoro' }} · {{ t('v{version}', { version: item.version }) }}</p>
-            </div>
-          </div>
-
-          <p class="mt-3 line-clamp-3 flex-1 text-sm text-ink-2">{{ item.description }}</p>
-
-          <div class="mt-4 flex items-center gap-2 border-t border-line pt-4">
-            <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold"
-              :class="item.type === 'theme' ? 'bg-fuchsia-500/15 text-fuchsia-600' : 'bg-primary/15 text-primary'">{{ item.type }}</span>
-            <span v-if="item.active" class="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-600">{{ t('Active') }}</span>
-            <span class="ml-auto text-sm font-extrabold" :class="item.premium ? 'text-amber-600' : 'text-ink-muted'">{{ priceLabel(item) }}</span>
-          </div>
-        </article>
+        <ProductCard v-for="(c, i) in cards" :key="c.accentKey || i" :item="c" />
       </div>
 
       <p class="mt-8 text-center text-sm text-ink-muted">
