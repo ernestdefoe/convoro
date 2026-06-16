@@ -265,11 +265,16 @@ class StoreController extends Controller
                 'name' => $p->name,
                 'type' => $p->type,
                 'tagline' => $p->tagline,
+                'description' => $p->description,
                 'version' => $p->version,
                 'package' => $p->package,
                 'price' => $p->priceLabel(),
                 'free' => $p->isFree(),
                 'image' => $p->image,
+                // Inline icon SVG so a remote install's Marketplace shows the same
+                // icon as the directory (it can't resolve a manifest it lacks).
+                'icon' => $p->resolvedIcon(),
+                'review' => ['rating' => $p->review_rating, 'score' => $p->review_score],
                 'source' => $p->source,
                 'repo' => $p->repo,
                 // GitHub-linked extensions install straight from the repo archive;

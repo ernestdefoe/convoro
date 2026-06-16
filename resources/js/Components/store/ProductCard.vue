@@ -72,11 +72,13 @@ const reviewBadge = computed(() => {
       <div v-if="reviewBadge" class="mt-3">
         <span class="inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold" :class="reviewBadge.c">{{ reviewBadge.t }}</span>
       </div>
-      <div class="mt-4 flex flex-1 items-end justify-between border-t border-line pt-4">
+      <div class="mt-4 flex flex-1 items-end justify-between gap-3 border-t border-line pt-4">
         <span v-if="item.priceLabel" class="font-extrabold" :class="item.free ? 'text-ink-muted' : 'text-primary'">{{ item.priceLabel }}</span>
         <span v-else></span>
-        <span v-if="item.active" class="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-600">{{ t('Active') }}</span>
-        <span v-else-if="href" class="text-sm font-semibold text-primary group-hover:underline">{{ t('View →') }}</span>
+        <slot name="action">
+          <span v-if="item.active" class="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-semibold text-emerald-600">{{ t('Active') }}</span>
+          <span v-else-if="href" class="text-sm font-semibold text-primary group-hover:underline">{{ t('View →') }}</span>
+        </slot>
       </div>
     </div>
   </component>

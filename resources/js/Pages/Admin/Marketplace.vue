@@ -2,17 +2,37 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
+import ProductCard from '@/Components/store/ProductCard.vue';
 import { t } from '@/lib/i18n';
 
 interface SettingField { key: string; label: string; type?: string; default?: unknown; help?: string; options?: { value: string; label: string }[] }
 interface Ext { id: string; name: string; version: string; description: string; author: string; type: string; premium: boolean; enabled: boolean; removable: boolean; settings: SettingField[]; values: Record<string, unknown>; adminUrl: string | null; image?: string | null }
+interface CatalogItem { slug: string; name: string; type: string; tagline: string; description?: string; version: string; price: string; free: boolean; image?: string | null; icon?: string | null; review?: { rating?: string | null; score?: number | null } | null; download_url: string | null }
 
 const props = defineProps<{
   update: { current: string; latest: string; available: boolean; url: string | null; checkedAt: string | null; enabled: boolean };
   extensions: Ext[];
   composer: { available: boolean; task: { state: string; action?: string; package?: string; output?: string; finishedAt?: string | null } };
-  catalog: { slug: string; name: string; type: string; tagline: string; version: string; price: string; free: boolean; image?: string | null; download_url: string | null }[];
+  catalog: CatalogItem[];
 }>();
+
+// Map a catalog item (from the central directory's /api/catalog) to the shared
+// ProductCard shape so the Marketplace looks exactly like the directory.
+const catalogCards = computed(() => props.catalog.map((c) => ({
+  item: {
+    name: c.name,
+    type: c.type,
+    description: c.description || c.tagline,
+    meta: c.version ? `v${c.version}` : null,
+    icon: c.icon ?? null,
+    image: (typeof c.image === 'string' && !c.image.includes('/storage/covers/')) ? c.image : null,
+    priceLabel: c.price,
+    free: c.free,
+    review: c.review ?? null,
+    accentKey: c.slug,
+  },
+  raw: c,
+})));
 
 const installingSlug = ref<string | null>(null);
 function installCatalog(item: { slug: string; free: boolean }) {
@@ -240,30 +260,19 @@ function uninstall(ext: { id: string; name: string }) {
         {{ t('Nothing new in the catalog right now — everything available is already installed.') }}
       </div>
 
-      <div v-else class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <div v-for="item in catalog" :key="item.slug" class="flex flex-col overflow-hidden rounded-2xl border border-line bg-appbg p-5">
-          <img v-if="item.image" :src="item.image" :alt="item.name" class="-mx-5 -mt-5 mb-3 aspect-[2/1] w-[calc(100%+2.5rem)] max-w-none object-cover" />
-          <div class="flex items-start gap-3">
-            <div class="min-w-0 flex-1">
-              <div class="flex items-center gap-1.5">
-                <span class="truncate font-bold text-ink">{{ item.name }}</span>
-                <span class="rounded bg-surface-2 px-1.5 py-0.5 text-[11px] text-ink-2">v{{ item.version }}</span>
-              </div>
-              <span class="text-[11px] font-semibold uppercase tracking-wide" :class="item.free ? 'text-emerald-300' : 'text-amber-300'">{{ item.price }}</span>
-            </div>
-          </div>
-          <p class="mt-3 line-clamp-2 flex-1 text-sm text-ink-2">{{ item.tagline }}</p>
-          <div class="mt-4 border-t border-line pt-3">
-            <button v-if="item.free" type="button" :disabled="installingSlug === item.slug" @click="installCatalog(item)"
-              class="w-full rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600 disabled:opacity-60">
-              {{ installingSlug === item.slug ? t('Installing…') : t('Download & install') }}
+      <div v-else class="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <ProductCard v-for="c in catalogCards" :key="c.raw.slug" :item="c.item">
+          <template #action>
+            <button v-if="c.raw.free" type="button" :disabled="installingSlug === c.raw.slug" @click="installCatalog(c.raw)"
+              class="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary-600 disabled:opacity-60">
+              {{ installingSlug === c.raw.slug ? t('Installing…') : t('Install') }}
             </button>
-            <a v-else :href="`https://convoro.co/extensions/${item.slug}`" target="_blank" rel="noopener"
-              class="block rounded-lg border border-line px-3 py-2 text-center text-sm font-semibold text-amber-300 hover:bg-surface-2">
-              {{ t('Buy on convoro.co — then redeem your key above') }}
+            <a v-else :href="`https://convoro.co/extensions/${c.raw.slug}`" target="_blank" rel="noopener"
+              class="text-sm font-semibold text-amber-500 hover:underline">
+              {{ t('Buy & redeem key') }}
             </a>
-          </div>
-        </div>
+          </template>
+        </ProductCard>
       </div>
     </section>
 
