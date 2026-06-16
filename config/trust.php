@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.39.1',
+            'date' => '2026-06-16',
+            'title' => 'Themes in the Marketplace + polish',
+            'items' => [
+                ['type' => 'new', 'text' => 'Themes can now be installed from the Marketplace — starting with Aurora, a cosmic dark theme with an animated backdrop and six colour palettes. Like all add-ons, themes install on demand; no software update needed.'],
+                ['type' => 'improved', 'text' => 'Marketplace cards have a cleaner, designed look — each gets its own colour-themed cover and shows the add-on’s icon.'],
+                ['type' => 'fixed', 'text' => 'The theme-editor button no longer overlaps the back-to-top button.'],
+            ],
+        ],
+        [
             'tag' => '1.39.0',
             'date' => '2026-06-15',
             'title' => 'Social Groups',
