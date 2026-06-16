@@ -2,7 +2,8 @@
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { t } from '@/lib/i18n';
-import { accentColors, coverGradient as gradientFor, coverBg as coverBgFor, stripIconBg } from '@/lib/accent';
+import { accentColors } from '@/lib/accent';
+import ProductCover from '@/Components/store/ProductCover.vue';
 
 // One card used by BOTH the Marketplace store (Store/Index) and the in-app
 // extensions directory (Extensions/Index) so they always look identical.
@@ -28,13 +29,7 @@ const props = defineProps<{
 // Per-card accent (deterministic) shared with the detail page via @/lib/accent.
 const accentKey = computed(() => String(props.item.accentKey ?? props.item.name ?? ''));
 const accent = computed(() => accentColors(accentKey.value));
-const coverGradient = computed(() => gradientFor(accentKey.value));
-const coverBg = computed(() => coverBgFor(accentKey.value));
 const cardStyle = computed(() => ({ background: accent.value[1] + '0d', borderColor: accent.value[1] + '47' }));
-// Every icon is rendered identically — a clean white silhouette on the accent
-// tile — so logo-style and line-glyph icons read as the same "image", never a
-// mix. Background rects are stripped so 48×48 logos flatten like 24×24 glyphs.
-const glyph = computed(() => stripIconBg(props.item.icon));
 
 const reviewBadge = computed(() => {
   const r = props.item.review?.rating;
@@ -48,19 +43,7 @@ const reviewBadge = computed(() => {
 <template>
   <component :is="href ? Link : 'div'" v-bind="href ? { href } : {}" :style="cardStyle"
     class="group flex flex-col overflow-hidden rounded-2xl border transition hover:-translate-y-0.5 hover:shadow-lg">
-    <div class="relative">
-      <img v-if="item.image" :src="item.image" :alt="item.name" loading="lazy" class="aspect-[2/1] w-full object-cover" />
-      <div v-else class="relative flex aspect-[2/1] w-full flex-col items-center justify-center overflow-hidden px-4 text-center" :style="{ background: coverBg }">
-        <span class="bg-clip-text text-2xl font-black tracking-tight text-transparent drop-shadow-sm sm:text-3xl" :style="{ backgroundImage: coverGradient, WebkitBackgroundClip: 'text' }">{{ item.name }}</span>
-        <span class="mt-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/55">{{ item.type }}</span>
-      </div>
-      <!-- The one icon, on the cover: a uniform white silhouette on the accent tile. -->
-      <span class="absolute left-3 top-3 grid h-11 w-11 place-items-center overflow-hidden rounded-xl shadow-md ring-1 ring-black/10"
-        :style="{ backgroundImage: coverGradient }">
-        <span v-if="glyph" v-html="glyph" class="grid h-6 w-6 place-items-center [&>svg]:h-full [&>svg]:w-full [&>svg]:[filter:brightness(0)_invert(1)]"></span>
-        <span v-else class="text-lg font-black text-white">{{ (item.name || '?').charAt(0).toUpperCase() }}</span>
-      </span>
-    </div>
+    <ProductCover :name="item.name" :type="item.type" :image="item.image" :icon="item.icon" :accent-key="accentKey" />
 
     <div class="flex flex-1 flex-col p-6">
       <div class="flex items-center gap-2">

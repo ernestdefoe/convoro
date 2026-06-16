@@ -3,11 +3,12 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ProductCard from '@/Components/store/ProductCard.vue';
+import ProductCover from '@/Components/store/ProductCover.vue';
 import { realScreenshot } from '@/lib/accent';
 import { t } from '@/lib/i18n';
 
 interface SettingField { key: string; label: string; type?: string; default?: unknown; help?: string; options?: { value: string; label: string }[] }
-interface Ext { id: string; name: string; version: string; description: string; author: string; type: string; premium: boolean; enabled: boolean; removable: boolean; settings: SettingField[]; values: Record<string, unknown>; adminUrl: string | null; image?: string | null }
+interface Ext { id: string; name: string; version: string; description: string; author: string; type: string; premium: boolean; enabled: boolean; removable: boolean; settings: SettingField[]; values: Record<string, unknown>; adminUrl: string | null; image?: string | null; icon?: string | null }
 interface CatalogItem { slug: string; name: string; type: string; tagline: string; description?: string; version: string; price: string; free: boolean; image?: string | null; icon?: string | null; review?: { rating?: string | null; score?: number | null } | null; download_url: string | null }
 
 const props = defineProps<{
@@ -206,7 +207,9 @@ function uninstall(ext: { id: string; name: string }) {
         <div v-for="ext in visibleExtensions" :key="ext.id"
           class="flex flex-col overflow-hidden rounded-2xl border bg-appbg p-5 transition"
           :class="ext.enabled ? 'border-indigo-500/30' : 'border-line'">
-          <img v-if="ext.image" :src="ext.image" :alt="ext.name" class="-mx-5 -mt-5 mb-3 aspect-[2/1] w-[calc(100%+2.5rem)] max-w-none object-cover" />
+          <div class="-mx-5 -mt-5 mb-3">
+            <ProductCover :name="ext.name" :type="ext.type" :image="realScreenshot(ext.image)" :icon="ext.icon" :accent-key="ext.id" />
+          </div>
           <!-- Header: name + version (the cover above already shows the icon) -->
           <div class="flex items-start gap-3">
             <div class="min-w-0 flex-1">

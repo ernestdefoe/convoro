@@ -532,6 +532,9 @@ class AdminController extends Controller
                 // Store-generated cover wins; otherwise fall back to a cover the
                 // extension ships in its own manifest ("cover": "cover.svg").
                 'image' => $covers[$m['id']] ?? \App\Support\ExtensionManager::coverUrl($m['id']),
+                // Icon (inline SVG) so the card draws the same designed cover +
+                // uniform icon as the directory instead of the old cover image.
+                'icon' => \App\Support\ExtensionManager::iconSvgFor($m),
             ]);
 
         // Browsable catalog from the central store (free items install directly;
