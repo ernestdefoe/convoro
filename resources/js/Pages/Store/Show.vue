@@ -3,8 +3,13 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import MarketingLayout from '@/Layouts/MarketingLayout.vue';
 import { t } from '@/lib/i18n';
+import { coverGradient, stripIconBg } from '@/lib/accent';
 
 const props = defineProps<{ product: any; checkoutEnabled: boolean }>();
+
+// Match the card: a white silhouette on the product's accent tile.
+const iconGlyph = computed(() => stripIconBg(props.product.icon));
+const iconTile = computed(() => coverGradient(props.product.slug ?? props.product.name));
 const page = usePage();
 const error = computed(() => (page.props as any).flash?.storeError ?? null);
 const loading = ref(false);
@@ -43,9 +48,9 @@ function buy() {
       <div class="mt-6 grid gap-10 md:grid-cols-[1fr_320px]">
         <div>
           <div class="flex items-center gap-4">
-            <div class="grid h-16 w-16 shrink-0 place-items-center text-3xl font-extrabold text-primary [&_svg]:h-16 [&_svg]:w-16 [&_svg]:rounded-2xl">
-              <span v-if="product.icon" class="grid h-16 w-16 place-items-center" v-html="product.icon"></span>
-              <span v-else>{{ (product.name || '?').charAt(0).toUpperCase() }}</span>
+            <div class="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-2xl shadow-md ring-1 ring-black/10" :style="{ backgroundImage: iconTile }">
+              <span v-if="iconGlyph" v-html="iconGlyph" class="grid h-9 w-9 place-items-center [&>svg]:h-full [&>svg]:w-full [&>svg]:[filter:brightness(0)_invert(1)]"></span>
+              <span v-else class="text-3xl font-black text-white">{{ (product.name || '?').charAt(0).toUpperCase() }}</span>
             </div>
             <div>
               <h1 class="text-3xl font-black tracking-tight">{{ product.name }}</h1>

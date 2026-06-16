@@ -2,6 +2,7 @@
 import { Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import { t } from '@/lib/i18n';
+import { accentColors, coverGradient as gradientFor, coverBg as coverBgFor, stripIconBg } from '@/lib/accent';
 
 // One card used by BOTH the Marketplace store (Store/Index) and the in-app
 // extensions directory (Extensions/Index) so they always look identical.
@@ -24,26 +25,16 @@ const props = defineProps<{
   href?: string | null;
 }>();
 
-// Per-card accent so the directory looks varied, deterministic so a card keeps
-// its colour. Mirrors the palette used elsewhere in the store.
-const ACCENTS = [
-  ['#f472b6', '#db2777'], ['#60a5fa', '#2563eb'], ['#34d399', '#059669'], ['#fbbf24', '#d97706'],
-  ['#a78bfa', '#7c3aed'], ['#22d3ee', '#0891b2'], ['#fb7185', '#e11d48'], ['#818cf8', '#4f46e5'],
-];
-const accent = computed(() => {
-  const key = String(props.item.accentKey ?? props.item.name ?? '');
-  let h = 0;
-  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
-  return ACCENTS[h % ACCENTS.length];
-});
-const coverGradient = computed(() => `linear-gradient(135deg,${accent.value[0]},${accent.value[1]})`);
-const coverBg = computed(() => [
-  `radial-gradient(60% 85% at 15% 15%, ${accent.value[0]}cc 0%, transparent 60%)`,
-  `radial-gradient(55% 80% at 88% 25%, ${accent.value[1]}b3 0%, transparent 60%)`,
-  `radial-gradient(70% 90% at 65% 115%, ${accent.value[0]}80 0%, transparent 60%)`,
-  `#0a0d1a`,
-].join(','));
+// Per-card accent (deterministic) shared with the detail page via @/lib/accent.
+const accentKey = computed(() => String(props.item.accentKey ?? props.item.name ?? ''));
+const accent = computed(() => accentColors(accentKey.value));
+const coverGradient = computed(() => gradientFor(accentKey.value));
+const coverBg = computed(() => coverBgFor(accentKey.value));
 const cardStyle = computed(() => ({ background: accent.value[1] + '0d', borderColor: accent.value[1] + '47' }));
+// Every icon is rendered identically — a clean white silhouette on the accent
+// tile — so logo-style and line-glyph icons read as the same "image", never a
+// mix. Background rects are stripped so 48×48 logos flatten like 24×24 glyphs.
+const glyph = computed(() => stripIconBg(props.item.icon));
 
 const reviewBadge = computed(() => {
   const r = props.item.review?.rating;
@@ -63,12 +54,12 @@ const reviewBadge = computed(() => {
         <span class="bg-clip-text text-2xl font-black tracking-tight text-transparent drop-shadow-sm sm:text-3xl" :style="{ backgroundImage: coverGradient, WebkitBackgroundClip: 'text' }">{{ item.name }}</span>
         <span class="mt-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/55">{{ item.type }}</span>
       </div>
-      <!-- The one icon, on the cover. Image (inline SVG) when present, else a monogram tile. -->
-      <span v-if="item.icon" v-html="item.icon"
-        class="absolute left-3 top-3 grid h-11 w-11 place-items-center overflow-hidden rounded-xl bg-white/95 shadow-md ring-1 ring-black/5 [&>svg]:h-7 [&>svg]:w-7"
-        :style="{ color: accent[1] }"></span>
-      <span v-else class="absolute left-3 top-3 grid h-11 w-11 place-items-center rounded-xl bg-white/95 text-lg font-black shadow-md ring-1 ring-black/5"
-        :style="{ color: accent[1] }">{{ (item.name || '?').charAt(0).toUpperCase() }}</span>
+      <!-- The one icon, on the cover: a uniform white silhouette on the accent tile. -->
+      <span class="absolute left-3 top-3 grid h-11 w-11 place-items-center overflow-hidden rounded-xl shadow-md ring-1 ring-black/10"
+        :style="{ backgroundImage: coverGradient }">
+        <span v-if="glyph" v-html="glyph" class="grid h-6 w-6 place-items-center [&>svg]:h-full [&>svg]:w-full [&>svg]:[filter:brightness(0)_invert(1)]"></span>
+        <span v-else class="text-lg font-black text-white">{{ (item.name || '?').charAt(0).toUpperCase() }}</span>
+      </span>
     </div>
 
     <div class="flex flex-1 flex-col p-6">
