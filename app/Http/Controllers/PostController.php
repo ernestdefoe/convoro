@@ -64,14 +64,18 @@ class PostController extends Controller
 
         $this->notifyParticipants($request, $topic, $post, $html);
 
-        // If the member @mentioned the assistant, have it reply with a grounded answer.
-        $mentionedIds = Mentions::parse(strip_tags($html))->pluck('id')->all();
-        if (\App\Jobs\AnswerMentionJob::shouldAnswer($post, $mentionedIds)) {
-            \App\Jobs\AnswerMentionJob::dispatch($post->id)->afterCommit();
-        }
+        // Social-group discussions stay inside the group: no AI auto-answer and
+        // no fediverse cross-post (which would leak a private group's content).
+        if (! $topic->group_id) {
+            // If the member @mentioned the assistant, have it reply with a grounded answer.
+            $mentionedIds = Mentions::parse(strip_tags($html))->pluck('id')->all();
+            if (\App\Jobs\AnswerMentionJob::shouldAnswer($post, $mentionedIds)) {
+                \App\Jobs\AnswerMentionJob::dispatch($post->id)->afterCommit();
+            }
 
-        // Cross-post out to the fediverse (no-op unless federation is on + relevant).
-        \App\Support\Federation::announceReply($post, $topic);
+            // Cross-post out to the fediverse (no-op unless federation is on + relevant).
+            \App\Support\Federation::announceReply($post, $topic);
+        }
 
         // Posting is participation — re-check whether they've earned a promotion.
         \App\Support\TrustLevels::evaluate($request->user());
