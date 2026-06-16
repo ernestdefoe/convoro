@@ -79,6 +79,15 @@ class UserProfileController extends Controller
                 'fediUrl' => \App\Support\Federation::enabled()
                     ? ($user->is_federated ? $user->federated_actor : \App\Support\Federation::userActorUrl($user))
                     : null,
+                // Primary social-group badge — only PUBLIC groups are surfaced, so a
+                // private-group membership is never disclosed on a public profile.
+                'primaryGroup' => (function () use ($user) {
+                    $pg = optional($user->primarySocialGroup)->group;
+
+                    return ($pg && ! $pg->is_private)
+                        ? ['name' => $pg->name, 'slug' => $pg->slug, 'color' => $pg->color]
+                        : null;
+                })(),
             ],
             'stats' => [
                 'topics' => $user->topics()->count(),

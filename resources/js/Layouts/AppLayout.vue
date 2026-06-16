@@ -95,6 +95,7 @@ function goMobile(href: string) {
           <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Forum') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Community') }}</Link>
           <Link v-if="storeOwner" href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Extensions') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Extensions') }}</Link>
           <Link href="/members" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component === 'Members/Index' ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Members') }}</Link>
+          <Link href="/groups" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Groups') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Groups') }}</Link>
           <Link v-for="n in visibleExtNav" :key="n.href" :href="n.href" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="navActive(n.href) ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t(n.label) }}</Link>
           <Slot name="header:nav" />
         </nav>
@@ -141,6 +142,7 @@ function goMobile(href: string) {
             <button type="button" @click="goMobile('/')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Community') }}</button>
             <button v-if="storeOwner" type="button" @click="goMobile('/extensions')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Extensions') }}</button>
             <button type="button" @click="goMobile('/members')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Members') }}</button>
+            <button type="button" @click="goMobile('/groups')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Groups') }}</button>
             <button v-for="n in visibleExtNav" :key="n.href" type="button" @click="goMobile(n.href)" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t(n.label) }}</button>
 
             <!-- Language + content auto-translate (the header controls are desktop-only). -->

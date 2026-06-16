@@ -9,7 +9,7 @@ import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import { t as tr } from '@/lib/i18n';
 
 const props = defineProps<{
-  profile: { id: number; name: string; bio: string | null; avatar: string | null; cover: string | null; initials: string; color: number; staff: { name: string; color: string } | null; joined: string; isAdmin: boolean; isSelf: boolean; fediHandle: string | null; fediUrl: string | null; trust: { level: number; label: string } | null };
+  profile: { id: number; name: string; bio: string | null; avatar: string | null; cover: string | null; initials: string; color: number; staff: { name: string; color: string } | null; joined: string; isAdmin: boolean; isSelf: boolean; fediHandle: string | null; fediUrl: string | null; trust: { level: number; label: string } | null; primaryGroup?: { name: string; slug: string; color: string } | null };
   stats: { topics: number; posts: number };
   recentTopics: { title: string; url: string; when: string }[];
   wall: { id: number; html: string; author: any; createdAt: string; canDelete: boolean }[];
@@ -65,6 +65,8 @@ function message() {
               :class="profile.trust.level >= 4 ? 'bg-amber-400/20 text-amber-500' : profile.trust.level >= 1 ? 'bg-primary/15 text-primary' : 'bg-ink/10 text-ink-muted'">
               {{ profile.trust.level >= 4 ? '★ ' : '' }}{{ tr(profile.trust.label) }}
             </span>
+            <a v-if="profile.primaryGroup" :href="`/groups/${profile.primaryGroup.slug}`" class="rounded-full px-2.5 py-0.5 text-xs font-bold"
+              :style="{ color: profile.primaryGroup.color, background: profile.primaryGroup.color + '22' }">{{ profile.primaryGroup.name }}</a>
           </div>
           <p v-if="profile.bio" class="mt-1 text-ink-2">{{ profile.bio }}</p>
           <div class="mt-3 flex flex-wrap gap-4 text-sm text-ink-muted">
