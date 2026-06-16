@@ -91,10 +91,13 @@ function reviewBadge(r: any): { t: string; c: string } | null {
       <div v-else class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         <Link v-for="p in products" :key="p.slug" :href="`/extensions/${p.slug}`" :style="cardStyle(p)"
           class="group flex flex-col overflow-hidden rounded-2xl border transition hover:-translate-y-0.5 hover:shadow-lg">
-          <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" class="aspect-[2/1] w-full object-cover" />
-          <div v-else class="relative flex aspect-[2/1] w-full flex-col items-center justify-center overflow-hidden px-4 text-center" :style="{ background: coverBg(p) }">
-            <span class="bg-clip-text text-2xl font-black tracking-tight text-transparent drop-shadow-sm sm:text-3xl" :style="{ backgroundImage: coverGradient(p), WebkitBackgroundClip: 'text' }">{{ p.name }}</span>
-            <span class="mt-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/55">{{ p.type }}</span>
+          <div class="relative">
+            <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" class="aspect-[2/1] w-full object-cover" />
+            <div v-else class="relative flex aspect-[2/1] w-full flex-col items-center justify-center overflow-hidden px-4 text-center" :style="{ background: coverBg(p) }">
+              <span class="bg-clip-text text-2xl font-black tracking-tight text-transparent drop-shadow-sm sm:text-3xl" :style="{ backgroundImage: coverGradient(p), WebkitBackgroundClip: 'text' }">{{ p.name }}</span>
+              <span class="mt-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-white/55">{{ p.type }}</span>
+            </div>
+            <span v-if="p.icon" v-html="p.icon" class="absolute left-3 top-3 grid h-10 w-10 place-items-center overflow-hidden rounded-xl shadow-md ring-1 ring-white/20 [&>svg]:h-full [&>svg]:w-full"></span>
           </div>
           <div class="flex flex-1 flex-col p-6">
             <div class="flex items-center gap-2">
