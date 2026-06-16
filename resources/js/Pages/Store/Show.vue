@@ -9,6 +9,13 @@ const page = usePage();
 const error = computed(() => (page.props as any).flash?.storeError ?? null);
 const loading = ref(false);
 
+// Only show a banner for a genuine custom screenshot — the auto-generated
+// /storage/covers art just repeats the name + icon already shown in the header.
+const bannerImage = computed(() => {
+  const img = typeof props.product.image === 'string' ? props.product.image : '';
+  return img && !img.includes('/storage/covers/') ? img : null;
+});
+
 const review = computed(() => props.product.review ?? null);
 const reviewMeta = computed(() => {
   const r = review.value?.rating;
@@ -45,7 +52,7 @@ function buy() {
               <p class="text-ink-muted">{{ product.tagline }}</p>
             </div>
           </div>
-          <img v-if="product.image" :src="product.image" :alt="product.name" class="mt-8 w-full rounded-2xl border border-line" />
+          <img v-if="bannerImage" :src="bannerImage" :alt="product.name" class="mt-8 w-full rounded-2xl border border-line" />
           <div class="prose prose-slate mt-8 max-w-none whitespace-pre-line text-ink-2">{{ product.description || product.tagline }}</div>
 
           <!-- AI security review -->

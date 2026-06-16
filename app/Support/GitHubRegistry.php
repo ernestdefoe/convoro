@@ -99,7 +99,37 @@ class GitHubRegistry
             'download_url' => $download,
             'ref' => $ref,
             'default_branch' => $branch,
+            'icon_svg' => self::fetchIcon($repo, $ref, $manifest),
         ];
+    }
+
+    /**
+     * Fetch the repo's icon as inline SVG markup so the directory/detail page can
+     * show a real glyph even when the extension isn't installed locally. Best
+     * effort — returns null if the manifest declares no icon or the fetch fails.
+     */
+    private static function fetchIcon(string $repo, string $ref, array $manifest): ?string
+    {
+        $path = $manifest['icon'] ?? 'icon.svg';
+        if (! is_string($path) || trim($path) === '') {
+            return null;
+        }
+        $path = ltrim(trim($path), '/');
+        if (! str_ends_with(strtolower($path), '.svg')) {
+            return null; // only inline SVG icons; raster icons go through `image`.
+        }
+
+        try {
+            $res = Http::timeout(15)->get("https://raw.githubusercontent.com/{$repo}/{$ref}/{$path}");
+        } catch (\Throwable) {
+            return null;
+        }
+        if (! $res->successful()) {
+            return null;
+        }
+        $svg = trim($res->body());
+
+        return str_contains($svg, '<svg') ? $svg : null;
     }
 
     private static function manifestType(array $m): string
@@ -138,6 +168,9 @@ class GitHubRegistry
             'pinned_version' => $pin,
             'last_synced_at' => now(),
         ]);
+        if (! empty($r['icon_svg'])) {
+            $product->icon = $r['icon_svg'];
+        }
         if ($isNew) {
             $product->price_cents = 0;
             $product->published = true;
@@ -182,6 +215,9 @@ class GitHubRegistry
             'ref' => $r['ref'],
             'last_synced_at' => now(),
         ]);
+        if (! empty($r['icon_svg'])) {
+            $product->icon = $r['icon_svg'];
+        }
         $changed = $before !== ($r['version'].'|'.$r['download_url']);
         $product->save();
 

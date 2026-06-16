@@ -44,6 +44,22 @@ class Product extends Model
         return 'slug';
     }
 
+    /**
+     * Inline SVG for this product's icon. Prefers the icon captured from the
+     * repo on sync (works even when the extension isn't installed here), then
+     * falls back to the matching installed extension's manifest. null → caller
+     * shows a monogram/letter.
+     */
+    public function resolvedIcon(): ?string
+    {
+        if (is_string($this->icon) && trim($this->icon) !== '') {
+            return $this->icon;
+        }
+        $manifest = \App\Support\ExtensionManager::all()[$this->package] ?? null;
+
+        return $manifest ? \App\Support\ExtensionManager::iconSvgFor($manifest) : null;
+    }
+
     public function isFree(): bool
     {
         return $this->price_cents <= 0;

@@ -210,11 +210,10 @@ class StoreController extends Controller
                 'repo' => $product->repo,
                 'review' => $product->reviewPayload(),
                 // The extension's own icon (inline SVG) for the header tile, so it
-                // shows a real glyph instead of a monogram initial. Resolved from
-                // the matching installed manifest; null → monogram fallback.
-                'icon' => ($m = \App\Support\ExtensionManager::all()[$product->package] ?? null)
-                    ? \App\Support\ExtensionManager::iconSvgFor($m)
-                    : null,
+                // shows a real glyph next to the name instead of a monogram. Comes
+                // from the repo (captured on sync) or the installed manifest; null
+                // → monogram fallback.
+                'icon' => $product->resolvedIcon(),
             ],
             'checkoutEnabled' => StripeService::configured(),
             'seo' => Seo::make(['title' => $product->name, 'description' => $product->tagline, 'image' => $product->image, 'type' => 'product']),
