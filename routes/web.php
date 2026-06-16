@@ -216,7 +216,6 @@ Route::get('/members', [App\Http\Controllers\MembersController::class, 'index'])
 // so private groups 404 for non-members; guests can browse public groups).
 Route::get('/groups', [App\Http\Controllers\Groups\GroupController::class, 'index'])->name('groups.index');
 Route::get('/groups/{group}', [App\Http\Controllers\Groups\GroupController::class, 'show'])->name('groups.show');
-Route::get('/groups/{group}/media', [App\Http\Controllers\Groups\GroupController::class, 'media'])->name('groups.media');
 Route::get('/groups/{group}/feed.rss', [App\Http\Controllers\Groups\GroupFeedController::class, 'rss'])->name('groups.feed');
 Route::get('/groups/{group}/d/{topicId}', [App\Http\Controllers\Groups\GroupDiscussionController::class, 'show'])->whereNumber('topicId')->name('groups.discussions.show');
 

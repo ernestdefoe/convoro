@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Groups;
 
 use App\Http\Controllers\Controller;
-use App\Models\Post;
 use App\Models\Scopes\SocialGroupTopicScope;
 use App\Models\SocialGroup;
 use App\Models\SocialGroupJoinRequest;
@@ -131,28 +130,6 @@ class GroupController extends Controller
         $group->delete();
 
         return redirect('/groups')->with('status', __('Group deleted.'));
-    }
-
-    /** JSON: images shared across the group's discussions (the media gallery tab). */
-    public function media(Request $request, SocialGroup $group)
-    {
-        abort_unless($group->isVisibleTo($request->user()), 404);
-
-        $topicIds = Topic::withoutGlobalScope(SocialGroupTopicScope::class)
-            ->where('group_id', $group->id)->visible()->pluck('id');
-
-        $images = [];
-        Post::whereIn('topic_id', $topicIds)->where('hidden', false)
-            ->latest()->limit(200)->get(['id', 'topic_id', 'body_html'])
-            ->each(function (Post $p) use (&$images) {
-                if (preg_match_all('/<img[^>]+src="([^"]+)"/i', (string) $p->body_html, $m)) {
-                    foreach ($m[1] as $src) {
-                        $images[] = ['src' => $src, 'postId' => $p->id, 'topicId' => $p->topic_id];
-                    }
-                }
-            });
-
-        return response()->json(['images' => array_slice($images, 0, 120)]);
     }
 
     // -- helpers ------------------------------------------------------------

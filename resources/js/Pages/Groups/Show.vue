@@ -16,7 +16,7 @@ const props = defineProps<{
 const page = usePage();
 const loggedIn = computed(() => !!(page.props as any).auth?.user);
 
-const tab = ref<'discussions' | 'members' | 'media' | 'about'>('discussions');
+const tab = ref<'discussions' | 'members' | 'about'>('discussions');
 const discussions = ref<any[]>([...props.discussions.data]);
 const next = ref<string | null>(props.discussions.next);
 watch(() => props.discussions, (d) => { discussions.value = [...d.data]; next.value = d.next; });
@@ -67,45 +67,6 @@ const inviteName = ref('');
 function invite() { if (!inviteName.value.trim()) return; act('invite', { user: inviteName.value }); inviteName.value = ''; }
 
 function setPrimaryBadge() { router.post('/groups/primary', { group_id: g.value.id }, { preserveScroll: true }); }
-
-// -- media (lazy) --
-const media = ref<any[]>([]);
-const mediaLoaded = ref(false);
-const uploadingMedia = ref(false);
-async function loadMedia(force = false) {
-  if (mediaLoaded.value && !force) return;
-  mediaLoaded.value = true;
-  try {
-    const r = await fetch(`/groups/${g.value.slug}/media`, { headers: { Accept: 'application/json' } });
-    if (r.ok) media.value = (await r.json()).images ?? [];
-  } catch { /* ignore */ }
-}
-watch(tab, (val) => { if (val === 'media') loadMedia(); });
-
-// Upload images to the gallery — posts them as a discussion (so they live in a
-// real thread and appear in the gallery), then refreshes the grid.
-async function addMedia(e: Event) {
-  const files = Array.from((e.target as HTMLInputElement).files ?? []);
-  (e.target as HTMLInputElement).value = '';
-  if (!files.length) return;
-  uploadingMedia.value = true;
-  try {
-    const urls: string[] = [];
-    for (const f of files) {
-      const { url } = await uploadImage(f);
-      urls.push(url);
-    }
-    const body = '<p>' + urls.map((u) => `<img src="${u}">`).join('') + '</p>';
-    await new Promise<void>((resolve) => router.post(`/groups/${g.value.slug}/discussions`, {
-      title: t('Shared photos'), body_html: body,
-    }, { preserveScroll: true, preserveState: true, onFinish: () => resolve() }));
-    await loadMedia(true);
-  } catch {
-    alert(t('Image upload failed.'));
-  } finally {
-    uploadingMedia.value = false;
-  }
-}
 
 // -- analytics (lazy modal) --
 const showStats = ref(false);
@@ -216,7 +177,7 @@ function timeAgo(iso: string | null) {
 
       <!-- Tabs -->
       <div class="mt-5 flex gap-1 border-b border-line">
-        <button v-for="x in (['discussions','members','media','about'] as const)" :key="x" type="button" @click="tab = x"
+        <button v-for="x in (['discussions','members','about'] as const)" :key="x" type="button" @click="tab = x"
           class="-mb-px border-b-2 px-4 py-2.5 text-sm font-semibold capitalize" :class="tab === x ? 'border-primary text-primary' : 'border-transparent text-ink-2 hover:text-ink'">
           {{ t(x.charAt(0).toUpperCase() + x.slice(1)) }}
         </button>
@@ -297,23 +258,6 @@ function timeAgo(iso: string | null) {
             </div>
           </div>
         </div>
-      </div>
-
-      <!-- Media -->
-      <div v-show="tab === 'media'" class="mt-4">
-        <div v-if="g.canPost" class="mb-3 flex justify-end">
-          <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary-600">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" /></svg>
-            {{ uploadingMedia ? t('Uploading…') : t('Add media') }}
-            <input type="file" accept="image/*" multiple class="hidden" :disabled="uploadingMedia" @change="addMedia" />
-          </label>
-        </div>
-        <div v-if="media.length" class="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
-          <Link v-for="(img, i) in media" :key="i" :href="`/groups/${g.slug}/d/${img.topicId}`" class="aspect-square overflow-hidden rounded-lg border border-line bg-surface-2">
-            <img :src="img.src" alt="" class="h-full w-full object-cover" loading="lazy" />
-          </Link>
-        </div>
-        <p v-else class="rounded-[var(--c-radius)] border border-dashed border-line bg-surface px-6 py-12 text-center text-sm text-ink-2">{{ t('No media shared yet.') }}</p>
       </div>
 
       <!-- About -->
