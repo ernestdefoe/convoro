@@ -3,6 +3,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import ProductCard from '@/Components/store/ProductCard.vue';
+import { realScreenshot } from '@/lib/accent';
 import { t } from '@/lib/i18n';
 
 interface SettingField { key: string; label: string; type?: string; default?: unknown; help?: string; options?: { value: string; label: string }[] }
@@ -25,7 +26,7 @@ const catalogCards = computed(() => props.catalog.map((c) => ({
     description: c.description || c.tagline,
     meta: c.version ? `v${c.version}` : null,
     icon: c.icon ?? null,
-    image: (typeof c.image === 'string' && !c.image.includes('/storage/covers/')) ? c.image : null,
+    image: realScreenshot(c.image),
     priceLabel: c.price,
     free: c.free,
     review: c.review ?? null,

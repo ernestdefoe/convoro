@@ -3,7 +3,7 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import MarketingLayout from '@/Layouts/MarketingLayout.vue';
 import { t } from '@/lib/i18n';
-import { coverGradient, stripIconBg } from '@/lib/accent';
+import { coverGradient, stripIconBg, realScreenshot } from '@/lib/accent';
 
 const props = defineProps<{ product: any; checkoutEnabled: boolean }>();
 
@@ -16,10 +16,7 @@ const loading = ref(false);
 
 // Only show a banner for a genuine custom screenshot — the auto-generated
 // /storage/covers art just repeats the name + icon already shown in the header.
-const bannerImage = computed(() => {
-  const img = typeof props.product.image === 'string' ? props.product.image : '';
-  return img && !img.includes('/storage/covers/') ? img : null;
-});
+const bannerImage = computed(() => realScreenshot(props.product.image));
 
 const review = computed(() => props.product.review ?? null);
 const reviewMeta = computed(() => {

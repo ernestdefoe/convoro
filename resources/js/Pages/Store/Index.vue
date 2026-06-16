@@ -3,6 +3,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import MarketingLayout from '@/Layouts/MarketingLayout.vue';
 import ProductCard from '@/Components/store/ProductCard.vue';
+import { realScreenshot } from '@/lib/accent';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{ products: any[] }>();
@@ -10,21 +11,13 @@ const props = defineProps<{ products: any[] }>();
 const status = computed(() => (usePage().props as any).flash?.status as string | undefined);
 const loggedIn = computed(() => !!(usePage().props as any).auth?.user);
 
-// Auto-generated covers (under /storage/covers) just repeat the name + icon, so
-// they're dropped here and the card draws its designed cover instead. A genuine
-// custom screenshot (any other path) is passed through as the cover image.
-function screenshot(p: any): string | null {
-  const img = typeof p.image === 'string' ? p.image : '';
-  return img && !img.includes('/storage/covers/') ? img : null;
-}
-
 const cards = computed(() => props.products.map((p) => ({
   name: p.name,
   type: p.type,
   description: p.description,
   meta: p.version ? `v${p.version}` : null,
   icon: p.icon ?? null,
-  image: screenshot(p),
+  image: realScreenshot(p.image),
   priceLabel: p.price,
   free: p.free,
   review: p.review ?? null,

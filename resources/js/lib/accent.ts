@@ -5,11 +5,26 @@ const ACCENTS: [string, string][] = [
   ['#a78bfa', '#7c3aed'], ['#22d3ee', '#0891b2'], ['#fb7185', '#e11d48'], ['#818cf8', '#4f46e5'],
 ];
 
+// Brand-locked accents — these products always use their brand colour instead
+// of a hashed one (e.g. Facebook Auto Post stays Facebook blue, in the new style).
+const BRAND: { match: RegExp; colors: [string, string] }[] = [
+  { match: /facebook/i, colors: ['#1877F2', '#0b57c4'] },
+];
+
 export function accentColors(key?: string | null): [string, string] {
   const k = String(key ?? '');
+  for (const b of BRAND) if (b.match.test(k)) return b.colors;
   let h = 0;
   for (let i = 0; i < k.length; i++) h = (h * 31 + k.charCodeAt(i)) >>> 0;
   return ACCENTS[h % ACCENTS.length];
+}
+
+// A genuine uploaded screenshot only. Auto-generated covers (/storage/covers)
+// and extension-shipped covers (/ext-asset, the old pinned style) are dropped so
+// every card uses the uniform designed cover instead.
+export function realScreenshot(img?: string | null): string | null {
+  if (typeof img !== 'string' || !img) return null;
+  return img.includes('/storage/covers/') || img.includes('/ext-asset/') ? null : img;
 }
 
 export function coverGradient(key?: string | null): string {
