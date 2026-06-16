@@ -71,15 +71,41 @@ function setPrimaryBadge() { router.post('/groups/primary', { group_id: g.value.
 // -- media (lazy) --
 const media = ref<any[]>([]);
 const mediaLoaded = ref(false);
-watch(tab, async (val) => {
-  if (val === 'media' && !mediaLoaded.value) {
-    mediaLoaded.value = true;
-    try {
-      const r = await fetch(`/groups/${g.value.slug}/media`, { headers: { Accept: 'application/json' } });
-      if (r.ok) media.value = (await r.json()).images ?? [];
-    } catch { /* ignore */ }
+const uploadingMedia = ref(false);
+async function loadMedia(force = false) {
+  if (mediaLoaded.value && !force) return;
+  mediaLoaded.value = true;
+  try {
+    const r = await fetch(`/groups/${g.value.slug}/media`, { headers: { Accept: 'application/json' } });
+    if (r.ok) media.value = (await r.json()).images ?? [];
+  } catch { /* ignore */ }
+}
+watch(tab, (val) => { if (val === 'media') loadMedia(); });
+
+// Upload images to the gallery — posts them as a discussion (so they live in a
+// real thread and appear in the gallery), then refreshes the grid.
+async function addMedia(e: Event) {
+  const files = Array.from((e.target as HTMLInputElement).files ?? []);
+  (e.target as HTMLInputElement).value = '';
+  if (!files.length) return;
+  uploadingMedia.value = true;
+  try {
+    const urls: string[] = [];
+    for (const f of files) {
+      const { url } = await uploadImage(f);
+      urls.push(url);
+    }
+    const body = '<p>' + urls.map((u) => `<img src="${u}">`).join('') + '</p>';
+    await new Promise<void>((resolve) => router.post(`/groups/${g.value.slug}/discussions`, {
+      title: t('Shared photos'), body_html: body,
+    }, { preserveScroll: true, preserveState: true, onFinish: () => resolve() }));
+    await loadMedia(true);
+  } catch {
+    alert(t('Image upload failed.'));
+  } finally {
+    uploadingMedia.value = false;
   }
-});
+}
 
 // -- analytics (lazy modal) --
 const showStats = ref(false);
@@ -132,6 +158,10 @@ function timeAgo(iso: string | null) {
   <Head :title="g.name" />
   <AppLayout>
     <div class="mx-auto max-w-[var(--c-container)] px-4 py-6">
+      <Link href="/groups" class="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-2 hover:text-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
+        {{ t('All groups') }}
+      </Link>
       <!-- Header -->
       <div class="overflow-hidden rounded-[var(--c-radius)] border border-line bg-surface">
         <div class="h-32 w-full sm:h-40" :style="g.cover ? { backgroundImage: `url(${g.cover})`, backgroundSize: 'cover', backgroundPosition: 'center' } : tile()"></div>
@@ -271,6 +301,13 @@ function timeAgo(iso: string | null) {
 
       <!-- Media -->
       <div v-show="tab === 'media'" class="mt-4">
+        <div v-if="g.canPost" class="mb-3 flex justify-end">
+          <label class="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary-600">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14" /></svg>
+            {{ uploadingMedia ? t('Uploading…') : t('Add media') }}
+            <input type="file" accept="image/*" multiple class="hidden" :disabled="uploadingMedia" @change="addMedia" />
+          </label>
+        </div>
         <div v-if="media.length" class="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-6">
           <Link v-for="(img, i) in media" :key="i" :href="`/groups/${g.slug}/d/${img.topicId}`" class="aspect-square overflow-hidden rounded-lg border border-line bg-surface-2">
             <img :src="img.src" alt="" class="h-full w-full object-cover" loading="lazy" />
