@@ -99,16 +99,17 @@ class GitHubRegistry
             'download_url' => $download,
             'ref' => $ref,
             'default_branch' => $branch,
-            'icon_svg' => self::fetchIcon($repo, $ref, $manifest),
+            'icon_svg' => self::fetchIcon($repo, $ref, $branch, $manifest),
         ];
     }
 
     /**
      * Fetch the repo's icon as inline SVG markup so the directory/detail page can
-     * show a real glyph even when the extension isn't installed locally. Best
-     * effort — returns null if the manifest declares no icon or the fetch fails.
+     * show a real glyph even when the extension isn't installed locally. Tries the
+     * resolved ref first, then the default branch (so an icon added after the last
+     * release is still picked up). Best effort — null if none found.
      */
-    private static function fetchIcon(string $repo, string $ref, array $manifest): ?string
+    private static function fetchIcon(string $repo, string $ref, string $branch, array $manifest): ?string
     {
         $path = $manifest['icon'] ?? 'icon.svg';
         if (! is_string($path) || trim($path) === '') {
@@ -119,17 +120,21 @@ class GitHubRegistry
             return null; // only inline SVG icons; raster icons go through `image`.
         }
 
-        try {
-            $res = Http::timeout(15)->get("https://raw.githubusercontent.com/{$repo}/{$ref}/{$path}");
-        } catch (\Throwable) {
-            return null;
+        foreach (array_unique([$ref, $branch]) as $at) {
+            try {
+                $res = Http::timeout(15)->get("https://raw.githubusercontent.com/{$repo}/{$at}/{$path}");
+            } catch (\Throwable) {
+                continue;
+            }
+            if ($res->successful()) {
+                $svg = trim($res->body());
+                if (str_contains($svg, '<svg')) {
+                    return $svg;
+                }
+            }
         }
-        if (! $res->successful()) {
-            return null;
-        }
-        $svg = trim($res->body());
 
-        return str_contains($svg, '<svg') ? $svg : null;
+        return null;
     }
 
     private static function manifestType(array $m): string
