@@ -212,6 +212,13 @@ Route::get('/u/{user}', [App\Http\Controllers\UserProfileController::class, 'sho
 Route::get('/extensions', [App\Http\Controllers\ExtensionsPageController::class, 'index'])->middleware('store.owner')->name('extensions.index');
 Route::get('/members', [App\Http\Controllers\MembersController::class, 'index'])->name('members.index');
 
+// Social Groups — public reads (visibility is enforced inside the controllers,
+// so private groups 404 for non-members; guests can browse public groups).
+Route::get('/groups', [App\Http\Controllers\Groups\GroupController::class, 'index'])->name('groups.index');
+Route::get('/groups/{group}', [App\Http\Controllers\Groups\GroupController::class, 'show'])->name('groups.show');
+Route::get('/groups/{group}/feed.rss', [App\Http\Controllers\Groups\GroupFeedController::class, 'rss'])->name('groups.feed');
+Route::get('/groups/{group}/d/{topicId}', [App\Http\Controllers\Groups\GroupDiscussionController::class, 'show'])->whereNumber('topicId')->name('groups.discussions.show');
+
 Route::get('/welcome', fn () => Inertia::render('Welcome', [
     'canLogin' => Route::has('login'),
     'canRegister' => Route::has('register'),
@@ -254,6 +261,28 @@ Route::middleware('auth')->group(function () {
     Route::put('/posts/{post}', [PostController::class, 'update'])->name('posts.update');
     Route::delete('/posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
     Route::post('/posts/{post}/react', [ReactionController::class, 'toggle'])->name('posts.react');
+
+    // Social Groups — actions (auth required; per-group authz inside controllers).
+    Route::post('/groups', [App\Http\Controllers\Groups\GroupController::class, 'store'])->name('groups.store');
+    Route::post('/groups/primary', [App\Http\Controllers\Groups\PrimaryGroupController::class, 'update'])->name('groups.primary');
+    Route::put('/groups/{group}', [App\Http\Controllers\Groups\GroupController::class, 'update'])->name('groups.update');
+    Route::delete('/groups/{group}', [App\Http\Controllers\Groups\GroupController::class, 'destroy'])->name('groups.destroy');
+    Route::post('/groups/{group}/join', [App\Http\Controllers\Groups\GroupMembershipController::class, 'join'])->name('groups.join');
+    Route::post('/groups/{group}/leave', [App\Http\Controllers\Groups\GroupMembershipController::class, 'leave'])->name('groups.leave');
+    Route::post('/groups/{group}/invite', [App\Http\Controllers\Groups\GroupMembershipController::class, 'invite'])->name('groups.invite');
+    Route::post('/groups/{group}/requests/{joinRequest}/approve', [App\Http\Controllers\Groups\GroupMembershipController::class, 'approve'])->name('groups.requests.approve');
+    Route::delete('/groups/{group}/requests/{joinRequest}', [App\Http\Controllers\Groups\GroupMembershipController::class, 'reject'])->name('groups.requests.reject');
+    Route::delete('/groups/{group}/members/{member}', [App\Http\Controllers\Groups\GroupMembershipController::class, 'kick'])->name('groups.members.kick');
+    Route::post('/groups/{group}/members/{member}/ban', [App\Http\Controllers\Groups\GroupMembershipController::class, 'ban'])->name('groups.members.ban');
+    Route::post('/groups/{group}/members/{member}/unban', [App\Http\Controllers\Groups\GroupMembershipController::class, 'unban'])->name('groups.members.unban');
+    Route::put('/groups/{group}/members/{member}/role', [App\Http\Controllers\Groups\GroupMembershipController::class, 'setRole'])->name('groups.members.role');
+    Route::get('/groups/{group}/analytics', [App\Http\Controllers\Groups\GroupAnalyticsController::class, 'show'])->name('groups.analytics');
+    Route::post('/groups/{group}/discussions', [App\Http\Controllers\Groups\GroupDiscussionController::class, 'store'])->name('groups.discussions.store');
+    Route::post('/groups/{group}/d/{topicId}/reply', [App\Http\Controllers\Groups\GroupDiscussionController::class, 'reply'])->whereNumber('topicId')->name('groups.discussions.reply');
+    Route::delete('/groups/{group}/d/{topicId}', [App\Http\Controllers\Groups\GroupDiscussionController::class, 'destroy'])->whereNumber('topicId')->name('groups.discussions.destroy');
+    Route::post('/groups/{group}/d/{topicId}/pin', [App\Http\Controllers\Groups\GroupDiscussionController::class, 'pin'])->whereNumber('topicId')->name('groups.discussions.pin');
+    Route::post('/groups/{group}/d/{topicId}/lock', [App\Http\Controllers\Groups\GroupDiscussionController::class, 'lock'])->whereNumber('topicId')->name('groups.discussions.lock');
+
     Route::post('/report', [App\Http\Controllers\ReportController::class, 'store'])->name('report.store');
     Route::post('/uploads/image', [App\Http\Controllers\UploadController::class, 'image'])->name('uploads.image');
 

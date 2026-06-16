@@ -19,8 +19,12 @@ class TopicPublisher
      * @param  bool  $hold  Hold the new topic for moderator approval — it's hidden
      *                      from every listing and skips all outbound side effects
      *                      (notifications, federation, auto-answer) until approved.
+     * @param  int|null  $groupId  When set, the topic is a social-group discussion:
+     *                      it carries the group id (hidden from the public forum by
+     *                      SocialGroupTopicScope) and skips every public side effect
+     *                      — no federation, no Facebook auto-post, no AI auto-answer.
      */
-    public static function publish(User $user, array $data, ?string $ip = null, bool $hold = false): Topic
+    public static function publish(User $user, array $data, ?string $ip = null, bool $hold = false, ?int $groupId = null): Topic
     {
         $slug = (Str::slug($data['title']) ?: 'topic').'-'.Str::lower(Str::random(6));
 
@@ -28,7 +32,8 @@ class TopicPublisher
             'title' => $data['title'],
             'slug' => $slug,
             'user_id' => $user->id,
-            'category_id' => $data['category_id'] ?? null,
+            'category_id' => $groupId ? null : ($data['category_id'] ?? null),
+            'group_id' => $groupId,
             'cover_image' => $data['cover'] ?? null,
             'last_post_at' => now(),
             'hidden' => $hold,
@@ -64,6 +69,13 @@ class TopicPublisher
         // A held topic is invisible pending approval — don't notify anyone,
         // auto-answer, federate or fire the published hook until it's approved.
         if ($hold) {
+            return $topic;
+        }
+
+        // Group discussions live inside the group, never the public forum:
+        // skip federation, the Facebook auto-post hook and AI auto-answer.
+        // Member notifications are sent by the group discussion controller.
+        if ($groupId) {
             return $topic;
         }
 

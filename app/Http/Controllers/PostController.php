@@ -58,20 +58,29 @@ class PostController extends Controller
         $topic->increment('reply_count');
         $topic->update(['last_post_at' => now()]);
 
-        // Live-broadcast the new post to everyone viewing this topic.
+        // Live-broadcast the new post to everyone viewing this topic. A realtime
+        // outage (Reverb down) must never 500 the post — it's a best-effort push.
         $post->load(['user', 'reactions']);
-        broadcast(new PostCreated(Present::post($post, null), $topic->id));
+        try {
+            broadcast(new PostCreated(Present::post($post, null), $topic->id));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         $this->notifyParticipants($request, $topic, $post, $html);
 
-        // If the member @mentioned the assistant, have it reply with a grounded answer.
-        $mentionedIds = Mentions::parse(strip_tags($html))->pluck('id')->all();
-        if (\App\Jobs\AnswerMentionJob::shouldAnswer($post, $mentionedIds)) {
-            \App\Jobs\AnswerMentionJob::dispatch($post->id)->afterCommit();
-        }
+        // Social-group discussions stay inside the group: no AI auto-answer and
+        // no fediverse cross-post (which would leak a private group's content).
+        if (! $topic->group_id) {
+            // If the member @mentioned the assistant, have it reply with a grounded answer.
+            $mentionedIds = Mentions::parse(strip_tags($html))->pluck('id')->all();
+            if (\App\Jobs\AnswerMentionJob::shouldAnswer($post, $mentionedIds)) {
+                \App\Jobs\AnswerMentionJob::dispatch($post->id)->afterCommit();
+            }
 
-        // Cross-post out to the fediverse (no-op unless federation is on + relevant).
-        \App\Support\Federation::announceReply($post, $topic);
+            // Cross-post out to the fediverse (no-op unless federation is on + relevant).
+            \App\Support\Federation::announceReply($post, $topic);
+        }
 
         // Posting is participation — re-check whether they've earned a promotion.
         \App\Support\TrustLevels::evaluate($request->user());

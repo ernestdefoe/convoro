@@ -29,7 +29,14 @@ class Notifier
         $data = is_array($fresh->data) ? $fresh->data : (array) $fresh->data;
         $unread = $user->unreadNotifications()->count();
 
-        broadcast(new NotificationCreated(Present::notification($fresh), (int) $user->id, $unread));
+        // Best-effort live push: the notification is already persisted (above), so
+        // a realtime outage (Reverb down) must never 500 the action that triggered
+        // it — the recipient still sees it on their next page load.
+        try {
+            broadcast(new NotificationCreated(Present::notification($fresh), (int) $user->id, $unread));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
         // Everything below is rendered server-side, so localize it to the
         // RECIPIENT's language (not the actor's request locale).

@@ -16,10 +16,17 @@ class Topic extends Model {
         'is_live' => 'boolean',
         'hidden' => 'boolean',
     ];
+    /** Social-group discussions are topics with a group_id; a global scope hides
+     *  them from every ordinary listing. Group-aware code removes it explicitly
+     *  via Topic::withoutGlobalScope(SocialGroupTopicScope::class). */
+    protected static function booted(): void {
+        static::addGlobalScope(new \App\Models\Scopes\SocialGroupTopicScope);
+    }
     /** Exclude topics held for moderator approval from public listings. */
     public function scopeVisible($q) { return $q->where($this->getTable().'.hidden', false); }
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function category(): BelongsTo { return $this->belongsTo(Category::class); }
+    public function group(): BelongsTo { return $this->belongsTo(SocialGroup::class, 'group_id'); }
     public function posts(): HasMany { return $this->hasMany(Post::class); }
     public function firstPost(): HasOne { return $this->hasOne(Post::class)->where('is_first', true); }
     public function poll(): HasOne { return $this->hasOne(Poll::class); }

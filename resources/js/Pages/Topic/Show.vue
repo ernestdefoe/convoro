@@ -32,7 +32,7 @@ function sharePost(post: any) {
   }
 }
 
-const props = defineProps<{ topic: any; posts: any[]; canReply: boolean; categories?: any[]; allTags?: any[]; references?: { title: string; slug: string }[]; firstUnreadId?: number | null }>();
+const props = defineProps<{ topic: any; posts: any[]; canReply: boolean; categories?: any[]; allTags?: any[]; references?: { title: string; slug: string }[]; firstUnreadId?: number | null; group?: any; replyUrl?: string; moderateBase?: string }>();
 const page = usePage();
 const aiEnabled = computed(() => !!(page.props as any).ask?.enabled);
 const summary = ref('');
@@ -148,12 +148,12 @@ function removePost(post: any) {
 
 function togglePin() {
   menuFor.value = null;
-  router.post(`/t/${props.topic.slug}/pin`, {}, { preserveScroll: true });
+  router.post(props.moderateBase ? `${props.moderateBase}/pin` : `/t/${props.topic.slug}/pin`, {}, { preserveScroll: true });
 }
 
 function toggleLock() {
   menuFor.value = null;
-  router.post(`/t/${props.topic.slug}/lock`, {}, { preserveScroll: true });
+  router.post(props.moderateBase ? `${props.moderateBase}/lock` : `/t/${props.topic.slug}/lock`, {}, { preserveScroll: true });
 }
 
 // Local copy so live-broadcast posts can be appended; resync when the server
@@ -450,7 +450,7 @@ function react(postId: number, emoji: string) {
 function submitReply() {
   if (!editor.value || editor.value.isEmpty()) return;
   posting.value = true;
-  router.post(`/t/${props.topic.slug}/posts`,
+  router.post(props.replyUrl || `/t/${props.topic.slug}/posts`,
     { body_html: editor.value.getHTML(), body_json: editor.value.getJSON() },
     {
       preserveScroll: true,
@@ -479,6 +479,11 @@ function submitReply() {
         <img v-if="topic.cover" :src="topic.cover" alt="" class="h-56 w-full object-cover sm:h-72" />
         <div class="p-6 sm:p-9">
           <div class="flex flex-wrap items-center gap-2">
+            <a v-if="group" :href="`/groups/${group.slug}`" class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
+              :style="{ color: group.color, background: group.color + '22' }">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
+              {{ group.name }}
+            </a>
             <span v-if="topic.category" class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
               :style="{ color: topic.category.color, background: topic.category.color + '22' }"><CategoryIcon :icon="topic.category.icon" /> {{ topic.category.name }}</span>
             <span v-if="hereCount > 0" class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-600">

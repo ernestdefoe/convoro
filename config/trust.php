@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.39.0',
+            'date' => '2026-06-15',
+            'title' => 'Social Groups',
+            'items' => [
+                ['type' => 'new', 'text' => 'Members can create their own Groups — public or private — each with its own discussions, right from the new Groups link in the header.'],
+                ['type' => 'new', 'text' => 'Group discussions use the same editor, @mentions, reactions and polls as the rest of the forum; private groups keep their discussions hidden from the main feed, search and everywhere else unless you’re a member.'],
+                ['type' => 'new', 'text' => 'Open, request-to-join or invite-only membership, owner and moderator roles, banning and join-request approvals — plus a custom icon and banner for each group and an owner analytics view.'],
+            ],
+        ],
+        [
             'tag' => '1.38.13',
             'date' => '2026-06-14',
             'title' => 'Cleaner extension icons',

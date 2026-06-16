@@ -21,10 +21,12 @@ class Permissions
         'topic.delete_any' => ['Delete any topic', 'Moderation'],
         'topic.lock' => ['Lock / unlock topics', 'Moderation'],
         'topic.pin' => ['Pin / unpin topics', 'Moderation'],
+        'group.create' => ['Create social groups', 'Groups'],
+        'group.moderate' => ['Moderate any social group', 'Groups'],
     ];
 
     /** Granted to every authenticated user, regardless of group. */
-    public const BASELINE = ['topic.create', 'post.reply', 'post.react', 'post.edit_own', 'post.delete_own'];
+    public const BASELINE = ['topic.create', 'post.reply', 'post.react', 'post.edit_own', 'post.delete_own', 'group.create'];
 
     public static function keys(): array
     {

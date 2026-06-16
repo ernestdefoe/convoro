@@ -62,6 +62,27 @@ class User extends Authenticatable
         return $this->belongsToMany(Group::class, 'group_user')->withTimestamps();
     }
 
+    /** Social-group memberships (distinct from permission groups above). */
+    public function socialGroupMemberships(): HasMany
+    {
+        return $this->hasMany(SocialGroupMember::class);
+    }
+
+    /** Social groups this user is an active (non-banned) member of. */
+    public function socialGroups(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
+    {
+        return $this->belongsToMany(SocialGroup::class, 'social_group_members')
+            ->withPivot(['role', 'banned_at'])
+            ->wherePivotNull('banned_at')
+            ->withTimestamps();
+    }
+
+    /** The member's chosen primary social group (the badge on their profile). */
+    public function primarySocialGroup(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(\App\Models\SocialGroupPrimary::class);
+    }
+
     /** Effective permission check: admins bypass; baseline for all; else via groups. */
     public function hasPermission(string $key): bool
     {
