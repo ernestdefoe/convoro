@@ -15,7 +15,7 @@ use Laravel\Sanctum\HasApiTokens;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
 #[Fillable(['name', 'email', 'password', 'digest_frequency', 'notify_email', 'locale', 'auto_translate', 'is_admin', 'bio', 'avatar_path', 'cover_path', 'registration_ip', 'last_ip', 'banned_at', 'ban_reason', 'invited_by', 'trust_level', 'trust_locked', 'trust_promoted_at'])]
-#[Hidden(['password', 'remember_token'])]
+#[Hidden(['password', 'remember_token', 'github_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -123,7 +123,14 @@ class User extends Authenticatable
             'trust_level' => 'integer',
             'trust_locked' => 'boolean',
             'trust_promoted_at' => 'datetime',
+            'github_token' => 'encrypted',
         ];
+    }
+
+    /** Whether this seller has connected their GitHub account. */
+    public function hasGithub(): bool
+    {
+        return filled($this->github_token);
     }
 
     /** Notification types a member can tune per channel. */

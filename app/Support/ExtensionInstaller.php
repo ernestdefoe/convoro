@@ -88,7 +88,15 @@ class ExtensionInstaller
         $tmp = storage_path('app/ext-tmp/'.bin2hex(random_bytes(8)).'.zip');
         File::ensureDirectoryExists(dirname($tmp));
 
-        $res = \Illuminate\Support\Facades\Http::timeout(120)->get($url);
+        $req = \Illuminate\Support\Facades\Http::timeout(120);
+        // GitHub API archive endpoints (zipball) need the token to reach PRIVATE
+        // repos. The token is sent only to github.com hosts; the redirect to the
+        // signed codeload URL carries its own auth, so public repos still work.
+        if (str_contains($url, 'github.com') && ($token = \App\Support\GitHubRegistry::token()) !== '') {
+            $req = $req->withToken($token)->withHeaders(['User-Agent' => 'Convoro-Registry']);
+        }
+
+        $res = $req->get($url);
         if (! $res->successful()) {
             throw new \RuntimeException('Could not download the package (HTTP '.$res->status().').');
         }

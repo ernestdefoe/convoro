@@ -61,6 +61,13 @@ $convoroStoreRoutes = function () {
     Route::post('/extensions/{product}/manage', [App\Http\Controllers\StoreController::class, 'updateListing'])->middleware('auth')->name('store.manage.update');
     Route::get('/extensions/purchased', [App\Http\Controllers\StoreController::class, 'success'])->name('store.success');
 
+    // Seller "Connect GitHub" (OAuth) — lets any author list their own private repos.
+    Route::middleware('auth')->group(function () {
+        Route::get('/extensions/connect/github', [App\Http\Controllers\StoreController::class, 'connectGithub'])->name('store.connect.github');
+        Route::get('/extensions/connect/github/callback', [App\Http\Controllers\StoreController::class, 'githubCallback'])->name('store.connect.github.callback');
+        Route::post('/extensions/disconnect/github', [App\Http\Controllers\StoreController::class, 'disconnectGithub'])->name('store.disconnect.github');
+    });
+
     // Store-OWNER console actions (front-facing; operator only — the old
     // /admin/store section now lives here). admin + store.owner gated.
     Route::middleware(['auth', 'admin', 'store.owner'])->group(function () {

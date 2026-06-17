@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\License;
 use App\Models\Product;
+use App\Support\GitHubOAuth;
+use App\Support\GitHubRegistry;
 use App\Support\Seo;
 use App\Support\StripeService;
 use Illuminate\Http\JsonResponse;
@@ -26,15 +28,73 @@ class StoreController extends Controller
     }
 
     /** Public "submit your extension/theme" form on convoro.co. */
-    public function submitForm(): Response
+    public function submitForm(Request $request): Response
     {
         return Inertia::render('Store/Submit', [
             'checkoutEnabled' => StripeService::configured(),
+            'github' => $this->githubState($request),
             'seo' => Seo::make([
                 'title' => __('Submit your extension or theme'),
                 'description' => __('Publish your Convoro extension or theme to the directory. Link a public GitHub repo — free listings are instant; premium items sell through the Convoro store.'),
             ]),
         ]);
+    }
+
+    /** GitHub connection state for the seller UI. */
+    private function githubState(Request $request): array
+    {
+        $user = $request->user();
+
+        return [
+            'configured' => GitHubOAuth::configured(),
+            'connected' => (bool) $user?->hasGithub(),
+            'login' => $user?->github_login,
+        ];
+    }
+
+    /** Begin the seller GitHub OAuth flow. */
+    public function connectGithub(Request $request): RedirectResponse
+    {
+        if (! GitHubOAuth::configured()) {
+            return back()->with('storeError', __('GitHub Connect isn\'t set up on this store yet.'));
+        }
+        $request->session()->put('github_oauth_state', $state = \Illuminate\Support\Str::random(40));
+
+        return redirect()->away(GitHubOAuth::authorizeUrl(GitHubOAuth::redirectUri(), $state));
+    }
+
+    /** GitHub OAuth callback: store the seller's token + login. */
+    public function githubCallback(Request $request): RedirectResponse
+    {
+        $expected = $request->session()->pull('github_oauth_state');
+        if (! $expected || ! hash_equals($expected, (string) $request->query('state'))) {
+            return redirect()->route('store.submit')->with('storeError', __('GitHub connection failed (invalid state). Please try again.'));
+        }
+        if (! ($code = (string) $request->query('code'))) {
+            return redirect()->route('store.submit')->with('storeError', __('GitHub connection was cancelled.'));
+        }
+
+        try {
+            $creds = GitHubOAuth::exchangeCode($code, GitHubOAuth::redirectUri());
+        } catch (\Throwable $e) {
+            return redirect()->route('store.submit')->with('storeError', $e->getMessage());
+        }
+
+        $request->user()->forceFill([
+            'github_token' => $creds['token'],
+            'github_login' => $creds['login'],
+        ])->save();
+
+        return redirect()->route('store.submit')->with('status',
+            __('GitHub connected as :login — you can now list private repositories.', ['login' => $creds['login']]));
+    }
+
+    /** Disconnect the seller's GitHub account. */
+    public function disconnectGithub(Request $request): RedirectResponse
+    {
+        $request->user()->forceFill(['github_token' => null, 'github_login' => null])->save();
+
+        return back()->with('status', __('GitHub disconnected.'));
     }
 
     /**
@@ -50,13 +110,15 @@ class StoreController extends Controller
             'email' => ['required', 'email', 'max:255'],
         ]);
 
-        $repo = \App\Support\GitHubRegistry::normalizeRepo($data['repo']);
+        $repo = GitHubRegistry::normalizeRepo($data['repo']);
         if (! $repo) {
             return back()->with('storeError', __('That does not look like a GitHub repository. Use the owner/name or full URL.'));
         }
 
+        // Use the seller's connected token so they can submit their PRIVATE repos.
+        $token = $request->user()?->github_token;
         try {
-            $r = \App\Support\GitHubRegistry::resolve($repo);
+            $r = GitHubRegistry::resolve($repo, null, $token);
         } catch (\Throwable $e) {
             return back()->with('storeError', $e->getMessage());
         }
@@ -72,7 +134,7 @@ class StoreController extends Controller
             return back()->with('storeError', __('“:name” is already listed in the directory.', ['name' => $m['name']]));
         }
 
-        Product::updateOrCreate(
+        $product = Product::updateOrCreate(
             ['package' => $m['id']],
             [
                 'slug' => \Illuminate\Support\Str::slug($m['id']),
@@ -92,6 +154,12 @@ class StoreController extends Controller
                 'published' => false,
             ],
         );
+
+        // Private repos: buyers can't fetch them, so cache the archive store-side
+        // (served via the gated download) using the seller's token.
+        if (! empty($r['private']) && GitHubRegistry::cacheArchive($product, $r['download_url'], $token)) {
+            $product->save();
+        }
 
         return redirect()->route('store.index')->with('status',
             __('Thanks! “:name” was submitted for review. We\'ll email :email once it\'s approved.', ['name' => $m['name'], 'email' => $data['email']]));
@@ -277,10 +345,14 @@ class StoreController extends Controller
                 'review' => ['rating' => $p->review_rating, 'score' => $p->review_score],
                 'source' => $p->source,
                 'repo' => $p->repo,
-                // GitHub-linked extensions install straight from the repo archive;
-                // free hosted items use the catalog download; premium needs a license.
+                // Public GitHub repos install straight from the repo archive. A
+                // PRIVATE repo is cached store-side (download_path): free → gated
+                // catalog download; premium → null (buyer installs via license).
+                // Non-GitHub: free hosted uses the catalog download; premium → license.
                 'download_url' => $p->source === 'github'
-                    ? $p->download_url
+                    ? ($p->download_path
+                        ? ($p->isFree() ? route('catalog.download', $p) : null)
+                        : $p->download_url)
                     : (($p->isFree() && $p->download_path) ? route('catalog.download', $p) : null),
             ]);
 

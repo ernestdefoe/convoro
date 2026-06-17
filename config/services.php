@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    // GitHub integration for the extension registry.
+    //  - token: a global fallback PAT (the `github.token` admin setting overrides
+    //    it). Lets the STORE OWNER read their own private repos.
+    //  - client_id/secret: a GitHub OAuth App so ANY seller can "Connect GitHub"
+    //    and list their own private repos (their token is stored per-user).
+    'github' => [
+        'token' => env('GITHUB_TOKEN'),
+        'client_id' => env('GITHUB_CLIENT_ID'),
+        'client_secret' => env('GITHUB_CLIENT_SECRET'),
+        'redirect' => env('GITHUB_OAUTH_REDIRECT', ''),
+    ],
+
 ];

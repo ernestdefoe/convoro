@@ -27,39 +27,65 @@ class GitHubRegistry
         return preg_match('#^[\w.-]+/[\w.-]+$#', $s) ? $s : null;
     }
 
-    private static function http()
+    private static function http(?string $token = null)
     {
         $req = Http::withHeaders(['Accept' => 'application/vnd.github+json', 'User-Agent' => 'Convoro-Registry'])->timeout(15);
-        $token = (string) (Settings::get('github.token') ?: config('services.github.token'));
+        $token = ($token !== null && $token !== '') ? $token : self::token();
 
         return $token !== '' ? $req->withToken($token) : $req;
     }
 
     /**
+     * The token to use for a repo: the seller's connected token wins over the
+     * global one. Pass the seller's token explicitly (e.g. from the product owner
+     * or the submitting user) to read THEIR private repos.
+     */
+    public static function token(): string
+    {
+        return (string) (Settings::get('github.token') ?: config('services.github.token'));
+    }
+
+    /**
+     * Fetch a repo file's contents through the REST API rather than
+     * raw.githubusercontent.com, so the token unlocks PRIVATE repos too (raw.*
+     * can't be authenticated). Returns the response, or null on miss.
+     */
+    private static function rawContents(string $repo, string $path, string $ref, ?string $token = null): ?\Illuminate\Http\Client\Response
+    {
+        $res = self::http($token)
+            ->withHeaders(['Accept' => 'application/vnd.github.raw'])
+            ->get("https://api.github.com/repos/{$repo}/contents/".ltrim($path, '/'), ['ref' => $ref]);
+
+        return $res->successful() ? $res : null;
+    }
+
+    /**
      * @param  string|null  $pin  A specific release tag to resolve (frozen). NULL = latest release.
-     * @return array{manifest:array,version:string,download_url:string,ref:string,default_branch:string}
+     * @param  string|null  $token  The seller's connected token (reads their private repos).
+     * @return array{manifest:array,version:string,download_url:string,ref:string,default_branch:string,private:bool,icon_svg:?string}
      *
      * @throws \RuntimeException
      */
-    public static function resolve(string $input, ?string $pin = null): array
+    public static function resolve(string $input, ?string $pin = null, ?string $token = null): array
     {
         $repo = self::normalizeRepo($input);
         if (! $repo) {
             throw new \RuntimeException('Enter a valid GitHub repository (owner/name).');
         }
 
-        $info = self::http()->get("https://api.github.com/repos/{$repo}");
+        $info = self::http($token)->get("https://api.github.com/repos/{$repo}");
         if ($info->status() === 404) {
-            throw new \RuntimeException("Repository {$repo} not found (it must be public).");
+            throw new \RuntimeException("Repository {$repo} not found. Check the owner/name — and for a private repo, connect the GitHub account that owns it first.");
         }
         if (! $info->successful()) {
             throw new \RuntimeException('GitHub error: '.($info->json('message') ?? $info->status()));
         }
         $branch = $info->json('default_branch') ?: 'main';
+        $private = (bool) $info->json('private', false);
 
         // The extension manifest must live at the repo root.
-        $raw = Http::timeout(15)->get("https://raw.githubusercontent.com/{$repo}/{$branch}/extension.json");
-        if (! $raw->successful()) {
+        $raw = self::rawContents($repo, 'extension.json', $branch, $token);
+        if (! $raw) {
             throw new \RuntimeException('No extension.json found at the root of '.$repo.' ('.$branch.').');
         }
         $manifest = json_decode($raw->body(), true);
@@ -71,24 +97,24 @@ class GitHubRegistry
 
         if ($pin !== null) {
             // Pinned: resolve exactly this release tag and verify it exists.
-            $check = self::http()->get("https://api.github.com/repos/{$repo}/releases/tags/{$pin}");
+            $check = self::http($token)->get("https://api.github.com/repos/{$repo}/releases/tags/{$pin}");
             if (! $check->successful()) {
                 throw new \RuntimeException("Release tag “{$pin}” was not found on {$repo}.");
             }
             $ref = $pin;
-            $download = "https://github.com/{$repo}/archive/refs/tags/{$pin}.zip";
+            $download = "https://api.github.com/repos/{$repo}/zipball/{$pin}";
             $version = ltrim($pin, 'vV') ?: ($manifest['version'] ?? '0.0.0');
         } else {
             // Prefer the latest release tag; fall back to the default branch.
-            $rel = self::http()->get("https://api.github.com/repos/{$repo}/releases/latest");
+            $rel = self::http($token)->get("https://api.github.com/repos/{$repo}/releases/latest");
             if ($rel->successful() && $rel->json('tag_name')) {
                 $tag = $rel->json('tag_name');
                 $ref = $tag;
-                $download = "https://github.com/{$repo}/archive/refs/tags/{$tag}.zip";
+                $download = "https://api.github.com/repos/{$repo}/zipball/{$tag}";
                 $version = ltrim($tag, 'vV') ?: ($manifest['version'] ?? '0.0.0');
             } else {
                 $ref = $branch;
-                $download = "https://github.com/{$repo}/archive/refs/heads/{$branch}.zip";
+                $download = "https://api.github.com/repos/{$repo}/zipball/{$branch}";
                 $version = (string) ($manifest['version'] ?? '0.0.0');
             }
         }
@@ -99,7 +125,8 @@ class GitHubRegistry
             'download_url' => $download,
             'ref' => $ref,
             'default_branch' => $branch,
-            'icon_svg' => self::fetchIcon($repo, $ref, $branch, $manifest),
+            'private' => $private,
+            'icon_svg' => self::fetchIcon($repo, $ref, $branch, $manifest, $token),
         ];
     }
 
@@ -109,7 +136,7 @@ class GitHubRegistry
      * resolved ref first, then the default branch (so an icon added after the last
      * release is still picked up). Best effort — null if none found.
      */
-    private static function fetchIcon(string $repo, string $ref, string $branch, array $manifest): ?string
+    private static function fetchIcon(string $repo, string $ref, string $branch, array $manifest, ?string $token = null): ?string
     {
         $path = $manifest['icon'] ?? 'icon.svg';
         if (! is_string($path) || trim($path) === '') {
@@ -122,11 +149,11 @@ class GitHubRegistry
 
         foreach (array_unique([$ref, $branch]) as $at) {
             try {
-                $res = Http::timeout(15)->get("https://raw.githubusercontent.com/{$repo}/{$at}/{$path}");
+                $res = self::rawContents($repo, $path, $at, $token);
             } catch (\Throwable) {
                 continue;
             }
-            if ($res->successful()) {
+            if ($res) {
                 $svg = trim($res->body());
                 if (str_contains($svg, '<svg')) {
                     return $svg;
@@ -142,6 +169,42 @@ class GitHubRegistry
         $t = $m['type'] ?? 'extension';
 
         return in_array($t, ['extension', 'theme'], true) ? $t : 'extension';
+    }
+
+    /**
+     * Buyers can't fetch a PRIVATE repo themselves, so pull the archive with the
+     * seller's token and store it as the product's gated download. The buyer then
+     * installs from the store (licenses.download / catalog.download), never the
+     * repo. Sets $product->download_path (caller saves). Returns true on success.
+     */
+    public static function cacheArchive(Product $product, string $downloadUrl, ?string $token = null): bool
+    {
+        try {
+            $res = self::http($token)->timeout(180)->get($downloadUrl);
+        } catch (\Throwable) {
+            return false;
+        }
+        if (! $res->successful() || ! str_starts_with($res->body(), 'PK')) {
+            return false;
+        }
+
+        $rel = 'ext-cache/'.$product->slug.'-'.($product->ref ?: 'latest').'.zip';
+        $abs = storage_path('app/'.$rel);
+        \Illuminate\Support\Facades\File::ensureDirectoryExists(dirname($abs));
+        file_put_contents($abs, $res->body());
+        $product->download_path = $rel;
+
+        return true;
+    }
+
+    /** The seller's connected GitHub token for a product (null if not connected). */
+    private static function ownerToken(Product $product): ?string
+    {
+        $token = $product->owner_id
+            ? (string) (\App\Models\User::find($product->owner_id)?->github_token ?? '')
+            : '';
+
+        return $token !== '' ? $token : null;
     }
 
     /**
@@ -183,6 +246,10 @@ class GitHubRegistry
             // approve them directly rather than leaving them in submission review.
             $product->status = 'approved';
         }
+        // Private repos can't be fetched by buyers — cache the archive store-side.
+        if (! empty($r['private'])) {
+            self::cacheArchive($product, $r['download_url']);
+        }
         $product->save();
 
         try {
@@ -206,7 +273,8 @@ class GitHubRegistry
             return false;
         }
 
-        $r = self::resolve($product->repo, $product->pinned_version);
+        $token = self::ownerToken($product);
+        $r = self::resolve($product->repo, $product->pinned_version, $token);
         $m = $r['manifest'];
 
         $before = $product->version.'|'.$product->download_url;
@@ -224,6 +292,10 @@ class GitHubRegistry
             $product->icon = $r['icon_svg'];
         }
         $changed = $before !== ($r['version'].'|'.$r['download_url']);
+        // Refresh the store-side cached archive for private repos on every change.
+        if ($changed && ! empty($r['private'])) {
+            self::cacheArchive($product, $r['download_url'], $token);
+        }
         $product->save();
 
         if ($changed) {
