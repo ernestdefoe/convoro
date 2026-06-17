@@ -133,6 +133,28 @@ class User extends Authenticatable
         return filled($this->github_token);
     }
 
+    /**
+     * Whether mail can actually be delivered to this account. Synthetic / system
+     * accounts use reserved, non-routable placeholder domains — the AI assistant
+     * (assistant@convoro.local) and federated actors (…@federated.invalid) — which
+     * have no MX and only bounce. Skip all outbound mail to those.
+     */
+    public function isMailable(): bool
+    {
+        $email = (string) $this->email;
+        if (! filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return false;
+        }
+        $domain = strtolower((string) substr(strrchr($email, '@'), 1));
+        if ($domain === '' || $domain === 'localhost') {
+            return false;
+        }
+        // RFC 2606 / 6762 reserved, non-routable TLDs used for placeholders.
+        $tld = (string) strrchr($domain, '.');
+
+        return ! in_array($tld, ['.local', '.invalid', '.localhost', '.internal', '.example', '.test'], true);
+    }
+
     /** Notification types a member can tune per channel. */
     public const NOTIFY_TYPES = ['reply', 'mention', 'message', 'reaction', 'wall', 'badge', 'event'];
 

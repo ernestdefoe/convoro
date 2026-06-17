@@ -38,6 +38,9 @@ class SendDigests extends Command
         $withContent = 0;
 
         foreach ($users as $user) {
+            if (! $user->isMailable()) {
+                continue; // skip synthetic accounts (assistant/federated) — no MX
+            }
             $since = $user->last_digest_at ?? $fallback;
 
             $topics = Topic::with(['user', 'firstPost'])

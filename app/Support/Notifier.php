@@ -58,7 +58,7 @@ class Notifier
         // per-type preference + a real address.
         if ($user->wantsNotification($type, 'email')
             && Settings::get('mail.configured')
-            && filter_var($user->email, FILTER_VALIDATE_EMAIL)) {
+            && $user->isMailable()) {
             // For topic replies/mentions, let the member just reply to the email.
             $replyTo = null;
             if (EmailReply::enabled() && in_array($type, ['reply', 'mention'], true) && ! empty($data['post_id'])) {
