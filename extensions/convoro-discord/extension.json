@@ -1,0 +1,19 @@
+{
+  "id": "convoro-discord",
+  "name": "Discord",
+  "version": "1.0.0",
+  "description": "Connect your community to Discord. Members sign in with Discord, their roles sync both ways (Discord roles ⇄ Convoro groups), and new topics announce to Discord channels through per-category webhooks — so you choose exactly which categories post. Dependency-free (Laravel HTTP client only). Configure your Discord application, bot, role map and channel webhooks from the admin settings page.",
+  "author": "Convoro",
+  "convoro": ">=1.0.0",
+  "namespace": "Convoro\\Ext\\Discord\\",
+  "provider": "Convoro\\Ext\\Discord\\Extension",
+  "migrations": "migrations",
+  "admin_url": "/admin/ext/discord",
+  "assets": {
+    "forum": "assets/forum.js"
+  },
+  "icon": "icon.svg",
+  "cover": "cover.svg",
+  "premium": false,
+  "price": 0
+}
