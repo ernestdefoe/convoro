@@ -207,6 +207,12 @@ class GitHubRegistry
         return $token !== '' ? $token : null;
     }
 
+    /** Effective token for reading a product's repo: the seller's, else the global. */
+    public static function tokenFor(Product $product): ?string
+    {
+        return self::ownerToken($product) ?: (self::token() ?: null);
+    }
+
     /**
      * Link (create or re-link) a Product from a GitHub repo. Operator-initiated:
      * sets the pin explicitly (null clears it). Price/published are only set on

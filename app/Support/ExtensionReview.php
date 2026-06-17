@@ -104,20 +104,25 @@ class ExtensionReview
         }
 
         $tmpZip = null;
-        if ($product->source === 'github' && $product->download_url) {
+        $cached = $product->download_path ? storage_path('app/'.ltrim($product->download_path, '/')) : null;
+        if ($cached && is_file($cached)) {
+            // Prefer the store-cached archive (e.g. a PRIVATE repo we already
+            // pulled with the seller's token) — no auth or refetch needed.
+            $zipPath = $cached;
+        } elseif ($product->source === 'github' && $product->download_url) {
             $tmpZip = tempnam(sys_get_temp_dir(), 'cvr_zip_');
-            $res = Http::timeout(60)->get($product->download_url);
+            // Authenticate github.com fetches so PRIVATE repos resolve.
+            $req = Http::timeout(60);
+            if (str_contains($product->download_url, 'github.com') && ($token = GitHubRegistry::tokenFor($product))) {
+                $req = $req->withToken($token)->withHeaders(['User-Agent' => 'Convoro-Registry']);
+            }
+            $res = $req->get($product->download_url);
             if (! $res->successful()) {
                 @unlink($tmpZip);
                 throw new \RuntimeException('Could not download the repository archive.');
             }
             file_put_contents($tmpZip, $res->body());
             $zipPath = $tmpZip;
-        } elseif ($product->download_path) {
-            $zipPath = storage_path('app/'.ltrim($product->download_path, '/'));
-            if (! is_file($zipPath)) {
-                throw new \RuntimeException('The uploaded package file is missing.');
-            }
         } else {
             throw new \RuntimeException('No source archive available to review.');
         }

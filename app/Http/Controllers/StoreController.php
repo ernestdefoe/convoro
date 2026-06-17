@@ -288,7 +288,7 @@ class StoreController extends Controller
         ]);
     }
 
-    public function checkout(Request $request, Product $product): RedirectResponse
+    public function checkout(Request $request, Product $product): \Symfony\Component\HttpFoundation\Response
     {
         abort_unless($product->published, 404);
         abort_if($product->isFree(), 422);
@@ -303,7 +303,10 @@ class StoreController extends Controller
                 $email,
             );
 
-            return redirect()->away($session['url']);
+            // The buy button posts via Inertia (XHR). A plain redirect to Stripe
+            // would be followed by axios and fail CORS — Inertia::location sends a
+            // 409 + X-Inertia-Location so the client does a full-page visit.
+            return Inertia::location($session['url']);
         } catch (\Throwable $e) {
             return back()->with('storeError', $e->getMessage());
         }
