@@ -21,7 +21,7 @@ class StoreController extends Controller
     public function index(): Response
     {
         return Inertia::render('Store/Index', [
-            'products' => Product::where('published', true)->orderByDesc('featured')->orderBy('name')->get()
+            'products' => Product::where('published', true)->where('listed', true)->orderByDesc('featured')->orderBy('name')->get()
                 ->map(fn (Product $p) => MarketingController::card($p) + ['description' => $p->tagline]),
             'seo' => Seo::make(['title' => __('Store — premium extensions & themes'), 'description' => __('Premium Convoro extensions and themes. Buy once, get a license key and download.')]),
         ]);
@@ -403,17 +403,38 @@ class StoreController extends Controller
         }
 
         $event = json_decode($payload, true);
-        if (($event['type'] ?? null) === 'checkout.session.completed') {
-            $session = $event['data']['object'] ?? [];
-            $productId = $session['metadata']['product_id'] ?? null;
-            $product = $productId ? Product::find($productId) : null;
+        $type = $event['type'] ?? null;
+        $obj = $event['data']['object'] ?? [];
 
+        if ($type === 'checkout.session.completed') {
+            $product = ($pid = $obj['metadata']['product_id'] ?? null) ? Product::find($pid) : null;
             if ($product) {
                 License::issue($product, [
-                    'email' => $session['customer_details']['email'] ?? ($session['customer_email'] ?? null),
-                    'stripe_session_id' => $session['id'] ?? null,
-                    'stripe_payment_intent' => $session['payment_intent'] ?? null,
+                    'email' => $obj['customer_details']['email'] ?? ($obj['customer_email'] ?? null),
+                    'stripe_session_id' => $obj['id'] ?? null,
+                    'stripe_payment_intent' => $obj['payment_intent'] ?? null,
+                    // Subscriptions: remember the sub id so later invoice/cancel
+                    // events can keep this license in sync.
+                    'stripe_subscription_id' => $obj['subscription'] ?? null,
                 ]);
+            }
+        } elseif (in_array($type, ['invoice.paid', 'invoice.payment_succeeded'], true)) {
+            // Renewal succeeded → (re)activate the subscription's license.
+            if ($sub = $obj['subscription'] ?? null) {
+                $end = $obj['lines']['data'][0]['period']['end'] ?? ($obj['period_end'] ?? null);
+                License::where('stripe_subscription_id', $sub)->update(array_filter([
+                    'status' => 'active',
+                    'current_period_end' => $end ? now()->setTimestamp($end) : null,
+                ]));
+            }
+        } elseif ($type === 'invoice.payment_failed') {
+            if ($sub = $obj['subscription'] ?? null) {
+                License::where('stripe_subscription_id', $sub)->update(['status' => 'past_due']);
+            }
+        } elseif ($type === 'customer.subscription.deleted') {
+            // The subscription object's own id is the subscription id.
+            if ($sub = $obj['id'] ?? null) {
+                License::where('stripe_subscription_id', $sub)->update(['status' => 'canceled']);
             }
         }
 

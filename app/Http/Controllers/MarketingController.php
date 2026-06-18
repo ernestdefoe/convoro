@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\License;
 use App\Models\Product;
 use App\Support\Plans;
 use App\Support\Seo;
+use App\Support\StripeService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -54,6 +56,58 @@ class MarketingController extends Controller
                 'type' => 'website',
             ]),
         ]);
+    }
+
+    /** The ConvoroCP subscription product (created via tinker on prod). */
+    private function convorocpProduct(): ?Product
+    {
+        return Product::where('package', 'convorocp')->first();
+    }
+
+    /** Start a $10/mo ConvoroCP subscription checkout (public — no forum login needed). */
+    public function subscribe(Request $request): \Symfony\Component\HttpFoundation\Response
+    {
+        $product = $this->convorocpProduct();
+        abort_unless($product && $product->published, 404);
+
+        try {
+            $session = StripeService::createCheckout(
+                $product,
+                route('convorocp.welcome').'?session_id={CHECKOUT_SESSION_ID}',
+                route('convorocp').'#pricing',
+                $request->user()?->email,
+            );
+
+            return Inertia::location($session['url']);
+        } catch (\Throwable $e) {
+            return back()->with('storeError', $e->getMessage());
+        }
+    }
+
+    /** Post-checkout: show the generated license key + how to activate it in ConvoroCP. */
+    public function licenseWelcome(Request $request): Response
+    {
+        $license = ($sid = $request->query('session_id'))
+            ? License::with('product')->where('stripe_session_id', $sid)->first()
+            : null;
+
+        return Inertia::render('Marketing/ConvoroCPWelcome', [
+            // The webhook issues the license asynchronously; the page polls if it's
+            // not there yet.
+            'licenseKey' => $license?->key,
+            'sessionId' => $request->query('session_id'),
+            'seo' => Seo::make(['title' => __('Welcome to ConvoroCP'), 'type' => 'website']),
+        ]);
+    }
+
+    /** JSON poll for the license key once the Stripe webhook has issued it. */
+    public function licenseStatus(Request $request)
+    {
+        $license = ($sid = $request->query('session_id'))
+            ? License::where('stripe_session_id', $sid)->first()
+            : null;
+
+        return response()->json(['key' => $license?->key]);
     }
 
     public static function card(Product $p): array

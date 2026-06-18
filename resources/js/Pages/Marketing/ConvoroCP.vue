@@ -1,7 +1,12 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import MarketingLayout from '@/Layouts/MarketingLayout.vue';
 import { t } from '@/lib/i18n';
+
+const sub = useForm({});
+function subscribe() {
+  sub.post('/convorocp/subscribe');
+}
 
 const features = [
   { icon: '🌐', title: t('Sites & SSL'), body: t('Create a site in one click with nginx + PHP-FPM wired up, then issue free Let’s Encrypt certificates automatically.') },
@@ -23,6 +28,32 @@ const features = [
       <span class="text-sm font-bold uppercase tracking-wide text-primary">{{ t('ConvoroCP') }}</span>
       <h1 class="mt-2 text-4xl font-black tracking-tight sm:text-5xl">{{ t('A control panel that hosts everything — including Convoro') }}</h1>
       <p class="mx-auto mt-6 max-w-2xl text-xl text-ink-2">{{ t('ConvoroCP is our self-hosted web hosting control panel — a modern, beautiful alternative to cPanel and Plesk. It provisions and manages sites, databases, email, scheduled jobs, daemons, and Docker on your own server, all from one dashboard in the Convoro look.') }}</p>
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a href="#pricing" class="rounded-xl bg-primary px-6 py-3 font-bold text-white hover:bg-primary-600">{{ t('Start 30-day free trial') }}</a>
+        <a href="#install" class="rounded-xl border border-line bg-surface px-6 py-3 font-bold text-ink-2 hover:bg-surface-2">{{ t('Install docs') }}</a>
+      </div>
+    </section>
+
+    <!-- Pricing -->
+    <section id="pricing" class="mx-auto max-w-md px-6 py-16">
+      <div class="rounded-3xl border border-line bg-surface p-8 text-center shadow-sm">
+        <h2 class="text-2xl font-black tracking-tight">{{ t('Simple pricing') }}</h2>
+        <div class="mt-5 flex items-end justify-center gap-1">
+          <span class="text-5xl font-black tracking-tight">$10</span>
+          <span class="mb-1 text-ink-2">{{ t('/ month') }}</span>
+        </div>
+        <p class="mt-2 text-sm text-ink-2">{{ t('Per server. 30-day free trial — no card needed to start.') }}</p>
+        <ul class="mt-6 space-y-2 text-left text-ink-2">
+          <li class="flex gap-2"><span class="text-primary">✓</span>{{ t('Every feature, unlimited sites & databases') }}</li>
+          <li class="flex gap-2"><span class="text-primary">✓</span>{{ t('Cancel anytime; the panel keeps your services running') }}</li>
+          <li class="flex gap-2"><span class="text-primary">✓</span>{{ t('A license key you activate right in the panel') }}</li>
+        </ul>
+        <button type="button" @click="subscribe" :disabled="sub.processing"
+          class="mt-7 w-full rounded-xl bg-primary px-6 py-3 font-bold text-white hover:bg-primary-600 disabled:opacity-60">
+          {{ sub.processing ? t('Redirecting to checkout…') : t('Subscribe — $10/mo') }}
+        </button>
+        <p class="mt-3 text-xs text-ink-muted">{{ t('Install free and run a 30-day trial first — subscribe before it ends to keep going.') }}</p>
+      </div>
     </section>
 
     <!-- How it works -->

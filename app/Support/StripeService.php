@@ -120,8 +120,10 @@ class StripeService
             throw new \RuntimeException('Payments are not configured yet.');
         }
 
+        $recurring = (bool) ($product->recurring ?? false);
+
         $params = [
-            'mode' => 'payment',
+            'mode' => $recurring ? 'subscription' : 'payment',
             'success_url' => $successUrl,
             'cancel_url' => $cancelUrl,
             'line_items[0][quantity]' => 1,
@@ -129,8 +131,17 @@ class StripeService
             'line_items[0][price_data][unit_amount]' => $product->price_cents,
             'line_items[0][price_data][product_data][name]' => $product->name,
             'metadata[product_id]' => $product->id,
-            'payment_intent_data[metadata][product_id]' => $product->id,
         ];
+
+        if ($recurring) {
+            // Monthly subscription. Metadata also rides on the subscription so the
+            // later invoice/subscription webhooks can map back to the product.
+            $params['line_items[0][price_data][recurring][interval]'] = 'month';
+            $params['subscription_data[metadata][product_id]'] = $product->id;
+        } else {
+            // One-time purchase: tag the payment intent for the webhook.
+            $params['payment_intent_data[metadata][product_id]'] = $product->id;
+        }
         if ($email) {
             $params['customer_email'] = $email;
         }

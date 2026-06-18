@@ -94,6 +94,9 @@ Route::domain(config('convoro.marketing_domain'))->group(function () use ($convo
     Route::get('/', [App\Http\Controllers\MarketingController::class, 'home'])->name('marketing.home');
     Route::get('/compare', [App\Http\Controllers\MarketingController::class, 'compare'])->name('compare');
     Route::get('/convorocp', [App\Http\Controllers\MarketingController::class, 'convorocp'])->name('convorocp');
+    Route::post('/convorocp/subscribe', [App\Http\Controllers\MarketingController::class, 'subscribe'])->name('convorocp.subscribe');
+    Route::get('/convorocp/welcome', [App\Http\Controllers\MarketingController::class, 'licenseWelcome'])->name('convorocp.welcome');
+    Route::get('/convorocp/license-status', [App\Http\Controllers\MarketingController::class, 'licenseStatus'])->name('convorocp.license-status');
     // Trust pages — signals of an actively-maintained product.
     Route::get('/changelog', [App\Http\Controllers\TrustController::class, 'changelog'])->name('changelog');
     Route::get('/roadmap', [App\Http\Controllers\TrustController::class, 'roadmap'])->name('roadmap');
