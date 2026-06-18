@@ -45,6 +45,17 @@ class MarketingController extends Controller
         ]);
     }
 
+    public function convorocp(): Response
+    {
+        return Inertia::render('Marketing/ConvoroCP', [
+            'seo' => Seo::make([
+                'title' => __('ConvoroCP — the hosting control panel that runs Convoro'),
+                'description' => __('ConvoroCP is a self-hosted web hosting control panel — a modern alternative to cPanel and Plesk. Provision sites, databases, PHP, SSL, email, cron jobs, daemons, Docker and backups from one dashboard, all in the Convoro look.'),
+                'type' => 'website',
+            ]),
+        ]);
+    }
+
     public static function card(Product $p): array
     {
         return [

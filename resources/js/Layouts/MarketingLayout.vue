@@ -22,6 +22,7 @@ const auth = useAuthModal();
           <Link href="/" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Home</Link>
           <Link href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Extensions</Link>
           <Link href="/compare" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Compare</Link>
+          <Link href="/convorocp" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">ConvoroCP</Link>
           <a href="/docs" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Docs</a>
           <a :href="forumUrl" class="rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">Community</a>
         </nav>
@@ -47,6 +48,7 @@ const auth = useAuthModal();
           <Link href="/" class="flex items-center"><ConvoroLogo :size="24" /></Link>
           <Link href="/extensions" class="font-semibold text-ink-2 hover:text-ink">Extensions</Link>
           <Link href="/compare" class="font-semibold text-ink-2 hover:text-ink">Compare</Link>
+          <Link href="/convorocp" class="font-semibold text-ink-2 hover:text-ink">ConvoroCP</Link>
           <a href="/docs" class="font-semibold text-ink-2 hover:text-ink">Docs</a>
           <Link href="/changelog" class="font-semibold text-ink-2 hover:text-ink">Changelog</Link>
           <Link href="/roadmap" class="font-semibold text-ink-2 hover:text-ink">Roadmap</Link>

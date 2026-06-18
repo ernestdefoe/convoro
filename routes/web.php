@@ -93,6 +93,7 @@ $convoroStoreRoutes = function () {
 Route::domain(config('convoro.marketing_domain'))->group(function () use ($convoroStoreRoutes) {
     Route::get('/', [App\Http\Controllers\MarketingController::class, 'home'])->name('marketing.home');
     Route::get('/compare', [App\Http\Controllers\MarketingController::class, 'compare'])->name('compare');
+    Route::get('/convorocp', [App\Http\Controllers\MarketingController::class, 'convorocp'])->name('convorocp');
     // Trust pages — signals of an actively-maintained product.
     Route::get('/changelog', [App\Http\Controllers\TrustController::class, 'changelog'])->name('changelog');
     Route::get('/roadmap', [App\Http\Controllers\TrustController::class, 'roadmap'])->name('roadmap');

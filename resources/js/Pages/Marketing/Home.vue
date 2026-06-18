@@ -144,6 +144,39 @@ const stack = [
       </div>
     </section>
 
+    <!-- ConvoroCP — the control panel -->
+    <section class="mx-auto max-w-6xl px-6 py-20">
+      <div class="grid items-center gap-10 lg:grid-cols-2">
+        <div>
+          <span class="text-sm font-bold uppercase tracking-wide text-primary">{{ t('ConvoroCP') }}</span>
+          <h2 class="mt-2 text-3xl font-black tracking-tight sm:text-4xl">{{ t('Your own hosting control panel') }}</h2>
+          <p class="mt-4 text-lg text-ink-2">{{ t('ConvoroCP is our self-hosted control panel — a modern alternative to cPanel and Plesk, built in the Convoro look. Provision sites, databases, PHP versions, SSL, email, cron jobs, daemons, Docker containers and backups from one clean dashboard. It even runs Convoro itself.') }}</p>
+          <ul class="mt-6 space-y-2 text-ink-2">
+            <li class="flex gap-2"><span class="text-primary">✓</span>{{ t('One-click sites, free SSL, and per-site PHP settings') }}</li>
+            <li class="flex gap-2"><span class="text-primary">✓</span>{{ t('Cron jobs, background daemons, and Docker — managed for you') }}</li>
+            <li class="flex gap-2"><span class="text-primary">✓</span>{{ t('Webmail, databases, backups, and a built-in terminal') }}</li>
+          </ul>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <Link href="/convorocp" class="rounded-xl bg-primary px-5 py-3 font-bold text-white hover:bg-primary-600">{{ t('Explore ConvoroCP') }}</Link>
+          </div>
+        </div>
+        <div class="rounded-2xl border border-line bg-surface p-2 shadow-sm">
+          <div class="rounded-xl bg-slate-900 p-5 text-white">
+            <div class="flex items-center gap-2 text-xs text-slate-400"><span class="h-2.5 w-2.5 rounded-full bg-red-400"></span><span class="h-2.5 w-2.5 rounded-full bg-amber-400"></span><span class="h-2.5 w-2.5 rounded-full bg-emerald-400"></span><span class="ml-2">ConvoroCP · {{ t('hosting overview') }}</span></div>
+            <div class="mt-4 grid grid-cols-3 gap-3">
+              <div class="rounded-lg bg-white/5 p-3"><div class="text-xs text-slate-400">{{ t('Sites') }}</div><div class="text-xl font-bold">12</div></div>
+              <div class="rounded-lg bg-white/5 p-3"><div class="text-xs text-slate-400">{{ t('Databases') }}</div><div class="text-xl font-bold">9</div></div>
+              <div class="rounded-lg bg-white/5 p-3"><div class="text-xs text-slate-400">{{ t('Daemons') }}</div><div class="text-xl font-bold">4</div></div>
+            </div>
+            <div class="mt-3 space-y-2">
+              <div class="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-sm"><span class="h-2 w-2 rounded-full bg-emerald-400"></span>nginx<span class="ml-auto text-slate-400">{{ t('Running') }}</span></div>
+              <div class="flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2 text-sm"><span class="h-2 w-2 rounded-full bg-emerald-400"></span>php-fpm · horizon · reverb<span class="ml-auto text-slate-400">{{ t('Running') }}</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Built for the AI era -->
     <section class="mx-auto max-w-6xl px-6 py-20">
       <div class="overflow-hidden rounded-3xl border border-primary/20 bg-primary/[0.04] p-8 sm:p-12">
