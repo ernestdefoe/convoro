@@ -58,6 +58,56 @@ const features = [
       </div>
     </section>
 
+    <!-- Install -->
+    <section id="install" class="mx-auto max-w-4xl px-6 py-16">
+      <h2 class="text-center text-3xl font-black tracking-tight">{{ t('Install ConvoroCP') }}</h2>
+      <p class="mx-auto mt-3 max-w-2xl text-center text-ink-2">{{ t('ConvoroCP installs on a fresh Linux server that it fully manages — it takes over nginx, PHP, SSL, mail and the firewall, so give it a box of its own, not one already running other sites.') }}</p>
+
+      <!-- Requirements -->
+      <div class="mt-10">
+        <h3 class="text-sm font-bold uppercase tracking-wide text-primary">{{ t('Requirements') }}</h3>
+        <ul class="mt-3 grid gap-2 text-ink-2 sm:grid-cols-2">
+          <li class="flex gap-2"><span class="text-primary">✓</span>{{ t('A dedicated Linux server (Ubuntu 24.04+ recommended) with root access') }}</li>
+          <li class="flex gap-2"><span class="text-primary">✓</span>{{ t('PHP 8.3+ (8.5 recommended) and Composer') }}</li>
+          <li class="flex gap-2"><span class="text-primary">✓</span>{{ t('Node.js 20+ (to build the dashboard)') }}</li>
+          <li class="flex gap-2"><span class="text-primary">✓</span>{{ t('A domain pointed at the server, for the panel + free SSL') }}</li>
+        </ul>
+      </div>
+
+      <!-- Quickstart -->
+      <div class="mt-10">
+        <h3 class="text-sm font-bold uppercase tracking-wide text-primary">{{ t('Quickstart') }}</h3>
+        <p class="mt-2 text-sm text-ink-2">{{ t('Run these as root on a fresh server:') }}</p>
+        <pre class="mt-4 overflow-x-auto rounded-2xl border border-line bg-slate-900 p-5 text-sm leading-relaxed text-slate-100"><code># 1 · Get the code
+git clone https://github.com/ernestdefoe/convorocp.git /var/www/convorocp
+cd /var/www/convorocp
+
+# 2 · Install dependencies + build the dashboard
+composer install --no-dev --optimize-autoloader
+npm install &amp;&amp; npm run build
+
+# 3 · Configure
+cp .env.example .env
+php artisan key:generate
+#   edit .env — set APP_URL, your database, and (on the real box)
+#   CONVOROCP_AGENT_DRY_RUN=false so the agent applies changes for real
+
+# 4 · Create the schema
+php artisan migrate
+
+# 5 · Run the privileged agent as root (install as a systemd service)
+php artisan agent:run
+
+# 6 · Serve the panel (php-fpm + nginx) over your domain with SSL
+#   then open https://your-domain and sign in as the operator</code></pre>
+        <p class="mt-4 text-sm text-ink-2">{{ t('The dashboard runs as an unprivileged user; only the small, allowlisted agent runs as root. In production, run both the agent and the panel as systemd services behind nginx.') }}</p>
+      </div>
+
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a href="https://github.com/ernestdefoe/convorocp" target="_blank" rel="noopener" class="rounded-xl bg-primary px-5 py-3 font-bold text-white hover:bg-primary-600">{{ t('View on GitHub') }}</a>
+      </div>
+    </section>
+
     <!-- CTA -->
     <section class="mx-auto max-w-4xl px-6 py-16 text-center">
       <h2 class="text-3xl font-black tracking-tight">{{ t('Bring your own server') }}</h2>
