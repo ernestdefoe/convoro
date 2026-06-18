@@ -46,6 +46,14 @@ if ('serviceWorker' in navigator) {
     const hadController = !!navigator.serviceWorker.controller;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
         if (refreshing || !hadController) return;
+        // Reload AT MOST once per tab session. Safari can fire `controllerchange`
+        // repeatedly (re-activating the same worker), which would otherwise turn
+        // this rescue reload into an infinite refresh loop. The session flag caps
+        // it at a single reload no matter how many times the event fires.
+        try {
+            if (sessionStorage.getItem('sw-refreshed') === '1') return;
+            sessionStorage.setItem('sw-refreshed', '1');
+        } catch (e) { /* private mode: fall through, the `refreshing` latch still applies */ }
         refreshing = true;
         window.location.reload();
     });
