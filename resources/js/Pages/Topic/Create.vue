@@ -327,7 +327,7 @@ function submit() {
 
         <div>
           <label class="mb-1.5 block text-sm font-semibold text-ink-2">{{ tr('Post') }}</label>
-          <Editor ref="editor" :content="draftBody" :placeholder="tr('Write your post… (rich text, drag images in)')" @typing="scheduleAutosave" />
+          <Editor ref="editor" :content="draftBody" :placeholder="tr('Write your post… (rich text, drag images in)')" :category-id="form.category_id" @typing="scheduleAutosave" />
           <p v-if="form.errors.body_html" class="mt-1 text-sm text-red-500">{{ form.errors.body_html }}</p>
         </div>
 

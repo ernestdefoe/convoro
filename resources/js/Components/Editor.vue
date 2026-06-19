@@ -15,7 +15,7 @@ import { lowlight, CODE_LANGUAGES } from '@/lib/highlight';
 import Slot from '@/Components/ext/Slot.vue';
 import { t } from '@/lib/i18n';
 
-const props = withDefaults(defineProps<{ placeholder?: string; content?: string }>(), { placeholder: 'Write a reply…', content: '' });
+const props = withDefaults(defineProps<{ placeholder?: string; content?: string; topicId?: number | null; categoryId?: number | null }>(), { placeholder: 'Write a reply…', content: '', topicId: null, categoryId: null });
 const emit = defineEmits<{ typing: [] }>();
 
 const uploading = ref(false);
@@ -269,7 +269,7 @@ function onFile(e: Event) {
       <button type="button" class="tb" :title="t('Undo')" :aria-label="t('Undo')" :data-tip="t('Undo (Ctrl+Z)')" @click="editor.chain().focus().undo().run()">↶</button>
       <button type="button" class="tb" :title="t('Redo')" :aria-label="t('Redo')" :data-tip="t('Redo (Ctrl+Y)')" @click="editor.chain().focus().redo().run()">↷</button>
       <!-- Extension point: composer-toolbar add-ons (e.g. the emoji picker) -->
-      <Slot name="composer:toolbar" :ctx="{ insertText }" />
+      <Slot name="composer:toolbar" :ctx="{ insertText, topicId: props.topicId, categoryId: props.categoryId }" />
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFile" />
     </div>
     <EditorContent :editor="editor" class="min-h-[110px] px-4 py-3 text-ink" />

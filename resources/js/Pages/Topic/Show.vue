@@ -691,7 +691,7 @@ function submitReply() {
             {{ tr('Draft saved') }}
           </span>
         </div>
-        <Editor ref="editor" :placeholder="tr('Share your thoughts… (rich text — no markdown needed)')" @typing="onTyping" />
+        <Editor ref="editor" :placeholder="tr('Share your thoughts… (rich text — no markdown needed)')" :topic-id="topic.id" :category-id="topic.categoryId ?? null" @typing="onTyping" />
         <div class="mt-3 flex items-center">
           <span class="text-xs text-ink-muted">{{ tr('Rich text · drag, drop or paste images — auto-converted to WebP') }}</span>
           <button @click="submitReply" :disabled="posting"
