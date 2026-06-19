@@ -10,10 +10,14 @@ const props = defineProps<{ target?: HTMLElement | null; count?: number }>();
 const progress = ref(0);
 const dragging = ref(false);
 const track = ref<HTMLElement | null>(null);
+const root = ref<HTMLElement | null>(null);
 
 // Only worth showing once there's a meaningful amount to scroll.
 const SHOW_THRESHOLD = 700;
 const visible = ref(false);
+// Pixels to nudge the (vertically-centered) scrubber up so it never overlaps
+// the page footer — stays fully visible, just shifts above it near the bottom.
+const liftPx = ref(0);
 
 const total = computed(() => Math.max(0, props.count ?? 0));
 // One dot per reply, evenly spaced top→bottom (skip when there are too many).
@@ -36,19 +40,30 @@ function maxScroll() {
 function curScroll() {
   return props.target ? props.target.scrollTop : window.scrollY;
 }
-// Don't let the centered scrubber overlap the page footer (e.g. when the footer
-// extension adds a tall footer). Hide it once the footer scrolls into view.
+// Keep the (vertically-centered) scrubber from overlapping the page footer:
+// when the footer scrolls into view, shift the whole scrubber up so its bottom
+// edge stays just above the footer. It stays fully visible the whole way down.
 let footerEl: HTMLElement | null = null;
-function footerInView() {
+function footerLift() {
   if (!footerEl) footerEl = document.querySelector('footer');
-  if (!footerEl) return false;
-  const r = footerEl.getBoundingClientRect();
-  return r.height > 0 && r.top < window.innerHeight + 8;
+  const el = root.value;
+  if (!footerEl || !el) return 0;
+  const fr = footerEl.getBoundingClientRect();
+  if (fr.height <= 0) return 0;
+  const vh = window.innerHeight;
+  const h = el.offsetHeight;
+  const centeredBottom = vh / 2 + h / 2;     // bottom edge with translateY(-50%)
+  const limit = fr.top - 16;                  // 16px gap above the footer
+  if (centeredBottom <= limit) return 0;
+  // Don't push it off the top of the viewport either.
+  const maxLift = vh / 2 - h / 2 - 8;
+  return Math.max(0, Math.min(centeredBottom - limit, maxLift));
 }
 function update() {
   const max = maxScroll();
-  visible.value = max >= SHOW_THRESHOLD && !footerInView();
+  visible.value = max >= SHOW_THRESHOLD;
   progress.value = Math.min(1, Math.max(0, curScroll() / max));
+  liftPx.value = footerLift();
 }
 function seek(clientY: number) {
   const el = track.value;
@@ -89,8 +104,10 @@ watch(() => props.target, () => { unbind(); bind(); });
        24rem half-width, viewport-centered) so it sits beside the posts rather
        than out by the browser scrollbar. -->
   <div
+    ref="root"
     v-show="visible"
-    class="group fixed left-[calc(50%+24.5rem)] top-1/2 z-30 hidden -translate-y-1/2 select-none flex-col items-center rounded-[20px] bg-surface-2/80 px-2.5 py-4 shadow-sm ring-1 ring-line backdrop-blur-sm xl:flex"
+    :style="{ transform: `translateY(calc(-50% - ${liftPx}px))` }"
+    class="group fixed left-[calc(50%+24.5rem)] top-1/2 z-30 hidden select-none flex-col items-center rounded-[20px] bg-surface-2/80 px-2.5 py-4 shadow-sm ring-1 ring-line backdrop-blur-sm transition-transform duration-150 xl:flex"
   >
     <!-- Top label: reply count -->
     <div v-if="total" class="mb-2.5 text-center text-[11px] font-semibold leading-tight text-ink-muted">
