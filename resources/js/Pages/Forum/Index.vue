@@ -129,6 +129,8 @@ function go(params: Record<string, string | null>) {
             </button>
           </nav>
         </div>
+        <!-- Ask Convoro lives under the categories list, on the left. -->
+        <AskBar v-if="askEnabled" :compact="true" class="mt-3.5" />
       </aside>
 
       <!-- Main -->
@@ -138,7 +140,6 @@ function go(params: Record<string, string | null>) {
           <input v-model="search" type="search" class="w-full border-0 bg-transparent p-0 text-sm text-ink placeholder:text-ink-muted focus:ring-0" :placeholder="tr('Search discussions…')" />
           <button v-if="search" type="submit" class="shrink-0 rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-600">{{ tr('Search') }}</button>
         </form>
-        <AskBar v-if="askEnabled" class="mb-5" />
         <div class="mb-4 flex items-center gap-3">
           <h1 class="text-2xl font-extrabold tracking-tight">{{ tr('Community') }}</h1>
           <div class="ml-auto flex rounded-[10px] border border-line bg-surface p-0.5 shadow-sm">
