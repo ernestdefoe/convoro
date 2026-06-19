@@ -36,9 +36,18 @@ function maxScroll() {
 function curScroll() {
   return props.target ? props.target.scrollTop : window.scrollY;
 }
+// Don't let the centered scrubber overlap the page footer (e.g. when the footer
+// extension adds a tall footer). Hide it once the footer scrolls into view.
+let footerEl: HTMLElement | null = null;
+function footerInView() {
+  if (!footerEl) footerEl = document.querySelector('footer');
+  if (!footerEl) return false;
+  const r = footerEl.getBoundingClientRect();
+  return r.height > 0 && r.top < window.innerHeight + 8;
+}
 function update() {
   const max = maxScroll();
-  visible.value = max >= SHOW_THRESHOLD;
+  visible.value = max >= SHOW_THRESHOLD && !footerInView();
   progress.value = Math.min(1, Math.max(0, curScroll() / max));
 }
 function seek(clientY: number) {
