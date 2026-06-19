@@ -10,6 +10,17 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.39.2',
+            'date' => '2026-06-19',
+            'title' => 'Role-play groundwork',
+            'items' => [
+                ['type' => 'new', 'text' => 'New PostIdentity hook lets an extension show a different author identity on a post — the foundation for role-play forums, where members post as characters. Powers the new free Role-Play extension.'],
+                ['type' => 'new', 'text' => 'The composer now tells extensions which topic and category a post is being written in, so add-ons can adapt the toolbar to the context (e.g. show a “post as character” picker only in role-play threads).'],
+                ['type' => 'improved', 'text' => 'Ask {site} now sits in the left sidebar under the categories list, freeing the main column for the discussion list.'],
+                ['type' => 'fixed', 'text' => 'The reading-progress scrubber no longer overlaps the footer at the bottom of a thread — it stays visible and slides up to sit just above it.'],
+            ],
+        ],
+        [
             'tag' => '1.39.1',
             'date' => '2026-06-16',
             'title' => 'Themes in the Marketplace + polish',
