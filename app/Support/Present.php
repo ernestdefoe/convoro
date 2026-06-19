@@ -277,7 +277,7 @@ class Present
             'html' => PostRender::render($p->body_html),
             'detectedLocale' => $p->detected_locale,
             'held' => (bool) ($p->hidden ?? false),
-            'author' => self::avatar($p->user),
+            'author' => PostIdentity::resolve($p, self::avatar($p->user)),
             'isFirst' => $p->is_first,
             'isAi' => (bool) ($p->is_ai ?? false),
             'createdAt' => optional($p->created_at)->diffForHumans(),
