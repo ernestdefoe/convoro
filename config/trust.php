@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.39.3',
+            'date' => '2026-06-19',
+            'title' => 'Role-Play in the Marketplace',
+            'items' => [
+                ['type' => 'new', 'text' => 'The free Role-Play extension is now in the Marketplace — install it on demand to let members create characters and post as them, with role-play topics, a dice roller, character sheets and a character directory.'],
+            ],
+        ],
+        [
             'tag' => '1.39.2',
             'date' => '2026-06-19',
             'title' => 'Role-play groundwork',
