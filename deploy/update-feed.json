@@ -1,11 +1,12 @@
 {
-    "version": "1.40.0",
-    "download": "https://convoro.co/releases/convoro-install-1.40.0.zip",
+    "version": "1.41.0",
+    "download": "https://convoro.co/releases/convoro-install-1.41.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "LIVE badges on avatars",
+    "title": "Staff badges on avatars",
     "date": "2026-06-20",
-    "notes": "Avatars can now show a pulsing LIVE badge wherever they appear. The OnAir extension uses this so members who go live are marked across the whole forum — in topics, on profiles and in member lists.",
+    "notes": "A member's staff badge (Admin, Mod, etc.) now sits on their avatar with its group colour and a white ring, wherever the avatar appears. If they're live, the LIVE badge stacks under it, and the online/offline dot moved to the top-right.",
     "changelog": [
-        {"type": "new", "text": "Avatars can show a LIVE badge everywhere; the OnAir extension marks members who are live-streaming across the forum."}
+        {"type": "new", "text": "Staff badges now appear on avatars everywhere, with the group colour and a white ring."},
+        {"type": "improved", "text": "LIVE badge stacks under the staff badge; the online/offline dot moved to the top-right."}
     ]
 }

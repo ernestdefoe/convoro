@@ -37,12 +37,16 @@ const gradients = [
   'linear-gradient(135deg,#f87171,#dc2626)',
 ];
 const bg = computed(() => gradients[(props.avatar.color - 1) % 6]);
-const showBadge = computed(() => props.badge && !!props.avatar.staff);
 
 const live = computed(() => convoro.isLive(props.avatar.id));
 const hasPresence = computed(() => props.presence != null);
-// Live streamers get the relative-wrapper variant so the LIVE pill can overlay.
-const useWrap = computed(() => hasPresence.value || live.value);
+// Staff badges now show wherever the user is staff (not just when `badge` is set),
+// mirroring the LIVE badge. A live staff member gets the LIVE pill stacked under
+// the staff pill. The `badge` prop is kept for back-compat but no longer gates it.
+const showStaff = computed(() => !!props.avatar.staff);
+// Staff + LIVE render as overlay pills sitting on the avatar's bottom edge (with
+// a white ring), so we need the relative wrapper whenever any overlay applies.
+const hasOverlay = computed(() => hasPresence.value || showStaff.value || live.value);
 const isOnline = computed(() =>
   props.presence === 'online' || (props.presence === 'auto' && !!props.avatar.online),
 );
@@ -55,58 +59,63 @@ const dotSize = computed(() => Math.max(9, Math.round(props.size * 0.26)));
 </script>
 
 <template>
-  <!-- No badge: the wrapper is transparent (display:contents) and the avatar
-       below carries all passed attrs, so it behaves exactly like a bare avatar.
-       Badge: a real centered column stacks the avatar + badge. -->
-  <span :class="showBadge ? 'inline-flex flex-col items-center gap-1' : 'contents'">
-    <!-- Presence/live variant: a relative wrapper holds the glyph + overlays. -->
-    <span v-if="useWrap" v-bind="$attrs" class="relative inline-flex shrink-0">
-      <img
-        v-if="avatar.avatar"
-        :src="avatar.avatar"
-        :alt="avatar.initials"
-        class="block object-cover"
-        :style="glyphStyle"
-      />
-      <span
-        v-else
-        class="grid place-items-center font-bold text-white"
-        :style="{ ...glyphStyle, fontSize: size * 0.38 + 'px', background: bg }"
-      >{{ avatar.initials || '?' }}</span>
-      <span
-        v-if="hasPresence && !live"
-        class="absolute bottom-0 right-0 rounded-full ring-2 ring-surface"
-        :class="isOnline ? 'bg-emerald-500' : 'bg-ink-muted'"
-        :style="{ width: dotSize + 'px', height: dotSize + 'px' }"
-        :title="isOnline ? 'Online' : 'Offline'"
-      ></span>
-      <span
-        v-if="live"
-        class="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-red-600 px-1 py-0.5 text-[8px] font-extrabold uppercase leading-none tracking-wide text-white ring-2 ring-surface"
-        title="Live now"
-      >Live</span>
-    </span>
-
-    <!-- Default variant: unchanged — glyph carries the passed attrs. -->
+  <!-- Overlay variant: a relative wrapper holds the glyph plus a presence dot
+       (top-right) and/or the staff + LIVE pills, which sit on the avatar's bottom
+       edge with a white ring — like badges pinned to the circle. -->
+  <span v-if="hasOverlay" v-bind="$attrs" class="relative inline-flex shrink-0">
     <img
-      v-else-if="avatar.avatar"
-      v-bind="$attrs"
+      v-if="avatar.avatar"
       :src="avatar.avatar"
       :alt="avatar.initials"
-      class="shrink-0 object-cover"
-      :style="{ width: size + 'px', height: size + 'px', borderRadius: 'var(--c-avatar-radius, 9999px)' }"
+      class="block object-cover"
+      :style="glyphStyle"
     />
     <span
       v-else
-      v-bind="$attrs"
-      class="grid shrink-0 place-items-center font-bold text-white"
-      :style="{ width: size + 'px', height: size + 'px', fontSize: size * 0.38 + 'px', background: bg, borderRadius: 'var(--c-avatar-radius, 9999px)' }"
+      class="grid place-items-center font-bold text-white"
+      :style="{ ...glyphStyle, fontSize: size * 0.38 + 'px', background: bg }"
     >{{ avatar.initials || '?' }}</span>
 
+    <!-- Online/offline presence dot — top-right. -->
     <span
-      v-if="showBadge"
-      class="max-w-full truncate rounded-full px-2 py-0.5 text-[9px] font-bold uppercase leading-none tracking-wide text-white shadow-sm"
-      :style="{ background: avatar.staff?.color }"
-    >{{ avatar.staff?.name }}</span>
+      v-if="hasPresence"
+      class="absolute right-0 top-0 rounded-full ring-2 ring-surface"
+      :class="isOnline ? 'bg-emerald-500' : 'bg-ink-muted'"
+      :style="{ width: dotSize + 'px', height: dotSize + 'px' }"
+      :title="isOnline ? 'Online' : 'Offline'"
+    ></span>
+
+    <!-- Staff (top) + LIVE (under) pills, centered on the avatar's bottom edge. -->
+    <span
+      v-if="showStaff || live"
+      class="pointer-events-none absolute bottom-0 left-1/2 flex -translate-x-1/2 translate-y-1/2 flex-col items-center gap-0.5"
+    >
+      <span
+        v-if="showStaff"
+        class="whitespace-nowrap rounded-full px-1.5 py-0.5 text-[8px] font-extrabold uppercase leading-none tracking-wide text-white shadow-sm ring-2 ring-surface"
+        :style="{ background: avatar.staff?.color }"
+      >{{ avatar.staff?.name }}</span>
+      <span
+        v-if="live"
+        class="rounded-full bg-red-600 px-1 py-0.5 text-[8px] font-extrabold uppercase leading-none tracking-wide text-white shadow-sm ring-2 ring-surface"
+        title="Live now"
+      >Live</span>
+    </span>
   </span>
+
+  <!-- Bare variants: the glyph carries the passed attrs. -->
+  <img
+    v-else-if="avatar.avatar"
+    v-bind="$attrs"
+    :src="avatar.avatar"
+    :alt="avatar.initials"
+    class="shrink-0 object-cover"
+    :style="{ width: size + 'px', height: size + 'px', borderRadius: 'var(--c-avatar-radius, 9999px)' }"
+  />
+  <span
+    v-else
+    v-bind="$attrs"
+    class="grid shrink-0 place-items-center font-bold text-white"
+    :style="{ width: size + 'px', height: size + 'px', fontSize: size * 0.38 + 'px', background: bg, borderRadius: 'var(--c-avatar-radius, 9999px)' }"
+  >{{ avatar.initials || '?' }}</span>
 </template>

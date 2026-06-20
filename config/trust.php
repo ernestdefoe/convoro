@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.41.0',
+            'date' => '2026-06-20',
+            'title' => 'Staff badges on avatars',
+            'items' => [
+                ['type' => 'new', 'text' => 'A member’s staff badge (Admin, Mod, etc.) now sits right on their avatar — with its group colour and a clean white ring — wherever the avatar appears, not just on their profile.'],
+                ['type' => 'improved', 'text' => 'If a staff member is live-streaming, the LIVE badge stacks neatly under their staff badge, and the online/offline dot moved to the top-right so nothing overlaps.'],
+            ],
+        ],
+        [
             'tag' => '1.40.0',
             'date' => '2026-06-20',
             'title' => 'LIVE badges on avatars',
