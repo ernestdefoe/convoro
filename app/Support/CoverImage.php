@@ -33,7 +33,7 @@ class CoverImage
             premium: ! $product->isFree(),
             slug: $product->slug,
             repo: $product->repo ?: ('ernestdefoe/'.$product->slug),
-            icon: self::iconInner((string) $product->package),
+            icon: self::iconInner($product),
         );
 
         $path = 'covers/'.$product->slug.'.svg';
@@ -78,19 +78,17 @@ class CoverImage
     }
 
     /**
-     * Inner SVG markup of an installed extension's icon (so the cover can show
-     * a real glyph instead of an initials monogram). Returns null when the
-     * extension ships no icon or isn't installed → caller falls back to the
-     * monogram. currentColor in the icon is resolved to the cover accent.
+     * Inner SVG markup of an extension's icon (so the cover can show a real
+     * glyph instead of an initials monogram). Uses the product's resolved icon:
+     * the stored repo icon (fetched at link time) or the installed manifest —
+     * so it works for non-bundled marketplace extensions that aren't installed
+     * on the store host. Returns null when there's no SVG icon → caller falls
+     * back to the monogram. currentColor in the icon resolves to the cover accent.
      */
-    private static function iconInner(string $package): ?string
+    private static function iconInner(Product $product): ?string
     {
-        if ($package === '') {
-            return null;
-        }
-        $manifest = \App\Support\ExtensionManager::all()[$package] ?? null;
-        $svg = $manifest ? \App\Support\ExtensionManager::iconSvgFor($manifest) : null;
-        if (! $svg) {
+        $svg = $product->resolvedIcon();
+        if (! is_string($svg) || ! str_contains($svg, '<svg')) {
             return null;
         }
         // Keep the icon's own fill/stroke (line-art vs filled differ) and its
