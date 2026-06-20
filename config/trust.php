@@ -10,6 +10,16 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.39.5',
+            'date' => '2026-06-19',
+            'title' => 'Downloads in the Marketplace',
+            'items' => [
+                ['type' => 'new', 'text' => 'The free Downloads extension is now in the Marketplace — a downloads directory. Organise downloads into categories, link a GitHub release or URL, or upload a file that’s served privately through a counted route. Cards show a cover image, a short excerpt and per-download counts.'],
+                ['type' => 'new', 'text' => 'Category icons can be a preset emoji or your own uploaded image.'],
+                ['type' => 'fixed', 'text' => 'Embedded extension management panels in the admin area now follow the light/dark theme immediately instead of only after a refresh.'],
+            ],
+        ],
+        [
             'tag' => '1.39.4',
             'date' => '2026-06-19',
             'title' => 'Rich link previews',

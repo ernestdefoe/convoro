@@ -1,14 +1,13 @@
 {
-    "version": "1.39.4",
-    "download": "https://convoro.co/releases/convoro-install-1.39.4.zip",
+    "version": "1.39.5",
+    "download": "https://convoro.co/releases/convoro-install-1.39.5.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Rich link previews",
+    "title": "Downloads extension",
     "date": "2026-06-19",
-    "notes": "Paste a link on its own line and it becomes a rich preview card — the page's title, description, image and site, pulled from its Open Graph tags. Plus the new free Role-Play extension in the Marketplace, the role-play core hooks, Ask moved into the left sidebar, and the reading-scrubber footer fix.",
+    "notes": "A new free Downloads extension is in the Marketplace — a downloads directory with categories, GitHub-release / URL links or private file uploads, and per-download counts. Category icons can be a preset emoji or your own uploaded image. Plus embedded extension management panels in the admin area now follow light/dark instantly.",
     "changelog": [
-        {"type": "new", "text": "Rich link previews: paste a link on its own line and it becomes a preview card (title, description, image, site) from the page's Open Graph tags — cached and fetched safely."},
-        {"type": "new", "text": "The free Role-Play extension is now in the Marketplace — characters, post-as-character, role-play topics, a dice roller, character sheets and a character directory."},
-        {"type": "improved", "text": "Ask now sits in the left sidebar under the categories list."},
-        {"type": "fixed", "text": "The reading-progress scrubber no longer overlaps the footer at the bottom of a thread."}
+        {"type": "new", "text": "The free Downloads extension is now in the Marketplace — organise downloads into categories, link a GitHub release or URL, or upload a file served through a private counted route. Cards show a cover, a short excerpt and per-download counts."},
+        {"type": "new", "text": "Category icons can be a preset emoji or your own uploaded image."},
+        {"type": "fixed", "text": "Embedded extension management panels in the admin area now follow the light/dark theme immediately instead of only after a refresh."}
     ]
 }

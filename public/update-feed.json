@@ -1,11 +1,13 @@
 {
-    "version": "1.17.1",
-    "download": "https://convoro.co/releases/convoro-1.17.1.zip",
+    "version": "1.39.5",
+    "download": "https://convoro.co/releases/convoro-install-1.39.5.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Extension nav links sit with the main nav",
-    "date": "2026-06-13",
-    "notes": "Extensions can now add links to the primary header navigation (next to Community and Members) instead of off to the side. The Leaderboard link now sits with the other nav links.",
+    "title": "Downloads extension",
+    "date": "2026-06-19",
+    "notes": "A new free Downloads extension is in the Marketplace — a downloads directory with categories, GitHub-release / URL links or private file uploads, and per-download counts. Category icons can be a preset emoji or your own uploaded image. Plus embedded extension management panels in the admin area now follow light/dark instantly.",
     "changelog": [
-        {"type": "changed", "text": "Extensions can add primary-nav links (header:nav slot); the Leaderboard link now sits with the other nav links."}
+        {"type": "new", "text": "The free Downloads extension is now in the Marketplace — organise downloads into categories, link a GitHub release or URL, or upload a file served through a private counted route. Cards show a cover, a short excerpt and per-download counts."},
+        {"type": "new", "text": "Category icons can be a preset emoji or your own uploaded image."},
+        {"type": "fixed", "text": "Embedded extension management panels in the admin area now follow the light/dark theme immediately instead of only after a refresh."}
     ]
 }
