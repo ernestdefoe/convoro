@@ -62,7 +62,7 @@ const dotSize = computed(() => Math.max(9, Math.round(props.size * 0.26)));
   <!-- Overlay variant: a relative wrapper holds the glyph plus a presence dot
        (top-right) and/or the staff + LIVE pills, which sit on the avatar's bottom
        edge with a white ring — like badges pinned to the circle. -->
-  <span v-if="hasOverlay" v-bind="$attrs" class="relative inline-flex shrink-0">
+  <span v-if="hasOverlay" v-bind="$attrs" class="relative inline-flex shrink-0" :style="{ width: size + 'px', height: size + 'px' }">
     <img
       v-if="avatar.avatar"
       :src="avatar.avatar"

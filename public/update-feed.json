@@ -1,12 +1,12 @@
 {
-    "version": "1.41.0",
-    "download": "https://convoro.co/releases/convoro-install-1.41.0.zip",
+    "version": "1.41.1",
+    "download": "https://convoro.co/releases/convoro-install-1.41.1.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Staff badges on avatars",
+    "title": "Avatar badge + link-card polish",
     "date": "2026-06-20",
-    "notes": "A member's staff badge (Admin, Mod, etc.) now sits on their avatar with its group colour and a white ring, wherever the avatar appears. If they're live, the LIVE badge stacks under it, and the online/offline dot moved to the top-right.",
+    "notes": "Avatar badges (staff/LIVE) now sit snugly on the avatar in the discussion list instead of drifting below it, and link-preview cards match Convoro's current card design (rounded corners, soft shadow, subtle hover lift).",
     "changelog": [
-        {"type": "new", "text": "Staff badges now appear on avatars everywhere, with the group colour and a white ring."},
-        {"type": "improved", "text": "LIVE badge stacks under the staff badge; the online/offline dot moved to the top-right."}
+        {"type": "fixed", "text": "Avatar staff/LIVE badges sit on the avatar in the discussion list instead of below it."},
+        {"type": "improved", "text": "Link-preview cards match the current card design (rounded corners, soft shadow, hover lift)."}
     ]
 }

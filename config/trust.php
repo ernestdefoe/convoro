@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.41.1',
+            'date' => '2026-06-20',
+            'title' => 'Avatar badge + link-card polish',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'Avatar badges (staff/LIVE) now sit snugly on the avatar in the discussion list instead of drifting below it.'],
+                ['type' => 'improved', 'text' => 'Link-preview cards now match Convoro’s current card design — rounded corners, a soft shadow and a subtle hover lift.'],
+            ],
+        ],
+        [
             'tag' => '1.41.0',
             'date' => '2026-06-20',
             'title' => 'Staff badges on avatars',
