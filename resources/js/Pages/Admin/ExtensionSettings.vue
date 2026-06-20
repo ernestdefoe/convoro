@@ -51,22 +51,19 @@ watch(formValues, () => {
 // it reads as a native admin panel.
 const frame = ref<HTMLIFrameElement | null>(null);
 let ro: ResizeObserver | null = null;
+let themeObserver: MutationObserver | null = null;
+let injectedStyle: HTMLStyleElement | null = null;
 
-function onFrameLoad() {
-  const f = frame.value;
-  if (!f) return;
-  try {
-    const doc = f.contentDocument;
-    if (!doc) return;
-
-    // Mirror the admin's resolved theme tokens into the iframe, then remap the
-    // extension page's hardcoded dark palette onto them so it adopts the
-    // settings-page colors instead of rendering as a detached dark box.
-    const cs = getComputedStyle(document.documentElement);
-    const tok = (n: string) => cs.getPropertyValue(n).trim();
-    const isDark = (document.documentElement.dataset.theme || document.body.dataset.theme) === 'dark';
-    const style = doc.createElement('style');
-    style.textContent = `
+// The iframe inherits a baked copy of the admin's resolved theme tokens so that
+// third-party admin pages (which lack our light/dark CSS vars) still adopt the
+// settings-page colors. Because these are absolute values on :root, they must be
+// rebuilt whenever the admin toggles light/dark — otherwise the stale (load-time)
+// palette overrides the iframe's own [data-theme] rules and the embed stays light.
+function buildEmbedCss(): string {
+  const cs = getComputedStyle(document.documentElement);
+  const tok = (n: string) => cs.getPropertyValue(n).trim();
+  const isDark = (document.documentElement.dataset.theme || document.body.dataset.theme) === 'dark';
+  return `
       :root{
         --c-bg:${tok('--c-bg')};--c-surface:${tok('--c-surface')};--c-surface-2:${tok('--c-surface-2')};
         --c-border:${tok('--c-border')};--c-text:${tok('--c-text')};--c-text-2:${tok('--c-text-2')};
@@ -88,7 +85,26 @@ function onFrameLoad() {
       table,th,td,hr,.row,.item,.divider{border-color:rgb(var(--c-border))!important}
       ::-webkit-scrollbar{width:0;height:0}
     `;
-    doc.head.appendChild(style);
+}
+
+function onFrameLoad() {
+  const f = frame.value;
+  if (!f) return;
+  try {
+    const doc = f.contentDocument;
+    if (!doc) return;
+
+    injectedStyle = doc.createElement('style');
+    injectedStyle.textContent = buildEmbedCss();
+    doc.head.appendChild(injectedStyle);
+
+    // Re-mirror the tokens whenever the admin flips light/dark, so the embed
+    // follows the theme live instead of only after a refresh.
+    themeObserver?.disconnect();
+    themeObserver = new MutationObserver(() => {
+      if (injectedStyle) injectedStyle.textContent = buildEmbedCss();
+    });
+    themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
     const isCustomPage = !!doc.querySelector('.top, .wrap, .container');
     const resize = () => {
@@ -110,7 +126,7 @@ function onFrameLoad() {
   }
 }
 
-onBeforeUnmount(() => { ro?.disconnect(); ro = null; });
+onBeforeUnmount(() => { ro?.disconnect(); ro = null; themeObserver?.disconnect(); themeObserver = null; });
 </script>
 
 <template>
