@@ -517,6 +517,7 @@ function submitReply() {
           </div>
 
           <div v-if="firstPost?.held" class="mt-5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-500">{{ tr('Held for review by the moderation copilot — only you and moderators can see this until it’s approved.') }}</div>
+          <div v-if="firstPost?.cardHtml" class="ext-post-card mt-6" v-html="firstPost.cardHtml"></div>
           <div v-if="firstPost" class="prose-q mt-7 max-w-none text-[1.075rem] leading-relaxed text-ink" :data-post-id="firstPost.id" :data-post-author="firstPost.author?.name" v-html="displayHtml(firstPost)"></div>
           <div v-if="firstPost && translateEnabled && (needsTranslation(firstPost) || tx[firstPost.id]?.html)" class="mt-2 flex items-center gap-2 text-xs">
             <button @click="toggleTranslation(firstPost)" class="inline-flex items-center gap-1.5 font-semibold text-primary hover:underline">

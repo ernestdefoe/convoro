@@ -275,6 +275,7 @@ class Present
         return [
             'id' => $p->id,
             'html' => PostRender::render($p->body_html),
+            'cardHtml' => PostCard::render($p),
             'detectedLocale' => $p->detected_locale,
             'held' => (bool) ($p->hidden ?? false),
             'author' => PostIdentity::resolve($p, self::avatar($p->user)),
