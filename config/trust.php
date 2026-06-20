@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.39.6',
+            'date' => '2026-06-19',
+            'title' => 'Movie & TV cards in the Marketplace',
+            'items' => [
+                ['type' => 'new', 'text' => 'The free TMDB extension is now in the Marketplace. Pick your movie/TV boards, then title a topic with a film or show name — Convoro pulls the poster, overview, cast, where-to-watch and a trailer from The Movie Database and renders it as a rich card on the first post.'],
+                ['type' => 'new', 'text' => 'As you type the title you get a live match preview, and in those boards a movie thread needs only a title — the card is the post, so there’s nothing to write.'],
+            ],
+        ],
+        [
             'tag' => '1.39.5',
             'date' => '2026-06-19',
             'title' => 'Downloads in the Marketplace',

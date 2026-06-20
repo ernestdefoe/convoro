@@ -1,13 +1,12 @@
 {
-    "version": "1.39.5",
-    "download": "https://convoro.co/releases/convoro-install-1.39.5.zip",
+    "version": "1.39.6",
+    "download": "https://convoro.co/releases/convoro-install-1.39.6.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Downloads extension",
+    "title": "Movie & TV cards",
     "date": "2026-06-19",
-    "notes": "A new free Downloads extension is in the Marketplace — a downloads directory with categories, GitHub-release / URL links or private file uploads, and per-download counts. Category icons can be a preset emoji or your own uploaded image. Plus embedded extension management panels in the admin area now follow light/dark instantly.",
+    "notes": "A new free TMDB extension is in the Marketplace. Pick your movie/TV boards, then title a topic with a film or show name — Convoro pulls the poster, overview, cast, where-to-watch and a trailer from The Movie Database and renders it as a rich card on the first post. You get a live match preview as you type, and a movie thread needs only a title.",
     "changelog": [
-        {"type": "new", "text": "The free Downloads extension is now in the Marketplace — organise downloads into categories, link a GitHub release or URL, or upload a file served through a private counted route. Cards show a cover, a short excerpt and per-download counts."},
-        {"type": "new", "text": "Category icons can be a preset emoji or your own uploaded image."},
-        {"type": "fixed", "text": "Embedded extension management panels in the admin area now follow the light/dark theme immediately instead of only after a refresh."}
+        {"type": "new", "text": "The free TMDB extension is now in the Marketplace — title a topic with a film/show name in a movie board and Convoro renders a rich card (poster, overview, cast, where-to-watch, trailer) from The Movie Database on the first post."},
+        {"type": "new", "text": "Live match preview as you type the title, and movie threads need only a title — the card is the post."}
     ]
 }
