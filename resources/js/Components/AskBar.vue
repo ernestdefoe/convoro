@@ -84,8 +84,9 @@ function reset() {
         </button>
       </form>
 
-      <!-- Starter questions — the one-click "ask anything" moment. -->
-      <div v-if="!asked && suggestions.length" class="mt-3 flex flex-wrap gap-2">
+      <!-- Starter questions — the one-click "ask anything" moment. Hidden in the
+           compact sidebar, where it's just the input + Ask button. -->
+      <div v-if="!asked && suggestions.length && !compact" class="mt-3 flex flex-wrap gap-2">
         <button
           v-for="(s, i) in suggestions"
           :key="i"
