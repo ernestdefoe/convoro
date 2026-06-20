@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.39.8',
+            'date' => '2026-06-20',
+            'title' => 'Click a post number to cross-reference it',
+            'items' => [
+                ['type' => 'new', 'text' => 'Click any post’s #number to copy a link to it. Paste that link into a post anywhere and it cross-references the original — the target gains a “Mentioned in” backlink and its author is notified.'],
+                ['type' => 'new', 'text' => 'Forums can now show a Donate card in the sidebar, backed by a Stripe buy button (set it up in admin settings).'],
+            ],
+        ],
+        [
             'tag' => '1.39.7',
             'date' => '2026-06-20',
             'title' => 'GitHub-style #123 cross-references',

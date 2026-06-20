@@ -1,12 +1,12 @@
 {
-    "version": "1.39.7",
-    "download": "https://convoro.co/releases/convoro-install-1.39.7.zip",
+    "version": "1.39.8",
+    "download": "https://convoro.co/releases/convoro-install-1.39.8.zip",
     "url": "https://convoro.co/changelog",
-    "title": "GitHub-style #123 cross-references",
+    "title": "Click a post number to cross-reference it",
     "date": "2026-06-20",
-    "notes": "Type #123 in a post to reference another topic — it renders as a chip showing that topic's current title and is recorded just like pasting its link. When someone references your topic (by #123 or a pasted link) you now get a notification, and it shows in the target's \"Mentioned in\" box.",
+    "notes": "Click any post's #number to copy a link to it, then paste that link into a post anywhere to cross-reference the original — the target gains a \"Mentioned in\" backlink and its author is notified. Forums can also show a Stripe-backed Donate card in the sidebar.",
     "changelog": [
-        {"type": "new", "text": "Reference another topic with the #123 shorthand — it renders as a live-title chip and is recorded like a pasted link, so renames flow through automatically."},
-        {"type": "new", "text": "Get notified when someone references your topic, and see it in the \"Mentioned in\" box."}
+        {"type": "new", "text": "Click a post's #number to copy its link; paste it anywhere to cross-reference that post (with a \"Mentioned in\" backlink + author notification)."},
+        {"type": "new", "text": "Optional sidebar Donate card backed by a Stripe buy button, configured in admin settings."}
     ]
 }

@@ -18,6 +18,20 @@ import { t as tr } from '@/lib/i18n';
 
 const auth = useAuthModal();
 
+// Clicking a post's number copies its permalink. Paste that link into a
+// composer anywhere and the saved post cross-references this one — the target
+// gains a "Mentioned in" backlink and its author is notified.
+function copyPostLink(post: any) {
+  const url = `${window.location.origin}/t/${props.topic.slug}#post-${post.id}`;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url)
+      .then(() => toast(tr('Link copied — paste it in a post to cross-reference')))
+      .catch(() => toast(tr("Couldn't copy link"), 'error'));
+  } else {
+    toast(url, 'info', 6000);
+  }
+}
+
 // Share a post: native share sheet where available, else copy the permalink.
 function sharePost(post: any) {
   const url = `${window.location.origin}/t/${props.topic.slug}#post-${post.id}`;
@@ -506,7 +520,7 @@ function submitReply() {
               <Link :href="firstPost.author.url" class="font-bold hover:underline">{{ firstPost.author.name }}</Link>
               <a v-if="firstPost.author.fedi" :href="firstPost.author.fediUrl" target="_blank" rel="noopener" class="ml-1.5 inline-flex items-center gap-1 rounded-full bg-surface-2 px-1.5 py-0.5 align-middle text-[11px] font-medium text-ink-muted hover:text-primary" :title="tr('From the fediverse')">🌐 {{ firstPost.author.fedi }}</a>
               <div class="text-sm text-ink-muted">
-                <a :href="'#post-' + firstPost.id" class="font-semibold text-ink-muted hover:text-primary" :title="tr('Permalink to this post')">#{{ postNumber(firstPost) }}</a>
+                <a :href="'#post-' + firstPost.id" @click.prevent="copyPostLink(firstPost)" class="cursor-pointer font-semibold text-ink-muted hover:text-primary" :title="tr('Copy link to this post (paste it to cross-reference)')">#{{ postNumber(firstPost) }}</a>
                 · {{ firstPost.createdAt }}<span v-if="firstPost.editedAt"> · {{ tr('edited {date}', { date: firstPost.editedAt }) }}</span>
               </div>
             </div>
@@ -615,7 +629,7 @@ function submitReply() {
             </div>
             <div class="min-w-0 flex-1">
               <div class="mb-2.5 text-xs text-ink-muted">
-                <a :href="'#post-' + post.id" class="font-semibold text-ink-muted hover:text-primary" :title="tr('Permalink to this post')">#{{ postNumber(post) }}</a>
+                <a :href="'#post-' + post.id" @click.prevent="copyPostLink(post)" class="cursor-pointer font-semibold text-ink-muted hover:text-primary" :title="tr('Copy link to this post (paste it to cross-reference)')">#{{ postNumber(post) }}</a>
                 · {{ post.createdAt }}<span v-if="post.editedAt"> · {{ tr('edited {date}', { date: post.editedAt }) }}</span>
               </div>
               <div v-if="post.held" class="mb-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-500">{{ tr('Held for review — only you and moderators can see this until it’s approved.') }}</div>

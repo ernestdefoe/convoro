@@ -49,6 +49,14 @@ class HandleInertiaRequests extends Middleware
                 : null,
             'appVersion' => config('convoro.version'),
             'ask' => fn () => ['enabled' => \App\Support\Ask::enabled(), 'suggestions' => \App\Support\Ask::suggestions()],
+            // Optional Stripe "buy button" donate widget in the sidebar — only
+            // appears once an admin sets a (public) buy-button id + key.
+            'donate' => fn () => [
+                'buyButtonId' => (string) Settings::get('donate.buy_button_id', ''),
+                'publishableKey' => (string) Settings::get('donate.publishable_key', ''),
+                'heading' => (string) (Settings::get('donate.heading', '') ?: 'Donate'),
+                'blurb' => (string) Settings::get('donate.blurb', ''),
+            ],
             'composer' => fn () => ['gifs' => \App\Support\Gifs::enabled()],
             'inviteOnly' => fn () => (bool) Settings::get('invites.only', false),
             'sso' => fn () => \App\Support\Oidc::enabled() ? ['enabled' => true, 'label' => \App\Support\Oidc::label()] : ['enabled' => false],

@@ -8,6 +8,7 @@ import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
 import Slot from '@/Components/ext/Slot.vue';
 import EmptyState from '@/Components/EmptyState.vue';
 import AskBar from '@/Components/AskBar.vue';
+import DonateWidget from '@/Components/DonateWidget.vue';
 import { useAuthModal } from '@/lib/authModal';
 import { t as tr } from '@/lib/i18n';
 import { convoro } from '@/lib/convoro-ext';
@@ -16,6 +17,7 @@ const pg = usePage();
 const auth = useAuthModal();
 const loggedIn = computed(() => !!(pg.props as any).auth?.user);
 const askEnabled = computed(() => !!(pg.props as any).ask?.enabled);
+const donate = computed(() => (pg.props as any).donate || {});
 // The mobile tab bar (phones) carries a compose button, so on phones the FAB is
 // redundant — keep it only on tablets (md–lg), where the bar is hidden.
 const barHasCompose = computed(() => {
@@ -131,6 +133,8 @@ function go(params: Record<string, string | null>) {
         </div>
         <!-- Ask Convoro lives under the categories list, on the left. -->
         <AskBar v-if="askEnabled" :compact="true" class="mt-3.5" />
+        <!-- Optional Stripe donate widget, directly under Ask. -->
+        <DonateWidget v-if="donate.buyButtonId" :buy-button-id="donate.buyButtonId" :publishable-key="donate.publishableKey" :heading="donate.heading" :blurb="donate.blurb" class="mt-3.5" />
       </aside>
 
       <!-- Main -->
