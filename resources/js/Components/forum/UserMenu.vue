@@ -35,7 +35,7 @@ function logout() {
 <template>
   <div v-if="user" ref="root" class="relative">
     <button type="button" class="block rounded-full focus:outline-none focus:ring-2 focus:ring-primary" :aria-label="t('Account menu')" @click="open = !open">
-      <Avatar :avatar="{ initials, color: (user.id % 6) + 1, avatar: user.avatar_path }" :size="34" />
+      <Avatar :avatar="{ id: user.id, initials, color: (user.id % 6) + 1, avatar: user.avatar_path }" :size="34" />
     </button>
 
     <div v-if="open" class="absolute right-0 top-[44px] z-50 w-56 overflow-hidden rounded-c border border-line bg-surface py-1 shadow-2xl shadow-black/15">

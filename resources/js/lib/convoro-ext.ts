@@ -56,6 +56,25 @@ class ConvoroRuntime {
    */
   readonly data = reactive<Record<string, unknown>>({});
 
+  /**
+   * User ids currently live-streaming. Populated by the OnAir extension and read
+   * by the shared Avatar component to show a LIVE badge wherever a streamer's
+   * avatar renders. Reactive so badges appear/disappear without a reload.
+   */
+  readonly liveUsers = reactive<Set<number>>(new Set());
+
+  /** Replace the live-streaming user set (mutated in place to keep reactivity). */
+  setLiveUsers(ids: Array<number | string>): void {
+    const next = new Set((ids ?? []).map((n) => Number(n)));
+    this.liveUsers.forEach((id) => { if (!next.has(id)) this.liveUsers.delete(id); });
+    next.forEach((id) => this.liveUsers.add(id));
+  }
+
+  /** Whether a user id is currently live-streaming. */
+  isLive(id?: number | string | null): boolean {
+    return id != null && this.liveUsers.has(Number(id));
+  }
+
   private events: Record<string, Listener[]> = {};
   private seq = 0;
   private translator: (k: string, p?: Record<string, string | number>) => string = (k) => k;

@@ -100,7 +100,7 @@ function go(tb: Tab, e: Event) {
         <template v-else>
           <span class="relative">
             <!-- Account tab shows the avatar when signed in. -->
-            <Avatar v-if="tab.key === 'account' && user" :avatar="{ initials: '', color: (user.id % 6) + 1, avatar: user.avatar_path }" :size="24" />
+            <Avatar v-if="tab.key === 'account' && user" :avatar="{ id: user.id, initials: '', color: (user.id % 6) + 1, avatar: user.avatar_path }" :size="24" />
             <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path :d="tab.icon" /></svg>
             <span v-if="badge(tab) > 0" class="absolute -right-2 -top-1.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-white">{{ badge(tab) > 99 ? '99+' : badge(tab) }}</span>
           </span>

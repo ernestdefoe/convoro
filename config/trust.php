@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.40.0',
+            'date' => '2026-06-20',
+            'title' => 'LIVE badges on avatars',
+            'items' => [
+                ['type' => 'new', 'text' => 'Avatars can now show a pulsing LIVE badge wherever they appear. The OnAir extension uses this so members who go live are marked across the whole forum — in topics, on profiles and in member lists.'],
+            ],
+        ],
+        [
             'tag' => '1.39.8',
             'date' => '2026-06-20',
             'title' => 'Click a post number to cross-reference it',

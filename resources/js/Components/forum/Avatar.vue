@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { convoro } from '@/lib/convoro-ext';
 
 // Parent-passed attrs (class like `mx-auto`/`ring-2`, style, listeners) must land
 // on the AVATAR element — not the optional badge wrapper — so alignment is
@@ -10,6 +11,7 @@ defineOptions({ inheritAttrs: false });
 const props = withDefaults(
   defineProps<{
     avatar: {
+      id?: number;
       initials: string;
       color: number;
       avatar?: string | null;
@@ -37,7 +39,10 @@ const gradients = [
 const bg = computed(() => gradients[(props.avatar.color - 1) % 6]);
 const showBadge = computed(() => props.badge && !!props.avatar.staff);
 
+const live = computed(() => convoro.isLive(props.avatar.id));
 const hasPresence = computed(() => props.presence != null);
+// Live streamers get the relative-wrapper variant so the LIVE pill can overlay.
+const useWrap = computed(() => hasPresence.value || live.value);
 const isOnline = computed(() =>
   props.presence === 'online' || (props.presence === 'auto' && !!props.avatar.online),
 );
@@ -54,8 +59,8 @@ const dotSize = computed(() => Math.max(9, Math.round(props.size * 0.26)));
        below carries all passed attrs, so it behaves exactly like a bare avatar.
        Badge: a real centered column stacks the avatar + badge. -->
   <span :class="showBadge ? 'inline-flex flex-col items-center gap-1' : 'contents'">
-    <!-- Presence variant: a relative wrapper holds the glyph + a status dot. -->
-    <span v-if="hasPresence" v-bind="$attrs" class="relative inline-flex shrink-0">
+    <!-- Presence/live variant: a relative wrapper holds the glyph + overlays. -->
+    <span v-if="useWrap" v-bind="$attrs" class="relative inline-flex shrink-0">
       <img
         v-if="avatar.avatar"
         :src="avatar.avatar"
@@ -69,11 +74,17 @@ const dotSize = computed(() => Math.max(9, Math.round(props.size * 0.26)));
         :style="{ ...glyphStyle, fontSize: size * 0.38 + 'px', background: bg }"
       >{{ avatar.initials || '?' }}</span>
       <span
+        v-if="hasPresence && !live"
         class="absolute bottom-0 right-0 rounded-full ring-2 ring-surface"
         :class="isOnline ? 'bg-emerald-500' : 'bg-ink-muted'"
         :style="{ width: dotSize + 'px', height: dotSize + 'px' }"
         :title="isOnline ? 'Online' : 'Offline'"
       ></span>
+      <span
+        v-if="live"
+        class="absolute -bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-red-600 px-1 py-0.5 text-[8px] font-extrabold uppercase leading-none tracking-wide text-white ring-2 ring-surface"
+        title="Live now"
+      >Live</span>
     </span>
 
     <!-- Default variant: unchanged — glyph carries the passed attrs. -->

@@ -1,12 +1,11 @@
 {
-    "version": "1.39.8",
-    "download": "https://convoro.co/releases/convoro-install-1.39.8.zip",
+    "version": "1.40.0",
+    "download": "https://convoro.co/releases/convoro-install-1.40.0.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Click a post number to cross-reference it",
+    "title": "LIVE badges on avatars",
     "date": "2026-06-20",
-    "notes": "Click any post's #number to copy a link to it, then paste that link into a post anywhere to cross-reference the original — the target gains a \"Mentioned in\" backlink and its author is notified. Forums can also show a Stripe-backed Donate card in the sidebar.",
+    "notes": "Avatars can now show a pulsing LIVE badge wherever they appear. The OnAir extension uses this so members who go live are marked across the whole forum — in topics, on profiles and in member lists.",
     "changelog": [
-        {"type": "new", "text": "Click a post's #number to copy its link; paste it anywhere to cross-reference that post (with a \"Mentioned in\" backlink + author notification)."},
-        {"type": "new", "text": "Optional sidebar Donate card backed by a Stripe buy button, configured in admin settings."}
+        {"type": "new", "text": "Avatars can show a LIVE badge everywhere; the OnAir extension marks members who are live-streaming across the forum."}
     ]
 }

@@ -53,7 +53,7 @@ function message() {
         <div class="px-6 pb-5">
           <div class="-mt-12 flex items-end justify-between">
             <div class="w-fit ring-4 ring-surface" :style="{ borderRadius: 'var(--c-avatar-radius, 9999px)' }">
-              <Avatar :avatar="{ initials: profile.initials, color: profile.color, avatar: profile.avatar, staff: profile.staff }" :size="112" badge />
+              <Avatar :avatar="{ id: profile.id, initials: profile.initials, color: profile.color, avatar: profile.avatar, staff: profile.staff }" :size="112" badge />
             </div>
             <Link v-if="profile.isSelf" href="/profile" class="rounded-lg border border-line bg-surface px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ tr('Edit profile') }}</Link>
             <button v-else-if="loggedIn" type="button" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600" @click="message">{{ tr('Message') }}</button>
