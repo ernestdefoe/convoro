@@ -202,13 +202,9 @@ class ExtensionManager
             'premium' => (bool) ($raw['premium'] ?? false),
             'price' => $raw['price'] ?? 0,
             'admin_url' => isset($raw['admin_url']) && is_string($raw['admin_url']) ? $raw['admin_url'] : null,
-            // Server-rendered header nav link {label, href, auth?} so it appears
-            // instantly with the page instead of popping in after the JS bundle.
-            'nav' => is_array($raw['nav'] ?? null) && ! empty($raw['nav']['href']) && ! empty($raw['nav']['label']) ? [
-                'label' => (string) $raw['nav']['label'],
-                'href' => (string) $raw['nav']['href'],
-                'auth' => (bool) ($raw['nav']['auth'] ?? false),
-            ] : null,
+            // Server-rendered header nav link(s) {label, href, auth?} so they appear
+            // instantly with the page. Accepts a single object or a list of them.
+            'nav' => self::navList($raw['nav'] ?? null),
             'icon' => $raw['icon'] ?? null,
             'cover' => $raw['cover'] ?? null,
             '_path' => $dir,
@@ -283,8 +279,35 @@ class ExtensionManager
     {
         $out = [];
         foreach (self::enabled() as $m) {
-            if (! empty($m['nav'])) {
-                $out[] = $m['nav'];
+            foreach ($m['nav'] ?? [] as $link) {
+                $out[] = $link;
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Normalize a manifest `nav` value — a single {label,href,auth?} object or a
+     * list of them — to a flat array of valid links.
+     *
+     * @return array<int,array{label:string,href:string,auth:bool}>
+     */
+    private static function navList(mixed $raw): array
+    {
+        if (! is_array($raw)) {
+            return [];
+        }
+        // A single link has an `href` key; otherwise treat it as a list.
+        $items = isset($raw['href']) ? [$raw] : $raw;
+        $out = [];
+        foreach ($items as $n) {
+            if (is_array($n) && ! empty($n['href']) && ! empty($n['label'])) {
+                $out[] = [
+                    'label' => (string) $n['label'],
+                    'href' => (string) $n['href'],
+                    'auth' => (bool) ($n['auth'] ?? false),
+                ];
             }
         }
 

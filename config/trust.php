@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.41.4',
+            'date' => '2026-06-20',
+            'title' => 'Extensions can add multiple menu links',
+            'items' => [
+                ['type' => 'improved', 'text' => 'An extension can now contribute more than one navigation link — so OnAir+ surfaces both its creator Studio and a public VODs (past broadcasts) library.'],
+            ],
+        ],
+        [
             'tag' => '1.41.2',
             'date' => '2026-06-20',
             'title' => 'Tidier navigation',

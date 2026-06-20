@@ -1,11 +1,11 @@
 {
-    "version": "1.41.3",
-    "download": "https://convoro.co/releases/convoro-install-1.41.3.zip",
+    "version": "1.41.4",
+    "download": "https://convoro.co/releases/convoro-install-1.41.4.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Tidier navigation",
+    "title": "Extensions can add multiple menu links",
     "date": "2026-06-20",
-    "notes": "Extension links in the top navigation now group under a \"More\" menu (from three or more), keeping the bar clean.",
+    "notes": "Extensions can now contribute more than one navigation link (e.g. OnAir+ now surfaces both Studio and a public VODs library).",
     "changelog": [
-        {"type": "improved", "text": "Extension nav links group under a \"More\" menu once there are a few, keeping the top bar tidy."}
+        {"type": "improved", "text": "Extensions can contribute multiple top-nav links, not just one."}
     ]
 }
