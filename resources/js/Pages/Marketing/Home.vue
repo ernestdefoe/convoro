@@ -2,9 +2,26 @@
 import { Head, Link } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import MarketingLayout from '@/Layouts/MarketingLayout.vue';
+import ProductCard from '@/Components/store/ProductCard.vue';
+import { realScreenshot } from '@/lib/accent';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{ catalog: any[]; plans?: any[]; getStartedUrl?: string }>();
+
+// Map the catalog into the shared ProductCard shape so the homepage cards are
+// identical to the extension directory (designed gradient cover + icon overlay).
+const cards = computed(() => props.catalog.map((p) => ({
+  name: p.name,
+  type: p.type,
+  description: p.tagline,
+  icon: p.icon ?? null,
+  image: realScreenshot(p.image),
+  priceLabel: p.price,
+  free: p.free,
+  review: p.review ?? null,
+  accentKey: p.slug ?? p.name,
+  href: `/extensions/${p.slug}`,
+})));
 
 const plans = computed(() => props.plans ?? []);
 const getStartedUrl = computed(() => props.getStartedUrl ?? '/get-started');
@@ -18,7 +35,7 @@ const demoLabel = computed(() => t('Request a demo'));
 
 // Duplicate the list so the marquee can scroll seamlessly (only when there's
 // enough to scroll); a short list just centers.
-const loop = computed(() => (props.catalog.length > 3 ? [...props.catalog, ...props.catalog] : props.catalog));
+const loop = computed(() => (cards.value.length > 3 ? [...cards.value, ...cards.value] : cards.value));
 const marquee = computed(() => props.catalog.length > 3);
 
 const features = [
@@ -235,22 +252,7 @@ const stack = [
 
       <div class="marquee" :class="{ 'is-static': !marquee }">
         <div class="marquee-track" :class="{ animate: marquee }">
-          <Link v-for="(p, i) in loop" :key="p.slug + '-' + i" :href="`/extensions/${p.slug}`"
-            class="marquee-card group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition hover:shadow-lg hover:shadow-black/5">
-            <img v-if="p.image" :src="p.image" :alt="p.name" loading="lazy" class="aspect-[2/1] w-full object-cover" />
-            <div v-else class="grid aspect-[2/1] w-full place-items-center bg-primary/10 text-4xl font-extrabold text-primary">{{ (p.name || '?').charAt(0).toUpperCase() }}</div>
-            <div class="flex flex-1 flex-col p-5">
-              <div class="flex items-center gap-2">
-                <h3 class="truncate font-bold group-hover:text-primary">{{ p.name }}</h3>
-                <span class="ml-auto shrink-0 text-[11px] font-semibold uppercase tracking-wide text-ink-muted">{{ p.type }}</span>
-              </div>
-              <p class="mt-1.5 line-clamp-2 h-10 text-sm text-ink-2">{{ p.tagline }}</p>
-              <div class="mt-3 flex items-center justify-between">
-                <span class="font-extrabold" :class="p.free ? 'text-ink-muted' : 'text-primary'">{{ p.price }}</span>
-                <span v-if="p.review?.rating === 'safe'" class="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">{{ t('✓ reviewed') }}</span>
-              </div>
-            </div>
-          </Link>
+          <ProductCard v-for="(c, i) in loop" :key="c.href + '-' + i" :item="c" :href="c.href" class="marquee-card" />
         </div>
       </div>
 
