@@ -1,14 +1,14 @@
 {
-    "version": "1.39.3",
-    "download": "https://convoro.co/releases/convoro-install-1.39.3.zip",
+    "version": "1.39.4",
+    "download": "https://convoro.co/releases/convoro-install-1.39.4.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Role-Play in the Marketplace",
+    "title": "Rich link previews",
     "date": "2026-06-19",
-    "notes": "The free Role-Play extension is now in the Marketplace — members create characters and post as them, with role-play topics, a dice roller, character sheets and a character directory. Plus the role-play core hooks, Ask moved into the left sidebar, and the reading-scrubber footer fix.",
+    "notes": "Paste a link on its own line and it becomes a rich preview card — the page's title, description, image and site, pulled from its Open Graph tags. Plus the new free Role-Play extension in the Marketplace, the role-play core hooks, Ask moved into the left sidebar, and the reading-scrubber footer fix.",
     "changelog": [
-        {"type": "new", "text": "The free Role-Play extension is now in the Marketplace — install it on demand to let members create characters and post as them, with role-play topics, a dice roller, character sheets and a character directory."},
-        {"type": "new", "text": "PostIdentity hook + composer context — the foundation for role-play forums, where members post as characters."},
-        {"type": "improved", "text": "Ask now sits in the left sidebar under the categories list, freeing the main column for the discussion list."},
-        {"type": "fixed", "text": "The reading-progress scrubber no longer overlaps the footer at the bottom of a thread — it stays visible and slides up just above it."}
+        {"type": "new", "text": "Rich link previews: paste a link on its own line and it becomes a preview card (title, description, image, site) from the page's Open Graph tags — cached and fetched safely."},
+        {"type": "new", "text": "The free Role-Play extension is now in the Marketplace — characters, post-as-character, role-play topics, a dice roller, character sheets and a character directory."},
+        {"type": "improved", "text": "Ask now sits in the left sidebar under the categories list."},
+        {"type": "fixed", "text": "The reading-progress scrubber no longer overlaps the footer at the bottom of a thread."}
     ]
 }
