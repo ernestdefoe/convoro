@@ -103,6 +103,10 @@ Route::domain(config('convoro.marketing_domain'))->group(function () use ($convo
     Route::get('/status', [App\Http\Controllers\TrustController::class, 'status'])->name('status');
     Route::get('/about', [App\Http\Controllers\TrustController::class, 'about'])->name('about');
     Route::get('/security', [App\Http\Controllers\TrustController::class, 'security'])->name('security');
+    // Legal / policy pages (content in config/legal.php).
+    Route::get('/privacy', [App\Http\Controllers\TrustController::class, 'legal'])->defaults('key', 'privacy')->name('privacy');
+    Route::get('/terms', [App\Http\Controllers\TrustController::class, 'legal'])->defaults('key', 'terms')->name('terms');
+    Route::get('/guidelines', [App\Http\Controllers\TrustController::class, 'legal'])->defaults('key', 'guidelines')->name('guidelines');
     // Documentation hub + guides.
     Route::get('/docs', [App\Http\Controllers\DocsController::class, 'index'])->name('docs');
     Route::get('/docs/{guide}', [App\Http\Controllers\DocsController::class, 'show'])->name('docs.show');

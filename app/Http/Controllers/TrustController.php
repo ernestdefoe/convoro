@@ -88,6 +88,18 @@ class TrustController extends Controller
         ]);
     }
 
+    /** Privacy Policy / Terms of Use / Community Guidelines — content in config/legal.php. */
+    public function legal(string $key): Response
+    {
+        $doc = config('legal.'.$key);
+        abort_unless(is_array($doc), 404);
+
+        return Inertia::render('Marketing/Legal', [
+            'doc' => $doc,
+            'seo' => Seo::make(['title' => $doc['title'].' — Convoro', 'description' => $doc['intro'] ?? $doc['title']]),
+        ]);
+    }
+
     /** Live, best-effort health checks. Each returns ok|degraded|down. */
     private function statusChecks(): array
     {

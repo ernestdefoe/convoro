@@ -62,6 +62,9 @@ const auth = useAuthModal();
         <div class="mt-6 flex flex-wrap items-center gap-3 border-t border-line pt-6 text-xs text-ink-muted">
           <span>© {{ new Date().getFullYear() }} Convoro</span>
           <Link v-if="version" href="/changelog" class="rounded-full bg-surface-2 px-2 py-0.5 font-mono font-semibold text-ink-2 hover:text-ink">v{{ version }}</Link>
+          <Link href="/privacy" class="font-semibold text-ink-2 hover:text-ink">Privacy</Link>
+          <Link href="/terms" class="font-semibold text-ink-2 hover:text-ink">Terms</Link>
+          <Link href="/guidelines" class="font-semibold text-ink-2 hover:text-ink">Community Guidelines</Link>
           <!-- Launchpadly — Convoro (text) -->
           <a href="https://launchpadly.co/startup/convoro" target="_blank" rel="noopener noreferrer" data-launchpadly-badge="convoro" class="ml-auto font-semibold text-ink-2 hover:text-ink">
             Proudly listed on Launchpadly Startup Directory
