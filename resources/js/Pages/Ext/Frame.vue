@@ -10,6 +10,7 @@ const props = defineProps<{ title: string; bodyHtml: string; css?: string; js?: 
 
 let styleEl: HTMLStyleElement | null = null;
 let scriptEl: HTMLScriptElement | null = null;
+let themeObserver: MutationObserver | null = null;
 
 onMounted(() => {
   if (props.css) {
@@ -24,11 +25,23 @@ onMounted(() => {
     scriptEl.textContent = props.js;
     document.body.appendChild(scriptEl);
   }
+  // When embedded in an admin pane (iframe), follow the parent's light/dark theme
+  // live — otherwise the embed keeps its load-time theme until a refresh.
+  if (props.embed && window.parent && window.parent !== window) {
+    try {
+      const parentHtml = window.parent.document.documentElement;
+      const sync = () => { document.documentElement.dataset.theme = parentHtml.dataset.theme || 'light'; };
+      sync();
+      themeObserver = new MutationObserver(sync);
+      themeObserver.observe(parentHtml, { attributes: true, attributeFilter: ['data-theme'] });
+    } catch { /* cross-origin parent — leave the theme as loaded */ }
+  }
 });
 
 onBeforeUnmount(() => {
   styleEl?.remove();
   scriptEl?.remove();
+  themeObserver?.disconnect();
 });
 </script>
 
