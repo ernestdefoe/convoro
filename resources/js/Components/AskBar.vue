@@ -86,7 +86,6 @@ function reset() {
 
       <!-- Starter questions — the one-click "ask anything" moment. -->
       <div v-if="!asked && suggestions.length" class="mt-3 flex flex-wrap gap-2">
-        <span class="self-center text-xs font-semibold text-ink-muted">{{ t('Try:') }}</span>
         <button
           v-for="(s, i) in suggestions"
           :key="i"
