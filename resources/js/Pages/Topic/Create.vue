@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Editor from '@/Components/Editor.vue';
+import Slot from '@/Components/ext/Slot.vue';
 import { uploadImage } from '@/lib/upload';
 import UploadButton from '@/Components/UploadButton.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
@@ -256,9 +257,11 @@ function submit() {
               {{ suggestingTitle ? tr('Thinking…') : tr('Suggest a title') }}
             </button>
           </div>
-          <input v-model="form.title" type="text" maxlength="160" :placeholder="tr('What do you want to discuss?')"
+          <input v-model="form.title" type="text" maxlength="160" :placeholder="tr('What do you want to discuss?')" data-composer-title
             class="mt-1.5 w-full rounded-lg border-line bg-surface-2 text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary" />
           <p v-if="form.errors.title" class="mt-1 text-sm text-red-500">{{ form.errors.title }}</p>
+          <!-- Extensions can preview a title match here as you type (e.g. TMDB movie/TV). -->
+          <Slot name="composer:title" :ctx="{ categoryId: form.category_id }" />
           <div v-if="titleSuggestions.length" class="mt-2 flex flex-wrap gap-2">
             <button v-for="(s, i) in titleSuggestions" :key="i" type="button" @click="form.title = s; titleSuggestions = []"
               class="rounded-lg border border-primary/30 bg-primary/[0.06] px-2.5 py-1 text-left text-xs text-ink hover:bg-primary/10">{{ s }}</button>
@@ -280,7 +283,7 @@ function submit() {
           </div>
 
           <label class="mt-4 block text-sm font-semibold text-ink-2">{{ tr('Category') }}</label>
-          <select v-model="form.category_id" class="mt-1.5 w-full rounded-lg border-line bg-surface-2 text-ink focus:border-primary focus:ring-primary">
+          <select v-model="form.category_id" data-composer-category class="mt-1.5 w-full rounded-lg border-line bg-surface-2 text-ink focus:border-primary focus:ring-primary">
             <option :value="null">{{ tr('— none —') }}</option>
             <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
           </select>
