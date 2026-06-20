@@ -676,6 +676,8 @@ class AdminController extends Controller
                 // generic puzzle tile; null → monogram-initial fallback.
                 'icon' => \App\Support\ExtensionManager::iconSvgFor($m),
             ],
+            // Category list for any 'categories' setting field (a board picker).
+            'categories' => \App\Models\Category::orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -700,6 +702,10 @@ class AdminController extends Controller
             $value = match ($field['type'] ?? 'text') {
                 'boolean' => (bool) $value,
                 'number' => is_numeric($value) ? $value + 0 : 0,
+                // A board picker — store the selected category ids as a CSV string.
+                'categories' => is_array($value)
+                    ? implode(',', array_values(array_unique(array_filter(array_map('intval', $value)))))
+                    : (is_scalar($value) ? (string) $value : ''),
                 default => is_scalar($value) ? (string) $value : '',
             };
             \App\Support\Settings::set(\App\Support\ExtensionManager::settingKey($id, $key), $value);

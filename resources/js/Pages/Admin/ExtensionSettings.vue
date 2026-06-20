@@ -12,10 +12,25 @@ interface Ext {
   values: Record<string, unknown>; adminUrl: string | null; icon?: string | null;
 }
 
-const props = defineProps<{ ext: Ext }>();
+const props = defineProps<{ ext: Ext; categories?: { id: number; name: string }[] }>();
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const formValues = ref<Record<string, any>>({ ...props.ext.values });
+
+// A 'categories' field is stored as a CSV of ids but edited as a number[]; hydrate it.
+for (const f of props.ext.settings) {
+  if (f.type === 'categories') {
+    const v = formValues.value[f.key];
+    formValues.value[f.key] = typeof v === 'string' && v !== ''
+      ? v.split(',').map((s) => parseInt(s, 10)).filter((n) => !isNaN(n))
+      : Array.isArray(v) ? v : [];
+  }
+}
+function toggleCategory(key: string, id: number) {
+  const arr: number[] = Array.isArray(formValues.value[key]) ? formValues.value[key] : [];
+  const i = arr.indexOf(id);
+  formValues.value[key] = i >= 0 ? arr.filter((x) => x !== id) : [...arr, id];
+}
 const status = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
 let timer: ReturnType<typeof setTimeout> | null = null;
 
@@ -182,6 +197,20 @@ onBeforeUnmount(() => { ro?.disconnect(); ro = null; themeObserver?.disconnect()
             <input type="checkbox" v-model="formValues[field.key]" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />
             <span class="text-sm font-medium text-ink">{{ field.label }}</span>
           </label>
+
+          <template v-else-if="field.type === 'categories'">
+            <label class="block text-sm font-medium text-ink-2">{{ field.label }}</label>
+            <div class="mt-1.5 flex flex-wrap gap-1.5">
+              <button v-for="c in categories || []" :key="c.id" type="button" @click="toggleCategory(field.key, c.id)"
+                class="rounded-full border px-3 py-1 text-[13px] font-semibold transition"
+                :class="(formValues[field.key] || []).includes(c.id)
+                  ? 'border-indigo-500 bg-indigo-500/15 text-indigo-300'
+                  : 'border-line bg-appbg text-ink-2 hover:border-indigo-400'">
+                {{ c.name }}
+              </button>
+              <span v-if="!(categories || []).length" class="text-xs text-ink-muted">{{ t('No categories yet.') }}</span>
+            </div>
+          </template>
 
           <template v-else>
             <label class="block text-sm font-medium text-ink-2">{{ field.label }}</label>
