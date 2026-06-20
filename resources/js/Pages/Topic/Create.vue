@@ -14,7 +14,12 @@ const props = defineProps<{
   tags: { id: number; name: string; color: string }[];
   draft?: any;
   autosave?: any;
+  bodyOptionalCategories?: number[];
 }>();
+
+// Boards where an extension supplies the content (e.g. a TMDB movie card) — the
+// post body is optional there, so don't force the author to type anything.
+const bodyOptional = computed(() => (props.bodyOptionalCategories || []).includes(form.category_id as number));
 
 const editor = ref<any>(null);
 const uploadingCover = ref(false);
@@ -215,9 +220,9 @@ async function pickCover(file: File) {
 
 function submit() {
   if (autoTimer) clearTimeout(autoTimer); // don't autosave after we navigate away
-  if (!editor.value || editor.value.isEmpty()) { form.setError('body_html', tr('Write something first.')); return; }
-  form.body_html = editor.value.getHTML();
-  form.body_json = editor.value.getJSON();
+  if (!bodyOptional.value && (!editor.value || editor.value.isEmpty())) { form.setError('body_html', tr('Write something first.')); return; }
+  form.body_html = editor.value?.getHTML() ?? '';
+  form.body_json = editor.value?.getJSON() ?? '';
   const opts = poll.options.map((o) => o.trim()).filter(Boolean);
   form.transform((data) => ({
     ...data,
@@ -329,8 +334,9 @@ function submit() {
         </div>
 
         <div>
-          <label class="mb-1.5 block text-sm font-semibold text-ink-2">{{ tr('Post') }}</label>
-          <Editor ref="editor" :content="draftBody" :placeholder="tr('Write your post… (rich text, drag images in)')" :category-id="form.category_id" @typing="scheduleAutosave" />
+          <label class="mb-1.5 block text-sm font-semibold text-ink-2">{{ tr('Post') }}<span v-if="bodyOptional" class="ml-1 font-normal text-ink-muted">· {{ tr('optional') }}</span></label>
+          <p v-if="bodyOptional" class="mb-1.5 text-xs text-ink-muted">{{ tr('Just the title is enough here — the info card is added for you. Add a comment if you like.') }}</p>
+          <Editor ref="editor" :content="draftBody" :placeholder="bodyOptional ? tr('Add a comment (optional)…') : tr('Write your post… (rich text, drag images in)')" :category-id="form.category_id" @typing="scheduleAutosave" />
           <p v-if="form.errors.body_html" class="mt-1 text-sm text-red-500">{{ form.errors.body_html }}</p>
         </div>
 

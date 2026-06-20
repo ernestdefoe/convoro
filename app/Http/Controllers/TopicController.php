@@ -52,6 +52,8 @@ class TopicController extends Controller
             'tags' => Tag::orderBy('name')->get(['id', 'name', 'color']),
             'draft' => $draft,
             'autosave' => $autosave,
+            // Boards where an extension supplies the content (body optional).
+            'bodyOptionalCategories' => \App\Support\CategoryRules::bodyOptionalIds(),
         ]);
     }
 
@@ -64,7 +66,7 @@ class TopicController extends Controller
             'category_id' => ['nullable', 'integer', 'exists:categories,id'],
             'tags' => ['array'],
             'tags.*' => ['integer', 'exists:tags,id'],
-            'body_html' => ['required', 'string', 'max:120000'],
+            'body_html' => ['nullable', 'string', 'max:120000'],
             'body_json' => ['nullable', 'string', 'max:200000'],
             'cover' => ['nullable', 'string', 'max:2048'],
             'poll' => ['nullable', 'array'],
@@ -75,11 +77,14 @@ class TopicController extends Controller
             'poll.closes_days' => ['nullable', 'integer', 'min:1', 'max:365'],
         ]);
 
-        $data['body_html'] = Content::clean($data['body_html']);
+        $data['body_html'] = Content::clean($data['body_html'] ?? '');
         if (\App\Support\TrustLevels::gatesContent($request->user())) {
             $data['body_html'] = \App\Support\TrustLevels::stripLinksMedia($data['body_html']);
         }
-        abort_if(trim(strip_tags($data['body_html'])) === '', 422, __('The post body is empty.'));
+        // A body is required unless the board lets an extension supply the content
+        // (e.g. a TMDB movie card), in which case an empty first post is fine.
+        $bodyOptional = \App\Support\CategoryRules::isBodyOptional(! empty($data['category_id']) ? (int) $data['category_id'] : null);
+        abort_if(! $bodyOptional && trim(strip_tags($data['body_html'])) === '', 422, __('The post body is empty.'));
 
         // Spam, flood & slow-mode controls.
         $category = ! empty($data['category_id']) ? \App\Models\Category::find($data['category_id']) : null;
