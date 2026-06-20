@@ -1,12 +1,12 @@
 {
-    "version": "1.39.6",
-    "download": "https://convoro.co/releases/convoro-install-1.39.6.zip",
+    "version": "1.39.7",
+    "download": "https://convoro.co/releases/convoro-install-1.39.7.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Movie & TV cards",
-    "date": "2026-06-19",
-    "notes": "A new free TMDB extension is in the Marketplace. Pick your movie/TV boards, then title a topic with a film or show name — Convoro pulls the poster, overview, cast, where-to-watch and a trailer from The Movie Database and renders it as a rich card on the first post. You get a live match preview as you type, and a movie thread needs only a title.",
+    "title": "GitHub-style #123 cross-references",
+    "date": "2026-06-20",
+    "notes": "Type #123 in a post to reference another topic — it renders as a chip showing that topic's current title and is recorded just like pasting its link. When someone references your topic (by #123 or a pasted link) you now get a notification, and it shows in the target's \"Mentioned in\" box.",
     "changelog": [
-        {"type": "new", "text": "The free TMDB extension is now in the Marketplace — title a topic with a film/show name in a movie board and Convoro renders a rich card (poster, overview, cast, where-to-watch, trailer) from The Movie Database on the first post."},
-        {"type": "new", "text": "Live match preview as you type the title, and movie threads need only a title — the card is the post."}
+        {"type": "new", "text": "Reference another topic with the #123 shorthand — it renders as a live-title chip and is recorded like a pasted link, so renames flow through automatically."},
+        {"type": "new", "text": "Get notified when someone references your topic, and see it in the \"Mentioned in\" box."}
     ]
 }

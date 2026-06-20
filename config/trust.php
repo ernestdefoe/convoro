@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.39.7',
+            'date' => '2026-06-20',
+            'title' => 'GitHub-style #123 cross-references',
+            'items' => [
+                ['type' => 'new', 'text' => 'Type #123 in a post to reference another topic — it renders as a chip showing that topic’s current title (so it updates automatically if the topic is renamed), and the reference is recorded just like pasting its link.'],
+                ['type' => 'new', 'text' => 'When someone references your topic — by a #123 shorthand or a pasted link — you now get a notification, and the reference shows in the target’s “Mentioned in” box.'],
+            ],
+        ],
+        [
             'tag' => '1.39.6',
             'date' => '2026-06-19',
             'title' => 'Movie & TV cards in the Marketplace',

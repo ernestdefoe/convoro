@@ -24,7 +24,7 @@ class PostRender
     /** Render a post body: mentions → embeds → registered extension filters. */
     public static function render(?string $html): string
     {
-        $out = Embeds::render(Mentions::linkify((string) $html));
+        $out = CrossRef::chips(Embeds::render(Mentions::linkify((string) $html)));
         foreach (self::$filters as $filter) {
             $out = (string) $filter($out);
         }
