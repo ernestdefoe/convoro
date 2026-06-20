@@ -1,11 +1,11 @@
 {
-    "version": "1.41.2",
-    "download": "https://convoro.co/releases/convoro-install-1.41.2.zip",
+    "version": "1.41.3",
+    "download": "https://convoro.co/releases/convoro-install-1.41.3.zip",
     "url": "https://convoro.co/changelog",
     "title": "Tidier navigation",
     "date": "2026-06-20",
-    "notes": "When several extensions add links to the top navigation, the extras now tuck into a \"More\" menu so the bar stays clean instead of sprawling.",
+    "notes": "Extension links in the top navigation now group under a \"More\" menu (from three or more), keeping the bar clean.",
     "changelog": [
-        {"type": "improved", "text": "Extension nav links beyond the first few collapse into a \"More\" menu so the top bar stays tidy."}
+        {"type": "improved", "text": "Extension nav links group under a \"More\" menu once there are a few, keeping the top bar tidy."}
     ]
 }

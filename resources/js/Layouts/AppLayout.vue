@@ -37,9 +37,9 @@ function navActive(href: string) {
 }
 // Once the nav gets busy, keep the first few extension links inline and tuck the
 // rest into a "More" dropdown so the bar doesn't sprawl as extensions are added.
-const useMoreNav = computed(() => visibleExtNav.value.length > 4);
-const inlineExtNav = computed(() => (useMoreNav.value ? visibleExtNav.value.slice(0, 3) : visibleExtNav.value));
-const moreExtNav = computed(() => (useMoreNav.value ? visibleExtNav.value.slice(3) : []));
+const useMoreNav = computed(() => visibleExtNav.value.length > 2);
+const inlineExtNav = computed(() => (useMoreNav.value ? [] : visibleExtNav.value));
+const moreExtNav = computed(() => (useMoreNav.value ? visibleExtNav.value : []));
 const moreActive = computed(() => moreExtNav.value.some((n) => navActive(n.href)));
 const moreOpen = ref(false);
 const moreRoot = ref<HTMLElement | null>(null);
