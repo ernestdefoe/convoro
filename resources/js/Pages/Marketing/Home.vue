@@ -315,7 +315,7 @@ const stack = [
   padding: 0 0.75rem;
 }
 .marquee-track.animate {
-  animation: marquee-scroll 60s linear infinite;
+  animation: marquee-scroll 100s linear infinite;
 }
 .marquee:hover .marquee-track.animate { animation-play-state: paused; }
 .marquee-card {
