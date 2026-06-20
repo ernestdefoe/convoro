@@ -1,0 +1,14 @@
+{
+    "version": "1.39.3",
+    "download": "https://convoro.co/releases/convoro-install-1.39.3.zip",
+    "url": "https://convoro.co/changelog",
+    "title": "Role-Play in the Marketplace",
+    "date": "2026-06-19",
+    "notes": "The free Role-Play extension is now in the Marketplace — members create characters and post as them, with role-play topics, a dice roller, character sheets and a character directory. Plus the role-play core hooks, Ask moved into the left sidebar, and the reading-scrubber footer fix.",
+    "changelog": [
+        {"type": "new", "text": "The free Role-Play extension is now in the Marketplace — install it on demand to let members create characters and post as them, with role-play topics, a dice roller, character sheets and a character directory."},
+        {"type": "new", "text": "PostIdentity hook + composer context — the foundation for role-play forums, where members post as characters."},
+        {"type": "improved", "text": "Ask now sits in the left sidebar under the categories list, freeing the main column for the discussion list."},
+        {"type": "fixed", "text": "The reading-progress scrubber no longer overlaps the footer at the bottom of a thread — it stays visible and slides up just above it."}
+    ]
+}
