@@ -6,7 +6,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 // A generic shell for server-rendered extension pages: the extension provides
 // plain body HTML plus optional page-scoped CSS/JS, and we render it inside the
 // real forum layout so the header, footer and theme are identical everywhere.
-const props = defineProps<{ title: string; bodyHtml: string; css?: string; js?: string }>();
+const props = defineProps<{ title: string; bodyHtml: string; css?: string; js?: string; embed?: boolean }>();
 
 let styleEl: HTMLStyleElement | null = null;
 let scriptEl: HTMLScriptElement | null = null;
@@ -34,7 +34,8 @@ onBeforeUnmount(() => {
 
 <template>
   <Head :title="title" />
-  <AppLayout>
+  <div v-if="embed" class="ext-frame ext-embed p-4" v-html="bodyHtml"></div>
+  <AppLayout v-else>
     <div class="ext-frame" v-html="bodyHtml"></div>
   </AppLayout>
 </template>

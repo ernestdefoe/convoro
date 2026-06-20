@@ -32,6 +32,9 @@ class ExtPage
             'bodyHtml' => $bodyHtml,
             'css' => $css,
             'js' => $js,
+            // Chromeless render (no header/footer) when embedded in an admin pane
+            // via an iframe — the admin settings page appends ?embed=1.
+            'embed' => request()->boolean('embed'),
         ]);
     }
 }
