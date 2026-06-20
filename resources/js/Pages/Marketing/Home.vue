@@ -321,8 +321,8 @@ const stack = [
 }
 .marquee:hover .marquee-track.animate { animation-play-state: paused; }
 .marquee-card {
-  flex: 0 0 300px;
-  width: 300px;
+  flex: 0 0 348px;
+  width: 348px;
 }
 @keyframes marquee-scroll {
   from { transform: translateX(0); }
