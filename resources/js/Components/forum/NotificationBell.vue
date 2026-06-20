@@ -124,7 +124,7 @@ function onDocClick(e: MouseEvent) {
           :class="!n.read ? 'bg-primary/10' : ''"
           @click="go(n)"
         >
-          <Avatar v-if="n.actor" :avatar="{ id: n.actor.id, initials: n.actor.initials, color: n.actor.color }" :size="34" />
+          <Avatar v-if="n.actor" :avatar="{ initials: n.actor.initials, color: n.actor.color }" :size="34" />
           <span v-else class="grid h-[34px] w-[34px] shrink-0 place-items-center rounded-full bg-surface-2 text-lg">{{ (n as any).icon || '🔔' }}</span>
           <span class="min-w-0 flex-1">
             <span class="block text-sm leading-snug text-ink">{{ label(n) }}</span>

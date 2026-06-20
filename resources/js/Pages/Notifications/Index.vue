@@ -71,7 +71,7 @@ function clearOne(n: Note) {
           @click="go(n)"
         >
           <div v-if="!n.actor" class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-primary/15 text-xl">🎉</div>
-          <Avatar v-else :avatar="{ id: n.actor.id, initials: n.actor.initials, color: n.actor.color }" :size="40" />
+          <Avatar v-else :avatar="{ initials: n.actor.initials, color: n.actor.color }" :size="40" />
           <div class="min-w-0 flex-1">
             <div class="text-sm leading-snug text-ink">{{ label(n) }}</div>
             <div v-if="n.excerpt" class="mt-1 truncate text-sm text-ink-muted">{{ n.excerpt }}</div>
