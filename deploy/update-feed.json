@@ -1,12 +1,11 @@
 {
-    "version": "1.41.1",
-    "download": "https://convoro.co/releases/convoro-install-1.41.1.zip",
+    "version": "1.41.2",
+    "download": "https://convoro.co/releases/convoro-install-1.41.2.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Avatar badge + link-card polish",
+    "title": "Tidier navigation",
     "date": "2026-06-20",
-    "notes": "Avatar badges (staff/LIVE) now sit snugly on the avatar in the discussion list instead of drifting below it, and link-preview cards match Convoro's current card design (rounded corners, soft shadow, subtle hover lift).",
+    "notes": "When several extensions add links to the top navigation, the extras now tuck into a \"More\" menu so the bar stays clean instead of sprawling.",
     "changelog": [
-        {"type": "fixed", "text": "Avatar staff/LIVE badges sit on the avatar in the discussion list instead of below it."},
-        {"type": "improved", "text": "Link-preview cards match the current card design (rounded corners, soft shadow, hover lift)."}
+        {"type": "improved", "text": "Extension nav links beyond the first few collapse into a \"More\" menu so the top bar stays tidy."}
     ]
 }

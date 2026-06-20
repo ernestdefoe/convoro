@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link, router, usePage } from '@inertiajs/vue3';
-import { computed, defineAsyncComponent, ref, watchEffect } from 'vue';
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watchEffect } from 'vue';
 import ConvoroLogo from '@/Components/ConvoroLogo.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import NotificationBell from '@/Components/forum/NotificationBell.vue';
@@ -35,6 +35,19 @@ function navActive(href: string) {
   const url = String((page as any).url ?? '').split(/[?#]/)[0];
   return url === href || url.startsWith(href + '/');
 }
+// Once the nav gets busy, keep the first few extension links inline and tuck the
+// rest into a "More" dropdown so the bar doesn't sprawl as extensions are added.
+const useMoreNav = computed(() => visibleExtNav.value.length > 4);
+const inlineExtNav = computed(() => (useMoreNav.value ? visibleExtNav.value.slice(0, 3) : visibleExtNav.value));
+const moreExtNav = computed(() => (useMoreNav.value ? visibleExtNav.value.slice(3) : []));
+const moreActive = computed(() => moreExtNav.value.some((n) => navActive(n.href)));
+const moreOpen = ref(false);
+const moreRoot = ref<HTMLElement | null>(null);
+function onMoreDoc(e: MouseEvent) {
+  if (moreOpen.value && moreRoot.value && !moreRoot.value.contains(e.target as Node)) moreOpen.value = false;
+}
+onMounted(() => document.addEventListener('click', onMoreDoc));
+onBeforeUnmount(() => document.removeEventListener('click', onMoreDoc));
 const dmUnread = computed(() => Number((page.props as any).dmUnread ?? 0));
 const mobileBar = computed(() => !!(page.props as any).mobileNav?.enabled && ((page.props as any).mobileNav?.tabs?.length ?? 0) >= 2);
 const siteLogo = computed(() => (page.props as any).site?.logo || '');
@@ -96,7 +109,16 @@ function goMobile(href: string) {
           <Link v-if="storeOwner" href="/extensions" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Extensions') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Extensions') }}</Link>
           <Link href="/members" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component === 'Members/Index' ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Members') }}</Link>
           <Link href="/groups" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="$page.component.startsWith('Groups') ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t('Groups') }}</Link>
-          <Link v-for="n in visibleExtNav" :key="n.href" :href="n.href" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="navActive(n.href) ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t(n.label) }}</Link>
+          <Link v-for="n in inlineExtNav" :key="n.href" :href="n.href" class="rounded-lg px-3 py-2 text-sm font-semibold" :class="navActive(n.href) ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ t(n.label) }}</Link>
+          <div v-if="moreExtNav.length" ref="moreRoot" class="relative">
+            <button type="button" @click="moreOpen = !moreOpen" class="flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-semibold" :class="moreActive || moreOpen ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">
+              {{ t('More') }}
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="transition" :class="moreOpen ? 'rotate-180' : ''"><path d="m6 9 6 6 6-6" /></svg>
+            </button>
+            <div v-if="moreOpen" class="absolute left-0 top-[46px] z-50 w-52 overflow-hidden rounded-c border border-line bg-surface py-1 shadow-2xl shadow-black/15">
+              <Link v-for="n in moreExtNav" :key="n.href" :href="n.href" @click="moreOpen = false" class="block px-4 py-2.5 text-sm font-medium" :class="navActive(n.href) ? 'bg-primary/10 text-primary' : 'text-ink-2 hover:bg-surface-2 hover:text-ink'">{{ t(n.label) }}</Link>
+            </div>
+          </div>
           <Slot name="header:nav" />
         </nav>
         <div class="ml-auto flex items-center gap-3">

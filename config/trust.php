@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.41.2',
+            'date' => '2026-06-20',
+            'title' => 'Tidier navigation',
+            'items' => [
+                ['type' => 'improved', 'text' => 'When several extensions add links to the top navigation, the extras now tuck into a “More” menu so the bar stays clean instead of sprawling.'],
+            ],
+        ],
+        [
             'tag' => '1.41.1',
             'date' => '2026-06-20',
             'title' => 'Avatar badge + link-card polish',
