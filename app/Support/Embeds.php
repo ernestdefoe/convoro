@@ -97,7 +97,132 @@ class Embeds
             return '<div class="'.$kind.'" data-href="'.self::e($url).'" data-width="500"></div>';
         }
 
-        return null;
+        // --- Generic link: a rich Open Graph preview card ---
+        return self::linkCard($url, $host);
+    }
+
+    /**
+     * A rich preview card for any other link, built from the page's Open Graph
+     * tags. Fetched once and cached by URL (failures cached too, so a dead link
+     * isn't re-fetched on every render). Inert until a member posts a link.
+     */
+    private static function linkCard(string $url, string $host): ?string
+    {
+        if (! Settings::get('embeds.link_previews', true)) {
+            return null;
+        }
+        if (! in_array(strtolower((string) parse_url($url, PHP_URL_SCHEME)), ['http', 'https'], true)) {
+            return null;
+        }
+        if (self::blockedHost($host)) {
+            return null;
+        }
+
+        $data = \Illuminate\Support\Facades\Cache::remember(
+            'ogcard:'.sha1($url),
+            now()->addDays(7),
+            fn () => self::fetchOg($url)
+        );
+        if (empty($data) || empty($data['title'])) {
+            return null; // no usable metadata → leave the plain link
+        }
+
+        $img = ! empty($data['image'])
+            ? '<span class="embed-card-img" style="background-image:url(\''.self::e($data['image']).'\')"></span>'
+            : '';
+        $desc = ! empty($data['description'])
+            ? '<span class="embed-card-desc">'.self::e($data['description']).'</span>'
+            : '';
+
+        return '<a class="embed-card'.($img ? ' has-img' : '').'" href="'.self::e($url).'" target="_blank" rel="noopener nofollow ugc">'
+            .$img
+            .'<span class="embed-card-body">'
+            .'<span class="embed-card-site">'.self::e($data['site'] ?: $host).'</span>'
+            .'<span class="embed-card-title">'.self::e($data['title']).'</span>'
+            .$desc
+            .'</span></a>';
+    }
+
+    /** Fetch + parse Open Graph metadata. Returns ['_fail'=>true] on any problem (cached, so no re-fetch). */
+    private static function fetchOg(string $url): array
+    {
+        try {
+            $res = \Illuminate\Support\Facades\Http::timeout(4)
+                ->connectTimeout(3)
+                ->withHeaders(['User-Agent' => 'ConvoroBot/1.0 (+https://convoro.co; link preview)'])
+                ->withOptions(['allow_redirects' => ['max' => 3]])
+                ->get($url);
+            if (! $res->ok() || ! str_contains(strtolower((string) $res->header('Content-Type')), 'text/html')) {
+                return ['_fail' => true];
+            }
+
+            return self::parseOg(substr($res->body(), 0, 512 * 1024), $url);
+        } catch (\Throwable) {
+            return ['_fail' => true];
+        }
+    }
+
+    /** Pull og:title/description/image/site_name (with <title>/meta-description fallbacks). */
+    private static function parseOg(string $html, string $base): array
+    {
+        $meta = function (string $prop) use ($html): ?string {
+            $p = preg_quote($prop, '#');
+            if (preg_match('#<meta[^>]+(?:property|name)=["\']'.$p.'["\'][^>]*?content=["\']([^"\']*)["\']#i', $html, $m)) {
+                return $m[1];
+            }
+            if (preg_match('#<meta[^>]+content=["\']([^"\']*)["\'][^>]*?(?:property|name)=["\']'.$p.'["\']#i', $html, $m)) {
+                return $m[1];
+            }
+
+            return null;
+        };
+        $clean = fn (?string $v) => $v !== null ? trim(html_entity_decode($v, ENT_QUOTES | ENT_HTML5)) : null;
+
+        $title = $clean($meta('og:title'))
+            ?: (preg_match('#<title[^>]*>(.*?)</title>#is', $html, $m) ? $clean($m[1]) : null);
+        $desc = $clean($meta('og:description')) ?: $clean($meta('description'));
+        $image = $clean($meta('og:image') ?? $meta('og:image:url') ?? $meta('twitter:image'));
+
+        return [
+            'title' => $title ? mb_substr($title, 0, 160) : null,
+            'description' => $desc ? mb_substr($desc, 0, 280) : null,
+            'image' => $image ? self::absoluteUrl($image, $base) : null,
+            'site' => $clean($meta('og:site_name')),
+        ];
+    }
+
+    /** Resolve a possibly-relative og:image against the page URL. */
+    private static function absoluteUrl(string $img, string $base): ?string
+    {
+        if (preg_match('#^https?://#i', $img)) {
+            return $img;
+        }
+        $b = parse_url($base);
+        if (empty($b['scheme']) || empty($b['host'])) {
+            return null;
+        }
+        $origin = $b['scheme'].'://'.$b['host'].(isset($b['port']) ? ':'.$b['port'] : '');
+        if (str_starts_with($img, '//')) {
+            return $b['scheme'].':'.$img;
+        }
+
+        return $origin.'/'.ltrim($img, '/');
+    }
+
+    /** Block loopback/internal hosts (basic SSRF guard) before fetching. */
+    private static function blockedHost(string $host): bool
+    {
+        $h = strtolower($host);
+        if ($h === 'localhost' || str_ends_with($h, '.localhost') || str_ends_with($h, '.local') || str_ends_with($h, '.internal')) {
+            return true;
+        }
+        // Literal IP, or one the host resolves to, must be a public address.
+        $ip = filter_var($h, FILTER_VALIDATE_IP) ? $h : @gethostbyname($h);
+        if ($ip && filter_var($ip, FILTER_VALIDATE_IP) && ! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
+            return true;
+        }
+
+        return false;
     }
 
     /** A 16:9 responsive iframe wrapper. */

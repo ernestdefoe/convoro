@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.39.4',
+            'date' => '2026-06-19',
+            'title' => 'Rich link previews',
+            'items' => [
+                ['type' => 'new', 'text' => 'Paste a link on its own line and it becomes a rich preview card — the page’s title, description, image and site, pulled from its Open Graph tags. Works alongside the existing YouTube/Spotify/X embeds; previews are cached and fetched safely.'],
+            ],
+        ],
+        [
             'tag' => '1.39.3',
             'date' => '2026-06-19',
             'title' => 'Role-Play in the Marketplace',
