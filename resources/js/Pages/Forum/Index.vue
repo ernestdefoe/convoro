@@ -79,10 +79,18 @@ function onTopicActivity(e: any) {
   const card = e?.topic;
   if (!card || props.sort !== 'recent') return;
   if (props.activeCategory && card.category?.slug !== props.activeCategory) return;
-  // Upsert: drop any existing entry, then prepend the fresh card flagged "new"
-  // so it carries the same highlight as a server-detected unread thread.
+  // Upsert: drop any existing entry, then insert the fresh card flagged "new".
+  // Respect pinning — pinned topics stay on top, so a bumped non-pinned thread
+  // goes to the top of the NON-pinned section, never above pinned ones (mirrors
+  // the server's `orderByDesc(is_pinned)` then recency).
   const next = items.value.filter((t: any) => t.id !== card.id);
-  next.unshift({ ...card, isNew: true });
+  const fresh = { ...card, isNew: true };
+  if (fresh.isPinned) {
+    next.unshift(fresh);
+  } else {
+    const firstNonPinned = next.findIndex((t: any) => !t.isPinned);
+    next.splice(firstNonPinned === -1 ? next.length : firstNonPinned, 0, fresh);
+  }
   items.value = next.slice(0, 30);
 }
 
