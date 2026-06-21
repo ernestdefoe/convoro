@@ -7,7 +7,7 @@ import UploadButton from '@/Components/UploadButton.vue';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
-  values: { name: string; tagline: string; logo: string; logo_dark: string; favicon: string; default_view: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string; gif_provider: string; gif_key_set: boolean; trust_enabled: boolean; trust_gate_new_users: boolean; reply_enabled: boolean; reply_domain: string; reply_secret: string; reply_webhook: string };
+  values: { name: string; tagline: string; logo: string; logo_dark: string; favicon: string; default_view: string; default_cover: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string; gif_provider: string; gif_key_set: boolean; trust_enabled: boolean; trust_gate_new_users: boolean; reply_enabled: boolean; reply_domain: string; reply_secret: string; reply_webhook: string };
   mobileNav: { enabled: boolean; tabs: string[]; catalog: string[] };
   federation: { enabled: boolean; username: string; handle: string; followers: number };
 }>();
@@ -61,6 +61,7 @@ const form = useForm({
   logo_dark: props.values.logo_dark ?? '',
   favicon: props.values.favicon ?? '',
   default_view: props.values.default_view,
+  default_cover: props.values.default_cover || '',
   realtime: props.values.realtime,
   digests: props.values.digests,
   pwa_banner: props.values.pwa_banner,
@@ -162,7 +163,12 @@ function save() {
           <select v-model="form.default_view" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500">
             <option value="feed">{{ t('Feed') }}</option>
             <option value="grid">{{ t('Grid') }}</option>
+            <option value="category">{{ t('Categories') }}</option>
           </select>
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-ink-2">{{ t('Default cover image') }}</label>
+          <input v-model="form.default_cover" type="url" :placeholder="t('https://… — shown in Grid view for topics without their own cover')" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink placeholder:text-ink-muted focus:border-indigo-500 focus:ring-indigo-500" />
         </div>
         <label class="flex items-center gap-3">
           <input v-model="form.realtime" type="checkbox" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />

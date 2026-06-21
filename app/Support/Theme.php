@@ -114,12 +114,35 @@ class Theme
             $vars['--c-muted'] = self::triplet(self::hexToRgb($muted));
         }
 
+        // Widget-header tint token. Sidebar widgets paint their header bar with
+        // `rgb(var(--c-widget-header) / .10)`, falling back to the primary when
+        // unset — so the theme editor can recolor every widget header at once.
+        $widgetHeaderRaw = trim((string) Settings::get('theme.widget_header_color', ''));
+        $vars['--c-widget-header'] = $widgetHeaderRaw !== ''
+            ? self::triplet(self::hexToRgb($widgetHeaderRaw))
+            : 'var(--c-primary)';
+
         $body = '';
         foreach ($vars as $k => $v) {
             $body .= "{$k}:{$v};";
         }
 
-        return ":root{{$body}}";
+        $css = ":root{{$body}}";
+
+        // Forum background image. Painted on the <html> canvas with a fixed
+        // attachment and the app shell made transparent so it shows across the
+        // whole page field (a body-only background is hidden behind the shell).
+        $bgImage = trim((string) Settings::get('theme.background_image', ''));
+        if ($bgImage !== '') {
+            $safe = str_replace(['"', "'", "\n", "\r", '<', '>', '\\'], '', $bgImage);
+            $tile = (string) Settings::get('theme.background_style', 'cover') === 'tile';
+            $sizeRepeat = $tile ? 'background-size:auto;background-repeat:repeat;' : 'background-size:cover;background-repeat:no-repeat;';
+            $css .= 'html{background-image:url("'.$safe.'");'.$sizeRepeat.'background-position:center top;background-attachment:fixed}';
+            $css .= 'body,#app{background-color:transparent !important}';
+            $css .= '.bg-appbg{background-color:transparent !important}';
+        }
+
+        return $css;
     }
 
     /**

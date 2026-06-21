@@ -35,6 +35,12 @@ class AutoAnswerTopicJob implements ShouldQueue
         if (! $topic) {
             return;
         }
+        // Category gate: when categories are configured, only answer topics that
+        // live in one of them. This is the reliable "only auto-reply in certain
+        // categories" control (the keyword gate alone proved too loose).
+        if (! self::passesCategoryGate($topic->category_id)) {
+            return;
+        }
         // Only answer if no one (human or AI) has replied yet.
         if ($topic->posts->where('is_first', false)->isNotEmpty()) {
             return;
@@ -85,6 +91,22 @@ class AutoAnswerTopicJob implements ShouldQueue
         $haystack = mb_strtolower($text);
 
         return $keywords->contains(fn ($k) => str_contains($haystack, $k));
+    }
+
+    /**
+     * Whether a topic clears the category gate. With no categories configured
+     * the bot may answer in any category (back-compat); with categories set it
+     * only answers topics that belong to one of them.
+     */
+    public static function passesCategoryGate(?int $categoryId): bool
+    {
+        $ids = Settings::get('ai.autoanswer_categories', []);
+        $ids = is_array($ids) ? array_map('intval', $ids) : [];
+        if ($ids === []) {
+            return true;
+        }
+
+        return $categoryId !== null && in_array((int) $categoryId, $ids, true);
     }
 
     /** Build the assistant's reply HTML (answer + sources + disclaimer). */

@@ -278,6 +278,7 @@ class AiController extends Controller
                 'embed_model' => Settings::get('ai.embed_model', ''),
                 'autoanswer_enabled' => (bool) Settings::get('ai.autoanswer_enabled', false),
                 'autoanswer_keywords' => Settings::get('ai.autoanswer_keywords', ''),
+                'autoanswer_categories' => array_values(array_map('intval', (array) Settings::get('ai.autoanswer_categories', []))),
                 'bot_name' => Settings::get('ai.bot_name', 'Convoro Assistant'),
                 'moderation_enabled' => (bool) Settings::get('ai.moderation_enabled', false),
                 'translate_posts' => (bool) Settings::get('translate.posts', true),
@@ -287,6 +288,10 @@ class AiController extends Controller
             ],
             'index' => $this->indexState(),
             'usage' => Llm::usageSummary(),
+            'categories' => \App\Models\Category::orderBy('position')->orderBy('name')
+                ->get(['id', 'name'])
+                ->map(fn ($c) => ['id' => (int) $c->id, 'name' => $c->name])
+                ->all(),
         ]);
     }
 
@@ -352,6 +357,8 @@ class AiController extends Controller
             'embed_key' => ['nullable', 'string', 'max:255'],
             'autoanswer_enabled' => ['boolean'],
             'autoanswer_keywords' => ['nullable', 'string', 'max:1000'],
+            'autoanswer_categories' => ['nullable', 'array'],
+            'autoanswer_categories.*' => ['integer'],
             'bot_name' => ['nullable', 'string', 'max:60'],
             'moderation_enabled' => ['boolean'],
             'translate_posts' => ['boolean'],
@@ -371,6 +378,7 @@ class AiController extends Controller
             'ask.strict' => $request->boolean('ask_strict'),
             'ai.autoanswer_enabled' => $request->boolean('autoanswer_enabled'),
             'ai.autoanswer_keywords' => $data['autoanswer_keywords'] ?? '',
+            'ai.autoanswer_categories' => array_values(array_map('intval', (array) ($data['autoanswer_categories'] ?? []))),
             'ai.bot_name' => $data['bot_name'] ?: 'Convoro Assistant',
             'ai.moderation_enabled' => $request->boolean('moderation_enabled'),
             'translate.posts' => $request->boolean('translate_posts'),

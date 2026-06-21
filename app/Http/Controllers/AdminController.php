@@ -784,6 +784,25 @@ class AdminController extends Controller
         return back();
     }
 
+    /**
+     * Persist a drag-reordered category list. Accepts the full ordered list of
+     * category ids and writes each one's position to match — so the forum's
+     * category ordering follows the admin's drag.
+     */
+    public function reorderCategories(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'order' => ['required', 'array'],
+            'order.*' => ['integer', 'exists:categories,id'],
+        ]);
+
+        foreach (array_values($data['order']) as $i => $id) {
+            Category::whereKey($id)->update(['position' => $i + 1]);
+        }
+
+        return back();
+    }
+
     public function storeTag(Request $request): RedirectResponse
     {
         $data = $request->validate([
@@ -1041,6 +1060,7 @@ class AdminController extends Controller
                 'logo_dark' => Settings::get('site.logo_dark'),
                 'favicon' => Settings::get('site.favicon'),
                 'default_view' => Settings::get('forum.default_view'),
+                'default_cover' => (string) Settings::get('forum.default_cover', ''),
                 'realtime' => (bool) Settings::get('realtime.enabled'),
                 'digests' => (bool) Settings::get('digests.enabled'),
                 'pwa_banner' => (bool) Settings::get('pwa.banner'),
@@ -1099,7 +1119,8 @@ class AdminController extends Controller
             'logo' => ['nullable', 'string', 'max:2048'],
             'logo_dark' => ['nullable', 'string', 'max:2048'],
             'favicon' => ['nullable', 'string', 'max:2048'],
-            'default_view' => ['required', 'in:feed,grid'],
+            'default_view' => ['required', 'in:feed,grid,category'],
+            'default_cover' => ['nullable', 'string', 'max:500'],
             'realtime' => ['required', 'boolean'],
             'digests' => ['required', 'boolean'],
             'pwa_banner' => ['required', 'boolean'],
@@ -1134,6 +1155,7 @@ class AdminController extends Controller
             'site.logo_dark' => $data['logo_dark'] ?? '',
             'site.favicon' => $data['favicon'] ?? '',
             'forum.default_view' => $data['default_view'],
+            'forum.default_cover' => $data['default_cover'] ?? '',
             'realtime.enabled' => (bool) $data['realtime'],
             'digests.enabled' => (bool) $data['digests'],
             'pwa.banner' => (bool) $data['pwa_banner'],
@@ -1388,6 +1410,9 @@ class AdminController extends Controller
             'custom_css' => ['nullable', 'string', 'max:20000'],
             'logo' => ['nullable', 'string', 'max:2048'],
             'favicon' => ['nullable', 'string', 'max:2048'],
+            'background_image' => ['nullable', 'string', 'max:2048'],
+            'background_style' => ['nullable', 'in:cover,tile'],
+            'widget_header_color' => ['nullable', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
         ]);
 
         Settings::setMany([
@@ -1407,6 +1432,9 @@ class AdminController extends Controller
             'theme.density' => $data['density'] ?? 'comfortable',
             'theme.link_color' => $data['link_color'] ?? 'primary',
             'theme.muted' => $data['muted'] ?? '',
+            'theme.background_image' => $data['background_image'] ?? '',
+            'theme.background_style' => $data['background_style'] ?? 'cover',
+            'theme.widget_header_color' => $data['widget_header_color'] ?? '',
             'theme.custom_css' => $data['custom_css'] ?? '',
             'site.logo' => $data['logo'] ?? Settings::get('site.logo', ''),
             'site.favicon' => $data['favicon'] ?? Settings::get('site.favicon', ''),

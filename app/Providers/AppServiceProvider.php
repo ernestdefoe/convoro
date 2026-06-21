@@ -39,6 +39,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Keep the "Ask Convoro" semantic index fresh as posts change.
         Post::observe(PostObserver::class);
+        // Keep the optional Typesense collection in step with topic title/lifecycle.
+        \App\Models\Topic::observe(\App\Observers\TopicObserver::class);
 
         // Apply admin-configured mail settings over .env (no-op until configured).
         // Guarded: a not-yet-installed box has no DB, so reading settings here

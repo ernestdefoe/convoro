@@ -20,13 +20,20 @@ class MessageController extends Controller
     {
         $me = (int) $request->user()->id;
 
-        $conversations = $request->user()->conversations()
+        return Inertia::render('Messages/Index', [
+            'conversations' => $this->conversationList($request->user(), $me),
+        ]);
+    }
+
+    /** The rail's conversation list, shared by the index and the open-thread page. */
+    private function conversationList($user, int $me)
+    {
+        return $user->conversations()
             ->with(['participants', 'lastMessage'])
             ->orderByDesc('last_message_at')
             ->get()
-            ->map(fn ($c) => Present::conversation($c, $me));
-
-        return Inertia::render('Messages/Index', ['conversations' => $conversations]);
+            ->map(fn ($c) => Present::conversation($c, $me))
+            ->values();
     }
 
     public function show(Request $request, Conversation $conversation): Response
@@ -41,6 +48,10 @@ class MessageController extends Controller
         $others = $conversation->participants->where('id', '!=', $me)->values();
 
         return Inertia::render('Messages/Show', [
+            // The full rail list so the two-pane layout shows conversations
+            // beside the open thread (and highlights the active one).
+            'conversations' => $this->conversationList($request->user(), $me),
+            'activeId' => $conversation->id,
             'conversation' => [
                 'id' => $conversation->id,
                 'isGroup' => (bool) $conversation->is_group,

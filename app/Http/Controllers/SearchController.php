@@ -6,6 +6,7 @@ use App\Models\Category;
 use App\Models\Topic;
 use App\Support\AskIndex;
 use App\Support\Present;
+use App\Support\Search\SearchManager;
 use App\Support\Seo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -93,30 +94,13 @@ class SearchController extends Controller
         ]);
     }
 
-    /** @return int[] ranked, de-duplicated topic ids via full-text (LIKE fallback). */
+    /**
+     * @return int[] ranked, de-duplicated topic ids via the configured search
+     * driver — ngram full-text by default (multilingual, works on shared
+     * hosting), or a hosted Typesense engine when one is configured.
+     */
     private function fulltextTopicIds(string $q): array
     {
-        try {
-            $rows = DB::table('posts')->join('topics', 'topics.id', '=', 'posts.topic_id')
-                ->whereRaw('MATCH(posts.body_html) AGAINST(? IN NATURAL LANGUAGE MODE)', [$q])
-                ->selectRaw('posts.topic_id, MATCH(posts.body_html) AGAINST(? IN NATURAL LANGUAGE MODE) as score', [$q])
-                ->orderByDesc('score')->limit(150)->get();
-        } catch (\Throwable) {
-            $like = '%'.addcslashes($q, '%_\\').'%';
-            $rows = DB::table('topics')->where('title', 'like', $like)->limit(150)
-                ->get()->map(fn ($t) => (object) ['topic_id' => $t->id]);
-        }
-
-        $ids = [];
-        foreach ($rows as $r) {
-            if (! in_array($r->topic_id, $ids, true)) {
-                $ids[] = $r->topic_id;
-            }
-            if (count($ids) >= 30) {
-                break;
-            }
-        }
-
-        return $ids;
+        return app(SearchManager::class)->topicIds($q, 30);
     }
 }

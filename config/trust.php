@@ -10,6 +10,21 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.42.0',
+            'date' => '2026-06-21',
+            'title' => 'Redesigned messages, multilingual search & a fresh look',
+            'items' => [
+                ['type' => 'new', 'text' => 'Direct messages have a brand-new two-pane layout — your conversation list sits beside the open chat, with a polished mobile view that switches between the two.'],
+                ['type' => 'new', 'text' => 'A new Categories view for the forum home, alongside Feed and Grid — browse the community as a tidy directory of categories.'],
+                ['type' => 'new', 'text' => 'Optional Typesense search: a bundled extension that plugs into a Typesense engine for faster, typo-tolerant results, with an automatic fall-back to the built-in search.'],
+                ['type' => 'improved', 'text' => 'Search now understands languages that don’t put spaces between words (Chinese, Japanese, Korean, Thai and more).'],
+                ['type' => 'improved', 'text' => 'The theme editor can now set a forum-wide background image and recolour the sidebar widget headers.'],
+                ['type' => 'improved', 'text' => 'Grid view can show a default cover image for topics that don’t have their own.'],
+                ['type' => 'improved', 'text' => 'Categories can be reordered by drag-and-drop in the admin panel.'],
+                ['type' => 'improved', 'text' => 'The AI assistant’s auto-answer can now be limited to specific categories with a simple click-to-choose list.'],
+            ],
+        ],
+        [
             'tag' => '1.41.4',
             'date' => '2026-06-20',
             'title' => 'Extensions can add multiple menu links',

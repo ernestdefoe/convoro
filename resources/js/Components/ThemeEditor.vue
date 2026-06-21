@@ -111,6 +111,9 @@ const form = reactive({
   density: 'comfortable' as 'compact' | 'comfortable' | 'spacious',
   link_color: 'primary' as 'primary' | 'accent',
   muted: '' as string, // optional muted-text color override ('' = theme default)
+  background_image: '',
+  background_style: 'cover' as 'cover' | 'tile',
+  widget_header_color: '' as string, // '' = follow primary
   custom_css: '',
   logo: '',
   favicon: '',
@@ -134,6 +137,9 @@ function load() {
   form.density = v.density ?? 'comfortable';
   form.link_color = v.linkColor ?? 'primary';
   form.muted = v.muted ?? '';
+  form.background_image = v.backgroundImage ?? '';
+  form.background_style = v.backgroundStyle ?? 'cover';
+  form.widget_header_color = v.widgetHeaderColor ?? '';
   form.custom_css = v.customCss ?? '';
   form.logo = site.value.logo ?? '';
   form.favicon = site.value.favicon ?? '';
@@ -200,6 +206,22 @@ function apply() {
   }
   if (form.muted) r.style.setProperty('--c-muted', hexRgb(form.muted));
   else r.style.removeProperty('--c-muted');
+  // Widget-header tint token (blank = follow primary).
+  r.style.setProperty('--c-widget-header', form.widget_header_color ? hexRgb(form.widget_header_color) : 'var(--c-primary)');
+  // Forum background image — live preview on the <html> canvas.
+  const safe = (form.background_image || '').replace(/["'<>\\]/g, '');
+  if (safe) {
+    r.style.backgroundImage = `url("${safe}")`;
+    r.style.backgroundSize = form.background_style === 'tile' ? 'auto' : 'cover';
+    r.style.backgroundRepeat = form.background_style === 'tile' ? 'repeat' : 'no-repeat';
+    r.style.backgroundPosition = 'center top';
+    r.style.backgroundAttachment = 'fixed';
+    document.body.style.backgroundColor = 'transparent';
+  } else {
+    r.style.backgroundImage = '';
+    r.style.backgroundAttachment = '';
+    document.body.style.backgroundColor = '';
+  }
   r.dataset.theme = form.mode;
   r.dataset.postStyle = form.post_style;
   auditA11y();
@@ -475,6 +497,40 @@ const labelCls = 'mb-2 block text-xs font-bold uppercase tracking-wide text-ink-
             <input type="color" v-model="form.header_color" @input="apply" class="h-9 w-12 cursor-pointer rounded border border-line bg-surface p-1" />
             <input type="text" v-model="form.header_color" @input="apply" class="w-full rounded-lg border-line bg-surface-2 font-mono text-sm text-ink focus:border-primary focus:ring-primary" />
           </div>
+        </div>
+
+        <!-- Forum background image -->
+        <div>
+          <label :class="labelCls">{{ tr('Forum background image') }}</label>
+          <input type="url" v-model="form.background_image" @input="apply" :placeholder="tr('https://… image URL (leave blank for none)')"
+            class="w-full rounded-lg border-line bg-surface-2 text-sm text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary" />
+          <div v-if="form.background_image" class="mt-2 flex items-center gap-2">
+            <button type="button" @click="form.background_style = 'cover'; apply()"
+              class="flex-1 rounded-lg border px-2 py-1.5 text-xs font-semibold"
+              :class="form.background_style === 'cover' ? 'border-primary bg-primary/10 text-primary' : 'border-line text-ink-2 hover:bg-surface-2'">{{ tr('Cover') }}</button>
+            <button type="button" @click="form.background_style = 'tile'; apply()"
+              class="flex-1 rounded-lg border px-2 py-1.5 text-xs font-semibold"
+              :class="form.background_style === 'tile' ? 'border-primary bg-primary/10 text-primary' : 'border-line text-ink-2 hover:bg-surface-2'">{{ tr('Tile') }}</button>
+            <button type="button" :title="tr('Remove')" @click="form.background_image = ''; apply()"
+              class="shrink-0 rounded-lg border border-line px-2 py-1.5 text-[11px] font-semibold text-ink-2 hover:bg-surface-2">{{ tr('Clear') }}</button>
+          </div>
+          <p class="mt-1 text-[11px] text-ink-muted">{{ tr('Shows behind the whole forum. Content cards stay solid so text remains readable.') }}</p>
+        </div>
+
+        <!-- Widget header color -->
+        <div>
+          <label :class="labelCls">{{ tr('Widget header color') }}</label>
+          <div class="flex items-center gap-3">
+            <input type="color" :value="form.widget_header_color || form.primary"
+              @input="(e) => { form.widget_header_color = (e.target as HTMLInputElement).value; apply(); }"
+              class="h-9 w-12 cursor-pointer rounded border border-line bg-surface p-1" />
+            <input type="text" v-model="form.widget_header_color" @input="apply" :placeholder="tr('follows primary')"
+              class="w-full rounded-lg border-line bg-surface-2 font-mono text-sm text-ink placeholder:text-ink-muted focus:border-primary focus:ring-primary" />
+            <button v-if="form.widget_header_color" type="button" :title="tr('Follow primary')"
+              class="shrink-0 rounded-lg border border-line px-2 py-1 text-[11px] font-semibold text-ink-2 hover:bg-surface-2"
+              @click="form.widget_header_color = ''; apply()">{{ tr('Reset') }}</button>
+          </div>
+          <p class="mt-1 text-[11px] text-ink-muted">{{ tr('Tints the header bar of sidebar widgets. Leave blank to follow your primary color.') }}</p>
         </div>
 
         <!-- Radii -->

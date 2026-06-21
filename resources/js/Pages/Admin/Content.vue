@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { reactive, ref } from 'vue';
+import { reactive, ref, watch } from 'vue';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { t as tr } from '@/lib/i18n';
 
-defineProps<{
+const props = defineProps<{
   categories: { id: number; name: string; slug: string; description: string | null; icon: string | null; color: string; position: number; topics: number; slow_mode: number }[];
   tags: { id: number; name: string; slug: string; color: string; topics: number }[];
 }>();
@@ -12,6 +12,24 @@ defineProps<{
 const opts = { preserveScroll: true };
 
 // --- Categories ---
+// Local working copy so a drag reorders instantly; re-synced whenever the
+// server sends a fresh list (after add/edit/delete/reorder).
+const cats = ref<any[]>([...props.categories]);
+watch(() => props.categories, (v) => { cats.value = [...v]; });
+
+const dragIndex = ref<number | null>(null);
+function onDragStart(i: number) { dragIndex.value = i; }
+function onDrop(i: number) {
+  const from = dragIndex.value;
+  dragIndex.value = null;
+  if (from === null || from === i) return;
+  const arr = [...cats.value];
+  const [moved] = arr.splice(from, 1);
+  arr.splice(i, 0, moved);
+  cats.value = arr;
+  router.post('/admin/categories/reorder', { order: arr.map((c) => c.id) }, opts);
+}
+
 const newCat = reactive({ name: '', icon: '', color: '#5b5bd6', description: '', slow_mode: 0 });
 const editCatId = ref<number | null>(null);
 const catBuf = reactive({ name: '', icon: '', color: '#5b5bd6', description: '', slow_mode: 0 });
@@ -76,7 +94,14 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
         </div>
 
         <ul class="space-y-2">
-          <li v-for="c in categories" :key="c.id" class="rounded-xl border border-line p-3">
+          <li
+            v-for="(c, i) in cats"
+            :key="c.id"
+            class="rounded-xl border border-line p-3 transition"
+            :class="dragIndex === i ? 'opacity-50' : ''"
+            @dragover.prevent
+            @drop="onDrop(i)"
+          >
             <template v-if="editCatId === c.id">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="grid h-9 w-9 place-items-center rounded-lg bg-surface-2 text-ink-2"><i v-if="catBuf.icon" :class="catBuf.icon"></i><span v-else>#</span></span>
@@ -93,6 +118,14 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
               </label>
             </template>
             <div v-else class="flex items-center gap-3">
+              <span
+                class="-ml-1 cursor-grab select-none px-1 text-ink-muted hover:text-ink active:cursor-grabbing"
+                draggable="true"
+                :title="tr('Drag to reorder')"
+                :aria-label="tr('Drag to reorder')"
+                @dragstart="onDragStart(i)"
+                @dragend="dragIndex = null"
+              >⠿</span>
               <span class="flex h-8 w-8 items-center justify-center rounded-lg text-base" :style="{ color: c.color, background: c.color + '22' }">
                 <i v-if="c.icon && c.icon.startsWith('fa')" :class="c.icon"></i><span v-else>{{ c.icon || '#' }}</span>
               </span>

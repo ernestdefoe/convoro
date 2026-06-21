@@ -42,10 +42,10 @@ class ForumController extends Controller
         // View preference: explicit ?view wins, else the visitor's saved choice
         // (cookie), else the admin default. Keeps grid/feed sticky between visits.
         $view = $request->query('view');
-        if (! in_array($view, ['feed', 'grid'], true)) {
+        if (! in_array($view, ['feed', 'grid', 'category'], true)) {
             $view = $request->cookie('convoro_view');
         }
-        $view = in_array($view, ['feed', 'grid'], true) ? $view : \App\Support\Settings::get('forum.default_view', 'feed');
+        $view = in_array($view, ['feed', 'grid', 'category'], true) ? $view : \App\Support\Settings::get('forum.default_view', 'feed');
         $sort = in_array($request->query('sort'), ['recent', 'popular', 'title']) ? $request->query('sort') : 'recent';
         $categorySlug = $request->query('category');
 
@@ -70,6 +70,7 @@ class ForumController extends Controller
             ->map(fn (Category $c) => [
                 'name' => $c->name, 'slug' => $c->slug, 'icon' => $c->icon,
                 'color' => $c->color, 'count' => $c->topics_count,
+                'description' => $c->description,
             ])->all();
 
         $cards = collect($topics->items())
@@ -114,6 +115,9 @@ class ForumController extends Controller
             'widgetData' => $this->widgetData(),
             'aboutHtml' => (string) \App\Support\Settings::get('widgets.about_html', ''),
             'aboutTitle' => (string) \App\Support\Settings::get('widgets.about_title', ''),
+            // Fallback cover so grid view shows an image even for topics without
+            // their own cover. Empty = no fallback (cards render text-only).
+            'defaultCover' => (string) \App\Support\Settings::get('forum.default_cover', '') ?: null,
         ]);
     }
 

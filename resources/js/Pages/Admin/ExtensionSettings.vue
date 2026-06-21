@@ -220,8 +220,8 @@ onBeforeUnmount(() => { ro?.disconnect(); ro = null; themeObserver?.disconnect()
               class="mt-1.5 w-full rounded-lg border-line bg-appbg text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500">
               <option v-for="o in field.options || []" :key="o.value" :value="o.value">{{ o.label }}</option>
             </select>
-            <input v-else :type="field.type === 'number' ? 'number' : (field.type === 'color' ? 'color' : 'text')"
-              v-model="formValues[field.key]"
+            <input v-else :type="field.type === 'number' ? 'number' : (field.type === 'color' ? 'color' : (field.type === 'password' ? 'password' : 'text'))"
+              v-model="formValues[field.key]" :autocomplete="field.type === 'password' ? 'new-password' : undefined"
               class="mt-1.5 w-full rounded-lg border-line bg-appbg text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500" />
           </template>
           <p v-if="field.help" class="mt-1 text-xs text-ink-muted">{{ field.help }}</p>

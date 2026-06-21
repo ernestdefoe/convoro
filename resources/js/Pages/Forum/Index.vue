@@ -36,7 +36,7 @@ function goSearch() {
 }
 
 const props = defineProps<{
-  view: 'feed' | 'grid';
+  view: 'feed' | 'grid' | 'category';
   sort: string;
   activeCategory: string | null;
   categories: any[];
@@ -46,6 +46,7 @@ const props = defineProps<{
   widgetData?: any;
   aboutHtml?: string;
   aboutTitle?: string;
+  defaultCover?: string | null;
 }>();
 
 // Live badges: keep topics that were live on load, and poll for who's reading now.
@@ -101,7 +102,7 @@ watch(sidebarLayout, (l) => convoro.setLayout('forum:sidebar', l), { immediate: 
 
 function go(params: Record<string, string | null>) {
   // Remember the view choice so it sticks on the next visit (server reads this cookie).
-  if (params.view === 'feed' || params.view === 'grid') {
+  if (params.view === 'feed' || params.view === 'grid' || params.view === 'category') {
     document.cookie = `convoro_view=${params.view};path=/;max-age=31536000;samesite=lax`;
   }
   router.get('/', { view: props.view, sort: props.sort, category: props.activeCategory, ...params }, { preserveScroll: true, preserveState: true });
@@ -152,6 +153,7 @@ function go(params: Record<string, string | null>) {
           <div class="ml-auto flex rounded-[10px] border border-line bg-surface p-0.5 shadow-sm">
             <button @click="go({ view: 'feed' })" class="rounded-[7px] px-3 py-1.5 text-[13px] font-semibold" :class="view === 'feed' ? 'bg-primary text-white' : 'text-ink-2'">{{ tr('Feed') }}</button>
             <button @click="go({ view: 'grid' })" class="rounded-[7px] px-3 py-1.5 text-[13px] font-semibold" :class="view === 'grid' ? 'bg-primary text-white' : 'text-ink-2'">{{ tr('Grid') }}</button>
+            <button @click="go({ view: 'category' })" class="rounded-[7px] px-3 py-1.5 text-[13px] font-semibold" :class="view === 'category' ? 'bg-primary text-white' : 'text-ink-2'">{{ tr('Categories') }}</button>
           </div>
           <select :value="sort" @change="go({ sort: ($event.target as HTMLSelectElement).value })"
             class="rounded-lg border-line bg-surface py-1.5 text-[13px] font-semibold text-ink-2 shadow-sm focus:ring-primary">
@@ -161,8 +163,24 @@ function go(params: Record<string, string | null>) {
           </select>
         </div>
 
+        <!-- Categories — a directory of category cards (independent of topics) -->
+        <div v-if="view === 'category'" class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+          <Link v-for="c in categories" :key="c.slug" :href="`/?category=${c.slug}&view=feed`"
+            class="flex items-start gap-3 rounded-c border border-line bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg" :style="{ color: c.color, background: c.color + '22' }">
+              <CategoryIcon :icon="c.icon" />
+            </span>
+            <div class="min-w-0 flex-1">
+              <h3 class="text-[15px] font-bold leading-snug">{{ c.name }}</h3>
+              <p v-if="c.description" class="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-2">{{ c.description }}</p>
+              <p class="mt-1.5 text-xs text-ink-muted">{{ tr('{n} topics', { n: c.count }) }}</p>
+            </div>
+          </Link>
+          <p v-if="!categories.length" class="col-span-full py-12 text-center text-sm text-ink-muted">{{ tr('No categories yet.') }}</p>
+        </div>
+
         <!-- Empty state -->
-        <EmptyState v-if="!topics.data.length" icon="💬" :title="tr('No topics yet')"
+        <EmptyState v-else-if="!topics.data.length" icon="💬" :title="tr('No topics yet')"
           :description="tr('This is the start of something. Be the first to post and get the conversation going.')">
           <button type="button" @click="startTopic" class="rounded-c bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-600">{{ tr('Start the first topic') }}</button>
         </EmptyState>
@@ -179,7 +197,7 @@ function go(params: Record<string, string | null>) {
             :class="t.isNew ? 'border-primary/40' : 'border-line'">
             <span v-if="t.isNew" class="absolute right-2 top-2 z-10 inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md shadow-primary/30">{{ tr('New') }}</span>
             <div class="aspect-[16/8] bg-surface-2">
-              <img v-if="t.cover" :src="t.cover" class="h-full w-full object-cover" loading="lazy" />
+              <img v-if="t.cover || defaultCover" :src="t.cover || defaultCover || ''" class="h-full w-full object-cover" loading="lazy" />
             </div>
             <div class="flex flex-1 flex-col p-4">
               <span v-if="t.category" class="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"

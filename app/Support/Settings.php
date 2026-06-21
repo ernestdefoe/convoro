@@ -218,6 +218,9 @@ class Settings
                 'linkColor' => self::get('theme.link_color'),
                 'customCss' => self::get('theme.custom_css'),
                 'muted' => self::get('theme.muted', ''),
+                'backgroundImage' => self::get('theme.background_image', ''),
+                'backgroundStyle' => self::get('theme.background_style', 'cover'),
+                'widgetHeaderColor' => self::get('theme.widget_header_color', ''),
             ],
             'widgets' => self::widgetLayout(),
             'widgetAbout' => [

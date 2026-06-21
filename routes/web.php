@@ -374,6 +374,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/sso', [App\Http\Controllers\AdminController::class, 'updateSso'])->name('sso.update');
 
     Route::get('/content', [App\Http\Controllers\AdminController::class, 'content'])->name('content');
+    Route::post('/categories/reorder', [App\Http\Controllers\AdminController::class, 'reorderCategories'])->name('categories.reorder');
     Route::post('/categories', [App\Http\Controllers\AdminController::class, 'storeCategory'])->name('categories.store');
     Route::put('/categories/{category}', [App\Http\Controllers\AdminController::class, 'updateCategory'])->name('categories.update');
     Route::delete('/categories/{category}', [App\Http\Controllers\AdminController::class, 'destroyCategory'])->name('categories.destroy');

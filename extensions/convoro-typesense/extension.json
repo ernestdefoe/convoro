@@ -1,0 +1,16 @@
+{
+  "id": "convoro-typesense",
+  "name": "Typesense Search",
+  "version": "1.0.0",
+  "description": "Faster, typo-tolerant, multilingual search powered by a Typesense engine you point it at — Typesense Cloud or your own server. When it's unreachable, search automatically falls back to the built-in engine, so enabling this is never a hard dependency.",
+  "author": "Convoro",
+  "convoro": ">=1.41.0",
+  "premium": false,
+  "price": 0,
+  "icon": "icon.svg",
+  "settings": [
+    { "key": "url", "label": "Typesense server URL", "type": "text", "default": "", "help": "e.g. https://xxx.a1.typesense.net or http://127.0.0.1:8108 (no trailing slash needed)." },
+    { "key": "api_key", "label": "API key", "type": "password", "default": "", "help": "An admin or search API key for your Typesense instance. Stored server-side; never exposed to visitors." },
+    { "key": "collection", "label": "Collection name", "type": "text", "default": "convoro_topics", "help": "The Typesense collection topics are indexed into. The default is fine for most installs." }
+  ]
+}

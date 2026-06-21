@@ -15,7 +15,7 @@
     box.style.cssText = 'border:1px solid ' + T.line + ';background:' + T.surface + ';border-radius:var(--c-radius,12px);box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden';
     if (title) {
       var h = document.createElement('div');
-      h.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 16px;background:rgb(var(--c-primary,91 91 214) / .10);border-bottom:1px solid ' + T.line;
+      h.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 16px;background:rgb(var(--c-widget-header,var(--c-primary,91 91 214)) / .10);border-bottom:1px solid ' + T.line;
       var hicon = document.createElement('span');
       hicon.textContent = 'ℹ️';
       hicon.style.cssText = 'font-size:14px;line-height:1';

@@ -2,7 +2,7 @@
 
 return [
     // Current installed version of the software.
-    'version' => '1.41.4',
+    'version' => '1.42.0',
 
     // Cache the Inertia SSR render of the static marketing pages (homepage,
     // changelog, roadmap, etc.). Self-invalidates on deploy + content change.
@@ -63,6 +63,27 @@ return [
     // per-demo Let's Encrypt cert (run via sudo). Blank = skip (local dev, where
     // demos are just sqlite files with no subdomain serving).
     'demo_site_hook' => env('CONVORO_DEMO_SITE_HOOK', ''),
+
+    // Search backend. The default 'database' driver works on ANY host — it uses
+    // MySQL's ngram full-text parser (multilingual, incl. CJK/Thai) with the
+    // existing Voyage semantic re-rank layered on top when the Ask index is
+    // warm, and degrades to LIKE on sqlite/pgsql. Set driver to 'typesense' to
+    // point at a hosted Typesense (Typesense Cloud or a small VPS) over HTTP —
+    // Typesense can't run ON shared hosting (it's a daemon), but Convoro can
+    // talk to a remote one from any host. Falls back to 'database' automatically
+    // when the configured engine isn't reachable.
+    'search' => [
+        'driver' => env('CONVORO_SEARCH_DRIVER', 'database'),
+        'typesense' => [
+            'url' => env('CONVORO_TYPESENSE_URL', ''),
+            'api_key' => env('CONVORO_TYPESENSE_API_KEY', ''),
+            'collection' => env('CONVORO_TYPESENSE_COLLECTION', 'convoro_topics'),
+            // Seconds before giving up on the engine and falling back to the
+            // database driver — keep low so a slow/unreachable engine never
+            // stalls the search page.
+            'timeout' => (int) env('CONVORO_TYPESENSE_TIMEOUT', 3),
+        ],
+    ],
 
     // Stripe (central store). Prefer admin Settings, fall back to env. Empty =
     // checkout disabled (store still browsable).

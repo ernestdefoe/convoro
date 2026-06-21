@@ -5,9 +5,10 @@ import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
-  config: { provider: string; model: string; base_url: string; has_key: boolean; ask_enabled: boolean; mention_reply: boolean; ask_knowledge: boolean; ask_strict: boolean; knowledge_count: number; embed_has_key: boolean; embed_model: string; autoanswer_enabled: boolean; autoanswer_keywords: string; bot_name: string; moderation_enabled: boolean; translate_posts: boolean; price_in: number; price_out: number; monthly_budget: number };
+  config: { provider: string; model: string; base_url: string; has_key: boolean; ask_enabled: boolean; mention_reply: boolean; ask_knowledge: boolean; ask_strict: boolean; knowledge_count: number; embed_has_key: boolean; embed_model: string; autoanswer_enabled: boolean; autoanswer_keywords: string; autoanswer_categories: number[]; bot_name: string; moderation_enabled: boolean; translate_posts: boolean; price_in: number; price_out: number; monthly_budget: number };
   index: { ready: boolean; count: number; running: boolean; percent: number; status: string | null; builtAt: string | null };
   usage: { spentCents: number; budgetCents: number; overBudget: boolean; calls: number; tokens: number; byFeature: { feature: string; calls: number; tokens: number; cents: number }[] };
+  categories: { id: number; name: string }[];
 }>();
 
 const page = usePage();
@@ -26,6 +27,7 @@ const form = reactive({
   embed_key: '',
   autoanswer_enabled: props.config.autoanswer_enabled,
   autoanswer_keywords: props.config.autoanswer_keywords || '',
+  autoanswer_categories: [...(props.config.autoanswer_categories || [])],
   bot_name: props.config.bot_name || 'Convoro Assistant',
   moderation_enabled: props.config.moderation_enabled,
   translate_posts: props.config.translate_posts,
@@ -36,6 +38,13 @@ const form = reactive({
 
 function save() {
   router.post('/admin/ai', { ...form }, { preserveScroll: true, onSuccess: () => { form.api_key = ''; form.embed_key = ''; } });
+}
+
+function toggleAutoanswerCategory(id: number) {
+  const i = form.autoanswer_categories.indexOf(id);
+  if (i === -1) form.autoanswer_categories.push(id);
+  else form.autoanswer_categories.splice(i, 1);
+  save();
 }
 
 const money = (cents: number) => '$' + (cents / 100).toFixed(2);
@@ -180,9 +189,27 @@ const field = 'mt-1 w-full rounded-lg border-line bg-appbg text-ink placeholder:
           {{ t('Let the assistant draft an answer on unanswered topics') }}
         </label>
 
+        <label class="mt-3 block text-xs font-semibold text-ink-2">{{ t('Only auto-reply in these categories') }}</label>
+        <p class="mb-2 mt-1 text-xs text-ink-muted">{{ t('Click to choose where the assistant may auto-answer. Leave none selected to allow every category.') }}</p>
+        <div v-if="categories.length" class="flex flex-wrap gap-2">
+          <button
+            v-for="c in categories"
+            :key="c.id"
+            type="button"
+            class="rounded-full border px-3 py-1 text-xs font-medium transition"
+            :class="form.autoanswer_categories.includes(c.id)
+              ? 'border-primary bg-primary/10 text-primary'
+              : 'border-line bg-appbg text-ink-2 hover:border-primary/40'"
+            @click="toggleAutoanswerCategory(c.id)"
+          >
+            <span v-if="form.autoanswer_categories.includes(c.id)">✓ </span>{{ c.name }}
+          </button>
+        </div>
+        <p v-else class="text-xs text-ink-muted">{{ t('No categories yet.') }}</p>
+
         <label class="mt-3 block text-xs font-semibold text-ink-2">{{ t('Only answer topics mentioning…') }} <span class="font-normal text-ink-muted">{{ t('(optional keywords)') }}</span></label>
         <textarea v-model="form.autoanswer_keywords" rows="2" :class="field" :placeholder="t('e.g. how do I, error, not working, setup, billing')" @change="save"></textarea>
-        <p class="mt-1 text-xs text-ink-muted">{{ t('Comma- or line-separated. The assistant only replies to topics that mention at least one of these — so it doesn’t respond on every topic. Leave empty to answer all unanswered topics.') }}</p>
+        <p class="mt-1 text-xs text-ink-muted">{{ t('Comma- or line-separated. Applied on top of the category filter — the assistant only replies to topics that mention at least one. Leave empty to answer all topics in the chosen categories.') }}</p>
 
         <label class="mt-3 block text-xs font-semibold text-ink-2">{{ t('Assistant display name') }}</label>
         <input v-model="form.bot_name" :class="field" placeholder="Convoro Assistant" @change="save" />

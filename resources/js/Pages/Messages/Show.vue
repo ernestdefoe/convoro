@@ -2,12 +2,13 @@
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import Editor from '@/Components/Editor.vue';
+import ConversationList from '@/Components/messages/ConversationList.vue';
 import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { t } from '@/lib/i18n';
 
-const props = defineProps<{ conversation: any; messages: any[] }>();
+const props = defineProps<{ conversation: any; messages: any[]; conversations?: any[]; activeId?: number | null }>();
 
 const page = usePage();
 const meId = computed(() => Number((page.props as any).auth?.user?.id ?? 0));
@@ -203,9 +204,16 @@ onBeforeUnmount(() => {
     <ReadingScrubber :target="thread" />
     <!-- dvh + a taller mobile offset (header + bottom tab bar) so only the
          message list scrolls, never the page, on phones. -->
-    <div class="mx-auto flex max-w-[760px] flex-col h-[calc(100dvh-13rem)] md:h-[calc(100vh-140px)]">
+    <div class="mx-auto h-[calc(100dvh-13rem)] max-w-[1100px] overflow-hidden rounded-c border border-line bg-surface md:grid md:h-[calc(100vh-150px)] md:grid-cols-[340px_1fr]">
+      <!-- Rail (desktop only — on mobile the open thread takes the full width) -->
+      <div class="hidden h-full flex-col border-r border-line p-4 md:flex">
+        <ConversationList :conversations="conversations || []" :active-id="activeId" @new="router.visit('/messages')" />
+      </div>
+
+      <!-- Open conversation -->
+      <div class="flex h-full min-h-0 flex-col p-4">
       <div class="mb-3 flex items-center gap-3">
-        <Link href="/messages" class="text-ink-muted hover:text-ink" :aria-label="t('Back to messages')">
+        <Link href="/messages" class="text-ink-muted hover:text-ink md:hidden" :aria-label="t('Back to messages')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6" /></svg>
         </Link>
         <!-- Group: stacked avatars; 1:1: partner avatar -->
@@ -269,6 +277,7 @@ onBeforeUnmount(() => {
             {{ posting ? t('Sending…') : t('Send') }}
           </button>
         </div>
+      </div>
       </div>
     </div>
 
