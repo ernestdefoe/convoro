@@ -4,17 +4,17 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Switch the search full-text indexes to MySQL's built-in `ngram` parser so
- * search works for languages without spaces between words (Chinese, Japanese,
- * Korean, Thai, …). The default parser tokenises on whitespace, so a CJK query
- * never matched anything — this is the zero-infrastructure, shared-hosting-
- * friendly path to multilingual search (no Typesense/Meilisearch daemon needed;
- * those remain an optional upgrade via config('convoro.search.driver')).
+ * Search full-text indexes.
  *
- * A column can carry only one full-text index that MATCH() will use, so we drop
- * the word-parser indexes and recreate them WITH PARSER ngram. ngram tokenises
- * Latin text too, so English/European search keeps working. MySQL only —
- * sqlite/pgsql installs fall back to LIKE in the database search driver.
+ * On MySQL we use the built-in `ngram` parser so search works for languages
+ * without spaces between words (Chinese, Japanese, Korean, Thai…). MariaDB has
+ * no ngram parser, so there we keep the default word-parser full-text indexes —
+ * real multilingual/typo-tolerant search on MariaDB is provided instead by the
+ * optional convoro-typesense extension. sqlite/pgsql fall back to LIKE in the
+ * database search driver, so this migration is a no-op for them.
+ *
+ * Written to be safe to re-run / recover: it only ever adds the index that's
+ * appropriate for the running engine, guarded by existence checks.
  */
 return new class extends Migration
 {
@@ -24,6 +24,16 @@ return new class extends Migration
             return;
         }
 
+        if ($this->isMariaDb()) {
+            // MariaDB: default-parser full-text indexes (no ngram). Recreate if a
+            // prior run dropped them.
+            $this->ensureFulltext('posts', 'posts_body_fulltext', 'body_html');
+            $this->ensureFulltext('topics', 'topics_title_fulltext', 'title');
+
+            return;
+        }
+
+        // MySQL: swap the default-parser indexes for ngram ones.
         $this->dropIndex('posts', 'posts_body_fulltext');
         $this->dropIndex('topics', 'topics_title_fulltext');
 
@@ -43,12 +53,14 @@ return new class extends Migration
 
         $this->dropIndex('posts', 'posts_body_ngram');
         $this->dropIndex('topics', 'topics_title_ngram');
+        $this->ensureFulltext('posts', 'posts_body_fulltext', 'body_html');
+        $this->ensureFulltext('topics', 'topics_title_fulltext', 'title');
+    }
 
-        if (! $this->hasIndex('posts', 'posts_body_fulltext')) {
-            DB::statement('ALTER TABLE `posts` ADD FULLTEXT INDEX `posts_body_fulltext` (`body_html`)');
-        }
-        if (! $this->hasIndex('topics', 'topics_title_fulltext')) {
-            DB::statement('ALTER TABLE `topics` ADD FULLTEXT INDEX `topics_title_fulltext` (`title`)');
+    private function ensureFulltext(string $table, string $index, string $column): void
+    {
+        if (! $this->hasIndex($table, $index)) {
+            DB::statement("ALTER TABLE `{$table}` ADD FULLTEXT INDEX `{$index}` (`{$column}`)");
         }
     }
 
@@ -56,6 +68,15 @@ return new class extends Migration
     {
         if ($this->hasIndex($table, $index)) {
             DB::statement("ALTER TABLE `{$table}` DROP INDEX `{$index}`");
+        }
+    }
+
+    private function isMariaDb(): bool
+    {
+        try {
+            return stripos((string) (DB::selectOne('select version() as v')->v ?? ''), 'mariadb') !== false;
+        } catch (\Throwable) {
+            return false;
         }
     }
 
