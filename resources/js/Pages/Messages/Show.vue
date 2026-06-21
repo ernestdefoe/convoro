@@ -201,7 +201,9 @@ onBeforeUnmount(() => {
 <template>
   <Head :title="conversation.title" />
   <AppLayout>
-    <ReadingScrubber :target="thread" />
+    <!-- Wider offset than the post column: clear the 1100px two-pane card so the
+         scrubber sits outside the conversation, not over the bubbles. -->
+    <ReadingScrubber :target="thread" :offset-rem="35" />
     <!-- dvh + a taller mobile offset (header + bottom tab bar) so only the
          message list scrolls, never the page, on phones. -->
     <div class="mx-auto h-[calc(100dvh-13rem)] max-w-[1100px] overflow-hidden rounded-c border border-line bg-surface md:grid md:h-[calc(100vh-150px)] md:grid-cols-[340px_1fr]">

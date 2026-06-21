@@ -5,7 +5,12 @@ import { t } from '@/lib/i18n';
 // A reading-progress scrubber for a discussion thread. Tracks the page (or an
 // inner `target` container) and renders a vertical rail with a dot per reply,
 // a "N replies" label up top and the current position below. Drag to jump.
-const props = defineProps<{ target?: HTMLElement | null; count?: number }>();
+// `offsetRem` is how far past the viewport centre (in rem) the scrubber sits —
+// tuned to land just outside the content column. Default 24.5rem matches the
+// post column (max-w-3xl); wider layouts (e.g. the messages two-pane) pass a
+// larger value so it clears the content instead of overlapping it.
+const props = defineProps<{ target?: HTMLElement | null; count?: number; offsetRem?: number }>();
+const offsetRem = computed(() => props.offsetRem ?? 24.5);
 
 const progress = ref(0);
 const dragging = ref(false);
@@ -106,8 +111,8 @@ watch(() => props.target, () => { unbind(); bind(); });
   <div
     ref="root"
     v-show="visible"
-    :style="{ transform: `translateY(calc(-50% - ${liftPx}px))` }"
-    class="group fixed left-[calc(50%+24.5rem)] top-1/2 z-30 hidden select-none flex-col items-center rounded-[20px] bg-surface-2/80 px-2.5 py-4 shadow-sm ring-1 ring-line backdrop-blur-sm transition-transform duration-150 xl:flex"
+    :style="{ transform: `translateY(calc(-50% - ${liftPx}px))`, left: `calc(50% + ${offsetRem}rem)` }"
+    class="group fixed top-1/2 z-30 hidden select-none flex-col items-center rounded-[20px] bg-surface-2/80 px-2.5 py-4 shadow-sm ring-1 ring-line backdrop-blur-sm transition-transform duration-150 xl:flex"
   >
     <!-- Top label: reply count -->
     <div v-if="total" class="mb-2.5 text-center text-[11px] font-semibold leading-tight text-ink-muted">
