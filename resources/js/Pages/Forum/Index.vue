@@ -118,7 +118,10 @@ function go(params: Record<string, string | null>) {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14" /></svg> {{ tr('Start a topic') }}
         </button>
         <div class="overflow-hidden rounded-c border border-line bg-surface shadow-sm">
-          <h4 class="border-b border-line px-4 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted">{{ tr('Categories') }}</h4>
+          <div class="flex items-center gap-2 border-b border-line bg-primary/10 px-4 py-3">
+            <span class="text-sm leading-none">📂</span>
+            <b class="text-[13px] font-bold uppercase tracking-wide text-ink-2">{{ tr('Categories') }}</b>
+          </div>
           <nav class="flex flex-col gap-0.5 p-2">
             <button @click="go({ category: null })" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold"
               :class="!activeCategory ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ tr('All topics') }}</button>

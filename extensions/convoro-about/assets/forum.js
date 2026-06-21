@@ -14,9 +14,15 @@
     var box = document.createElement('div');
     box.style.cssText = 'border:1px solid ' + T.line + ';background:' + T.surface + ';border-radius:var(--c-radius,12px);box-shadow:0 1px 2px rgba(0,0,0,.05);overflow:hidden';
     if (title) {
-      var h = document.createElement('h4');
-      h.textContent = title;
-      h.style.cssText = 'margin:0;padding:12px 16px;border-bottom:1px solid ' + T.line + ';font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:' + T.muted;
+      var h = document.createElement('div');
+      h.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px 16px;background:rgb(var(--c-primary,91 91 214) / .10);border-bottom:1px solid ' + T.line;
+      var hicon = document.createElement('span');
+      hicon.textContent = 'ℹ️';
+      hicon.style.cssText = 'font-size:14px;line-height:1';
+      var hlabel = document.createElement('b');
+      hlabel.textContent = title;
+      hlabel.style.cssText = 'font-size:13px;text-transform:uppercase;letter-spacing:.04em;color:rgb(var(--c-text-2,74 81 104))';
+      h.appendChild(hicon); h.appendChild(hlabel);
       box.appendChild(h);
     }
     return box;
