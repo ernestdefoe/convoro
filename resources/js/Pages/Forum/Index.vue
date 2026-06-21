@@ -66,6 +66,33 @@ async function pollLive() {
 onMounted(() => { liveTimer = setInterval(pollLive, 20000); });
 onUnmounted(() => { if (liveTimer) clearInterval(liveTimer); });
 
+// ── Live topic list ───────────────────────────────────────────────────────
+// New threads appear and replied-to threads bump to the top without a refresh.
+// We mutate a local copy (re-synced whenever the server sends a fresh page) so
+// pagination/sort/filter navigation still works. Only applied when sorted by
+// recent activity (a live bump only makes sense there) and within the active
+// category filter, if any.
+const items = ref<any[]>([...props.topics.data]);
+watch(() => props.topics.data, (d) => { items.value = [...d]; });
+
+function onTopicActivity(e: any) {
+  const card = e?.topic;
+  if (!card || props.sort !== 'recent') return;
+  if (props.activeCategory && card.category?.slug !== props.activeCategory) return;
+  // Upsert: drop any existing entry, then prepend the fresh card flagged "new"
+  // so it carries the same highlight as a server-detected unread thread.
+  const next = items.value.filter((t: any) => t.id !== card.id);
+  next.unshift({ ...card, isNew: true });
+  items.value = next.slice(0, 30);
+}
+
+let forumChannel: any = null;
+onMounted(() => {
+  const E = (window as any).Echo;
+  if (E) forumChannel = E.channel('forum').listen('.TopicListUpdated', onTopicActivity);
+});
+onUnmounted(() => { if (forumChannel && (window as any).Echo) (window as any).Echo.leave('forum'); });
+
 // ── Sidebar widgets (extension-driven) ───────────────────────────────────
 // Built-in and add-on widgets all register into the `forum:sidebar` slot and
 // read shared page data synchronously from window.Convoro.data. We push that
@@ -180,19 +207,19 @@ function go(params: Record<string, string | null>) {
         </div>
 
         <!-- Empty state -->
-        <EmptyState v-else-if="!topics.data.length" icon="💬" :title="tr('No topics yet')"
+        <EmptyState v-else-if="!items.length" icon="💬" :title="tr('No topics yet')"
           :description="tr('This is the start of something. Be the first to post and get the conversation going.')">
           <button type="button" @click="startTopic" class="rounded-c bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-600">{{ tr('Start the first topic') }}</button>
         </EmptyState>
 
         <!-- Feed -->
         <div v-else-if="view === 'feed'" class="flex flex-col gap-3">
-          <TopicCard v-for="t in topics.data" :key="t.id" :topic="withLive(t)" />
+          <TopicCard v-for="t in items" :key="t.id" :topic="withLive(t)" />
         </div>
 
         <!-- Grid -->
         <div v-else class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-          <Link v-for="t in topics.data" :key="t.id" :href="`/t/${t.slug}`"
+          <Link v-for="t in items" :key="t.id" :href="`/t/${t.slug}`"
             class="relative flex flex-col overflow-hidden rounded-c border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
             :class="t.isNew ? 'border-primary/40' : 'border-line'">
             <span v-if="t.isNew" class="absolute right-2 top-2 z-10 inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md shadow-primary/30">{{ tr('New') }}</span>

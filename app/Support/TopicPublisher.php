@@ -97,6 +97,9 @@ class TopicPublisher
         // (e.g. Facebook auto-post) — not fired for imports/seeds/demos.
         event(new \App\Events\TopicPublished($topic));
 
+        // Surface the new thread in everyone's forum list in real time.
+        \App\Support\TopicBroadcast::activity($topic, true);
+
         return $topic;
     }
 }

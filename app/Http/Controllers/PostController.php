@@ -67,6 +67,10 @@ class PostController extends Controller
             report($e);
         }
 
+        // Bump the topic in everyone's forum list (recent activity) — public
+        // topics only; gated inside TopicBroadcast.
+        \App\Support\TopicBroadcast::activity($topic, false);
+
         $this->notifyParticipants($request, $topic, $post, $html);
 
         // Social-group discussions stay inside the group: no AI auto-answer and
