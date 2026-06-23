@@ -3,7 +3,6 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import Editor from '@/Components/Editor.vue';
 import ConversationList from '@/Components/messages/ConversationList.vue';
-import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { t } from '@/lib/i18n';
@@ -201,9 +200,6 @@ onBeforeUnmount(() => {
 <template>
   <Head :title="conversation.title" />
   <AppLayout>
-    <!-- Wider offset than the post column: clear the 1100px two-pane card so the
-         scrubber sits outside the conversation, not over the bubbles. -->
-    <ReadingScrubber :target="thread" :offset-rem="35" />
     <!-- dvh + a taller mobile offset (header + bottom tab bar) so only the
          message list scrolls, never the page, on phones. -->
     <div class="mx-auto h-[calc(100dvh-13rem)] max-w-[1100px] overflow-hidden rounded-c border border-line bg-surface md:grid md:h-[calc(100vh-150px)] md:grid-cols-[340px_1fr]">
@@ -245,7 +241,7 @@ onBeforeUnmount(() => {
         </div>
       </div>
 
-      <div ref="thread" class="min-h-0 flex-1 space-y-3 overflow-y-auto rounded-c border border-line bg-surface p-4">
+      <div ref="thread" class="dm-thread min-h-0 flex-1 space-y-3 overflow-y-auto py-2 pl-0.5 pr-1.5">
         <div v-for="m in live" :key="m.id" class="flex gap-2.5" :class="mine(m) ? 'flex-row-reverse' : ''">
           <Avatar :avatar="m.author" :size="32" />
           <div class="max-w-[75%]">
@@ -301,4 +297,24 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .prose-onprimary :deep(a) { color: #fff; text-decoration: underline; }
+
+/* The message list is the ONLY scroll region — no nested bordered box and no
+   reading scrubber (this isn't a forum thread). Soft top/bottom fades and a
+   thin, track-less scrollbar mirror flarum/messages' MessageStream while
+   keeping our bubble style, so the chunky global 12px scrollbar doesn't read
+   as a second box inside the card. */
+.dm-thread {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+          mask-image: linear-gradient(180deg, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--c-muted) / 0.35) transparent;
+}
+.dm-thread::-webkit-scrollbar { width: 6px; }
+.dm-thread::-webkit-scrollbar-track { background: transparent; }
+.dm-thread::-webkit-scrollbar-thumb {
+  background: rgb(var(--c-muted) / 0.35);
+  border: 0;
+  border-radius: 9999px;
+}
+.dm-thread::-webkit-scrollbar-thumb:hover { background: rgb(var(--c-muted) / 0.55); }
 </style>

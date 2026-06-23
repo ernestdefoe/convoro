@@ -227,8 +227,8 @@ function onFile(e: Event) {
 </script>
 
 <template>
-  <div class="relative overflow-hidden rounded-c border border-line bg-surface">
-    <div v-if="editor" class="flex flex-wrap items-center gap-0.5 border-b border-line bg-surface-2 px-2.5 py-2">
+  <div class="relative rounded-c border border-line bg-surface">
+    <div v-if="editor" class="flex flex-wrap items-center gap-0.5 rounded-t-c border-b border-line bg-surface-2 px-2.5 py-2">
       <button type="button" class="tb" :class="{ on: isActive('bold') }" :title="t('Bold')" :aria-label="t('Bold')" :data-tip="t('Bold (Ctrl+B)')" @click="editor.chain().focus().toggleBold().run()"><b>B</b></button>
       <button type="button" class="tb italic" :class="{ on: isActive('italic') }" :title="t('Italic')" :aria-label="t('Italic')" :data-tip="t('Italic (Ctrl+I)')" @click="editor.chain().focus().toggleItalic().run()">I</button>
       <button type="button" class="tb underline" :class="{ on: isActive('underline') }" :title="t('Underline')" :aria-label="t('Underline')" :data-tip="t('Underline (Ctrl+U)')" @click="editor.chain().focus().toggleUnderline().run()">U</button>
@@ -327,6 +327,10 @@ function onFile(e: Event) {
 .tb:hover { background: rgb(var(--c-surface)); box-shadow: 0 0 0 1px rgb(var(--c-border)); }
 .tb[data-tip]:hover::after {
   content: attr(data-tip);
+  /* Above the button. The editor root no longer clips its overflow (the toolbar
+     carries the rounded top corners instead), so the tooltip shows in full —
+     previously overflow-hidden clipped it to a thin sliver that read as a stray
+     line moving across the toolbar, and edge buttons (Bold) got cut off. */
   position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
   background: rgb(var(--c-text)); color: rgb(var(--c-surface));
   font-size: 11px; font-weight: 600; line-height: 1; white-space: nowrap;
