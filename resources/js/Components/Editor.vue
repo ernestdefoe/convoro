@@ -229,32 +229,32 @@ function onFile(e: Event) {
 <template>
   <div class="relative rounded-c border border-line bg-surface">
     <div v-if="editor" class="flex flex-wrap items-center gap-0.5 rounded-t-c border-b border-line bg-surface-2 px-2.5 py-2">
-      <button type="button" class="tb" :class="{ on: isActive('bold') }" :title="t('Bold')" :aria-label="t('Bold')" :data-tip="t('Bold (Ctrl+B)')" @click="editor.chain().focus().toggleBold().run()"><b>B</b></button>
-      <button type="button" class="tb italic" :class="{ on: isActive('italic') }" :title="t('Italic')" :aria-label="t('Italic')" :data-tip="t('Italic (Ctrl+I)')" @click="editor.chain().focus().toggleItalic().run()">I</button>
-      <button type="button" class="tb underline" :class="{ on: isActive('underline') }" :title="t('Underline')" :aria-label="t('Underline')" :data-tip="t('Underline (Ctrl+U)')" @click="editor.chain().focus().toggleUnderline().run()">U</button>
-      <button type="button" class="tb line-through" :class="{ on: isActive('strike') }" :title="t('Strikethrough')" :aria-label="t('Strikethrough')" :data-tip="t('Strikethrough')" @click="editor.chain().focus().toggleStrike().run()">S</button>
+      <button type="button" class="tb" :class="{ on: isActive('bold') }" :aria-label="t('Bold')" :data-tip="t('Bold (Ctrl+B)')" @click="editor.chain().focus().toggleBold().run()"><b>B</b></button>
+      <button type="button" class="tb italic" :class="{ on: isActive('italic') }" :aria-label="t('Italic')" :data-tip="t('Italic (Ctrl+I)')" @click="editor.chain().focus().toggleItalic().run()">I</button>
+      <button type="button" class="tb underline" :class="{ on: isActive('underline') }" :aria-label="t('Underline')" :data-tip="t('Underline (Ctrl+U)')" @click="editor.chain().focus().toggleUnderline().run()">U</button>
+      <button type="button" class="tb line-through" :class="{ on: isActive('strike') }" :aria-label="t('Strikethrough')" :data-tip="t('Strikethrough')" @click="editor.chain().focus().toggleStrike().run()">S</button>
       <span class="mx-1.5 h-5 w-px bg-line"></span>
-      <button type="button" class="tb" :class="{ on: isActive('heading', { level: 2 }) }" :title="t('Heading')" :aria-label="t('Heading')" :data-tip="t('Heading')" @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"><b>H</b></button>
-      <button type="button" class="tb" :class="{ on: isActive('blockquote') }" :title="t('Quote')" :aria-label="t('Quote')" :data-tip="t('Quote')" @click="editor.chain().focus().toggleBlockquote().run()">”</button>
-      <button type="button" class="tb font-mono text-xs" :class="{ on: isActive('codeBlock') }" :title="t('Code block')" :aria-label="t('Code block')" :data-tip="t('Code block')" @click="editor.chain().focus().toggleCodeBlock().run()">{}</button>
+      <button type="button" class="tb" :class="{ on: isActive('heading', { level: 2 }) }" :aria-label="t('Heading')" :data-tip="t('Heading')" @click="editor.chain().focus().toggleHeading({ level: 2 }).run()"><b>H</b></button>
+      <button type="button" class="tb" :class="{ on: isActive('blockquote') }" :aria-label="t('Quote')" :data-tip="t('Quote')" @click="editor.chain().focus().toggleBlockquote().run()">”</button>
+      <button type="button" class="tb font-mono text-xs" :class="{ on: isActive('codeBlock') }" :aria-label="t('Code block')" :data-tip="t('Code block')" @click="editor.chain().focus().toggleCodeBlock().run()">{}</button>
       <select v-if="isActive('codeBlock')" v-model="codeLang" class="h-[30px] rounded-md border border-line bg-surface py-0 pl-2 pr-6 text-xs font-medium text-ink focus:border-primary focus:ring-0" :title="t('Code language')" :aria-label="t('Code language')">
         <option v-for="l in codeLanguages" :key="l.value" :value="l.value">{{ l.label }}</option>
       </select>
-      <button type="button" class="tb" :class="{ on: isActive('spoiler') }" :title="t('Spoiler')" :aria-label="t('Spoiler')" :data-tip="t('Spoiler (hidden until clicked)')" @click="editor.chain().focus().toggleSpoiler().run()">
+      <button type="button" class="tb" :class="{ on: isActive('spoiler') }" :aria-label="t('Spoiler')" :data-tip="t('Spoiler (hidden until clicked)')" @click="editor.chain().focus().toggleSpoiler().run()">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/><path d="m3 3 18 18"/></svg>
       </button>
-      <button type="button" class="tb" :class="{ on: isActive('bulletList') }" :title="t('Bullet list')" :aria-label="t('Bullet list')" :data-tip="t('Bullet list')" @click="editor.chain().focus().toggleBulletList().run()">•</button>
-      <button type="button" class="tb" :class="{ on: isActive('orderedList') }" :title="t('Numbered list')" :aria-label="t('Numbered list')" :data-tip="t('Numbered list')" @click="editor.chain().focus().toggleOrderedList().run()">1.</button>
+      <button type="button" class="tb" :class="{ on: isActive('bulletList') }" :aria-label="t('Bullet list')" :data-tip="t('Bullet list')" @click="editor.chain().focus().toggleBulletList().run()">•</button>
+      <button type="button" class="tb" :class="{ on: isActive('orderedList') }" :aria-label="t('Numbered list')" :data-tip="t('Numbered list')" @click="editor.chain().focus().toggleOrderedList().run()">1.</button>
       <span class="mx-1.5 h-5 w-px bg-line"></span>
-      <button type="button" class="tb" :class="{ on: isActive('link') }" :title="t('Insert link')" :aria-label="t('Insert link')" :data-tip="t('Insert link')" @click="setLink">🔗</button>
-      <button type="button" class="tb" :title="t('Insert image')" :aria-label="t('Insert image')" :data-tip="t('Insert image')" @click="pickImage">
+      <button type="button" class="tb" :class="{ on: isActive('link') }" :aria-label="t('Insert link')" :data-tip="t('Insert link')" @click="setLink">🔗</button>
+      <button type="button" class="tb" :aria-label="t('Insert image')" :data-tip="t('Insert image')" @click="pickImage">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-5-5L5 21" /></svg>
       </button>
-      <button v-if="gifsEnabled" type="button" class="tb w-auto px-1.5 text-[11px] font-bold" :title="t('Insert GIF')" :aria-label="t('Insert GIF')" :data-tip="t('Insert GIF')" @click="openGifs">GIF</button>
+      <button v-if="gifsEnabled" type="button" class="tb w-auto px-1.5 text-[11px] font-bold" :aria-label="t('Insert GIF')" :data-tip="t('Insert GIF')" @click="openGifs">GIF</button>
       <template v-if="aiEnabled">
         <span class="mx-1.5 h-5 w-px bg-line"></span>
         <div class="relative">
-          <button type="button" class="tb w-auto gap-1 px-2 font-semibold text-primary" :class="{ on: aiMenuOpen }" :title="t('AI writing assistant')" :data-tip="t('AI writing assistant')" :disabled="aiBusy" @click="aiMenuOpen = !aiMenuOpen">
+          <button type="button" class="tb w-auto gap-1 px-2 font-semibold text-primary" :class="{ on: aiMenuOpen }" :data-tip="t('AI writing assistant')" :disabled="aiBusy" @click="aiMenuOpen = !aiMenuOpen">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3M12 18v3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M3 12h3M18 12h3M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" /><circle cx="12" cy="12" r="3" /></svg>
             <span class="text-xs">{{ aiBusy ? t('Thinking…') : 'AI' }}</span>
           </button>
@@ -266,8 +266,8 @@ function onFile(e: Event) {
         </div>
       </template>
       <span class="mx-1.5 h-5 w-px bg-line"></span>
-      <button type="button" class="tb" :title="t('Undo')" :aria-label="t('Undo')" :data-tip="t('Undo (Ctrl+Z)')" @click="editor.chain().focus().undo().run()">↶</button>
-      <button type="button" class="tb" :title="t('Redo')" :aria-label="t('Redo')" :data-tip="t('Redo (Ctrl+Y)')" @click="editor.chain().focus().redo().run()">↷</button>
+      <button type="button" class="tb" :aria-label="t('Undo')" :data-tip="t('Undo (Ctrl+Z)')" @click="editor.chain().focus().undo().run()">↶</button>
+      <button type="button" class="tb" :aria-label="t('Redo')" :data-tip="t('Redo (Ctrl+Y)')" @click="editor.chain().focus().redo().run()">↷</button>
       <!-- Extension point: composer-toolbar add-ons (e.g. the emoji picker) -->
       <Slot name="composer:toolbar" :ctx="{ insertText, topicId: props.topicId, categoryId: props.categoryId }" />
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFile" />
