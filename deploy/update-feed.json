@@ -1,11 +1,14 @@
 {
-    "version": "1.41.4",
-    "download": "https://convoro.co/releases/convoro-install-1.41.4.zip",
+    "version": "1.42.1",
+    "download": "https://convoro.co/releases/convoro-install-1.42.1.zip",
     "url": "https://convoro.co/changelog",
-    "title": "Extensions can add multiple menu links",
-    "date": "2026-06-20",
-    "notes": "Extensions can now contribute more than one navigation link (e.g. OnAir+ now surfaces both Studio and a public VODs library).",
+    "title": "Fediverse followers now see new topics",
+    "date": "2026-06-23",
+    "notes": "Federation fix: when someone follows your community from Mastodon or another fediverse server, every new topic now appears in their timeline (the community boosts each topic, with the original author credited). Also includes the 1.42.0 batch: redesigned two-pane direct messages, multilingual search, and theme + category UX improvements.",
     "changelog": [
-        {"type": "improved", "text": "Extensions can contribute multiple top-nav links, not just one."}
+        {"type": "fixed", "text": "ActivityPub: community followers now receive new topics in their fediverse timeline (community boosts each member topic; topic URLs are dereferenceable as ActivityPub Notes)."},
+        {"type": "improved", "text": "Direct messages redesigned into a two-pane layout."},
+        {"type": "improved", "text": "Multilingual full-text search."},
+        {"type": "improved", "text": "Theme and category management UX refinements."}
     ]
 }
