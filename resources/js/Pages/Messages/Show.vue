@@ -181,7 +181,19 @@ onMounted(() => {
       if (e?.message && !live.value.some((m) => m.id === e.message.id)) {
         live.value.push(e.message);
         scrollDown();
-        if (needsTranslation(e.message)) translateMessage(e.message);
+        // detectedLocale is usually still null here (detection is async) — the
+        // MessageLocaleDetected event below triggers auto-translate once known.
+        if (autoTranslate.value && translateEnabled.value && needsTranslation(e.message)) {
+          translateMessage(e.message);
+        }
+      }
+    })
+    .listen('.MessageLocaleDetected', (e: any) => {
+      const msg = live.value.find((m) => m.id === e.messageId);
+      if (!msg) return;
+      msg.detectedLocale = e.detectedLocale;
+      if (autoTranslate.value && translateEnabled.value && needsTranslation(msg) && !tx.value[msg.id]) {
+        translateMessage(msg);
       }
     })
     .listenForWhisper('typing', (e: any) => {

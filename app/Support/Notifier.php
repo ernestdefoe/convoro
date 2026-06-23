@@ -55,8 +55,11 @@ class Notifier
         }
 
         // Instant email (queued, never blocks the request), honouring the member's
-        // per-type preference + a real address.
-        if ($user->wantsNotification($type, 'email')
+        // per-type preference + a real address. Direct messages are the exception:
+        // they push instantly but their emails are batched into a periodic digest
+        // (see convoro:digest-messages) so a burst of DMs can't flood an inbox.
+        if ($type !== 'message'
+            && $user->wantsNotification($type, 'email')
             && Settings::get('mail.configured')
             && $user->isMailable()) {
             // For topic replies/mentions, let the member just reply to the email.

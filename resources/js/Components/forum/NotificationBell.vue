@@ -108,7 +108,7 @@ function onDocClick(e: MouseEvent) {
 
     <div
       v-if="open"
-      class="absolute right-0 top-[44px] z-50 w-[360px] overflow-hidden rounded-c border border-line bg-surface shadow-2xl shadow-black/10"
+      class="fixed inset-x-2 top-[58px] z-50 w-auto overflow-hidden rounded-c border border-line bg-surface shadow-2xl shadow-black/10 md:absolute md:inset-x-auto md:right-0 md:top-[44px] md:w-[360px]"
     >
       <div class="flex items-center justify-between border-b border-line px-4 py-3">
         <span class="text-sm font-bold">{{ t('Notifications') }}</span>

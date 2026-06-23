@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Events\MessageLocaleDetected;
 use App\Models\Message;
 use App\Support\ContentTranslator;
 use Illuminate\Bus\Queueable;
@@ -32,6 +33,9 @@ class DetectMessageLanguageJob implements ShouldQueue
         $code = ContentTranslator::detect((string) $message->body_html);
         if ($code) {
             $message->updateQuietly(['detected_locale' => $code]);
+            // The message was broadcast before detection finished (detection is an
+            // LLM call); tell viewers now so live auto-translate works sans refresh.
+            broadcast(new MessageLocaleDetected((int) $message->conversation_id, (int) $message->id, $code));
         }
     }
 }

@@ -13,8 +13,26 @@ const refreshing = ref(false);
 let startY = 0;
 let tracking = false;
 
+/** Nearest ancestor with its own vertical scroll (e.g. the DM thread). */
+function scrollableAncestor(el: HTMLElement | null): HTMLElement | null {
+  let n: HTMLElement | null = el;
+  while (n && n !== document.body) {
+    const oy = getComputedStyle(n).overflowY;
+    if ((oy === 'auto' || oy === 'scroll') && n.scrollHeight > n.clientHeight + 1) return n;
+    n = n.parentElement;
+  }
+  return null;
+}
+
 function onStart(e: TouchEvent) {
   if (refreshing.value || window.scrollY > 0 || e.touches.length !== 1) {
+    tracking = false;
+    return;
+  }
+  // Don't hijack a downward drag an inner scroll region can consume — e.g.
+  // scrolling back up in the DM thread. Only engage when it's already at its top.
+  const sc = scrollableAncestor(e.target as HTMLElement);
+  if (sc && sc.scrollTop > 0) {
     tracking = false;
     return;
   }

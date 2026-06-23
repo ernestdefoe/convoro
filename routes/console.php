@@ -12,6 +12,10 @@ Artisan::command('inspire', function () {
 Schedule::command('convoro:digest daily')->dailyAt('08:00');
 Schedule::command('convoro:digest weekly')->weeklyOn(1, '08:00');
 
+// Direct-message emails are batched (push is instant) so a burst of DMs can't
+// flood an inbox — send a digest of still-unread messages every few hours.
+Schedule::command('convoro:digest-messages')->everyThreeHours()->withoutOverlapping();
+
 // Registry auto-refresh: pull new GitHub releases into the directory hourly
 // (the webhook handles instant updates; this is the safety-net poll).
 Schedule::command('convoro:refresh-registry')->hourly()->withoutOverlapping();
