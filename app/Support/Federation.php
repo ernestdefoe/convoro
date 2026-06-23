@@ -239,7 +239,12 @@ class Federation
         return ($user && ! $user->is_federated) ? $user : null;
     }
 
-    public static function createActivityForTopic(Topic $topic): array
+    /**
+     * The standalone Note object for a topic. Served (with @context added) at
+     * GET /t/{slug} under content negotiation so remotes can dereference a
+     * boosted/replied object, and embedded inside the Create activity below.
+     */
+    public static function noteForTopic(Topic $topic): array
     {
         $base = self::base();
         $topicUrl = $base.'/t/'.$topic->slug;
@@ -253,23 +258,53 @@ class Federation
             .'<p><a href="'.e($topicUrl).'">'.e($topicUrl).'</a></p>';
 
         return [
-            '@context' => 'https://www.w3.org/ns/activitystreams',
-            'id' => $topicUrl.'#create',
-            'type' => 'Create',
-            'actor' => $actor,
+            'id' => $topicUrl,
+            'type' => 'Note',
+            'attributedTo' => $actor,
+            'content' => $content,
+            'url' => $topicUrl,
             'published' => $published,
             'to' => ['https://www.w3.org/ns/activitystreams#Public'],
             'cc' => [$followers],
-            'object' => [
-                'id' => $topicUrl,
-                'type' => 'Note',
-                'attributedTo' => $actor,
-                'content' => $content,
-                'url' => $topicUrl,
-                'published' => $published,
-                'to' => ['https://www.w3.org/ns/activitystreams#Public'],
-                'cc' => [$followers],
-            ],
+        ];
+    }
+
+    public static function createActivityForTopic(Topic $topic): array
+    {
+        $note = self::noteForTopic($topic);
+
+        return [
+            '@context' => 'https://www.w3.org/ns/activitystreams',
+            'id' => $note['id'].'#create',
+            'type' => 'Create',
+            'actor' => $note['attributedTo'],
+            'published' => $note['published'],
+            'to' => $note['to'],
+            'cc' => $note['cc'],
+            'object' => $note,
+        ];
+    }
+
+    /**
+     * The community boosts (Announce) a topic's Note to its own followers, so
+     * anyone following @{community} sees every new topic with the member's
+     * native author attribution preserved (Mastodon dereferences the Note).
+     */
+    public static function announceActivityForTopic(Topic $topic): array
+    {
+        $base = self::base();
+        $noteUrl = $base.'/t/'.$topic->slug;
+        $published = ($topic->created_at ?? now())->toAtomString();
+
+        return [
+            '@context' => 'https://www.w3.org/ns/activitystreams',
+            'id' => $noteUrl.'#announce',
+            'type' => 'Announce',
+            'actor' => self::actorUrl(),
+            'published' => $published,
+            'to' => ['https://www.w3.org/ns/activitystreams#Public'],
+            'cc' => [$base.'/federation/followers'],
+            'object' => $noteUrl,
         ];
     }
 
@@ -409,17 +444,24 @@ class Federation
                 return;
             }
             $author = self::authorOf($topic->user);
-            $inboxes = DB::table('federation_followers')
-                ->where(function ($q) use ($author) {
-                    $q->whereNull('user_id');
-                    if ($author) {
-                        $q->orWhere('user_id', $author->id);
-                    }
-                })->get()->map(fn ($f) => $f->shared_inbox ?: $f->inbox)->filter()->unique()->values()->all();
-            if (! $inboxes) {
-                return;
+            $inboxesFor = fn ($rows) => $rows->map(fn ($f) => $f->shared_inbox ?: $f->inbox)
+                ->filter()->unique()->values()->all();
+
+            // Community followers (user_id NULL) get a boost from the community
+            // actor — that's the actor they actually follow, so it lands in their
+            // home timeline. Author attribution survives via the Note's attributedTo.
+            $communityInboxes = $inboxesFor(DB::table('federation_followers')->whereNull('user_id')->get());
+            if ($communityInboxes) {
+                \App\Jobs\DeliverActivity::dispatch(self::announceActivityForTopic($topic), $communityInboxes, null)->afterCommit();
             }
-            \App\Jobs\DeliverActivity::dispatch(self::createActivityForTopic($topic), $inboxes, $author?->id)->afterCommit();
+
+            // The author's own followers get the per-user Create, signed by them.
+            if ($author) {
+                $authorInboxes = $inboxesFor(DB::table('federation_followers')->where('user_id', $author->id)->get());
+                if ($authorInboxes) {
+                    \App\Jobs\DeliverActivity::dispatch(self::createActivityForTopic($topic), $authorInboxes, $author->id)->afterCommit();
+                }
+            }
         } catch (\Throwable $e) {
             Log::debug('Federation announce skipped: '.$e->getMessage());
         }

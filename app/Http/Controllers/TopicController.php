@@ -144,8 +144,20 @@ class TopicController extends Controller
         return response()->json(['count' => $count, 'live' => $count >= \App\Support\LiveTopics::threshold()]);
     }
 
-    public function show(Topic $topic): Response
+    public function show(Request $request, Topic $topic): Response|\Illuminate\Http\JsonResponse
     {
+        // ActivityPub content negotiation: when a fediverse server fetches the
+        // topic URL as application/activity+json (e.g. to dereference a boosted
+        // Note), return the Note object instead of the HTML page.
+        if (\App\Support\Federation::enabled() && ! $topic->hidden
+            && str_contains((string) $request->header('Accept'), 'application/activity+json')) {
+            $topic->loadMissing('firstPost');
+            $note = \App\Support\Federation::noteForTopic($topic);
+
+            return response()->json(['@context' => 'https://www.w3.org/ns/activitystreams'] + $note)
+                ->header('Content-Type', \App\Support\Federation::CTYPE);
+        }
+
         $actor = auth()->user();
         $actor?->loadMissing('groups');
         $actorId = $actor?->id;
