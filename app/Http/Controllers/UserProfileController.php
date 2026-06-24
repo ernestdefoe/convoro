@@ -67,6 +67,7 @@ class UserProfileController extends Controller
                 'staff' => $a['staff'],
                 'joined' => optional($user->created_at)?->format('F Y'),
                 'isAdmin' => (bool) $user->is_admin,
+                'verified' => $user->email_verified_at !== null,
                 'isSelf' => $actorId === (int) $user->id,
                 // Trust badge — shown for every level on non-admin members
                 // (admins show their Admin badge instead).

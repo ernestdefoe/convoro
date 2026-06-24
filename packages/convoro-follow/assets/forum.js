@@ -1,7 +1,7 @@
 /*
  * Convoro Follow & Feed — forum bundle (vanilla JS).
- * Adds a Follow button to member profiles (the profile:below slot) and a "Feed"
- * link to the header nav. Pages/API live in the provider.
+ * Adds a Follow button into the profile header action row (the profile:actions
+ * slot) and a "Feed" link to the header nav. Pages/API live in the provider.
  */
 (function () {
   if (!window.Convoro || typeof window.Convoro.registerSlot !== 'function') return;
@@ -11,37 +11,55 @@
     return m ? m.content : '';
   }
 
-  // ---- Follow button on a member's profile. ----
-  window.Convoro.registerSlot('profile:below', {
+  // Compact follower count (1.2K, 3.4M), like the channel-style header.
+  function fmt(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(n % 1e6 ? 1 : 0).replace(/\.0$/, '') + 'M';
+    if (n >= 1e3) return (n / 1e3).toFixed(n % 1e3 ? 1 : 0).replace(/\.0$/, '') + 'K';
+    return '' + n;
+  }
+
+  // Fill the follower count into the profile header's stats row (a core
+  // placeholder); core never queries our table — we own this number.
+  function updateStat(n) {
+    var stat = document.querySelector('[data-follow-stat]');
+    if (!stat) return;
+    stat.innerHTML = '<strong class="font-bold text-white">' + fmt(n) + '</strong> ' + (n === 1 ? 'follower' : 'followers');
+    stat.classList.remove('hidden');
+  }
+
+  var ICON_FOLLOW =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>';
+  var ICON_FOLLOWING =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 11 2 2 4-4"/></svg>';
+
+  // ---- Follow button in a member's profile header (over the cover card). ----
+  window.Convoro.registerSlot('profile:actions', {
     ext: 'convoro-follow',
     order: 5,
     mount: function (el, ctx) {
       var uid = ctx && ctx.props && ctx.props.userId;
       if (!uid) return;
 
-      var wrap = document.createElement('div');
-      wrap.className = 'mb-4 flex items-center gap-3 rounded-c border border-line bg-surface px-4 py-3';
-      el.appendChild(wrap);
-
-      var count = document.createElement('span');
-      count.className = 'text-sm text-ink-2';
       var btn = document.createElement('button');
       btn.type = 'button';
+      btn.style.display = 'none';
 
       function paint(state) {
-        var n = state.followers || 0;
-        count.textContent = n + (n === 1 ? ' follower' : ' followers');
         if (!state.canFollow) {
           btn.style.display = 'none';
           return;
         }
         btn.style.display = '';
+        var tip = state.followers + (state.followers === 1 ? ' follower' : ' followers');
+        btn.setAttribute('title', tip);
         if (state.following) {
-          btn.textContent = 'Following';
-          btn.className = 'rounded-lg border border-line bg-surface-2 px-4 py-2 text-sm font-semibold text-ink-2 hover:border-red-500/40 hover:text-red-500';
+          btn.innerHTML = ICON_FOLLOWING + '<span>Following</span>';
+          btn.className =
+            'inline-flex items-center gap-1.5 rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-semibold text-white transition hover:border-red-400/60 hover:text-red-200';
         } else {
-          btn.textContent = 'Follow';
-          btn.className = 'rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600';
+          btn.innerHTML = ICON_FOLLOW + '<span>Follow</span>';
+          btn.className =
+            'inline-flex items-center gap-1.5 rounded-xl bg-white/90 px-4 py-2.5 text-sm font-semibold text-slate-900 shadow transition hover:bg-white';
         }
       }
 
@@ -50,19 +68,17 @@
         btn.disabled = true;
         fetch('/api/ext/follow/user/' + uid, { method: 'POST', headers: { 'X-CSRF-TOKEN': csrf(), Accept: 'application/json' } })
           .then(function (r) { return r.ok ? r.json() : null; })
-          .then(function (d) { if (d) { current.following = d.following; current.followers = d.followers; paint(current); } })
+          .then(function (d) { if (d) { current.following = d.following; current.followers = d.followers; paint(current); updateStat(d.followers); } })
           .catch(function () {})
           .then(function () { btn.disabled = false; });
       });
 
-      wrap.appendChild(count);
-      var sp = document.createElement('span'); sp.className = 'flex-1'; wrap.appendChild(sp);
-      wrap.appendChild(btn);
+      el.appendChild(btn);
 
       fetch('/api/ext/follow/state/' + uid, { headers: { Accept: 'application/json' } })
         .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (d) { if (d) { current = d; paint(d); } else { wrap.remove(); } })
-        .catch(function () { wrap.remove(); });
+        .then(function (d) { if (d) { current = d; paint(d); updateStat(d.followers); } else { btn.remove(); } })
+        .catch(function () { btn.remove(); });
     },
   });
 
