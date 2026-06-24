@@ -14,26 +14,26 @@
    --------------------------------------------------------------------------- */
 @layer base {
   :root {
-    --c-primary: 91 91 214;        /* #5B5BD6 */
-    --c-primary-600: 79 79 207;
-    --c-primary-700: 66 66 181;
-    --c-primary-soft: 236 237 251;
-    --c-bg: 243 244 249;
-    --c-surface: 255 255 255;
-    --c-surface-2: 248 249 252;
-    --c-border: 230 232 240;
-    --c-text: 27 32 48;
-    --c-text-2: 74 81 104;
-    --c-muted: 138 144 166;
-    --c-radius: 12px;
+    --c-primary: 139 92 246;       /* #8B5CF6 — Prism violet */
+    --c-primary-600: 124 58 237;
+    --c-primary-700: 109 40 217;
+    --c-primary-soft: 34 28 56;
+    --c-bg: 11 10 20;              /* #0B0A14 — deep violet-black */
+    --c-surface: 22 19 38;        /* #161326 — glass base */
+    --c-surface-2: 31 27 52;      /* #1F1B34 */
+    --c-border: 52 47 86;
+    --c-text: 237 238 247;
+    --c-text-2: 180 182 204;
+    --c-muted: 134 136 162;
+    --c-radius: 16px;
     --c-radius-btn: 12px;
-    --c-accent: 139 92 246;        /* #8B5CF6 */
-    --c-accent-600: 124 58 237;
-    --c-header-bg: rgb(255 255 255);
-    --c-header-text: 27 32 48;
-    --c-link: 91 91 214;
+    --c-accent: 236 72 153;        /* #EC4899 — Prism fuchsia */
+    --c-accent-600: 219 39 119;
+    --c-header-bg: rgb(13 12 24 / 0.72);
+    --c-header-text: 237 238 247;
+    --c-link: 167 139 250;
     --c-density: 1;
-    --c-grad: linear-gradient(135deg, #6366f1 0%, #8b5cf6 55%, #a855f7 100%);
+    --c-grad: linear-gradient(135deg, #7c3aed 0%, #a855f7 48%, #ec4899 100%);
   }
 
   [data-theme='dark'] { --c-header-bg: rgb(22 25 41); --c-header-text: 233 235 243; }
@@ -53,6 +53,30 @@
 }
 
 .q-grad { background: var(--c-grad); }
+
+/* Convoro 2 "Prism" — dynamic aurora backdrop + frosted-glass surfaces, so the
+   whole UI (cards, sidebar, widgets, search) matches the hero. */
+body { position: relative; }
+body::before {
+  content: ''; position: fixed; inset: -10%; z-index: -1; pointer-events: none;
+  background:
+    radial-gradient(38% 48% at 12% 0%, rgba(124, 58, 237, 0.34), transparent 60%),
+    radial-gradient(36% 42% at 88% 4%, rgba(236, 72, 153, 0.24), transparent 60%),
+    radial-gradient(46% 52% at 60% 102%, rgba(34, 211, 238, 0.16), transparent 60%);
+  animation: prismAurora 24s ease-in-out infinite alternate;
+}
+@keyframes prismAurora {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-3%, 2%) scale(1.08); }
+}
+@media (prefers-reduced-motion: reduce) { body::before { animation: none; } }
+header.q-header { backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); }
+
+@layer utilities {
+  .bg-surface { background-color: rgb(var(--c-surface) / 0.72) !important; backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); }
+  .bg-surface-2 { background-color: rgb(var(--c-surface-2) / 0.66) !important; }
+  .border-line { border-color: rgb(255 255 255 / 0.09) !important; }
+}
 
 /* Live-editor tokens applied site-wide (every Convoro install gets these) */
 h1, h2, h3, h4, h5, h6 { font-family: var(--c-font-heading, var(--c-font)); }
