@@ -34,5 +34,5 @@ createServer((page) =>
             return app;
         },
     }),
-    Number(process.env.SSR_PORT) || 13714,
+    Number((globalThis as any).process?.env?.SSR_PORT) || 13714,
 );
