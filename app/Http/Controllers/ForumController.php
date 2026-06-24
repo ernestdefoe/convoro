@@ -96,8 +96,36 @@ class ForumController extends Controller
             unset($c);
         }
 
+        // Prism hero — the home page gets the community hero; viewing a category
+        // surfaces that space's own hero (its icon, colour, blurb). First piece
+        // of the Convoro 2 "Prism" concept; the tag/sub-tag heroes follow this
+        // path once categories migrate to tags.
+        $activeCat = $categorySlug ? collect($categories)->firstWhere('slug', $categorySlug) : null;
+        $fmt = fn (int $n) => $n >= 1000 ? round($n / 1000, 1).'k' : (string) $n;
+        $hero = $activeCat
+            ? [
+                'title' => $activeCat['name'],
+                'subtitle' => $activeCat['description'] ?: null,
+                'icon' => (is_string($activeCat['icon']) && str_starts_with((string) $activeCat['icon'], 'fa-')) ? $activeCat['icon'] : 'fa-solid fa-hashtag',
+                'c1' => $activeCat['color'] ?: '#7c3aed',
+                'stats' => [['label' => 'topics', 'value' => $fmt((int) $activeCat['count'])]],
+            ]
+            : [
+                'title' => (string) \App\Support\Settings::get('community.name', config('app.name', 'Convoro')),
+                'subtitle' => (string) \App\Support\Settings::get('forum.hero_subtitle', 'where every space refracts its own light'),
+                'icon' => (string) \App\Support\Settings::get('forum.hero_icon', 'fa-solid fa-meteor'),
+                'c1' => (string) \App\Support\Settings::get('forum.hero_c1', '#7c3aed'),
+                'c2' => (string) \App\Support\Settings::get('forum.hero_c2', '#ec4899'),
+                'image' => ((string) \App\Support\Settings::get('forum.hero_image', '')) ?: null,
+                'stats' => [
+                    ['label' => 'members', 'value' => $fmt(\App\Models\User::count())],
+                    ['label' => 'topics', 'value' => $fmt(Topic::count())],
+                ],
+            ];
+
         return Inertia::render('Forum/Index', [
             'view' => $view,
+            'hero' => $hero,
             'sort' => $sort,
             'activeCategory' => $categorySlug,
             'categories' => $categories,

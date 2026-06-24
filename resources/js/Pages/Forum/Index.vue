@@ -5,6 +5,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import TopicCard from '@/Components/forum/TopicCard.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
+import PrismHero from '@/Components/forum/PrismHero.vue';
 import Slot from '@/Components/ext/Slot.vue';
 import EmptyState from '@/Components/EmptyState.vue';
 import AskBar from '@/Components/AskBar.vue';
@@ -47,6 +48,7 @@ const props = defineProps<{
   aboutHtml?: string;
   aboutTitle?: string;
   defaultCover?: string | null;
+  hero?: any;
 }>();
 
 // Live badges: keep topics that were live on load, and poll for who's reading now.
@@ -147,6 +149,7 @@ function go(params: Record<string, string | null>) {
 <template>
   <Head title="Community" />
   <AppLayout>
+    <PrismHero v-if="hero" :config="hero" class="mb-5" />
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-[224px_1fr_268px]">
       <!-- Left sidebar -->
       <aside class="hidden lg:block">
