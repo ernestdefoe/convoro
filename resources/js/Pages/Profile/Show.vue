@@ -56,7 +56,7 @@ function message() {
         <div class="absolute inset-x-2 bottom-2 z-10 rounded-c border border-white/15 bg-black/30 p-4 shadow-2xl backdrop-blur-2xl sm:inset-x-4 sm:bottom-4 sm:p-5">
           <div class="flex flex-col gap-4 sm:flex-row sm:items-center">
             <!-- Avatar (pokes slightly above the card) -->
-            <div class="-mt-12 w-fit shrink-0 ring-4 ring-white/70 sm:-mt-10" :style="{ borderRadius: 'var(--c-avatar-radius, 9999px)' }">
+            <div class="-mt-12 flex w-fit shrink-0 ring-4 ring-white/70 sm:-mt-10" :style="{ borderRadius: 'var(--c-avatar-radius, 9999px)' }">
               <Avatar :avatar="{ id: profile.id, initials: profile.initials, color: profile.color, avatar: profile.avatar, staff: profile.staff }" :size="92" />
             </div>
 
