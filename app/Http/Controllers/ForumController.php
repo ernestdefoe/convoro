@@ -48,10 +48,12 @@ class ForumController extends Controller
         $view = in_array($view, ['feed', 'grid', 'category'], true) ? $view : \App\Support\Settings::get('forum.default_view', 'feed');
         $sort = in_array($request->query('sort'), ['recent', 'popular', 'title']) ? $request->query('sort') : 'recent';
         $categorySlug = $request->query('category');
+        $tagSlug = $request->query('tag');
 
         $query = Topic::query()->visible()
             ->with(['user.groups', 'category', 'tags', 'firstPost.reactions'])
-            ->when($categorySlug, fn ($q) => $q->whereHas('category', fn ($c) => $c->where('slug', $categorySlug)));
+            ->when($categorySlug, fn ($q) => $q->whereHas('category', fn ($c) => $c->where('slug', $categorySlug)))
+            ->when($tagSlug, fn ($q) => $q->whereHas('tags', fn ($t) => $t->where('slug', $tagSlug)));
 
         $query->orderByDesc('is_pinned');
         match ($sort) {
@@ -96,20 +98,35 @@ class ForumController extends Controller
             unset($c);
         }
 
-        // Prism hero — the home page gets the community hero; viewing a category
-        // surfaces that space's own hero (its icon, colour, blurb). First piece
-        // of the Convoro 2 "Prism" concept; the tag/sub-tag heroes follow this
-        // path once categories migrate to tags.
-        $activeCat = $categorySlug ? collect($categories)->firstWhere('slug', $categorySlug) : null;
+        // ── Prism tags ──────────────────────────────────────────────────────
+        // Tags (with sub-tags) are the primary navigation in Convoro 2: each is
+        // its own space with a customizable hero. Categories were imported into
+        // this tag tree. The home page shows the community hero.
+        $tagTree = \App\Models\Tag::query()->whereNull('parent_id')
+            ->withCount('topics')->orderBy('position')->orderBy('name')
+            ->with(['children' => fn ($c) => $c->withCount('topics')->orderBy('position')->orderBy('name')])
+            ->get();
+        $mapTag = fn (\App\Models\Tag $t) => [
+            'name' => $t->name, 'slug' => $t->slug, 'icon' => $t->icon,
+            'color' => $t->color, 'count' => $t->topics_count,
+        ];
+        $tags = $tagTree->map(fn (\App\Models\Tag $t) => $mapTag($t) + ['children' => $t->children->map($mapTag)->all()])->all();
+
+        $activeTag = $tagSlug ? \App\Models\Tag::where('slug', $tagSlug)->first() : null;
+        $subtags = null;
+        if ($activeTag) {
+            $parent = $activeTag->parent_id ? $activeTag->parent : $activeTag;
+            $subtags = [
+                'parent' => ['name' => $parent->name, 'slug' => $parent->slug],
+                'active' => $activeTag->slug,
+                'items' => $parent->children()->orderBy('position')->orderBy('name')->get()
+                    ->map(fn ($c) => ['name' => $c->name, 'slug' => $c->slug])->all(),
+            ];
+        }
+
         $fmt = fn (int $n) => $n >= 1000 ? round($n / 1000, 1).'k' : (string) $n;
-        $hero = $activeCat
-            ? [
-                'title' => $activeCat['name'],
-                'subtitle' => $activeCat['description'] ?: null,
-                'icon' => (is_string($activeCat['icon']) && str_starts_with((string) $activeCat['icon'], 'fa-')) ? $activeCat['icon'] : 'fa-solid fa-hashtag',
-                'c1' => $activeCat['color'] ?: '#7c3aed',
-                'stats' => [['label' => 'topics', 'value' => $fmt((int) $activeCat['count'])]],
-            ]
+        $hero = $activeTag
+            ? $activeTag->heroConfig() + ['stats' => [['label' => 'topics', 'value' => $fmt((int) $activeTag->topics()->count())]]]
             : [
                 'title' => (string) \App\Support\Settings::get('community.name', config('app.name', 'Convoro')),
                 'subtitle' => (string) \App\Support\Settings::get('forum.hero_subtitle', 'where every space refracts its own light'),
@@ -126,6 +143,9 @@ class ForumController extends Controller
         return Inertia::render('Forum/Index', [
             'view' => $view,
             'hero' => $hero,
+            'tags' => $tags,
+            'subtags' => $subtags,
+            'activeTag' => $tagSlug,
             'sort' => $sort,
             'activeCategory' => $categorySlug,
             'categories' => $categories,

@@ -49,6 +49,9 @@ const props = defineProps<{
   aboutTitle?: string;
   defaultCover?: string | null;
   hero?: any;
+  tags?: any[];
+  subtags?: any;
+  activeTag?: string | null;
 }>();
 
 // Live badges: keep topics that were live on load, and poll for who's reading now.
@@ -142,7 +145,12 @@ function go(params: Record<string, string | null>) {
   if (params.view === 'feed' || params.view === 'grid' || params.view === 'category') {
     document.cookie = `convoro_view=${params.view};path=/;max-age=31536000;samesite=lax`;
   }
-  router.get('/', { view: props.view, sort: props.sort, category: props.activeCategory, ...params }, { preserveScroll: true, preserveState: true });
+  router.get('/', { view: props.view, sort: props.sort, category: props.activeCategory, tag: props.activeTag, ...params }, { preserveScroll: true, preserveState: true });
+}
+
+// A top-level tag pill stays lit when it — or one of its sub-tags — is active.
+function isActiveTop(t: any) {
+  return props.activeTag === t.slug || (t.children || []).some((c: any) => c.slug === props.activeTag);
 }
 </script>
 
@@ -150,6 +158,35 @@ function go(params: Record<string, string | null>) {
   <Head title="Community" />
   <AppLayout>
     <PrismHero v-if="hero" :config="hero" class="mb-5" />
+
+    <!-- Prism tag rail — primary navigation; tags (with sub-tags) replace categories -->
+    <div v-if="tags && tags.length" class="mb-5">
+      <div class="flex items-center gap-2 overflow-x-auto pb-1">
+        <button type="button" @click="go({ tag: null, category: null })"
+          class="inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition"
+          :class="!activeTag ? 'border-transparent bg-primary text-white shadow-lg shadow-primary/30' : 'border-line bg-surface text-ink-2 hover:text-ink'">
+          <i class="fa-solid fa-layer-group text-[13px]" aria-hidden="true"></i> {{ tr('All') }}
+        </button>
+        <button v-for="t in tags" :key="t.slug" type="button" @click="go({ tag: t.slug, category: null })"
+          class="inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition"
+          :class="isActiveTop(t) ? 'border-transparent text-white shadow-lg' : 'border-line bg-surface text-ink-2 hover:text-ink'"
+          :style="isActiveTop(t) ? { background: t.color, boxShadow: '0 8px 24px -8px ' + t.color + 'aa' } : undefined">
+          <i v-if="t.icon && t.icon.startsWith('fa-')" :class="t.icon" class="text-[13px]" aria-hidden="true"></i>
+          <span v-else class="h-2 w-2 rounded-full" :style="{ background: isActiveTop(t) ? '#fff' : t.color }"></span>
+          {{ t.name }}
+          <span class="rounded-full px-1.5 text-xs" :class="isActiveTop(t) ? 'bg-black/20' : 'bg-surface-2'">{{ t.count }}</span>
+        </button>
+      </div>
+      <div v-if="subtags && subtags.items.length" class="mt-2.5 flex flex-wrap items-center gap-2">
+        <button type="button" @click="go({ tag: subtags.parent.slug, category: null })"
+          class="rounded-full px-3 py-1 text-xs font-semibold transition"
+          :class="subtags.active === subtags.parent.slug ? 'bg-primary/20 text-primary' : 'bg-surface text-ink-2 hover:text-ink'">{{ tr('All') }}</button>
+        <button v-for="s in subtags.items" :key="s.slug" type="button" @click="go({ tag: s.slug, category: null })"
+          class="rounded-full px-3 py-1 text-xs font-semibold transition"
+          :class="subtags.active === s.slug ? 'bg-primary/20 text-primary' : 'bg-surface text-ink-2 hover:text-ink'">{{ s.name }}</button>
+      </div>
+    </div>
+
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-[224px_1fr_268px]">
       <!-- Left sidebar -->
       <aside class="hidden lg:block">
