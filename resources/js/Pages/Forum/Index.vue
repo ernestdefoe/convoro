@@ -190,24 +190,38 @@ function isActiveTop(t: any) {
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-[224px_1fr_268px]">
       <!-- Left sidebar -->
       <aside class="hidden lg:block">
-        <button type="button" @click="startTopic" class="mb-3.5 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600">
+        <button type="button" @click="startTopic" class="mb-3.5 flex w-full items-center justify-center gap-2 rounded-lg q-grad px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/30 transition hover:opacity-90">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14" /></svg> {{ tr('Start a topic') }}
         </button>
         <div class="overflow-hidden rounded-c border border-line bg-surface shadow-sm">
           <div class="flex items-center gap-2 border-b border-line bg-primary/10 px-4 py-3">
-            <span class="text-sm leading-none">📂</span>
-            <b class="text-[13px] font-bold uppercase tracking-wide text-ink-2">{{ tr('Categories') }}</b>
+            <i class="fa-solid fa-layer-group text-[13px] text-primary" aria-hidden="true"></i>
+            <b class="text-[13px] font-bold uppercase tracking-wide text-ink-2">{{ tr('Spaces') }}</b>
           </div>
           <nav class="flex flex-col gap-0.5 p-2">
-            <button @click="go({ category: null })" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold"
-              :class="!activeCategory ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">{{ tr('All topics') }}</button>
-            <button v-for="c in categories" :key="c.slug" @click="go({ category: c.slug })"
-              class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition hover:bg-surface-2"
-              :style="activeCategory === c.slug ? { background: (c.color || '') + '24' } : undefined">
-              <CategoryIcon :icon="c.icon" :color="c.color" />
-              <span :style="{ color: c.color }">{{ c.name }}</span>
-              <span class="ml-auto rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink-muted">{{ c.count }}</span>
+            <button type="button" @click="go({ tag: null, category: null })" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold"
+              :class="!activeTag ? 'bg-primary/15 text-primary' : 'text-ink-2 hover:bg-surface-2'">
+              <i class="fa-solid fa-layer-group w-4 text-center text-[12px]" aria-hidden="true"></i> {{ tr('All topics') }}
             </button>
+            <template v-for="t in (tags || [])" :key="t.slug">
+              <button type="button" @click="go({ tag: t.slug, category: null })"
+                class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold transition hover:bg-surface-2"
+                :style="isActiveTop(t) ? { background: t.color + '24' } : undefined">
+                <i v-if="t.icon && t.icon.startsWith('fa-')" :class="t.icon" class="w-4 text-center text-[12px]" :style="{ color: t.color }" aria-hidden="true"></i>
+                <span v-else class="ml-0.5 h-2.5 w-2.5 rounded-full" :style="{ background: t.color }"></span>
+                <span :style="{ color: isActiveTop(t) ? t.color : undefined }">{{ t.name }}</span>
+                <span class="ml-auto rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink-muted">{{ t.count }}</span>
+              </button>
+              <template v-if="isActiveTop(t) && t.children && t.children.length">
+                <button v-for="c in t.children" :key="c.slug" type="button" @click="go({ tag: c.slug, category: null })"
+                  class="flex items-center gap-2 rounded-lg py-1.5 pl-9 pr-3 text-[13px] font-semibold transition hover:bg-surface-2"
+                  :class="activeTag === c.slug ? 'text-primary' : 'text-ink-2'">
+                  <span class="h-1.5 w-1.5 rounded-full" :style="{ background: c.color }"></span>
+                  <span class="truncate">{{ c.name }}</span>
+                  <span class="ml-auto text-xs text-ink-muted">{{ c.count }}</span>
+                </button>
+              </template>
+            </template>
           </nav>
         </div>
         <!-- Ask Convoro lives under the categories list, on the left. -->
