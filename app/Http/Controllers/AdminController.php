@@ -835,6 +835,78 @@ class AdminController extends Controller
         return back();
     }
 
+    // ---- Hero Studio (Convoro 2 "Prism") ----------------------------------
+
+    /** The customizer for the home hero + every tag space's hero. */
+    public function heroStudio(): Response
+    {
+        $home = [
+            'title' => (string) Settings::get('community.name', config('app.name', 'Convoro')),
+            'subtitle' => (string) Settings::get('forum.hero_subtitle', 'where every space refracts its own light'),
+            'icon' => (string) Settings::get('forum.hero_icon', 'fa-solid fa-meteor'),
+            'c1' => (string) Settings::get('forum.hero_c1', '#7c3aed'),
+            'c2' => (string) Settings::get('forum.hero_c2', '#ec4899'),
+            'image' => ((string) Settings::get('forum.hero_image', '')) ?: null,
+        ];
+
+        $tags = Tag::orderBy('parent_id')->orderBy('position')->orderBy('name')->get()
+            ->map(fn (Tag $t) => [
+                'id' => $t->id,
+                'name' => $t->name,
+                'isSub' => (bool) $t->parent_id,
+                'config' => $t->heroConfig(),
+            ])->all();
+
+        return Inertia::render('Admin/HeroStudio', ['home' => $home, 'tags' => $tags]);
+    }
+
+    /** Save a hero — `target` is 'home' or a tag id. */
+    public function saveHero(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'target' => ['required', 'string'],
+            'title' => ['nullable', 'string', 'max:60'],
+            'subtitle' => ['nullable', 'string', 'max:160'],
+            'icon' => ['nullable', 'string', 'max:60'],
+            'c1' => ['nullable', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'c2' => ['nullable', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'image' => ['nullable', 'string', 'max:2048'],
+        ]);
+
+        if ($data['target'] === 'home') {
+            Settings::setMany([
+                'community.name' => $data['title'] ?: config('app.name', 'Convoro'),
+                'forum.hero_subtitle' => $data['subtitle'] ?? '',
+                'forum.hero_icon' => $data['icon'] ?: 'fa-solid fa-meteor',
+                'forum.hero_c1' => $data['c1'] ?: '#7c3aed',
+                'forum.hero_c2' => $data['c2'] ?: '#ec4899',
+                'forum.hero_image' => $data['image'] ?? '',
+            ]);
+
+            return back();
+        }
+
+        $tag = Tag::findOrFail((int) $data['target']);
+        $tag->hero = array_filter([
+            'subtitle' => $data['subtitle'] ?? null,
+            'icon' => $data['icon'] ?? null,
+            'c1' => $data['c1'] ?? null,
+            'c2' => $data['c2'] ?? null,
+            'image' => $data['image'] ?? null,
+        ], fn ($v) => $v !== null && $v !== '');
+        // Mirror onto the tag's base fields so the rail pill + listings match.
+        if (! empty($data['c1'])) {
+            $tag->color = $data['c1'];
+        }
+        if (! empty($data['icon'])) {
+            $tag->icon = $data['icon'];
+        }
+        $tag->description = $data['subtitle'] ?? $tag->description;
+        $tag->save();
+
+        return back();
+    }
+
     // ---- Members & Groups -------------------------------------------------
 
     public function members(Request $request): Response

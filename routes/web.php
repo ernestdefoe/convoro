@@ -381,6 +381,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/tags', [App\Http\Controllers\AdminController::class, 'storeTag'])->name('tags.store');
     Route::put('/tags/{tag}', [App\Http\Controllers\AdminController::class, 'updateTag'])->name('tags.update');
     Route::delete('/tags/{tag}', [App\Http\Controllers\AdminController::class, 'destroyTag'])->name('tags.destroy');
+    Route::get('/heroes', [App\Http\Controllers\AdminController::class, 'heroStudio'])->name('heroes');
+    Route::post('/heroes', [App\Http\Controllers\AdminController::class, 'saveHero'])->name('heroes.save');
 
     Route::get('/marketplace', [App\Http\Controllers\AdminController::class, 'marketplace'])->name('marketplace');
     Route::post('/marketplace/license', [App\Http\Controllers\AdminController::class, 'installLicense'])->name('marketplace.license');

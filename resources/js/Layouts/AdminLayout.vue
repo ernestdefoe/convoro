@@ -68,6 +68,7 @@ const groups = computed(() => [
   { label: 'Community', items: [
     { label: 'Members', href: '/admin/members', component: 'Admin/Members', icon: I.members },
     { label: 'Categories & Tags', href: '/admin/content', component: 'Admin/Content', icon: I.tags },
+    { label: 'Hero Studio', href: '/admin/heroes', component: 'Admin/HeroStudio', icon: I.tags },
     { label: 'Moderation', href: '/admin/moderation', component: 'Admin/Moderation', icon: I.shield },
     { label: 'Spam & flood', href: '/admin/spam-flood', component: 'Admin/SpamFlood', icon: I.filter },
     { label: 'Audit log', href: '/admin/audit-log', component: 'Admin/AuditLog', icon: I.log },
