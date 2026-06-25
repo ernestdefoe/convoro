@@ -163,6 +163,18 @@ class TopicController extends Controller
         return response()->json(['count' => $count, 'live' => $count >= \App\Support\LiveTopics::threshold()]);
     }
 
+    /** Live typing signal — broadcasts this topic's tag slugs so the discussion
+     *  list shows a typing bubble beside them. Throttled at the route. */
+    public function typing(Request $request, Topic $topic): \Illuminate\Http\JsonResponse
+    {
+        $slugs = $topic->tags()->pluck('slug')->all();
+        if ($slugs && $request->user()) {
+            broadcast(new \App\Events\TagTyping($slugs, $request->user()->name));
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
     public function show(Request $request, Topic $topic): Response|\Illuminate\Http\JsonResponse
     {
         // ActivityPub content negotiation: when a fediverse server fetches the

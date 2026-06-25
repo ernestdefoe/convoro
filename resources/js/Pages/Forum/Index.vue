@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, ref, watch, watchEffect, onMounted, onUnmounted } from 'vue';
+import { computed, reactive, ref, watch, watchEffect, onMounted, onUnmounted } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TopicCard from '@/Components/forum/TopicCard.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
@@ -98,10 +98,25 @@ function onTopicActivity(e: any) {
   items.value = next.slice(0, 30);
 }
 
+// ── Live "typing in this tag" bubbles ─────────────────────────────────────
+// When someone is replying to a topic, its tag slugs come through on the forum
+// channel; we light up those tags with an iPhone-style typing bubble for a few
+// seconds (auto-expiring).
+const typingTags = reactive<Record<string, boolean>>({});
+const typingTimers: Record<string, any> = {};
+function onTagTyping(e: any) {
+  for (const slug of (e.tags || [])) {
+    typingTags[slug] = true;
+    clearTimeout(typingTimers[slug]);
+    typingTimers[slug] = setTimeout(() => { delete typingTags[slug]; }, 3800);
+  }
+}
+function isTyping(slug: string) { return !!typingTags[slug]; }
+
 let forumChannel: any = null;
 onMounted(() => {
   const E = (window as any).Echo;
-  if (E) forumChannel = E.channel('forum').listen('.TopicListUpdated', onTopicActivity);
+  if (E) forumChannel = E.channel('forum').listen('.TopicListUpdated', onTopicActivity).listen('.TagTyping', onTagTyping);
 });
 onUnmounted(() => { if (forumChannel && (window as any).Echo) (window as any).Echo.leave('forum'); });
 
@@ -181,6 +196,7 @@ function isActiveTop(t: any) {
                 <i v-if="t.icon && t.icon.startsWith('fa-')" :class="t.icon" class="w-4 text-center text-[12px]" :style="{ color: t.color }" aria-hidden="true"></i>
                 <span v-else class="ml-0.5 h-2.5 w-2.5 rounded-full" :style="{ background: t.color }"></span>
                 <span :style="{ color: isActiveTop(t) ? t.color : undefined }">{{ t.name }}</span>
+                <span v-if="isTyping(t.slug)" class="typing-bubble" :style="{ color: t.color }" :aria-label="tr('Someone is typing')"><i></i><i></i><i></i></span>
                 <span class="ml-auto rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink-muted">{{ t.count }}</span>
               </button>
               <template v-if="isActiveTop(t) && t.children && t.children.length">
@@ -189,6 +205,7 @@ function isActiveTop(t: any) {
                   :class="activeTag === c.slug ? 'text-primary' : 'text-ink-2'">
                   <span class="h-1.5 w-1.5 rounded-full" :style="{ background: c.color }"></span>
                   <span class="truncate">{{ c.name }}</span>
+                  <span v-if="isTyping(c.slug)" class="typing-bubble" :style="{ color: c.color }" :aria-label="tr('Someone is typing')"><i></i><i></i><i></i></span>
                   <span class="ml-auto text-xs text-ink-muted">{{ c.count }}</span>
                 </button>
               </template>
@@ -286,3 +303,31 @@ function isActiveTop(t: any) {
     </Teleport>
   </AppLayout>
 </template>
+
+<style scoped>
+/* iPhone-style "typing in this tag" bubble shown beside a tag name. */
+.typing-bubble {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 999px;
+  background: currentColor;
+  padding: 4px 6px;
+  flex: 0 0 auto;
+}
+.typing-bubble i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: .55;
+  animation: tdot 1.3s infinite ease-in-out;
+}
+.typing-bubble i:nth-child(2) { animation-delay: .18s; }
+.typing-bubble i:nth-child(3) { animation-delay: .36s; }
+@keyframes tdot {
+  0%, 65%, 100% { transform: translateY(0); opacity: .45; }
+  32% { transform: translateY(-3px); opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) { .typing-bubble i { animation: none; } }
+</style>

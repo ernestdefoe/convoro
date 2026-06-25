@@ -223,6 +223,7 @@ Route::get('/t/{topic}', [TopicController::class, 'show'])->name('topics.show');
 Route::get('/api/live-topics', [App\Http\Controllers\ForumController::class, 'liveTopics'])->name('topics.live');
 Route::get('/api/presence', [App\Http\Controllers\ForumController::class, 'presence'])->name('users.presence');
 Route::post('/t/{topic}/heartbeat', [TopicController::class, 'heartbeat'])->middleware(['auth', 'throttle:40,1'])->name('topics.heartbeat');
+Route::post('/t/{topic}/typing', [TopicController::class, 'typing'])->middleware(['auth', 'throttle:60,1'])->name('topics.typing');
 Route::get('/u/{user}', [App\Http\Controllers\UserProfileController::class, 'show'])->name('profiles.show');
 Route::get('/extensions', [App\Http\Controllers\ExtensionsPageController::class, 'index'])->middleware('store.owner')->name('extensions.index');
 Route::get('/members', [App\Http\Controllers\MembersController::class, 'index'])->name('members.index');

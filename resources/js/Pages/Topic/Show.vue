@@ -398,11 +398,18 @@ onBeforeUnmount(() => {
 });
 
 let whisperThrottle = 0;
+let tagTypingThrottle = 0;
 function onTyping() {
   const now = Date.now();
   if (channel && user.value && now - whisperThrottle > 1200) {
     whisperThrottle = now;
     channel.whisper('typing', { name: user.value.name });
+  }
+  // Tell the discussion list this topic's tags are being typed in (live bubble).
+  if (user.value && now - tagTypingThrottle > 2000) {
+    tagTypingThrottle = now;
+    const tok = (document.querySelector('meta[name=csrf-token]') as HTMLMetaElement)?.content || '';
+    fetch(`/t/${props.topic.slug}/typing`, { method: 'POST', headers: { 'X-CSRF-TOKEN': tok, Accept: 'application/json' } }).catch(() => {});
   }
   scheduleReplyAutosave();
 }
