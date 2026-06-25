@@ -2,7 +2,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref, watch, watchEffect, onMounted, onUnmounted } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
-import TopicCard from '@/Components/forum/TopicCard.vue';
+import TopicTile from '@/Components/forum/TopicTile.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import PrismHero from '@/Components/forum/PrismHero.vue';
 import Slot from '@/Components/ext/Slot.vue';
@@ -245,9 +245,12 @@ function isActiveTop(t: any) {
           <button type="button" @click="startTopic" class="rounded-c bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-600">{{ tr('Start the first topic') }}</button>
         </EmptyState>
 
-        <!-- Feed -->
-        <div v-else-if="view === 'feed'" class="flex flex-col gap-3">
-          <TopicCard v-for="t in items" :key="t.id" :topic="withLive(t)" />
+        <!-- Magazine feed: a featured lead + a bento grid of neon-glass tiles -->
+        <div v-else-if="view === 'feed'" class="flex flex-col gap-4">
+          <TopicTile v-if="items.length" :topic="withLive(items[0])" :featured="true" />
+          <div v-if="items.length > 1" class="grid gap-4 sm:grid-cols-2">
+            <TopicTile v-for="t in items.slice(1)" :key="t.id" :topic="withLive(t)" />
+          </div>
         </div>
 
         <!-- Grid -->
