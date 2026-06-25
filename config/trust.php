@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.42.2',
+            'date' => '2026-06-25',
+            'title' => 'Smoother self-hosted setup',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Installing from source is friendlier: `composer setup` now generates your app key without stalling on the production prompt, and stops with a clear, fix-it message when the database isn’t configured yet or Node.js isn’t installed — instead of a cryptic error.'],
+            ],
+        ],
+        [
             'tag' => '1.42.0',
             'date' => '2026-06-21',
             'title' => 'Redesigned messages, multilingual search & a fresh look',
