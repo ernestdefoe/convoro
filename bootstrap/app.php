@@ -13,6 +13,20 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trust reverse proxies (Caddy, nginx, FrankenPHP, Cloudflare, a load
+        // balancer …) so X-Forwarded-Proto/Host are honoured. Without this, a
+        // TLS terminator in front of the app makes Laravel emit http:// asset
+        // URLs on an https page → mixed-content block → blank screen. Defaults
+        // to all (a self-hosted forum is almost always behind a proxy); set
+        // TRUSTED_PROXIES to a comma-separated IP/CIDR list to restrict.
+        $middleware->trustProxies(
+            at: env('TRUSTED_PROXIES', '*') === '*' ? '*' : array_map('trim', explode(',', (string) env('TRUSTED_PROXIES'))),
+            headers: Request::HEADER_X_FORWARDED_FOR
+                | Request::HEADER_X_FORWARDED_HOST
+                | Request::HEADER_X_FORWARDED_PORT
+                | Request::HEADER_X_FORWARDED_PROTO,
+        );
+
         $middleware->web(prepend: [
             \App\Http\Middleware\EnsureInstalled::class,
             // Must run before StartSession so a demo subdomain gets its own
