@@ -36,6 +36,7 @@
         "highlight.js": "^11.11.1",
         "laravel-echo": "^2.3.7",
         "lowlight": "^3.3.0",
-        "pusher-js": "^8.5.0"
+        "pusher-js": "^8.5.0",
+        "vuedraggable": "^4.1.0"
     }
 }

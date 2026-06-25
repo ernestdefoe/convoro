@@ -1,19 +1,20 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { reactive, ref, watch } from 'vue';
+import draggable from 'vuedraggable';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { t as tr } from '@/lib/i18n';
 
+type Tag = { id: number; name: string; slug: string; color: string; icon: string | null; topics: number; children?: Tag[] };
+
 const props = defineProps<{
   categories: { id: number; name: string; slug: string; description: string | null; icon: string | null; color: string; position: number; topics: number; slow_mode: number }[];
-  tags: { id: number; name: string; slug: string; color: string; topics: number }[];
+  tags: Tag[];
 }>();
 
 const opts = { preserveScroll: true };
 
-// --- Categories ---
-// Local working copy so a drag reorders instantly; re-synced whenever the
-// server sends a fresh list (after add/edit/delete/reorder).
+// --- Categories (legacy) ---
 const cats = ref<any[]>([...props.categories]);
 watch(() => props.categories, (v) => { cats.value = [...v]; });
 
@@ -33,7 +34,6 @@ function onDrop(i: number) {
 const newCat = reactive({ name: '', icon: '', color: '#5b5bd6', description: '', slow_mode: 0 });
 const editCatId = ref<number | null>(null);
 const catBuf = reactive({ name: '', icon: '', color: '#5b5bd6', description: '', slow_mode: 0 });
-
 function addCategory() {
   if (!newCat.name.trim()) return;
   router.post('/admin/categories', { ...newCat }, { ...opts, onSuccess: () => Object.assign(newCat, { name: '', icon: '', color: '#5b5bd6', description: '', slow_mode: 0 }) });
@@ -42,32 +42,41 @@ function startCat(c: any) {
   editCatId.value = c.id;
   Object.assign(catBuf, { name: c.name, icon: c.icon ?? '', color: c.color, description: c.description ?? '', slow_mode: c.slow_mode ?? 0 });
 }
-function saveCat() {
-  router.put(`/admin/categories/${editCatId.value}`, { ...catBuf }, { ...opts, onSuccess: () => (editCatId.value = null) });
-}
-function delCat(c: any) {
-  if (confirm(tr('Delete category “{name}”?', { name: c.name }))) router.delete(`/admin/categories/${c.id}`, opts);
+function saveCat() { router.put(`/admin/categories/${editCatId.value}`, { ...catBuf }, { ...opts, onSuccess: () => (editCatId.value = null) }); }
+function delCat(c: any) { if (confirm(tr('Delete category “{name}”?', { name: c.name }))) router.delete(`/admin/categories/${c.id}`, opts); }
+
+// --- Tags (Flarum-style: drag to reorder, drop onto a tag to nest as a sub-tag) ---
+const primaries = ref<Tag[]>(clone(props.tags));
+watch(() => props.tags, (v) => { primaries.value = clone(v); });
+function clone(v: Tag[]): Tag[] { return JSON.parse(JSON.stringify(v || [])).map((t: Tag) => ({ ...t, children: t.children || [] })); }
+
+// Keep it two levels: a tag that already has sub-tags can't itself be nested.
+function checkMove(evt: any) {
+  const dragged = evt.draggedContext?.element;
+  const intoChildren = !!evt.to?.classList?.contains('children-zone');
+  if (intoChildren && dragged?.children && dragged.children.length) return false;
+  return true;
 }
 
-// --- Tags ---
-const newTag = reactive({ name: '', color: '#6366f1' });
+let treeTimer: any = null;
+function persistTree() {
+  clearTimeout(treeTimer);
+  treeTimer = setTimeout(() => {
+    const tree = primaries.value.map((p) => ({ id: p.id, children: (p.children || []).map((c) => c.id) }));
+    router.post('/admin/tags/tree', { tree }, { preserveScroll: true, preserveState: true });
+  }, 140);
+}
+
+const newTag = reactive({ name: '', color: '#6366f1', icon: '' });
 const editTagId = ref<number | null>(null);
-const tagBuf = reactive({ name: '', color: '#6366f1' });
-
+const tagBuf = reactive({ name: '', color: '#6366f1', icon: '' });
 function addTag() {
   if (!newTag.name.trim()) return;
-  router.post('/admin/tags', { ...newTag }, { ...opts, onSuccess: () => Object.assign(newTag, { name: '', color: '#6366f1' }) });
+  router.post('/admin/tags', { ...newTag }, { ...opts, onSuccess: () => Object.assign(newTag, { name: '', color: '#6366f1', icon: '' }) });
 }
-function startTag(t: any) {
-  editTagId.value = t.id;
-  Object.assign(tagBuf, { name: t.name, color: t.color });
-}
-function saveTag() {
-  router.put(`/admin/tags/${editTagId.value}`, { ...tagBuf }, { ...opts, onSuccess: () => (editTagId.value = null) });
-}
-function delTag(t: any) {
-  if (confirm(tr('Delete tag “{name}”?', { name: t.name }))) router.delete(`/admin/tags/${t.id}`, opts);
-}
+function startTag(t: Tag) { editTagId.value = t.id; Object.assign(tagBuf, { name: t.name, color: t.color, icon: t.icon ?? '' }); }
+function saveTag() { router.put(`/admin/tags/${editTagId.value}`, { ...tagBuf }, { ...opts, onSuccess: () => (editTagId.value = null) }); }
+function delTag(t: Tag) { if (confirm(tr('Delete tag “{name}”?', { name: t.name }))) router.delete(`/admin/tags/${t.id}`, opts); }
 
 const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500';
 </script>
@@ -78,10 +87,83 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
     <template #title>{{ tr('Categories & Tags') }}</template>
     <template #subtitle>{{ tr('Organize your community’s discussions') }}</template>
 
-    <div class="grid gap-6 lg:grid-cols-2">
-      <!-- Categories -->
+    <div class="space-y-6">
+      <!-- Tags — Flarum-style drag-and-drop tree -->
       <section class="rounded-2xl border border-line bg-surface p-5">
-        <h3 class="mb-3 text-sm font-bold text-ink">{{ tr('Categories') }}</h3>
+        <div class="mb-1 flex items-center gap-2">
+          <h3 class="text-sm font-bold text-ink">{{ tr('Tags') }}</h3>
+          <span class="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary">{{ tr('Spaces') }}</span>
+        </div>
+        <p class="mb-4 text-xs text-ink-muted">{{ tr('Drag the handle to reorder. Drop a tag onto another’s sub-tag area to make it a sub-tag; drag it back out to make it primary again.') }}</p>
+
+        <div class="mb-4 flex flex-wrap items-end gap-2 rounded-xl border border-line bg-appbg p-3">
+          <span class="grid h-9 w-9 place-items-center rounded-lg" :style="{ color: newTag.color, background: newTag.color + '22' }"><i v-if="newTag.icon && newTag.icon.startsWith('fa')" :class="newTag.icon"></i><span v-else>#</span></span>
+          <input v-model="newTag.name" :class="inp" class="min-w-[140px] flex-1" :placeholder="tr('New tag name')" @keyup.enter="addTag" />
+          <input v-model="newTag.icon" :class="inp" class="min-w-[180px] flex-1 font-mono text-xs" :placeholder="tr('Font Awesome class (optional)')" />
+          <input v-model="newTag.color" type="color" class="h-9 w-10 rounded border-line bg-transparent" />
+          <button class="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-600" @click="addTag">{{ tr('Create tag') }}</button>
+        </div>
+
+        <draggable :list="primaries" item-key="id" handle=".thandle" :group="{ name: 'tags' }" :move="checkMove" class="space-y-2" @change="persistTree">
+          <template #item="{ element: p }">
+            <div class="rounded-xl border border-line bg-appbg">
+              <!-- primary tag row -->
+              <div class="flex items-center gap-3 p-3">
+                <span class="thandle cursor-grab select-none px-0.5 text-ink-muted hover:text-ink active:cursor-grabbing" :title="tr('Drag to reorder or nest')">⠿</span>
+                <span class="h-8 w-1.5 rounded-full" :style="{ background: p.color }"></span>
+                <template v-if="editTagId === p.id">
+                  <input v-model="tagBuf.name" :class="inp" class="w-40" />
+                  <input v-model="tagBuf.icon" :class="inp" class="w-44 font-mono text-xs" :placeholder="tr('FA class')" />
+                  <input v-model="tagBuf.color" type="color" class="h-8 w-9 rounded border-line bg-transparent" />
+                  <button class="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white" @click="saveTag">{{ tr('Save') }}</button>
+                  <button class="text-xs text-ink-2 hover:text-ink" @click="editTagId = null">{{ tr('Cancel') }}</button>
+                </template>
+                <template v-else>
+                  <i v-if="p.icon && p.icon.startsWith('fa')" :class="p.icon" :style="{ color: p.color }"></i>
+                  <span class="font-semibold text-ink">{{ p.name }}</span>
+                  <span class="text-xs text-ink-muted">{{ tr('{n} topics', { n: p.topics }) }}</span>
+                  <span class="ml-auto"></span>
+                  <button class="text-xs text-ink-2 hover:text-ink" @click="startTag(p)">{{ tr('Edit') }}</button>
+                  <button class="text-xs text-ink-2 hover:text-red-400" @click="delTag(p)">{{ tr('Delete') }}</button>
+                </template>
+              </div>
+              <!-- sub-tags drop zone -->
+              <div class="px-3 pb-3 pl-10">
+                <p class="mb-1 text-[10px] font-bold uppercase tracking-wide text-ink-muted/70">{{ tr('Sub-tags') }}</p>
+                <draggable :list="p.children" item-key="id" handle=".thandle" :group="{ name: 'tags' }" :move="checkMove" class="children-zone min-h-[34px] space-y-1.5 rounded-lg border border-dashed border-line p-1.5" @change="persistTree">
+                  <template #item="{ element: c }">
+                    <div class="flex items-center gap-2 rounded-lg bg-surface px-2.5 py-1.5">
+                      <span class="thandle cursor-grab select-none text-xs text-ink-muted hover:text-ink active:cursor-grabbing">⠿</span>
+                      <span class="h-4 w-1 rounded-full" :style="{ background: c.color }"></span>
+                      <template v-if="editTagId === c.id">
+                        <input v-model="tagBuf.name" :class="inp" class="w-32 !py-1 text-xs" />
+                        <input v-model="tagBuf.color" type="color" class="h-7 w-8 rounded border-line bg-transparent" />
+                        <button class="rounded bg-emerald-500 px-2 py-1 text-[11px] font-semibold text-white" @click="saveTag">{{ tr('Save') }}</button>
+                        <button class="text-[11px] text-ink-2 hover:text-ink" @click="editTagId = null">{{ tr('Cancel') }}</button>
+                      </template>
+                      <template v-else>
+                        <span class="text-sm text-ink">{{ c.name }}</span>
+                        <span class="text-[11px] text-ink-muted">{{ c.topics }}</span>
+                        <span class="ml-auto"></span>
+                        <button class="text-[11px] text-ink-2 hover:text-ink" @click="startTag(c)">{{ tr('Edit') }}</button>
+                        <button class="text-[11px] text-ink-2 hover:text-red-400" @click="delTag(c)">{{ tr('Delete') }}</button>
+                      </template>
+                    </div>
+                  </template>
+                </draggable>
+              </div>
+            </div>
+          </template>
+        </draggable>
+        <p v-if="!primaries.length" class="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-muted">{{ tr('No tags yet — create one above.') }}</p>
+      </section>
+
+      <!-- Categories (legacy) -->
+      <section class="rounded-2xl border border-line bg-surface p-5">
+        <div class="mb-3 flex items-center gap-2">
+          <h3 class="text-sm font-bold text-ink">{{ tr('Categories') }}</h3>
+          <span class="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-semibold text-ink-muted">{{ tr('legacy') }}</span>
+        </div>
 
         <div class="mb-4 rounded-xl border border-line bg-appbg p-3">
           <div class="flex items-center gap-2">
@@ -94,14 +176,7 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
         </div>
 
         <ul class="space-y-2">
-          <li
-            v-for="(c, i) in cats"
-            :key="c.id"
-            class="rounded-xl border border-line p-3 transition"
-            :class="dragIndex === i ? 'opacity-50' : ''"
-            @dragover.prevent
-            @drop="onDrop(i)"
-          >
+          <li v-for="(c, i) in cats" :key="c.id" class="rounded-xl border border-line p-3 transition" :class="dragIndex === i ? 'opacity-50' : ''" @dragover.prevent @drop="onDrop(i)">
             <template v-if="editCatId === c.id">
               <div class="flex flex-wrap items-center gap-2">
                 <span class="grid h-9 w-9 place-items-center rounded-lg bg-surface-2 text-ink-2"><i v-if="catBuf.icon" :class="catBuf.icon"></i><span v-else>#</span></span>
@@ -112,60 +187,16 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
               </div>
               <input v-model="catBuf.icon" :class="inp" class="mt-2 w-full font-mono" :placeholder="tr('Font Awesome class — e.g. fa-solid fa-rocket')" />
               <input v-model="catBuf.description" :class="inp" class="mt-2 w-full" :placeholder="tr('Description (optional)')" />
-              <label class="mt-2 flex items-center gap-2 text-xs text-ink-muted">
-                <span>{{ tr('Slow mode — seconds between posts in this category (0 = off)') }}</span>
-                <input v-model.number="catBuf.slow_mode" type="number" min="0" max="86400" :class="inp" class="w-24" />
-              </label>
             </template>
             <div v-else class="flex items-center gap-3">
-              <span
-                class="-ml-1 cursor-grab select-none px-1 text-ink-muted hover:text-ink active:cursor-grabbing"
-                draggable="true"
-                :title="tr('Drag to reorder')"
-                :aria-label="tr('Drag to reorder')"
-                @dragstart="onDragStart(i)"
-                @dragend="dragIndex = null"
-              >⠿</span>
-              <span class="flex h-8 w-8 items-center justify-center rounded-lg text-base" :style="{ color: c.color, background: c.color + '22' }">
-                <i v-if="c.icon && c.icon.startsWith('fa')" :class="c.icon"></i><span v-else>{{ c.icon || '#' }}</span>
-              </span>
+              <span class="thandle -ml-1 cursor-grab select-none px-1 text-ink-muted hover:text-ink active:cursor-grabbing" draggable="true" :title="tr('Drag to reorder')" @dragstart="onDragStart(i)" @dragend="dragIndex = null">⠿</span>
+              <span class="flex h-8 w-8 items-center justify-center rounded-lg text-base" :style="{ color: c.color, background: c.color + '22' }"><i v-if="c.icon && c.icon.startsWith('fa')" :class="c.icon"></i><span v-else>{{ c.icon || '#' }}</span></span>
               <div class="min-w-0 flex-1">
                 <div class="font-semibold text-ink">{{ c.name }}</div>
                 <div class="text-xs text-ink-muted">{{ tr('{n} topics', { n: c.topics }) }} · /{{ c.slug }}</div>
               </div>
               <button class="text-ink-2 hover:text-ink" @click="startCat(c)">{{ tr('Edit') }}</button>
               <button class="text-ink-2 hover:text-red-400" @click="delCat(c)">{{ tr('Delete') }}</button>
-            </div>
-          </li>
-        </ul>
-      </section>
-
-      <!-- Tags -->
-      <section class="rounded-2xl border border-line bg-surface p-5">
-        <h3 class="mb-3 text-sm font-bold text-ink">{{ tr('Tags') }}</h3>
-
-        <div class="mb-4 flex flex-wrap items-end gap-2 rounded-xl border border-line bg-appbg p-3">
-          <input v-model="newTag.name" :class="inp" class="flex-1" :placeholder="tr('New tag name')" @keyup.enter="addTag" />
-          <input v-model="newTag.color" type="color" class="h-9 w-10 rounded border-line bg-transparent" />
-          <button class="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="addTag">{{ tr('Add') }}</button>
-        </div>
-
-        <ul class="space-y-2">
-          <li v-for="t in tags" :key="t.id" class="rounded-xl border border-line p-3">
-            <template v-if="editTagId === t.id">
-              <div class="flex items-center gap-2">
-                <input v-model="tagBuf.name" :class="inp" class="flex-1" />
-                <input v-model="tagBuf.color" type="color" class="h-9 w-10 rounded border-line bg-transparent" />
-                <button class="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white" @click="saveTag">{{ tr('Save') }}</button>
-                <button class="rounded-lg px-3 py-1.5 text-sm text-ink-2 hover:text-ink" @click="editTagId = null">{{ tr('Cancel') }}</button>
-              </div>
-            </template>
-            <div v-else class="flex items-center gap-3">
-              <span class="rounded-full px-2.5 py-0.5 text-xs font-semibold" :style="{ color: t.color, background: t.color + '22' }">#{{ t.name }}</span>
-              <span class="text-xs text-ink-muted">{{ tr('{n} topics', { n: t.topics }) }}</span>
-              <span class="ml-auto"></span>
-              <button class="text-ink-2 hover:text-ink" @click="startTag(t)">{{ tr('Edit') }}</button>
-              <button class="text-ink-2 hover:text-red-400" @click="delTag(t)">{{ tr('Delete') }}</button>
             </div>
           </li>
         </ul>

@@ -725,8 +725,14 @@ class AdminController extends Controller
                     'icon' => $c->icon, 'color' => $c->color, 'position' => $c->position, 'topics' => $c->topics_count,
                     'slow_mode' => (int) ($c->slow_mode ?? 0),
                 ]),
-            'tags' => Tag::orderBy('name')->withCount('topics')->get()
-                ->map(fn ($t) => ['id' => $t->id, 'name' => $t->name, 'slug' => $t->slug, 'color' => $t->color, 'topics' => $t->topics_count]),
+            'tags' => Tag::whereNull('parent_id')->orderBy('position')->orderBy('name')->withCount('topics')
+                ->with(['children' => fn ($c) => $c->withCount('topics')->orderBy('position')->orderBy('name')])
+                ->get()->map(fn (Tag $t) => [
+                    'id' => $t->id, 'name' => $t->name, 'slug' => $t->slug, 'color' => $t->color, 'icon' => $t->icon, 'topics' => $t->topics_count,
+                    'children' => $t->children->map(fn (Tag $c) => [
+                        'id' => $c->id, 'name' => $c->name, 'slug' => $c->slug, 'color' => $c->color, 'icon' => $c->icon, 'topics' => $c->topics_count,
+                    ])->all(),
+                ]),
         ]);
     }
 
@@ -808,8 +814,11 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:40'],
             'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'icon' => ['nullable', 'string', 'max:60'],
+            'parent_id' => ['nullable', 'integer', 'exists:tags,id'],
         ]);
         $data['slug'] = $this->uniqueSlug(Tag::class, $data['name']);
+        $data['position'] = (int) Tag::max('position') + 1;
         Tag::create($data);
 
         return back();
@@ -820,9 +829,33 @@ class AdminController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:40'],
             'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'icon' => ['nullable', 'string', 'max:60'],
         ]);
         $data['slug'] = $this->uniqueSlug(Tag::class, $data['name'], $tag->id);
         $tag->update($data);
+
+        return back();
+    }
+
+    /** Persist the full tag tree from the drag-and-drop manager (Flarum-style):
+     *  ordered primaries, each with ordered child sub-tags. */
+    public function saveTagTree(Request $request): RedirectResponse
+    {
+        $tree = $request->validate([
+            'tree' => ['array'],
+            'tree.*.id' => ['required', 'integer', 'exists:tags,id'],
+            'tree.*.children' => ['array'],
+            'tree.*.children.*' => ['integer', 'exists:tags,id'],
+        ])['tree'] ?? [];
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($tree) {
+            foreach ($tree as $i => $node) {
+                Tag::whereKey($node['id'])->update(['parent_id' => null, 'position' => $i]);
+                foreach (($node['children'] ?? []) as $j => $childId) {
+                    Tag::whereKey($childId)->update(['parent_id' => $node['id'], 'position' => $j]);
+                }
+            }
+        });
 
         return back();
     }
