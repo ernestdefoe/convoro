@@ -894,7 +894,7 @@ class AdminController extends Controller
     {
         $home = [
             'title' => (string) Settings::get('community.name', config('app.name', 'Convoro')),
-            'subtitle' => (string) Settings::get('forum.hero_subtitle', 'where every space refracts its own light'),
+            'subtitle' => (string) Settings::get('forum.hero_subtitle', 'where every tag refracts its own light'),
             'icon' => (string) Settings::get('forum.hero_icon', 'fa-solid fa-meteor'),
             'c1' => (string) Settings::get('forum.hero_c1', '#7c3aed'),
             'c2' => (string) Settings::get('forum.hero_c2', '#ec4899'),

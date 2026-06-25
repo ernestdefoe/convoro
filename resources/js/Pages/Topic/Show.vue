@@ -498,8 +498,6 @@ function submitReply() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" /></svg>
               {{ group.name }}
             </a>
-            <span v-if="topic.category" class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-              :style="{ color: topic.category.color, background: topic.category.color + '22' }"><CategoryIcon :icon="topic.category.icon" /> {{ topic.category.name }}</span>
             <span v-if="hereCount > 0" class="inline-flex items-center gap-1.5 rounded-full bg-rose-100 px-2.5 py-0.5 text-xs font-bold text-rose-600">
               <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-500"></span>{{ tr('LIVE · {n} here', { n: hereCount }) }}
             </span>

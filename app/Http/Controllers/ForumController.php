@@ -129,7 +129,7 @@ class ForumController extends Controller
             ? $activeTag->heroConfig() + ['stats' => [['label' => 'topics', 'value' => $fmt((int) $activeTag->topics()->count())]]]
             : [
                 'title' => (string) \App\Support\Settings::get('community.name', config('app.name', 'Convoro')),
-                'subtitle' => (string) \App\Support\Settings::get('forum.hero_subtitle', 'where every space refracts its own light'),
+                'subtitle' => (string) \App\Support\Settings::get('forum.hero_subtitle', 'where every tag refracts its own light'),
                 'icon' => (string) \App\Support\Settings::get('forum.hero_icon', 'fa-solid fa-meteor'),
                 'c1' => (string) \App\Support\Settings::get('forum.hero_c1', '#7c3aed'),
                 'c2' => (string) \App\Support\Settings::get('forum.hero_c2', '#ec4899'),

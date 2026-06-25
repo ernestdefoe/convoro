@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
 import Avatar from './Avatar.vue';
-import CategoryIcon from './CategoryIcon.vue';
 import { t } from '@/lib/i18n';
 
 defineProps<{ topic: any }>();
@@ -12,7 +11,7 @@ defineProps<{ topic: any }>();
     :href="`/t/${topic.slug}`"
     class="q-post relative flex gap-4 rounded-c border bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-primary/60 hover:shadow-md"
     :class="topic.isNew ? 'border-primary/40' : 'border-line'"
-    :style="(topic.category?.color || topic.tags?.[0]?.color) ? { borderLeftWidth: '4px', borderLeftColor: topic.category?.color || topic.tags?.[0]?.color } : {}"
+    :style="topic.tags?.[0]?.color ? { borderLeftWidth: '4px', borderLeftColor: topic.tags[0].color } : {}"
   >
     <span v-if="topic.isNew" class="absolute -right-1.5 -top-1.5 z-10 inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md shadow-primary/30" :title="t('New posts since your last visit')">{{ t('New') }}</span>
     <Avatar :avatar="topic.author" :size="52" />
@@ -26,11 +25,7 @@ defineProps<{ topic: any }>();
       </div>
       <p class="mt-1.5 line-clamp-2 text-sm text-ink-2">{{ topic.excerpt }}</p>
       <div class="mt-2.5 flex flex-wrap items-center gap-x-3.5 gap-y-1.5 text-[13px] text-ink-muted">
-        <span v-if="topic.category" class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-          :style="{ color: topic.category.color, background: topic.category.color + '22' }">
-          <CategoryIcon :icon="topic.category.icon" /> {{ topic.category.name }}
-        </span>
-        <template v-else-if="topic.tags && topic.tags.length">
+        <template v-if="topic.tags && topic.tags.length">
           <span v-for="tg in topic.tags.slice(0, 3)" :key="tg.slug" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
             :style="{ color: tg.color, background: tg.color + '22' }">{{ tg.name }}</span>
         </template>

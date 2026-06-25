@@ -90,18 +90,15 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
 </script>
 
 <template>
-  <Head :title="tr('Admin · Categories & Tags')" />
+  <Head :title="tr('Admin · Tags')" />
   <AdminLayout>
-    <template #title>{{ tr('Categories & Tags') }}</template>
+    <template #title>{{ tr('Tags') }}</template>
     <template #subtitle>{{ tr('Organize your community’s discussions') }}</template>
 
     <div class="space-y-6">
       <!-- Tags — Flarum-style drag-and-drop tree -->
       <section class="rounded-2xl border border-line bg-surface p-5">
-        <div class="mb-1 flex items-center gap-2">
-          <h3 class="text-sm font-bold text-ink">{{ tr('Tags') }}</h3>
-          <span class="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary">{{ tr('Spaces') }}</span>
-        </div>
+        <h3 class="mb-1 text-sm font-bold text-ink">{{ tr('Tags') }}</h3>
         <p class="mb-4 text-xs text-ink-muted">{{ tr('Drag the handle to reorder. Drop a tag onto another’s sub-tag area to make it a sub-tag; drag it back out to make it primary again.') }}</p>
 
         <div class="mb-3 flex flex-wrap items-center gap-4 rounded-xl border border-line bg-appbg p-3">
@@ -112,7 +109,7 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
           <label class="flex items-center gap-2 text-sm text-ink-2">{{ tr('Max') }}
             <input v-model.number="rules.max" type="number" min="0" max="10" :class="inp" class="w-16" @change="saveRules" />
           </label>
-          <span class="text-xs text-ink-muted">{{ tr('0 = no limit. Members must pick this many primary spaces when posting (Flarum-style).') }}</span>
+          <span class="text-xs text-ink-muted">{{ tr('0 = no limit. Members must pick this many primary tags when posting (Flarum-style).') }}</span>
         </div>
 
         <div class="mb-4 flex flex-wrap items-end gap-2 rounded-xl border border-line bg-appbg p-3">
@@ -175,50 +172,6 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
           </template>
         </draggable>
         <p v-if="!primaries.length" class="rounded-xl border border-dashed border-line p-6 text-center text-sm text-ink-muted">{{ tr('No tags yet — create one above.') }}</p>
-      </section>
-
-      <!-- Categories (legacy) -->
-      <section class="rounded-2xl border border-line bg-surface p-5">
-        <div class="mb-3 flex items-center gap-2">
-          <h3 class="text-sm font-bold text-ink">{{ tr('Categories') }}</h3>
-          <span class="rounded-full bg-surface-2 px-2 py-0.5 text-[11px] font-semibold text-ink-muted">{{ tr('legacy') }}</span>
-        </div>
-
-        <div class="mb-4 rounded-xl border border-line bg-appbg p-3">
-          <div class="flex items-center gap-2">
-            <span class="grid h-9 w-9 place-items-center rounded-lg bg-surface-2 text-ink-2"><i v-if="newCat.icon" :class="newCat.icon"></i><span v-else>#</span></span>
-            <input v-model="newCat.name" :class="inp" class="flex-1" :placeholder="tr('New category name')" @keyup.enter="addCategory" />
-            <input v-model="newCat.color" type="color" class="h-9 w-10 rounded border-line bg-transparent" />
-            <button class="rounded-lg bg-indigo-500 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-600" @click="addCategory">{{ tr('Add') }}</button>
-          </div>
-          <input v-model="newCat.icon" :class="inp" class="mt-2 w-full font-mono" :placeholder="tr('Font Awesome class — e.g. fa-solid fa-rocket')" />
-        </div>
-
-        <ul class="space-y-2">
-          <li v-for="(c, i) in cats" :key="c.id" class="rounded-xl border border-line p-3 transition" :class="dragIndex === i ? 'opacity-50' : ''" @dragover.prevent @drop="onDrop(i)">
-            <template v-if="editCatId === c.id">
-              <div class="flex flex-wrap items-center gap-2">
-                <span class="grid h-9 w-9 place-items-center rounded-lg bg-surface-2 text-ink-2"><i v-if="catBuf.icon" :class="catBuf.icon"></i><span v-else>#</span></span>
-                <input v-model="catBuf.name" :class="inp" class="flex-1" />
-                <input v-model="catBuf.color" type="color" class="h-9 w-10 rounded border-line bg-transparent" />
-                <button class="rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white" @click="saveCat">{{ tr('Save') }}</button>
-                <button class="rounded-lg px-3 py-1.5 text-sm text-ink-2 hover:text-ink" @click="editCatId = null">{{ tr('Cancel') }}</button>
-              </div>
-              <input v-model="catBuf.icon" :class="inp" class="mt-2 w-full font-mono" :placeholder="tr('Font Awesome class — e.g. fa-solid fa-rocket')" />
-              <input v-model="catBuf.description" :class="inp" class="mt-2 w-full" :placeholder="tr('Description (optional)')" />
-            </template>
-            <div v-else class="flex items-center gap-3">
-              <span class="thandle -ml-1 cursor-grab select-none px-1 text-ink-muted hover:text-ink active:cursor-grabbing" draggable="true" :title="tr('Drag to reorder')" @dragstart="onDragStart(i)" @dragend="dragIndex = null">⠿</span>
-              <span class="flex h-8 w-8 items-center justify-center rounded-lg text-base" :style="{ color: c.color, background: c.color + '22' }"><i v-if="c.icon && c.icon.startsWith('fa')" :class="c.icon"></i><span v-else>{{ c.icon || '#' }}</span></span>
-              <div class="min-w-0 flex-1">
-                <div class="font-semibold text-ink">{{ c.name }}</div>
-                <div class="text-xs text-ink-muted">{{ tr('{n} topics', { n: c.topics }) }} · /{{ c.slug }}</div>
-              </div>
-              <button class="text-ink-2 hover:text-ink" @click="startCat(c)">{{ tr('Edit') }}</button>
-              <button class="text-ink-2 hover:text-red-400" @click="delCat(c)">{{ tr('Delete') }}</button>
-            </div>
-          </li>
-        </ul>
       </section>
     </div>
   </AdminLayout>

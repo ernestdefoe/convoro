@@ -30,15 +30,15 @@ const tagRuleError = computed(() => {
   const min = props.tagRules?.minPrimary || 0;
   const max = props.tagRules?.maxPrimary || 0;
   const n = primarySelected.value;
-  if (min && n < min) return tr('Choose at least {n} primary space(s).', { n: min });
-  if (max && n > max) return tr('Choose at most {n} primary space(s).', { n: max });
+  if (min && n < min) return tr('Choose at least {n} primary tag(s).', { n: min });
+  if (max && n > max) return tr('Choose at most {n} primary tag(s).', { n: max });
   return '';
 });
 const ruleHint = computed(() => {
   const min = props.tagRules?.minPrimary || 0, max = props.tagRules?.maxPrimary || 0;
-  if (min && max) return min === max ? tr('Pick exactly {n} primary space(s).', { n: min }) : tr('Pick {min}–{max} primary spaces.', { min, max });
-  if (min) return tr('Pick at least {n} primary space(s).', { n: min });
-  if (max) return tr('Pick up to {n} primary space(s).', { n: max });
+  if (min && max) return min === max ? tr('Pick exactly {n} primary tag(s).', { n: min }) : tr('Pick {min}–{max} primary tags.', { min, max });
+  if (min) return tr('Pick at least {n} primary tag(s).', { n: min });
+  if (max) return tr('Pick up to {n} primary tag(s).', { n: max });
   return tr('Pick the space(s) this belongs in.');
 });
 
@@ -310,7 +310,7 @@ function submit() {
           </div>
 
           <div class="mt-4 flex items-center justify-between">
-            <label class="block text-sm font-semibold text-ink-2">{{ tr('Spaces & tags') }}</label>
+            <label class="block text-sm font-semibold text-ink-2">{{ tr('Tags') }}</label>
             <button v-if="aiEnabled && tags.length" type="button" :disabled="suggestingTags" @click="suggestTags"
               class="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline disabled:opacity-50">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>

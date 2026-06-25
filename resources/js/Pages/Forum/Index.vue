@@ -4,7 +4,6 @@ import { computed, ref, watch, watchEffect, onMounted, onUnmounted } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TopicCard from '@/Components/forum/TopicCard.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
-import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
 import PrismHero from '@/Components/forum/PrismHero.vue';
 import Slot from '@/Components/ext/Slot.vue';
 import EmptyState from '@/Components/EmptyState.vue';
@@ -159,34 +158,6 @@ function isActiveTop(t: any) {
   <AppLayout>
     <PrismHero v-if="hero" :config="hero" class="mb-5" />
 
-    <!-- Prism tag rail — primary navigation; tags (with sub-tags) replace categories -->
-    <div v-if="tags && tags.length" class="mb-5">
-      <div class="flex items-center gap-2 overflow-x-auto pb-1">
-        <button type="button" @click="go({ tag: null, category: null })"
-          class="inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition"
-          :class="!activeTag ? 'border-transparent bg-primary text-white shadow-lg shadow-primary/30' : 'border-line bg-surface text-ink-2 hover:text-ink'">
-          <i class="fa-solid fa-layer-group text-[13px]" aria-hidden="true"></i> {{ tr('All') }}
-        </button>
-        <button v-for="t in tags" :key="t.slug" type="button" @click="go({ tag: t.slug, category: null })"
-          class="inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold transition"
-          :class="isActiveTop(t) ? 'border-transparent text-white shadow-lg' : 'border-line bg-surface text-ink-2 hover:text-ink'"
-          :style="isActiveTop(t) ? { background: t.color, boxShadow: '0 8px 24px -8px ' + t.color + 'aa' } : undefined">
-          <i v-if="t.icon && t.icon.startsWith('fa-')" :class="t.icon" class="text-[13px]" aria-hidden="true"></i>
-          <span v-else class="h-2 w-2 rounded-full" :style="{ background: isActiveTop(t) ? '#fff' : t.color }"></span>
-          {{ t.name }}
-          <span class="rounded-full px-1.5 text-xs" :class="isActiveTop(t) ? 'bg-black/20' : 'bg-surface-2'">{{ t.count }}</span>
-        </button>
-      </div>
-      <div v-if="subtags && subtags.items.length" class="mt-2.5 flex flex-wrap items-center gap-2">
-        <button type="button" @click="go({ tag: subtags.parent.slug, category: null })"
-          class="rounded-full px-3 py-1 text-xs font-semibold transition"
-          :class="subtags.active === subtags.parent.slug ? 'bg-primary/20 text-primary' : 'bg-surface text-ink-2 hover:text-ink'">{{ tr('All') }}</button>
-        <button v-for="s in subtags.items" :key="s.slug" type="button" @click="go({ tag: s.slug, category: null })"
-          class="rounded-full px-3 py-1 text-xs font-semibold transition"
-          :class="subtags.active === s.slug ? 'bg-primary/20 text-primary' : 'bg-surface text-ink-2 hover:text-ink'">{{ s.name }}</button>
-      </div>
-    </div>
-
     <div class="grid grid-cols-1 gap-5 lg:grid-cols-[224px_1fr_268px]">
       <!-- Left sidebar -->
       <aside class="hidden lg:block">
@@ -196,7 +167,7 @@ function isActiveTop(t: any) {
         <div class="overflow-hidden rounded-c border border-line bg-surface shadow-sm">
           <div class="flex items-center gap-2 border-b border-line bg-primary/10 px-4 py-3">
             <i class="fa-solid fa-layer-group text-[13px] text-primary" aria-hidden="true"></i>
-            <b class="text-[13px] font-bold uppercase tracking-wide text-ink-2">{{ tr('Spaces') }}</b>
+            <b class="text-[13px] font-bold uppercase tracking-wide text-ink-2">{{ tr('Tags') }}</b>
           </div>
           <nav class="flex flex-col gap-0.5 p-2">
             <button type="button" @click="go({ tag: null, category: null })" class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-semibold"
@@ -242,7 +213,6 @@ function isActiveTop(t: any) {
           <div class="ml-auto flex rounded-[10px] border border-line bg-surface p-0.5 shadow-sm">
             <button @click="go({ view: 'feed' })" class="rounded-[7px] px-3 py-1.5 text-[13px] font-semibold" :class="view === 'feed' ? 'bg-primary text-white' : 'text-ink-2'">{{ tr('Feed') }}</button>
             <button @click="go({ view: 'grid' })" class="rounded-[7px] px-3 py-1.5 text-[13px] font-semibold" :class="view === 'grid' ? 'bg-primary text-white' : 'text-ink-2'">{{ tr('Grid') }}</button>
-            <button @click="go({ view: 'category' })" class="rounded-[7px] px-3 py-1.5 text-[13px] font-semibold" :class="view === 'category' ? 'bg-primary text-white' : 'text-ink-2'">{{ tr('Categories') }}</button>
           </div>
           <select :value="sort" @change="go({ sort: ($event.target as HTMLSelectElement).value })"
             class="rounded-lg border-line bg-surface py-1.5 text-[13px] font-semibold text-ink-2 shadow-sm focus:ring-primary">
@@ -252,24 +222,8 @@ function isActiveTop(t: any) {
           </select>
         </div>
 
-        <!-- Categories — a directory of category cards (independent of topics) -->
-        <div v-if="view === 'category'" class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-          <Link v-for="c in categories" :key="c.slug" :href="`/?category=${c.slug}&view=feed`"
-            class="flex items-start gap-3 rounded-c border border-line bg-surface p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg" :style="{ color: c.color, background: c.color + '22' }">
-              <CategoryIcon :icon="c.icon" />
-            </span>
-            <div class="min-w-0 flex-1">
-              <h3 class="text-[15px] font-bold leading-snug">{{ c.name }}</h3>
-              <p v-if="c.description" class="mt-1 line-clamp-2 text-[13px] leading-relaxed text-ink-2">{{ c.description }}</p>
-              <p class="mt-1.5 text-xs text-ink-muted">{{ tr('{n} topics', { n: c.count }) }}</p>
-            </div>
-          </Link>
-          <p v-if="!categories.length" class="col-span-full py-12 text-center text-sm text-ink-muted">{{ tr('No categories yet.') }}</p>
-        </div>
-
         <!-- Empty state -->
-        <EmptyState v-else-if="!items.length" icon="💬" :title="tr('No topics yet')"
+        <EmptyState v-if="!items.length" icon="💬" :title="tr('No topics yet')"
           :description="tr('This is the start of something. Be the first to post and get the conversation going.')">
           <button type="button" @click="startTopic" class="rounded-c bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-600">{{ tr('Start the first topic') }}</button>
         </EmptyState>
@@ -289,8 +243,8 @@ function isActiveTop(t: any) {
               <img v-if="t.cover || defaultCover" :src="t.cover || defaultCover || ''" class="h-full w-full object-cover" loading="lazy" />
             </div>
             <div class="flex flex-1 flex-col p-4">
-              <span v-if="t.category" class="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                :style="{ color: t.category.color, background: t.category.color + '22' }"><CategoryIcon :icon="t.category.icon" /> {{ t.category.name }}</span>
+              <span v-for="tg in (t.tags || []).slice(0, 2)" :key="tg.slug" class="mb-2 mr-1.5 inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
+                :style="{ color: tg.color, background: tg.color + '22' }">{{ tg.name }}</span>
               <h3 class="text-[15px] font-bold leading-snug">{{ t.title }}</h3>
               <p v-if="t.excerpt" class="mt-1.5 line-clamp-3 text-[13px] leading-relaxed text-ink-2">{{ t.excerpt }}</p>
               <div class="mt-auto flex items-center gap-2 pt-3 text-xs text-ink-muted">
