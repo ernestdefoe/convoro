@@ -197,8 +197,21 @@ function goMobile(href: string) {
       <div v-if="mobileBar" class="h-16 md:hidden" aria-hidden="true"></div>
     </main>
 
-    <footer v-show="hasFooter" class="mt-10 border-t border-line">
-      <div class="mx-auto flex max-w-[var(--c-container)] flex-wrap items-center justify-center gap-x-5 gap-y-2 px-6 py-6 text-sm text-ink-muted">
+    <footer v-show="hasFooter" class="relative isolate mt-16">
+      <!-- Prism wavy divider + aurora glow (replaces the old top border line) -->
+      <div class="footer-waves pointer-events-none absolute inset-x-0 top-0 -z-10" aria-hidden="true">
+        <svg class="wave wave-back" viewBox="0 0 2880 140" preserveAspectRatio="none">
+          <defs><linearGradient id="prismWaveB" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#7c3aed" /><stop offset=".5" stop-color="#a855f7" /><stop offset="1" stop-color="#ec4899" /></linearGradient></defs>
+          <path fill="url(#prismWaveB)" d="M0,70 C360,20 360,120 720,70 C1080,20 1080,120 1440,70 C1800,20 1800,120 2160,70 C2520,20 2520,120 2880,70 L2880,140 L0,140 Z" />
+        </svg>
+        <svg class="wave wave-front" viewBox="0 0 2880 140" preserveAspectRatio="none">
+          <defs><linearGradient id="prismWaveF" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#ec4899" /><stop offset=".5" stop-color="#a855f7" /><stop offset="1" stop-color="#7c3aed" /></linearGradient></defs>
+          <path fill="url(#prismWaveF)" d="M0,84 C360,132 360,36 720,84 C1080,132 1080,36 1440,84 C1800,132 1800,36 2160,84 C2520,132 2520,36 2880,84 L2880,140 L0,140 Z" />
+        </svg>
+      </div>
+      <div class="footer-glow pointer-events-none absolute inset-0 -z-10" aria-hidden="true"></div>
+
+      <div class="relative mx-auto flex max-w-[var(--c-container)] flex-wrap items-center justify-center gap-x-5 gap-y-2 px-6 pb-9 pt-24 text-sm text-ink-muted">
         <Slot name="forum:footer" />
       </div>
     </footer>
@@ -216,4 +229,22 @@ function goMobile(href: string) {
 <style scoped>
 .mnav-enter-active, .mnav-leave-active { transition: opacity 0.18s ease, transform 0.18s ease; }
 .mnav-enter-from, .mnav-leave-to { opacity: 0; transform: translateY(-6px); }
+
+/* Wavy Prism footer */
+.footer-waves { height: 5.5rem; overflow: hidden; }
+.wave {
+  position: absolute; left: 0; top: 0; display: block;
+  width: 200%; height: 5.5rem; will-change: transform;
+  -webkit-mask: linear-gradient(to bottom, #000, #000 42%, transparent 96%);
+  mask: linear-gradient(to bottom, #000, #000 42%, transparent 96%);
+}
+.wave-back { opacity: .14; animation: footerWave 23s linear infinite; }
+.wave-front { opacity: .22; animation: footerWaveRev 17s linear infinite; }
+[data-theme='dark'] .wave-back { opacity: .22; }
+[data-theme='dark'] .wave-front { opacity: .32; }
+@keyframes footerWave { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes footerWaveRev { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+.footer-glow { background: radial-gradient(115% 80% at 50% 118%, rgb(168 85 247 / .14), rgb(236 72 153 / .07) 45%, transparent 72%); }
+[data-theme='dark'] .footer-glow { background: radial-gradient(115% 85% at 50% 122%, rgb(168 85 247 / .22), rgb(236 72 153 / .12) 45%, transparent 74%); }
+@media (prefers-reduced-motion: reduce) { .wave { animation: none; } }
 </style>
