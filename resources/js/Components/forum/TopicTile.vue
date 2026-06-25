@@ -15,7 +15,7 @@ const c2 = computed(() => props.topic.tags?.[1]?.color || '#ec4899');
   <Link :href="`/t/${topic.slug}`"
     class="tile group relative flex flex-col overflow-hidden rounded-c border border-line bg-surface p-4 sm:p-5"
     :class="featured ? 'tile-feat' : ''"
-    :style="featured ? { '--tg': c1, '--glow': c1 + '55' } : { '--tg': c1, '--glow': c1 + '55', borderLeftWidth: '4px', borderLeftColor: c1 }">
+    :style="{ '--tg': c1, '--glow': c1 + '55' }">
     <template v-if="featured">
       <div class="pointer-events-none absolute inset-0" :style="{ background: `linear-gradient(120deg, ${c1}, ${c2})` }"></div>
       <div class="pointer-events-none absolute inset-0" style="background: radial-gradient(120% 130% at 85% 0, rgba(255,255,255,.24), transparent 55%)"></div>
@@ -53,7 +53,8 @@ const c2 = computed(() => props.topic.tags?.[1]?.color || '#ec4899');
 
 <style scoped>
 .tile { transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
-.tile:hover { transform: translateY(-3px); border-color: var(--tg); box-shadow: 0 16px 50px -14px var(--glow), 0 0 0 1px var(--glow); }
+.tile:not(.tile-feat) { box-shadow: inset 4px 0 0 0 var(--tg); }
+.tile:not(.tile-feat):hover { transform: translateY(-3px); border-color: var(--tg); box-shadow: inset 4px 0 0 0 var(--tg), 0 16px 50px -14px var(--glow), 0 0 0 1px var(--glow); }
 .tile-feat { min-height: 188px; border-color: transparent; box-shadow: 0 18px 60px -16px var(--glow); }
 .tile-feat:hover { transform: translateY(-3px); box-shadow: 0 26px 72px -14px var(--glow); }
 @media (prefers-reduced-motion: reduce) { .tile, .tile:hover, .tile-feat:hover { transform: none; } }

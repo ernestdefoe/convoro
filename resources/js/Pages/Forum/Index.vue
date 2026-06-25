@@ -3,7 +3,6 @@ import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, reactive, ref, watch, watchEffect, onMounted, onUnmounted } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import TopicTile from '@/Components/forum/TopicTile.vue';
-import Avatar from '@/Components/forum/Avatar.vue';
 import PrismHero from '@/Components/forum/PrismHero.vue';
 import Slot from '@/Components/ext/Slot.vue';
 import EmptyState from '@/Components/EmptyState.vue';
@@ -227,12 +226,8 @@ function isActiveTop(t: any) {
         </form>
         <div class="mb-4 flex items-center gap-3">
           <h1 class="text-2xl font-extrabold tracking-tight">{{ tr('Community') }}</h1>
-          <div class="ml-auto flex rounded-[10px] border border-line bg-surface p-0.5 shadow-sm">
-            <button @click="go({ view: 'feed' })" class="rounded-[7px] px-3 py-1.5 text-[13px] font-semibold" :class="view === 'feed' ? 'bg-primary text-white' : 'text-ink-2'">{{ tr('Feed') }}</button>
-            <button @click="go({ view: 'grid' })" class="rounded-[7px] px-3 py-1.5 text-[13px] font-semibold" :class="view === 'grid' ? 'bg-primary text-white' : 'text-ink-2'">{{ tr('Grid') }}</button>
-          </div>
           <select :value="sort" @change="go({ sort: ($event.target as HTMLSelectElement).value })"
-            class="rounded-lg border-line bg-surface py-1.5 text-[13px] font-semibold text-ink-2 shadow-sm focus:ring-primary">
+            class="ml-auto rounded-lg border-line bg-surface py-1.5 text-[13px] font-semibold text-ink-2 shadow-sm focus:ring-primary">
             <option value="recent">{{ tr('Latest activity') }}</option>
             <option value="popular">{{ tr('Most viewed') }}</option>
             <option value="title">{{ tr('Title (A–Z)') }}</option>
@@ -246,33 +241,11 @@ function isActiveTop(t: any) {
         </EmptyState>
 
         <!-- Magazine feed: a featured lead + a bento grid of neon-glass tiles -->
-        <div v-else-if="view === 'feed'" class="flex flex-col gap-4">
+        <div v-else class="flex flex-col gap-4">
           <TopicTile v-if="items.length" :topic="withLive(items[0])" :featured="true" />
           <div v-if="items.length > 1" class="grid gap-4 sm:grid-cols-2">
             <TopicTile v-for="t in items.slice(1)" :key="t.id" :topic="withLive(t)" />
           </div>
-        </div>
-
-        <!-- Grid -->
-        <div v-else class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-          <Link v-for="t in items" :key="t.id" :href="`/t/${t.slug}`"
-            class="relative flex flex-col overflow-hidden rounded-c border bg-surface shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-            :class="t.isNew ? 'border-primary/40' : 'border-line'">
-            <span v-if="t.isNew" class="absolute right-2 top-2 z-10 inline-flex items-center rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md shadow-primary/30">{{ tr('New') }}</span>
-            <div class="aspect-[16/8] bg-surface-2">
-              <img v-if="t.cover || defaultCover" :src="t.cover || defaultCover || ''" class="h-full w-full object-cover" loading="lazy" />
-            </div>
-            <div class="flex flex-1 flex-col p-4">
-              <span v-for="tg in (t.tags || []).slice(0, 2)" :key="tg.slug" class="mb-2 mr-1.5 inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-semibold"
-                :style="{ color: tg.color, background: tg.color + '22' }">{{ tg.name }}</span>
-              <h3 class="text-[15px] font-bold leading-snug">{{ t.title }}</h3>
-              <p v-if="t.excerpt" class="mt-1.5 line-clamp-3 text-[13px] leading-relaxed text-ink-2">{{ t.excerpt }}</p>
-              <div class="mt-auto flex items-center gap-2 pt-3 text-xs text-ink-muted">
-                <Avatar :avatar="t.author" :size="28" /><span>{{ t.author.name }}</span>
-                <span class="ml-auto">💬 {{ t.replyCount }}</span>
-              </div>
-            </div>
-          </Link>
         </div>
 
         <div v-if="topics.next" class="py-6 text-center">
