@@ -126,6 +126,16 @@ function save() {
 
           <div>
             <span class="mb-2 block text-[11px] font-bold uppercase tracking-wide text-ink-muted">{{ tr('Icon') }} · Font Awesome</span>
+            <div class="mb-2 flex items-center gap-2">
+              <span class="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-line bg-surface-2 text-base text-ink">
+                <i v-if="editing.icon" :class="editing.icon" aria-hidden="true"></i>
+                <i v-else class="fa-regular fa-circle-question text-ink-muted" aria-hidden="true"></i>
+              </span>
+              <input v-model.trim="editing.icon" type="text" spellcheck="false"
+                class="w-full rounded-lg border-line bg-appbg font-mono text-xs text-ink focus:border-indigo-500 focus:ring-indigo-500"
+                :placeholder="tr('Type any Font Awesome class, e.g. fa-solid fa-dragon')" />
+            </div>
+            <span class="mb-1.5 block text-[10px] uppercase tracking-wide text-ink-muted/80">{{ tr('Quick picks') }}</span>
             <div class="grid grid-cols-8 gap-1.5">
               <button v-for="ic in ICONS" :key="ic" type="button" @click="editing.icon = ic"
                 class="grid aspect-square place-items-center rounded-lg border text-sm transition"

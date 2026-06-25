@@ -48,11 +48,14 @@ const icon = computed(() => props.config.icon || 'fa-solid fa-meteor');
         <h1 class="truncate text-3xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-4xl">{{ config.title }}</h1>
         <p v-if="config.subtitle" class="mt-1 line-clamp-1 text-white/80">{{ config.subtitle }}</p>
       </div>
-      <div v-if="config.stats?.length" class="hidden shrink-0 items-stretch divide-x divide-white/20 sm:flex">
-        <div v-for="(s, i) in config.stats" :key="i" class="flex flex-col items-center justify-center gap-1.5 px-4">
-          <div class="text-xl font-extrabold leading-none text-white sm:text-2xl">{{ s.value }}</div>
-          <i v-if="s.icon" :class="s.icon" class="text-[13px] text-white/70" :title="s.label" :aria-label="s.label"></i>
-          <span v-else class="text-xs text-white/70">{{ s.label }}</span>
+      <div v-if="config.stats?.length" class="hidden shrink-0 gap-2.5 pr-1 sm:flex">
+        <div v-for="(s, i) in config.stats" :key="i"
+          class="flex min-w-[64px] flex-col items-center gap-1.5 rounded-2xl border border-white/15 bg-white/10 px-3.5 py-2.5 shadow-lg shadow-black/10 backdrop-blur-sm transition duration-200 hover:-translate-y-0.5 hover:bg-white/20">
+          <span v-if="s.icon" class="grid h-7 w-7 place-items-center rounded-full bg-white/25 text-[12px] text-white shadow-inner" :title="s.label" :aria-label="s.label">
+            <i :class="s.icon" aria-hidden="true"></i>
+          </span>
+          <span class="text-2xl font-black leading-none tracking-tight text-white sm:text-[26px]" style="text-shadow: 0 2px 12px rgba(0,0,0,.3)">{{ s.value }}</span>
+          <span v-if="!s.icon" class="text-[11px] font-semibold text-white/80">{{ s.label }}</span>
         </div>
       </div>
     </div>
