@@ -31,7 +31,7 @@ const c2 = computed(() => props.topic.tags?.[1]?.color || '#ec4899');
           <span class="h-1.5 w-1.5 animate-pulse rounded-full bg-white"></span>{{ tr('LIVE') }}
         </span>
         <span v-else-if="topic.isNew" class="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white" :class="featured ? 'bg-white/25' : 'bg-primary'">{{ tr('New') }}</span>
-        <span v-if="featured" class="ml-auto inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2.5 py-0.5 text-[11px] font-bold text-white"><i class="fa-solid fa-fire" aria-hidden="true"></i> {{ tr('Featured') }}</span>
+        <span v-if="featured" class="ml-auto inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2.5 py-0.5 text-[11px] font-bold text-white"><i class="fa-solid fa-fire" aria-hidden="true"></i> {{ tr('Hottest') }}</span>
       </div>
 
       <h3 class="font-bold tracking-tight" :class="featured ? 'text-2xl text-white drop-shadow-sm sm:text-[27px]' : 'text-[17px]'" style="line-height:1.16">{{ topic.title }}</h3>
