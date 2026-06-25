@@ -42,9 +42,10 @@ class FederationTest extends TestCase
 
         $this->get('/federation/actor')
             ->assertOk()
-            ->assertJsonPath('type', 'Service')
+            ->assertJsonPath('type', 'Group')
             ->assertJsonPath('id', Federation::actorUrl())
-            ->assertJsonPath('publicKey.id', Federation::actorUrl().'#main-key');
+            ->assertJsonPath('publicKey.id', Federation::actorUrl().'#main-key')
+            ->assertJsonPath('assertionMethod.0.type', 'Multikey');
     }
 
     public function test_http_signature_round_trip(): void

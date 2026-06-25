@@ -84,6 +84,142 @@ class Federation
         return self::keys()['public'];
     }
 
+    // ---- JSON-LD context + key representations (FEP-521a) ----
+
+    /**
+     * The JSON-LD @context shared by actors, objects and activities. Beyond AS2
+     * + the security vocab it defines the Mastodon/FEP terms we actually emit
+     * (discoverable, manuallyApprovesFollowers, sensitive, Hashtag,
+     * PropertyValue, and the FEP-521a Multikey / assertionMethod) so strict
+     * JSON-LD consumers don't silently drop them.
+     */
+    public static function context(): array
+    {
+        return [
+            'https://www.w3.org/ns/activitystreams',
+            'https://w3id.org/security/v1',
+            [
+                'Hashtag' => 'as:Hashtag',
+                'sensitive' => 'as:sensitive',
+                'manuallyApprovesFollowers' => 'as:manuallyApprovesFollowers',
+                'toot' => 'http://joinmastodon.org/ns#',
+                'discoverable' => 'toot:discoverable',
+                'indexable' => 'toot:indexable',
+                'featured' => ['@id' => 'toot:featured', '@type' => '@id'],
+                'schema' => 'http://schema.org#',
+                'PropertyValue' => 'schema:PropertyValue',
+                'value' => 'schema:value',
+                'Multikey' => 'https://w3id.org/security#Multikey',
+                'assertionMethod' => ['@id' => 'https://w3id.org/security#assertionMethod', '@type' => '@id'],
+                'publicKeyMultibase' => ['@id' => 'https://w3id.org/security#publicKeyMultibase', '@type' => 'https://w3id.org/security#multibase'],
+            ],
+        ];
+    }
+
+    /**
+     * FEP-521a — an `assertionMethod` Multikey for an actor, published alongside
+     * the legacy `publicKey` (which Mastodon still requires). $owner is the
+     * actor URI; the same RSA key backs both representations.
+     */
+    public static function assertionMethod(string $ownerUrl, string $pem): array
+    {
+        $mb = self::multibaseKey($pem);
+        if ($mb === '') {
+            return [];
+        }
+
+        return [[
+            'id' => $ownerUrl.'#main-key-multikey',
+            'type' => 'Multikey',
+            'controller' => $ownerUrl,
+            'publicKeyMultibase' => $mb,
+        ]];
+    }
+
+    /** Encode an RSA public key (PEM) as a FEP-521a multibase Multikey value. */
+    public static function multibaseKey(string $pem): string
+    {
+        $pub = openssl_pkey_get_public($pem);
+        $d = $pub ? openssl_pkey_get_details($pub) : false;
+        if (! $d || ! isset($d['rsa']['n'], $d['rsa']['e'])) {
+            return '';
+        }
+        // RSAPublicKey ::= SEQUENCE { modulus INTEGER, publicExponent INTEGER }  (PKCS#1, RFC 8017)
+        $der = self::derSeq(self::derInt($d['rsa']['n']).self::derInt($d['rsa']['e']));
+        // multicodec rsa-pub (0x1205) as unsigned varint = 0x85 0x24, then multibase base58btc ('z').
+        return 'z'.self::base58("\x85\x24".$der);
+    }
+
+    private static function derInt(string $bytes): string
+    {
+        $bytes = ltrim($bytes, "\x00");
+        if ($bytes === '') {
+            $bytes = "\x00";
+        }
+        if (ord($bytes[0]) & 0x80) {
+            $bytes = "\x00".$bytes; // keep the integer positive
+        }
+
+        return "\x02".self::derLen(strlen($bytes)).$bytes;
+    }
+
+    private static function derSeq(string $body): string
+    {
+        return "\x30".self::derLen(strlen($body)).$body;
+    }
+
+    private static function derLen(int $n): string
+    {
+        if ($n < 0x80) {
+            return chr($n);
+        }
+        $out = '';
+        while ($n > 0) {
+            $out = chr($n & 0xff).$out;
+            $n >>= 8;
+        }
+
+        return chr(0x80 | strlen($out)).$out;
+    }
+
+    /** Pure-PHP base58btc (no gmp/bcmath dependency). */
+    private static function base58(string $data): string
+    {
+        $alphabet = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+        $bytes = array_values(unpack('C*', $data) ?: []);
+        $n = count($bytes);
+        $zeros = 0;
+        while ($zeros < $n && $bytes[$zeros] === 0) {
+            $zeros++;
+        }
+        $out = '';
+        $start = $zeros;
+        while ($start < $n) {
+            $rem = 0;
+            for ($i = $start; $i < $n; $i++) {
+                $acc = ($rem << 8) + $bytes[$i];
+                $bytes[$i] = intdiv($acc, 58);
+                $rem = $acc % 58;
+            }
+            $out = $alphabet[$rem].$out;
+            while ($start < $n && $bytes[$start] === 0) {
+                $start++;
+            }
+        }
+
+        return str_repeat('1', $zeros).$out;
+    }
+
+    /** Mastodon-style profile metadata rows (schema:PropertyValue). */
+    private static function profileAttachment(string $label, string $href, string $text): array
+    {
+        return [[
+            'type' => 'PropertyValue',
+            'name' => $label,
+            'value' => '<a href="'.e($href).'" rel="me" target="_blank">'.e($text).'</a>',
+        ]];
+    }
+
     // ---- Per-user actors (Phase 3) ----
 
     /** A member's unique fediverse username (lazy: slug of name, deduped by id). */
@@ -137,8 +273,9 @@ class Federation
         $url = self::userActorUrl($user);
         $avatar = $user->avatar_path;
 
+        $profileUrl = $base.'/u/'.$user->id;
         $doc = [
-            '@context' => ['https://www.w3.org/ns/activitystreams', 'https://w3id.org/security/v1'],
+            '@context' => self::context(),
             'id' => $url,
             'type' => 'Person',
             'preferredUsername' => self::userUsername($user),
@@ -146,15 +283,18 @@ class Federation
             'summary' => $user->bio ? e(Str::limit(strip_tags((string) $user->bio), 400)) : '',
             'manuallyApprovesFollowers' => false,
             'discoverable' => true,
+            'indexable' => true,
             'inbox' => $base.'/u/'.$user->id.'/inbox',
             'outbox' => $base.'/u/'.$user->id.'/outbox',
             'followers' => $base.'/u/'.$user->id.'/followers',
-            'url' => $base.'/u/'.$user->id,
+            'url' => $profileUrl,
+            'attachment' => self::profileAttachment(__('Profile'), $profileUrl, '@'.self::userUsername($user).'@'.self::host()),
             'publicKey' => [
                 'id' => $url.'#main-key',
                 'owner' => $url,
                 'publicKeyPem' => self::userKeys($user)['public'],
             ],
+            'assertionMethod' => self::assertionMethod($url, self::userKeys($user)['public']),
         ];
         if ($avatar) {
             $doc['icon'] = ['type' => 'Image', 'url' => str_starts_with($avatar, 'http') ? $avatar : $base.$avatar];
@@ -199,24 +339,29 @@ class Federation
         $icon = $base.'/icons/icon-192.png?v='.Settings::get('icons.rev', '1');
 
         return [
-            '@context' => ['https://www.w3.org/ns/activitystreams', 'https://w3id.org/security/v1'],
+            '@context' => self::context(),
             'id' => $url,
-            'type' => 'Service',
+            // FEP-1b12: the community is a Group, so followers receive every
+            // boosted topic (Mastodon/Lemmy treat Group actors as communities).
+            'type' => 'Group',
             'preferredUsername' => self::username(),
             'name' => (string) (Settings::get('site.name') ?: 'Community'),
             'summary' => (string) (Settings::get('site.tagline') ?: ''),
             'manuallyApprovesFollowers' => false,
             'discoverable' => true,
+            'indexable' => true,
             'inbox' => $base.'/federation/inbox',
             'outbox' => $base.'/federation/outbox',
             'followers' => $base.'/federation/followers',
             'url' => $base.'/',
             'icon' => ['type' => 'Image', 'mediaType' => 'image/png', 'url' => $icon],
+            'attachment' => self::profileAttachment(__('Website'), $base.'/', self::host()),
             'publicKey' => [
                 'id' => $url.'#main-key',
                 'owner' => $url,
                 'publicKeyPem' => self::publicKeyPem(),
             ],
+            'assertionMethod' => self::assertionMethod($url, self::publicKeyPem()),
         ];
     }
 
@@ -257,7 +402,22 @@ class Federation
             .($excerpt !== '' ? '<p>'.e($excerpt).'</p>' : '')
             .'<p><a href="'.e($topicUrl).'">'.e($topicUrl).'</a></p>';
 
-        return [
+        // Federate the topic's tags as Hashtags so Mastodon/Lemmy can index and
+        // surface them (the # name is the slug stripped to letters/numbers).
+        $hashtags = [];
+        foreach ($topic->tags as $t) {
+            $name = preg_replace('/[^\p{L}\p{N}]+/u', '', (string) $t->slug);
+            if ($name === '') {
+                continue;
+            }
+            $hashtags[] = [
+                'type' => 'Hashtag',
+                'href' => $base.'/?tag='.rawurlencode((string) $t->slug),
+                'name' => '#'.$name,
+            ];
+        }
+
+        $note = [
             'id' => $topicUrl,
             'type' => 'Note',
             'attributedTo' => $actor,
@@ -267,6 +427,11 @@ class Federation
             'to' => ['https://www.w3.org/ns/activitystreams#Public'],
             'cc' => [$followers],
         ];
+        if ($hashtags) {
+            $note['tag'] = $hashtags;
+        }
+
+        return $note;
     }
 
     public static function createActivityForTopic(Topic $topic): array
@@ -274,7 +439,7 @@ class Federation
         $note = self::noteForTopic($topic);
 
         return [
-            '@context' => 'https://www.w3.org/ns/activitystreams',
+            '@context' => self::context(),
             'id' => $note['id'].'#create',
             'type' => 'Create',
             'actor' => $note['attributedTo'],
@@ -297,7 +462,7 @@ class Federation
         $published = ($topic->created_at ?? now())->toAtomString();
 
         return [
-            '@context' => 'https://www.w3.org/ns/activitystreams',
+            '@context' => self::context(),
             'id' => $noteUrl.'#announce',
             'type' => 'Announce',
             'actor' => self::actorUrl(),
@@ -408,7 +573,7 @@ class Federation
                     .'<p><a href="'.e($postUrl).'">'.e($topicUrl).'</a></p>';
 
             $activity = [
-                '@context' => 'https://www.w3.org/ns/activitystreams',
+                '@context' => self::context(),
                 'id' => $postUrl.'#create',
                 'type' => 'Create',
                 'actor' => $actor,

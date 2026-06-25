@@ -185,7 +185,7 @@ class TopicController extends Controller
             $topic->loadMissing('firstPost');
             $note = \App\Support\Federation::noteForTopic($topic);
 
-            return response()->json(['@context' => 'https://www.w3.org/ns/activitystreams'] + $note)
+            return response()->json(['@context' => \App\Support\Federation::context()] + $note)
                 ->header('Content-Type', \App\Support\Federation::CTYPE);
         }
 
