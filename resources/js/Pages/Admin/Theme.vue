@@ -99,7 +99,9 @@ function applyLive() {
   root.setProperty('--c-font', fontStack(form.font));
   root.setProperty('--c-font-size', `${form.font_size}px`);
   ensureFont(form.font);
-  document.documentElement.dataset.theme = form.mode;
+  document.documentElement.dataset.theme = form.mode === 'system'
+    ? ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light')
+    : form.mode;
 }
 
 watch(() => [form.primary, form.radius, form.mode, form.font, form.font_size, form.container], applyLive, { immediate: true });
@@ -169,7 +171,7 @@ function save() {
         <section class="rounded-2xl border border-line bg-surface p-5">
           <h3 class="mb-3 text-xs font-bold uppercase tracking-wide text-ink-2">{{ t('Appearance') }}</h3>
           <div class="grid grid-cols-2 gap-2">
-            <button v-for="m in ['light','dark']" :key="m" type="button" class="rounded-lg border px-3 py-2 text-sm font-semibold capitalize" :class="form.mode === m ? 'border-indigo-500 bg-indigo-500/10 text-ink' : 'border-line text-ink-2 hover:text-ink'" @click="form.mode = m">{{ t(m) }}</button>
+            <button v-for="m in ['light','dark','system']" :key="m" type="button" class="rounded-lg border px-3 py-2 text-sm font-semibold capitalize" :class="form.mode === m ? 'border-indigo-500 bg-indigo-500/10 text-ink' : 'border-line text-ink-2 hover:text-ink'" @click="form.mode = m">{{ t(m) }}</button>
           </div>
         </section>
 

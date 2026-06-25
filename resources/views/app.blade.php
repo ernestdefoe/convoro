@@ -18,7 +18,7 @@
         {{-- Apply the visitor's saved light/dark choice before paint (no flash).
              Reads a domain-scoped cookie so the choice carries across
              convoro.co and community.convoro.co; falls back to localStorage. --}}
-        <script>(function(){try{var m=document.cookie.split('; ').find(function(c){return c.indexOf('convoro_theme=')===0;});var t=m?decodeURIComponent(m.split('=')[1]):localStorage.getItem('convoro_theme');if(t==='dark'||t==='light'){document.documentElement.dataset.theme=t;}}catch(e){}})();</script>
+        <script>(function(){try{var m=document.cookie.split('; ').find(function(c){return c.indexOf('convoro_theme=')===0;});var stored=m?decodeURIComponent(m.split('=')[1]):localStorage.getItem('convoro_theme');var server=document.documentElement.dataset.theme;var mm=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)');var t;if(stored==='dark'||stored==='light'){t=stored;}else if(server==='system'||stored==='system'){t=(mm&&mm.matches)?'dark':'light';if(mm){mm.addEventListener('change',function(e){var s=localStorage.getItem('convoro_theme');if(s!=='dark'&&s!=='light'&&!/convoro_theme=(dark|light)/.test(document.cookie)){document.documentElement.dataset.theme=e.matches?'dark':'light';}});}}else{t=server==='dark'?'dark':'light';}document.documentElement.dataset.theme=t;}catch(e){}})();</script>
 
         @php($seo = $page['props']['seo'] ?? [])
         <title inertia>{{ $seo['title'] ?? config('app.name', 'Convoro') }}</title>

@@ -13,39 +13,42 @@
    Colors are space-separated RGB channels so Tailwind can apply opacity.
    --------------------------------------------------------------------------- */
 @layer base {
+  /* Prism — LIGHT is the default; dark is the variant below. Both share the
+     violet→fuchsia gradient + glass treatment. */
   :root {
-    --c-primary: 139 92 246;       /* #8B5CF6 — Prism violet */
-    --c-primary-600: 124 58 237;
-    --c-primary-700: 109 40 217;
-    --c-primary-soft: 34 28 56;
-    --c-bg: 11 10 20;              /* #0B0A14 — deep violet-black */
-    --c-surface: 22 19 38;        /* #161326 — glass base */
-    --c-surface-2: 31 27 52;      /* #1F1B34 */
-    --c-border: 52 47 86;
-    --c-text: 237 238 247;
-    --c-text-2: 180 182 204;
-    --c-muted: 134 136 162;
+    --c-primary: 124 58 237;       /* #7C3AED — Prism violet */
+    --c-primary-600: 109 40 217;
+    --c-primary-700: 91 33 182;
+    --c-primary-soft: 237 233 252;
+    --c-bg: 245 243 252;           /* #F5F3FC — light violet-white */
+    --c-surface: 255 255 255;       /* frosted light glass */
+    --c-surface-2: 244 242 251;
+    --c-border: 22 18 44;
+    --c-text: 28 23 48;
+    --c-text-2: 86 80 112;
+    --c-muted: 130 126 156;
     --c-radius: 16px;
     --c-radius-btn: 12px;
     --c-accent: 236 72 153;        /* #EC4899 — Prism fuchsia */
     --c-accent-600: 219 39 119;
-    --c-header-bg: rgb(13 12 24 / 0.72);
-    --c-header-text: 237 238 247;
-    --c-link: 167 139 250;
+    --c-header-bg: rgb(255 255 255 / 0.72);
+    --c-header-text: 28 23 48;
+    --c-link: 124 58 237;
     --c-density: 1;
     --c-grad: linear-gradient(135deg, #7c3aed 0%, #a855f7 48%, #ec4899 100%);
   }
 
-  [data-theme='dark'] { --c-header-bg: rgb(22 25 41); --c-header-text: 233 235 243; }
-
   [data-theme='dark'] {
-    --c-bg: 16 18 30;
-    --c-surface: 22 25 41;
-    --c-surface-2: 28 32 52;
-    --c-border: 42 47 70;
-    --c-text: 233 235 243;
-    --c-text-2: 174 180 208;
-    --c-muted: 120 127 152;
+    --c-bg: 11 10 20;              /* #0B0A14 — deep violet-black */
+    --c-surface: 22 19 38;        /* #161326 — glass base */
+    --c-surface-2: 31 27 52;
+    --c-border: 52 47 86;
+    --c-text: 237 238 247;
+    --c-text-2: 180 182 204;
+    --c-muted: 134 136 162;
+    --c-header-bg: rgb(13 12 24 / 0.72);
+    --c-header-text: 237 238 247;
+    --c-link: 167 139 250;
   }
 
   html { font-family: var(--c-font, 'Inter', ui-sans-serif, system-ui, sans-serif); }
@@ -60,10 +63,16 @@ body { position: relative; }
 body::before {
   content: ''; position: fixed; inset: -10%; z-index: -1; pointer-events: none;
   background:
+    radial-gradient(38% 48% at 12% 0%, rgba(124, 58, 237, 0.16), transparent 60%),
+    radial-gradient(36% 42% at 88% 4%, rgba(236, 72, 153, 0.13), transparent 60%),
+    radial-gradient(46% 52% at 60% 102%, rgba(34, 211, 238, 0.10), transparent 60%);
+  animation: prismAurora 24s ease-in-out infinite alternate;
+}
+[data-theme='dark'] body::before {
+  background:
     radial-gradient(38% 48% at 12% 0%, rgba(124, 58, 237, 0.34), transparent 60%),
     radial-gradient(36% 42% at 88% 4%, rgba(236, 72, 153, 0.24), transparent 60%),
     radial-gradient(46% 52% at 60% 102%, rgba(34, 211, 238, 0.16), transparent 60%);
-  animation: prismAurora 24s ease-in-out infinite alternate;
 }
 @keyframes prismAurora {
   0% { transform: translate(0, 0) scale(1); }
@@ -75,7 +84,8 @@ header.q-header { backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-fi
 @layer utilities {
   .bg-surface { background-color: rgb(var(--c-surface) / 0.72) !important; backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); }
   .bg-surface-2 { background-color: rgb(var(--c-surface-2) / 0.66) !important; }
-  .border-line { border-color: rgb(255 255 255 / 0.09) !important; }
+  .border-line { border-color: rgb(22 18 44 / 0.12) !important; }
+  [data-theme='dark'] .border-line { border-color: rgb(255 255 255 / 0.09) !important; }
 }
 
 /* Live-editor tokens applied site-wide (every Convoro install gets these) */

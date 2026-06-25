@@ -1519,7 +1519,7 @@ class AdminController extends Controller
             'accent' => ['nullable', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'radius' => ['required', 'integer', 'min:0', 'max:28'],
             'button_radius' => ['nullable', 'integer', 'min:0', 'max:28'],
-            'mode' => ['required', 'in:light,dark'],
+            'mode' => ['required', 'in:light,dark,system'],
             'font' => ['required', 'in:'.$fonts],
             'heading_font' => ['nullable', 'in:,'.$fonts],
             'font_size' => ['required', 'integer', 'min:12', 'max:20'],
