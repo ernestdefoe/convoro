@@ -126,7 +126,7 @@ class ForumController extends Controller
 
         $fmt = fn (int $n) => $n >= 1000 ? round($n / 1000, 1).'k' : (string) $n;
         $hero = $activeTag
-            ? $activeTag->heroConfig() + ['stats' => [['label' => 'topics', 'value' => $fmt((int) $activeTag->topics()->count())]]]
+            ? $activeTag->heroConfig() + ['stats' => [['label' => 'Topics', 'icon' => 'fa-solid fa-comments', 'value' => $fmt((int) $activeTag->topics()->count())]]]
             : [
                 'title' => (string) \App\Support\Settings::get('community.name', config('app.name', 'Convoro')),
                 'subtitle' => (string) \App\Support\Settings::get('forum.hero_subtitle', 'where every tag refracts its own light'),
@@ -135,14 +135,30 @@ class ForumController extends Controller
                 'c2' => (string) \App\Support\Settings::get('forum.hero_c2', '#ec4899'),
                 'image' => ((string) \App\Support\Settings::get('forum.hero_image', '')) ?: null,
                 'stats' => [
-                    ['label' => 'members', 'value' => $fmt(\App\Models\User::count())],
-                    ['label' => 'topics', 'value' => $fmt(Topic::count())],
+                    ['label' => 'Members', 'icon' => 'fa-solid fa-users', 'value' => $fmt(\App\Models\User::count())],
+                    ['label' => 'Topics', 'icon' => 'fa-solid fa-comments', 'value' => $fmt(Topic::count())],
+                    ['label' => 'Posts', 'icon' => 'fa-solid fa-message', 'value' => $fmt(\App\Models\Post::count())],
+                    ['label' => 'Reactions', 'icon' => 'fa-solid fa-heart', 'value' => $fmt(\App\Models\Reaction::count())],
                 ],
             ];
+
+        // "Hottest" topic = most engaged recently (replies + views), used as the
+        // featured lead card on the feed. Falls back to null → the page uses the
+        // top list item instead.
+        $hot = Topic::query()->visible()
+            ->when($tagSlug, fn ($q) => $q->whereHas('tags', fn ($t) => $t->where('slug', $tagSlug)))
+            ->with(['user.groups', 'category', 'tags', 'firstPost.reactions'])
+            ->where('last_post_at', '>=', now()->subDays(21))
+            ->orderByRaw('(reply_count * 25 + view_count * 0.06) DESC')
+            ->first();
+        $featured = $hot
+            ? Present::topicCard($hot, $actorId, in_array($hot->id, $unread, true), $hot->is_live || in_array($hot->id, $live, true))
+            : null;
 
         return Inertia::render('Forum/Index', [
             'view' => $view,
             'hero' => $hero,
+            'featured' => $featured,
             'tags' => $tags,
             'subtags' => $subtags,
             'activeTag' => $tagSlug,

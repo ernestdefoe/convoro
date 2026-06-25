@@ -23,7 +23,7 @@
     --c-bg: 245 243 252;           /* #F5F3FC — light violet-white */
     --c-surface: 255 255 255;       /* frosted light glass */
     --c-surface-2: 244 242 251;
-    --c-border: 22 18 44;
+    --c-border: 228 225 242;
     --c-text: 28 23 48;
     --c-text-2: 86 80 112;
     --c-muted: 130 126 156;
@@ -42,7 +42,7 @@
     --c-bg: 11 10 20;              /* #0B0A14 — deep violet-black */
     --c-surface: 22 19 38;        /* #161326 — glass base */
     --c-surface-2: 31 27 52;
-    --c-border: 52 47 86;
+    --c-border: 44 40 70;
     --c-text: 237 238 247;
     --c-text-2: 180 182 204;
     --c-muted: 134 136 162;

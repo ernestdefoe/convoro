@@ -47,6 +47,7 @@ const props = defineProps<{
   aboutTitle?: string;
   defaultCover?: string | null;
   hero?: any;
+  featured?: any;
   tags?: any[];
   subtags?: any;
   activeTag?: string | null;
@@ -55,7 +56,7 @@ const props = defineProps<{
 // Live badges: keep topics that were live on load, and poll for who's reading now.
 const initialLive = new Set<number>(props.topics.data.filter((t: any) => t.isLive).map((t: any) => t.id));
 const liveSet = ref<Set<number>>(new Set(initialLive));
-const withLive = (t: any) => ({ ...t, isLive: liveSet.value.has(t.id) });
+const withLive = (t: any) => ({ ...t, isLive: liveSet.value.has(t.id) || t.isLive });
 let liveTimer: any = null;
 async function pollLive() {
   const ids = props.topics.data.map((t: any) => t.id);
@@ -77,6 +78,10 @@ onUnmounted(() => { if (liveTimer) clearInterval(liveTimer); });
 // category filter, if any.
 const items = ref<any[]>([...props.topics.data]);
 watch(() => props.topics.data, (d) => { items.value = [...d]; });
+
+// The "hottest" featured lead card + the rest in the grid (lead excluded).
+const lead = computed(() => props.featured || items.value[0] || null);
+const gridItems = computed(() => items.value.filter((t: any) => t.id !== lead.value?.id));
 
 function onTopicActivity(e: any) {
   const card = e?.topic;
@@ -240,11 +245,11 @@ function isActiveTop(t: any) {
           <button type="button" @click="startTopic" class="rounded-c bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-600">{{ tr('Start the first topic') }}</button>
         </EmptyState>
 
-        <!-- Magazine feed: a featured lead + a bento grid of neon-glass tiles -->
+        <!-- Magazine feed: the hottest lead + a bento grid of neon-glass tiles -->
         <div v-else class="flex flex-col gap-4">
-          <TopicTile v-if="items.length" :topic="withLive(items[0])" :featured="true" />
-          <div v-if="items.length > 1" class="grid gap-4 sm:grid-cols-2">
-            <TopicTile v-for="t in items.slice(1)" :key="t.id" :topic="withLive(t)" />
+          <TopicTile v-if="lead" :topic="withLive(lead)" :featured="true" />
+          <div v-if="gridItems.length" class="grid gap-4 sm:grid-cols-2">
+            <TopicTile v-for="t in gridItems" :key="t.id" :topic="withLive(t)" />
           </div>
         </div>
 
