@@ -7,7 +7,7 @@ import UploadButton from '@/Components/UploadButton.vue';
 import { t } from '@/lib/i18n';
 
 const props = defineProps<{
-  values: { name: string; tagline: string; logo: string; logo_dark: string; favicon: string; default_view: string; default_cover: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string; gif_provider: string; gif_key_set: boolean; trust_enabled: boolean; trust_gate_new_users: boolean; reply_enabled: boolean; reply_domain: string; reply_secret: string; reply_webhook: string };
+  values: { name: string; tagline: string; logo: string; logo_dark: string; favicon: string; theme_mode: string; default_cover: string; realtime: boolean; digests: boolean; pwa_banner: boolean; pwa_short_name: string; fa_kit_url: string; seo_description: string; seo_image: string; gif_provider: string; gif_key_set: boolean; trust_enabled: boolean; trust_gate_new_users: boolean; reply_enabled: boolean; reply_domain: string; reply_secret: string; reply_webhook: string };
   mobileNav: { enabled: boolean; tabs: string[]; catalog: string[] };
   federation: { enabled: boolean; username: string; handle: string; followers: number };
 }>();
@@ -60,7 +60,7 @@ const form = useForm({
   logo: props.values.logo ?? '',
   logo_dark: props.values.logo_dark ?? '',
   favicon: props.values.favicon ?? '',
-  default_view: props.values.default_view,
+  theme_mode: props.values.theme_mode,
   default_cover: props.values.default_cover || '',
   realtime: props.values.realtime,
   digests: props.values.digests,
@@ -159,11 +159,12 @@ function save() {
           </div>
         </div>
         <div>
-          <label class="block text-sm font-medium text-ink-2">{{ t('Default forum view') }}</label>
-          <select v-model="form.default_view" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500">
-            <option value="feed">{{ t('Feed') }}</option>
-            <option value="grid">{{ t('Grid') }}</option>
-            <option value="category">{{ t('Categories') }}</option>
+          <label class="block text-sm font-medium text-ink-2">{{ t('Default theme') }}</label>
+          <p class="text-xs text-ink-muted">{{ t('“System” follows each visitor’s device light/dark setting. Members can still override it.') }}</p>
+          <select v-model="form.theme_mode" class="mt-1.5 w-full rounded-lg border-line bg-appbg text-ink focus:border-indigo-500 focus:ring-indigo-500">
+            <option value="light">{{ t('Light') }}</option>
+            <option value="dark">{{ t('Dark') }}</option>
+            <option value="system">{{ t('System') }}</option>
           </select>
         </div>
         <div>
