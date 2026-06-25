@@ -55,6 +55,7 @@ function delCat(c: any) { if (confirm(tr('Delete category “{name}”?', { name
 
 // --- Tags (Flarum-style: drag to reorder, drop onto a tag to nest as a sub-tag) ---
 const primaries = ref<Tag[]>(clone(props.tags));
+const dragging = ref(false);
 watch(() => props.tags, (v) => { primaries.value = clone(v); });
 function clone(v: Tag[]): Tag[] { return JSON.parse(JSON.stringify(v || [])).map((t: Tag) => ({ ...t, children: t.children || [] })); }
 
@@ -84,6 +85,28 @@ function addTag() {
 }
 function startTag(t: Tag) { editTagId.value = t.id; Object.assign(tagBuf, { name: t.name, color: t.color, icon: t.icon ?? '' }); }
 function saveTag() { router.put(`/admin/tags/${editTagId.value}`, { ...tagBuf }, { ...opts, onSuccess: () => (editTagId.value = null) }); }
+
+// Reliable, non-drag nesting (drag is fiddly for empty zones). Mutate the tree
+// locally then persist via the same saveTagTree endpoint the drag uses.
+function nestUnder(child: any, parentId: number) {
+  const parent = primaries.value.find((t: any) => t.id === parentId);
+  if (!parent || parent.id === child.id) return;
+  primaries.value = primaries.value.filter((t: any) => t.id !== child.id);
+  if (!parent.children) parent.children = [];
+  parent.children.push({ ...child, children: [] });
+  persistTree();
+}
+function onNestSelect(child: any, e: Event) {
+  const sel = e.target as HTMLSelectElement;
+  const id = Number(sel.value);
+  sel.value = '';
+  if (id) nestUnder(child, id);
+}
+function promote(child: any, parent: any) {
+  parent.children = (parent.children || []).filter((c: any) => c.id !== child.id);
+  primaries.value.push({ ...child, children: [] });
+  persistTree();
+}
 function delTag(t: Tag) { if (confirm(tr('Delete tag “{name}”?', { name: t.name }))) router.delete(`/admin/tags/${t.id}`, opts); }
 
 const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indigo-500 focus:ring-indigo-500';
@@ -99,7 +122,7 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
       <!-- Tags — Flarum-style drag-and-drop tree -->
       <section class="rounded-2xl border border-line bg-surface p-5">
         <h3 class="mb-1 text-sm font-bold text-ink">{{ tr('Tags') }}</h3>
-        <p class="mb-4 text-xs text-ink-muted">{{ tr('Drag the handle to reorder. Drop a tag onto another’s sub-tag area to make it a sub-tag; drag it back out to make it primary again.') }}</p>
+        <p class="mb-4 text-xs text-ink-muted">{{ tr('Drag the handle to reorder, or drop a tag into another’s sub-tag area to nest it. You can also use the “Nest under…” menu on any tag, and “Promote” to send a sub-tag back to the top level.') }}</p>
 
         <div class="mb-3 flex flex-wrap items-center gap-4 rounded-xl border border-line bg-appbg p-3">
           <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">{{ tr('Primary tags per topic') }}</span>
@@ -120,7 +143,7 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
           <button class="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white hover:bg-primary-600" @click="addTag">{{ tr('Create tag') }}</button>
         </div>
 
-        <draggable :list="primaries" item-key="id" handle=".thandle" :group="{ name: 'tags' }" :move="checkMove" class="space-y-2" @change="persistTree">
+        <draggable :list="primaries" item-key="id" handle=".thandle" :group="{ name: 'tags' }" :move="checkMove" :swap-threshold="0.55" :fallback-on-body="true" :empty-insert-threshold="10" class="space-y-2" @change="persistTree" @start="dragging = true" @end="dragging = false">
           <template #item="{ element: p }">
             <div class="rounded-xl border border-line bg-appbg">
               <!-- primary tag row -->
@@ -139,14 +162,18 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
                   <span class="font-semibold text-ink">{{ p.name }}</span>
                   <span class="text-xs text-ink-muted">{{ tr('{n} topics', { n: p.topics }) }}</span>
                   <span class="ml-auto"></span>
+                  <select v-if="!p.children || !p.children.length" :class="inp" class="!py-1 text-[11px]" :title="tr('Make this a sub-tag of…')" @change="onNestSelect(p, $event)">
+                    <option value="">{{ tr('Nest under…') }}</option>
+                    <option v-for="q in primaries.filter((t: any) => t.id !== p.id)" :key="q.id" :value="q.id">{{ q.name }}</option>
+                  </select>
                   <button class="text-xs text-ink-2 hover:text-ink" @click="startTag(p)">{{ tr('Edit') }}</button>
                   <button class="text-xs text-ink-2 hover:text-red-400" @click="delTag(p)">{{ tr('Delete') }}</button>
                 </template>
               </div>
               <!-- sub-tags drop zone -->
               <div class="px-3 pb-3 pl-10">
-                <p class="mb-1 text-[10px] font-bold uppercase tracking-wide text-ink-muted/70">{{ tr('Sub-tags') }}</p>
-                <draggable :list="p.children" item-key="id" handle=".thandle" :group="{ name: 'tags' }" :move="checkMove" class="children-zone min-h-[34px] space-y-1.5 rounded-lg border border-dashed border-line p-1.5" @change="persistTree">
+                <p class="mb-1 text-[10px] font-bold uppercase tracking-wide" :class="dragging ? 'text-indigo-400' : 'text-ink-muted/70'">{{ dragging ? tr('Drop here to make a sub-tag') : tr('Sub-tags') }}</p>
+                <draggable :list="p.children" item-key="id" handle=".thandle" :group="{ name: 'tags' }" :move="checkMove" :swap-threshold="0.65" :fallback-on-body="true" :empty-insert-threshold="40" :class="['children-zone min-h-[40px] space-y-1.5 rounded-lg border border-dashed p-1.5 transition-colors', dragging ? 'border-indigo-400/70 bg-indigo-400/10' : 'border-line']" @change="persistTree" @start="dragging = true" @end="dragging = false">
                   <template #item="{ element: c }">
                     <div class="flex items-center gap-2 rounded-lg bg-surface px-2.5 py-1.5">
                       <span class="thandle cursor-grab select-none text-xs text-ink-muted hover:text-ink active:cursor-grabbing">⠿</span>
@@ -161,6 +188,7 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
                         <span class="text-sm text-ink">{{ c.name }}</span>
                         <span class="text-[11px] text-ink-muted">{{ c.topics }}</span>
                         <span class="ml-auto"></span>
+                        <button class="text-[11px] text-indigo-400 hover:text-indigo-300" :title="tr('Move back to top level')" @click="promote(c, p)">↑ {{ tr('Promote') }}</button>
                         <button class="text-[11px] text-ink-2 hover:text-ink" @click="startTag(c)">{{ tr('Edit') }}</button>
                         <button class="text-[11px] text-ink-2 hover:text-red-400" @click="delTag(c)">{{ tr('Delete') }}</button>
                       </template>
