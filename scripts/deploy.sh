@@ -33,6 +33,8 @@ SHIP_PATHS=(
   resources
   routes
   extensions
+  composer.json
+  scripts
 )
 
 echo "==> [1/5] Building client + SSR bundles..."
