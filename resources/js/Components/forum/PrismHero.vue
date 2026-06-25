@@ -48,8 +48,8 @@ const icon = computed(() => props.config.icon || 'fa-solid fa-meteor');
         <h1 class="truncate text-3xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-4xl">{{ config.title }}</h1>
         <p v-if="config.subtitle" class="mt-1 line-clamp-1 text-white/80">{{ config.subtitle }}</p>
       </div>
-      <div v-if="config.stats?.length" class="hidden shrink-0 gap-5 pr-1 sm:flex">
-        <div v-for="(s, i) in config.stats" :key="i" class="flex flex-col items-center gap-1.5">
+      <div v-if="config.stats?.length" class="hidden shrink-0 items-stretch divide-x divide-white/20 sm:flex">
+        <div v-for="(s, i) in config.stats" :key="i" class="flex flex-col items-center justify-center gap-1.5 px-4">
           <div class="text-xl font-extrabold leading-none text-white sm:text-2xl">{{ s.value }}</div>
           <i v-if="s.icon" :class="s.icon" class="text-[13px] text-white/70" :title="s.label" :aria-label="s.label"></i>
           <span v-else class="text-xs text-white/70">{{ s.label }}</span>
