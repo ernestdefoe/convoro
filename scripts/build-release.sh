@@ -30,7 +30,8 @@ zip -r -q "$TMP" . \
   -x "storage/app/backups/*" -x "storage/app/downloads/*" -x "storage/app/imports/*" -x "storage/app/public/*" \
   -x "storage/logs/*" -x "storage/framework/sessions/*" -x "storage/framework/cache/*" -x "storage/framework/views/*" \
   -x "bootstrap/cache/*" -x "public/releases/*" -x "public/storage/*" \
-  -x "database/database.sqlite" -x "database/tenants/*" -x "*.sqlite"
+  -x "database/database.sqlite" -x "database/tenants/*" -x "*.sqlite" \
+  -x "._*" -x "*/._*" -x ".DS_Store" -x "*/.DS_Store"
 
 # ---- secret scan (file-level, against the REAL live secrets) ----
 D="$(mktemp -d)"

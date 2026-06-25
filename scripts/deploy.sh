@@ -47,7 +47,7 @@ fi
 [ -f bootstrap/ssr/ssr.js ] || { echo "ERROR: bootstrap/ssr/ssr.js missing — SSR build failed"; exit 1; }
 
 echo "==> [2/5] Packaging ($STAMP)..."
-tar -czf "$LOCAL_TGZ" "${SHIP_PATHS[@]}"
+COPYFILE_DISABLE=1 tar -czf "$LOCAL_TGZ" "${SHIP_PATHS[@]}"   # COPYFILE_DISABLE stops macOS tar adding ._ AppleDouble files
 
 echo "==> [3/5] Uploading to $REMOTE..."
 scp -q "$LOCAL_TGZ" "$REMOTE:/tmp/convoro-deploy.tgz"
