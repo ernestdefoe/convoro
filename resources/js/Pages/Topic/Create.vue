@@ -15,6 +15,7 @@ const props = defineProps<{
   draft?: any;
   autosave?: any;
   bodyOptionalCategories?: number[];
+  tagRules?: { minPrimary: number; maxPrimary: number };
 }>();
 
 // Boards where an extension supplies the content (e.g. a TMDB movie card) — the
@@ -22,6 +23,24 @@ const props = defineProps<{
 const bodyOptional = computed(() => (props.bodyOptionalCategories || []).includes(form.category_id as number));
 // Flattened tag list (top-level + sub-tags) for lookups like AI tag suggestions.
 const flatTags = computed(() => props.tags.flatMap((t) => [t, ...(t.children || [])]));
+// Flarum-style min/max PRIMARY (top-level) tags required to post.
+const primaryIds = computed(() => new Set(props.tags.map((t) => t.id)));
+const primarySelected = computed(() => form.tags.filter((id: number) => primaryIds.value.has(id)).length);
+const tagRuleError = computed(() => {
+  const min = props.tagRules?.minPrimary || 0;
+  const max = props.tagRules?.maxPrimary || 0;
+  const n = primarySelected.value;
+  if (min && n < min) return tr('Choose at least {n} primary space(s).', { n: min });
+  if (max && n > max) return tr('Choose at most {n} primary space(s).', { n: max });
+  return '';
+});
+const ruleHint = computed(() => {
+  const min = props.tagRules?.minPrimary || 0, max = props.tagRules?.maxPrimary || 0;
+  if (min && max) return min === max ? tr('Pick exactly {n} primary space(s).', { n: min }) : tr('Pick {min}–{max} primary spaces.', { min, max });
+  if (min) return tr('Pick at least {n} primary space(s).', { n: min });
+  if (max) return tr('Pick up to {n} primary space(s).', { n: max });
+  return tr('Pick the space(s) this belongs in.');
+});
 
 const editor = ref<any>(null);
 const uploadingCover = ref(false);
@@ -223,6 +242,7 @@ async function pickCover(file: File) {
 function submit() {
   if (autoTimer) clearTimeout(autoTimer); // don't autosave after we navigate away
   if (!bodyOptional.value && (!editor.value || editor.value.isEmpty())) { form.setError('body_html', tr('Write something first.')); return; }
+  if (tagRuleError.value) { form.setError('tags', tagRuleError.value); return; }
   form.body_html = editor.value?.getHTML() ?? '';
   form.body_json = editor.value?.getJSON() ?? '';
   const opts = poll.options.map((o) => o.trim()).filter(Boolean);
@@ -297,7 +317,7 @@ function submit() {
               {{ suggestingTags ? tr('Thinking…') : tr('Suggest tags') }}
             </button>
           </div>
-          <p class="mt-0.5 text-xs text-ink-muted">{{ tr('Pick the space(s) this belongs in.') }}</p>
+          <p class="mt-0.5 text-xs" :class="tagRuleError ? 'text-red-400' : 'text-ink-muted'">{{ tagRuleError || ruleHint }}</p>
           <div class="mt-2 flex flex-col gap-2">
             <div v-for="t in tags" :key="t.id" class="flex flex-wrap items-center gap-1.5">
               <button type="button"

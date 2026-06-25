@@ -10,7 +10,15 @@ type Tag = { id: number; name: string; slug: string; color: string; icon: string
 const props = defineProps<{
   categories: { id: number; name: string; slug: string; description: string | null; icon: string | null; color: string; position: number; topics: number; slow_mode: number }[];
   tags: Tag[];
+  tagRules: { minPrimary: number; maxPrimary: number };
 }>();
+
+// Flarum-style min/max primary tags required when starting a topic (0 = off).
+const rules = reactive({ min: props.tagRules.minPrimary, max: props.tagRules.maxPrimary });
+watch(() => props.tagRules, (v) => { rules.min = v.minPrimary; rules.max = v.maxPrimary; });
+function saveRules() {
+  router.post('/admin/tags/settings', { min_primary: rules.min, max_primary: rules.max }, { preserveScroll: true, preserveState: true });
+}
 
 const opts = { preserveScroll: true };
 
@@ -95,6 +103,17 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
           <span class="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary">{{ tr('Spaces') }}</span>
         </div>
         <p class="mb-4 text-xs text-ink-muted">{{ tr('Drag the handle to reorder. Drop a tag onto another’s sub-tag area to make it a sub-tag; drag it back out to make it primary again.') }}</p>
+
+        <div class="mb-3 flex flex-wrap items-center gap-4 rounded-xl border border-line bg-appbg p-3">
+          <span class="text-xs font-bold uppercase tracking-wide text-ink-muted">{{ tr('Primary tags per topic') }}</span>
+          <label class="flex items-center gap-2 text-sm text-ink-2">{{ tr('Min') }}
+            <input v-model.number="rules.min" type="number" min="0" max="10" :class="inp" class="w-16" @change="saveRules" />
+          </label>
+          <label class="flex items-center gap-2 text-sm text-ink-2">{{ tr('Max') }}
+            <input v-model.number="rules.max" type="number" min="0" max="10" :class="inp" class="w-16" @change="saveRules" />
+          </label>
+          <span class="text-xs text-ink-muted">{{ tr('0 = no limit. Members must pick this many primary spaces when posting (Flarum-style).') }}</span>
+        </div>
 
         <div class="mb-4 flex flex-wrap items-end gap-2 rounded-xl border border-line bg-appbg p-3">
           <span class="grid h-9 w-9 place-items-center rounded-lg" :style="{ color: newTag.color, background: newTag.color + '22' }"><i v-if="newTag.icon && newTag.icon.startsWith('fa')" :class="newTag.icon"></i><span v-else>#</span></span>

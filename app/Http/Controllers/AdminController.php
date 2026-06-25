@@ -719,6 +719,10 @@ class AdminController extends Controller
     public function content(): Response
     {
         return Inertia::render('Admin/Content', [
+            'tagRules' => [
+                'minPrimary' => (int) Settings::get('tags.min_primary', 0),
+                'maxPrimary' => (int) Settings::get('tags.max_primary', 0),
+            ],
             'categories' => Category::orderBy('position')->withCount('topics')->get()
                 ->map(fn ($c) => [
                     'id' => $c->id, 'name' => $c->name, 'slug' => $c->slug, 'description' => $c->description,
@@ -833,6 +837,21 @@ class AdminController extends Controller
         ]);
         $data['slug'] = $this->uniqueSlug(Tag::class, $data['name'], $tag->id);
         $tag->update($data);
+
+        return back();
+    }
+
+    /** Flarum-style min/max primary tags required when starting a topic. */
+    public function saveTagSettings(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'min_primary' => ['required', 'integer', 'min:0', 'max:10'],
+            'max_primary' => ['required', 'integer', 'min:0', 'max:10'],
+        ]);
+        Settings::setMany([
+            'tags.min_primary' => $data['min_primary'],
+            'tags.max_primary' => $data['max_primary'],
+        ]);
 
         return back();
     }

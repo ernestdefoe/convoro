@@ -380,6 +380,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::delete('/categories/{category}', [App\Http\Controllers\AdminController::class, 'destroyCategory'])->name('categories.destroy');
     Route::post('/tags', [App\Http\Controllers\AdminController::class, 'storeTag'])->name('tags.store');
     Route::post('/tags/tree', [App\Http\Controllers\AdminController::class, 'saveTagTree'])->name('tags.tree');
+    Route::post('/tags/settings', [App\Http\Controllers\AdminController::class, 'saveTagSettings'])->name('tags.settings');
     Route::put('/tags/{tag}', [App\Http\Controllers\AdminController::class, 'updateTag'])->name('tags.update');
     Route::delete('/tags/{tag}', [App\Http\Controllers\AdminController::class, 'destroyTag'])->name('tags.destroy');
     Route::get('/heroes', [App\Http\Controllers\AdminController::class, 'heroStudio'])->name('heroes');

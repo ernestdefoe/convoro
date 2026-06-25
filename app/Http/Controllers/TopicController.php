@@ -59,6 +59,11 @@ class TopicController extends Controller
             'autosave' => $autosave,
             // Boards where an extension supplies the content (body optional).
             'bodyOptionalCategories' => \App\Support\CategoryRules::bodyOptionalIds(),
+            // Flarum-style min/max primary (top-level) tags required per topic.
+            'tagRules' => [
+                'minPrimary' => (int) \App\Support\Settings::get('tags.min_primary', 0),
+                'maxPrimary' => (int) \App\Support\Settings::get('tags.max_primary', 0),
+            ],
         ]);
     }
 
@@ -81,6 +86,15 @@ class TopicController extends Controller
             'poll.multiple' => ['boolean'],
             'poll.closes_days' => ['nullable', 'integer', 'min:1', 'max:365'],
         ]);
+
+        // Flarum-style min/max primary (top-level) tags per topic.
+        $minP = (int) \App\Support\Settings::get('tags.min_primary', 0);
+        $maxP = (int) \App\Support\Settings::get('tags.max_primary', 0);
+        if ($minP > 0 || $maxP > 0) {
+            $primaryCount = \App\Models\Tag::whereIn('id', $data['tags'] ?? [])->whereNull('parent_id')->count();
+            abort_if($minP > 0 && $primaryCount < $minP, 422, __('Please choose at least :n primary space(s).', ['n' => $minP]));
+            abort_if($maxP > 0 && $primaryCount > $maxP, 422, __('Please choose at most :n primary space(s).', ['n' => $maxP]));
+        }
 
         $data['body_html'] = Content::clean($data['body_html'] ?? '');
         if (\App\Support\TrustLevels::gatesContent($request->user())) {
