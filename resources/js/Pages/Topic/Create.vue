@@ -11,7 +11,7 @@ import { toast } from '@/lib/toast';
 
 const props = defineProps<{
   categories: { id: number; name: string; icon: string | null; color: string }[];
-  tags: { id: number; name: string; color: string }[];
+  tags: { id: number; name: string; icon: string | null; color: string; children: { id: number; name: string; color: string }[] }[];
   draft?: any;
   autosave?: any;
   bodyOptionalCategories?: number[];
@@ -20,6 +20,8 @@ const props = defineProps<{
 // Boards where an extension supplies the content (e.g. a TMDB movie card) — the
 // post body is optional there, so don't force the author to type anything.
 const bodyOptional = computed(() => (props.bodyOptionalCategories || []).includes(form.category_id as number));
+// Flattened tag list (top-level + sub-tags) for lookups like AI tag suggestions.
+const flatTags = computed(() => props.tags.flatMap((t) => [t, ...(t.children || [])]));
 
 const editor = ref<any>(null);
 const uploadingCover = ref(false);
@@ -41,7 +43,7 @@ const pollField = 'w-full rounded-lg border-line bg-appbg text-sm text-ink place
 
 const form = useForm({
   title: props.draft?.title ?? '',
-  category_id: props.draft?.category_id ?? (props.categories[0]?.id ?? null),
+  category_id: props.draft?.category_id ?? null,
   tags: (props.draft?.tags ?? []) as number[],
   cover: (props.draft?.cover ?? '') as string,
   body_html: '',
@@ -207,7 +209,7 @@ async function suggestTags() {
     });
     const names: string[] = (await r.json()).tags ?? [];
     for (const name of names) {
-      const tag = props.tags.find((t) => t.name.toLowerCase() === name.toLowerCase());
+      const tag = flatTags.value.find((t) => t.name.toLowerCase() === name.toLowerCase());
       if (tag && !form.tags.includes(tag.id)) form.tags.push(tag.id);
     }
   } catch { /* ignore */ } finally { suggestingTags.value = false; }
@@ -287,26 +289,32 @@ function submit() {
             <p class="mt-1.5 text-[11px] text-ink-muted">{{ tr('Still different? Carry on — your question is welcome.') }}</p>
           </div>
 
-          <label class="mt-4 block text-sm font-semibold text-ink-2">{{ tr('Category') }}</label>
-          <select v-model="form.category_id" data-composer-category class="mt-1.5 w-full rounded-lg border-line bg-surface-2 text-ink focus:border-primary focus:ring-primary">
-            <option :value="null">{{ tr('— none —') }}</option>
-            <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
-          </select>
-
           <div class="mt-4 flex items-center justify-between">
-            <label class="block text-sm font-semibold text-ink-2">{{ tr('Tags') }}</label>
+            <label class="block text-sm font-semibold text-ink-2">{{ tr('Spaces & tags') }}</label>
             <button v-if="aiEnabled && tags.length" type="button" :disabled="suggestingTags" @click="suggestTags"
               class="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline disabled:opacity-50">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/></svg>
               {{ suggestingTags ? tr('Thinking…') : tr('Suggest tags') }}
             </button>
           </div>
-          <div class="mt-2 flex flex-wrap gap-2">
-            <button v-for="t in tags" :key="t.id" type="button"
-              class="rounded-full border px-3 py-1 text-xs font-semibold"
-              :class="form.tags.includes(t.id) ? 'border-primary bg-primary/15 text-primary' : 'border-line bg-surface-2 text-ink-2 hover:bg-surface'"
-              @click="toggleTag(t.id)">#{{ t.name }}</button>
-            <span v-if="!tags.length" class="text-sm text-ink-muted">{{ tr('No tags yet.') }}</span>
+          <p class="mt-0.5 text-xs text-ink-muted">{{ tr('Pick the space(s) this belongs in.') }}</p>
+          <div class="mt-2 flex flex-col gap-2">
+            <div v-for="t in tags" :key="t.id" class="flex flex-wrap items-center gap-1.5">
+              <button type="button"
+                class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition"
+                :class="form.tags.includes(t.id) ? 'border-transparent text-white' : 'border-line bg-surface-2 text-ink-2 hover:bg-surface'"
+                :style="form.tags.includes(t.id) ? { background: t.color } : undefined"
+                @click="toggleTag(t.id)">
+                <i v-if="t.icon && t.icon.startsWith('fa-')" :class="t.icon" aria-hidden="true"></i>
+                <span v-else class="h-2 w-2 rounded-full" :style="{ background: t.color }"></span>
+                {{ t.name }}
+              </button>
+              <button v-for="c in (t.children || [])" :key="c.id" type="button"
+                class="rounded-full border px-2.5 py-1 text-[11px] font-semibold transition"
+                :class="form.tags.includes(c.id) ? 'border-primary bg-primary/15 text-primary' : 'border-line bg-surface-2 text-ink-muted hover:bg-surface'"
+                @click="toggleTag(c.id)">{{ c.name }}</button>
+            </div>
+            <span v-if="!tags.length" class="text-sm text-ink-muted">{{ tr('No spaces yet.') }}</span>
           </div>
 
           <label class="mt-4 block text-sm font-semibold text-ink-2">{{ tr('Cover image') }} <span class="font-normal text-ink-muted">{{ tr('(optional, for grid view)') }}</span></label>

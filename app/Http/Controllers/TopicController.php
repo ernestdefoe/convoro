@@ -49,7 +49,12 @@ class TopicController extends Controller
 
         return Inertia::render('Topic/Create', [
             'categories' => Category::orderBy('position')->get(['id', 'name', 'icon', 'color']),
-            'tags' => Tag::orderBy('name')->get(['id', 'name', 'color']),
+            'tags' => Tag::whereNull('parent_id')->orderBy('position')->orderBy('name')
+                ->with(['children' => fn ($c) => $c->orderBy('position')->orderBy('name')])
+                ->get()->map(fn ($t) => [
+                    'id' => $t->id, 'name' => $t->name, 'icon' => $t->icon, 'color' => $t->color,
+                    'children' => $t->children->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'color' => $c->color])->all(),
+                ]),
             'draft' => $draft,
             'autosave' => $autosave,
             // Boards where an extension supplies the content (body optional).
