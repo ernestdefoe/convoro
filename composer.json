@@ -44,9 +44,8 @@
     "scripts": {
         "setup": [
             "composer install",
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
-            "@php artisan key:generate",
-            "@php artisan migrate --force",
+            "@php scripts/preflight.php",
+            "@php artisan migrate --force --ansi",
             "npm install --ignore-scripts",
             "npm run build"
         ],
