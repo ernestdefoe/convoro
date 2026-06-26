@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "convoro-dev": {
+      "command": "php",
+      "args": ["artisan", "mcp:start", "convoro-dev"]
+    }
+  }
+}
