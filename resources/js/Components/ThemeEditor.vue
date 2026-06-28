@@ -106,6 +106,7 @@ const form = reactive({
   container: 1240,
   avatar_shape: 'circle' as 'circle' | 'rounded' | 'square',
   post_style: 'card' as 'card' | 'bordered' | 'flat',
+  footer_wave: true,
   header_bg: 'surface' as 'surface' | 'brand' | 'custom',
   header_color: '#5b5bd6',
   density: 'comfortable' as 'compact' | 'comfortable' | 'spacious',
@@ -132,6 +133,7 @@ function load() {
   form.container = v.container ?? 1240;
   form.avatar_shape = v.avatarShape ?? 'circle';
   form.post_style = v.postStyle ?? 'card';
+  form.footer_wave = v.footerWave !== false;
   form.header_bg = v.headerBg ?? 'surface';
   form.header_color = v.headerColor ?? '#5b5bd6';
   form.density = v.density ?? 'comfortable';
@@ -224,6 +226,7 @@ function apply() {
   }
   r.dataset.theme = form.mode;
   r.dataset.postStyle = form.post_style;
+  r.dataset.footerWave = form.footer_wave ? 'on' : 'off';
   auditA11y();
 }
 
@@ -410,8 +413,8 @@ const labelCls = 'mb-2 block text-xs font-bold uppercase tracking-wide text-ink-
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="10.5" r="2.5"/><circle cx="8.5" cy="7.5" r="2.5"/><circle cx="6.5" cy="12.5" r="2.5"/><path d="M12 2a10 10 0 1 0 0 20 2 2 0 0 0 2-2 1.5 1.5 0 0 1 1.5-1.5H18a4 4 0 0 0 4-4 10 10 0 0 0-10-10z"/></svg>
     </button>
 
-    <!-- Drawer -->
-    <div v-if="open" class="fixed inset-y-0 left-0 z-[71] flex w-[340px] max-w-[90vw] flex-col border-r border-line bg-surface shadow-2xl">
+    <!-- Drawer (no-frost: solid surfaces so the controls stay readable) -->
+    <div v-if="open" class="no-frost fixed inset-y-0 left-0 z-[71] flex w-[340px] max-w-[90vw] flex-col border-r border-line bg-surface shadow-2xl">
       <div class="flex items-center gap-2 border-b border-line px-5 py-4">
         <h2 class="text-base font-extrabold">{{ tr('Customize') }}</h2>
         <span class="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary">{{ tr('Live') }}</span>
@@ -590,6 +593,19 @@ const labelCls = 'mb-2 block text-xs font-bold uppercase tracking-wide text-ink-
             <button v-for="s in postStyles" :key="s.v" type="button" @click="form.post_style = s.v; apply()"
               class="flex-1 rounded-lg border px-2 py-2 text-xs font-semibold"
               :class="form.post_style === s.v ? 'border-primary bg-primary/10 text-primary' : 'border-line text-ink-2 hover:bg-surface-2'">{{ s.label }}</button>
+          </div>
+        </div>
+
+        <!-- Footer wave -->
+        <div>
+          <label :class="labelCls">{{ tr('Footer wave') }}</label>
+          <div class="flex gap-2">
+            <button type="button" @click="form.footer_wave = true; apply()"
+              class="flex-1 rounded-lg border px-2 py-2 text-xs font-semibold"
+              :class="form.footer_wave ? 'border-primary bg-primary/10 text-primary' : 'border-line text-ink-2 hover:bg-surface-2'">{{ tr('On') }}</button>
+            <button type="button" @click="form.footer_wave = false; apply()"
+              class="flex-1 rounded-lg border px-2 py-2 text-xs font-semibold"
+              :class="!form.footer_wave ? 'border-primary bg-primary/10 text-primary' : 'border-line text-ink-2 hover:bg-surface-2'">{{ tr('Off') }}</button>
           </div>
         </div>
 

@@ -165,6 +165,8 @@ class AdminController extends Controller
             'enabled' => (bool) config('convoro.update_url'),
             'running' => (bool) Settings::get('update.running', false),
             'lastStatus' => Settings::get('update.last_status'),
+            'preflight' => \App\Support\UpdatePreflight::checks(),
+            'canAuto' => \App\Support\UpdatePreflight::canRunDetached(),
         ];
     }
 
@@ -269,10 +271,41 @@ class AdminController extends Controller
             return back()->with('status', __('An update is already in progress.'));
         }
 
-        Settings::setMany(['update.running' => true, 'update.last_status' => __('Update started…')]);
-        \App\Jobs\ApplyUpdateJob::dispatch();
+        // Pre-flight: abort with a clear reason rather than failing mid-update.
+        $blockers = \App\Support\UpdatePreflight::blockers();
+        if ($blockers) {
+            $reasons = implode(' ', array_map(
+                fn ($b) => $b['label'].($b['detail'] ? ' — '.$b['detail'] : '.'),
+                $blockers,
+            ));
 
-        return back()->with('status', __('Update started — it runs in the background and finishes in a moment. Refresh to see the new version.'));
+            return back()->with('status', __('Update can\'t start: ').$reasons);
+        }
+
+        // Run the update in a detached background process so it completes even with
+        // NO queue worker running (the old queued-job path hung forever without one).
+        if (\App\Support\UpdatePreflight::canRunDetached()) {
+            Settings::setMany(['update.running' => true, 'update.last_status' => __('Update started…')]);
+
+            if (\App\Support\UpdatePreflight::runDetached()) {
+                return back()->with('status', __('Update started — it runs in the background and finishes in a moment. Refresh to see the new version.'));
+            }
+
+            // Spawn failed unexpectedly — don't leave a stuck flag.
+            Settings::setMany(['update.running' => false, 'update.last_status' => __('Couldn\'t start the background update.')]);
+        }
+
+        // No safe way to self-run (exec disabled / no PHP CLI found): tell the admin
+        // exactly what to run from the server terminal.
+        return back()->with('status', __('This server can\'t apply updates automatically. From your project folder run: php artisan convoro:update'));
+    }
+
+    /** Clear a stuck "update in progress" flag so the admin can retry. */
+    public function resetUpdate(): RedirectResponse
+    {
+        Settings::setMany(['update.running' => false, 'update.last_status' => __('Update flag reset.')]);
+
+        return back()->with('status', __('Cleared the update flag — you can try again.'));
     }
 
     // ---- Store (central, convoro.co) ------------------------------------
@@ -899,6 +932,8 @@ class AdminController extends Controller
             'c1' => (string) Settings::get('forum.hero_c1', '#7c3aed'),
             'c2' => (string) Settings::get('forum.hero_c2', '#ec4899'),
             'image' => ((string) Settings::get('forum.hero_image', '')) ?: null,
+            'height' => ((int) Settings::get('forum.hero_height', 0)) ?: null,
+            'width' => ((int) Settings::get('forum.hero_width', 0)) ?: null,
         ];
 
         $tags = Tag::orderBy('parent_id')->orderBy('position')->orderBy('name')->get()
@@ -923,6 +958,8 @@ class AdminController extends Controller
             'c1' => ['nullable', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'c2' => ['nullable', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'image' => ['nullable', 'string', 'max:2048'],
+            'height' => ['nullable', 'integer', 'min:0', 'max:2000'],
+            'width' => ['nullable', 'integer', 'min:0', 'max:4000'],
         ]);
 
         if ($data['target'] === 'home') {
@@ -933,6 +970,8 @@ class AdminController extends Controller
                 'forum.hero_c1' => $data['c1'] ?: '#7c3aed',
                 'forum.hero_c2' => $data['c2'] ?: '#ec4899',
                 'forum.hero_image' => $data['image'] ?? '',
+                'forum.hero_height' => $data['height'] ?? '',
+                'forum.hero_width' => $data['width'] ?? '',
             ]);
 
             return back();
@@ -945,6 +984,8 @@ class AdminController extends Controller
             'c1' => $data['c1'] ?? null,
             'c2' => $data['c2'] ?? null,
             'image' => $data['image'] ?? null,
+            'height' => $data['height'] ?? null,
+            'width' => $data['width'] ?? null,
         ], fn ($v) => $v !== null && $v !== '');
         // Mirror onto the tag's base fields so the rail pill + listings match.
         if (! empty($data['c1'])) {
@@ -1200,6 +1241,8 @@ class AdminController extends Controller
                 'reply_domain' => Settings::get('mail.reply_domain', ''),
                 'reply_secret' => (string) Settings::get('mail.reply_secret', ''),
                 'reply_webhook' => url('/mail/inbound'),
+                'maintenance' => (bool) Settings::get('maintenance.enabled', false),
+                'maintenance_message' => (string) Settings::get('maintenance.message', ''),
             ],
             'mobileNav' => \App\Support\MobileNav::share(),
             'federation' => [
@@ -1258,7 +1301,12 @@ class AdminController extends Controller
             'trust_gate_new_users' => ['required', 'boolean'],
             'reply_enabled' => ['required', 'boolean'],
             'reply_domain' => ['nullable', 'string', 'max:120', 'regex:/^[a-z0-9.\-]*$/i'],
+            'maintenance' => ['sometimes', 'boolean'],
+            'maintenance_message' => ['nullable', 'string', 'max:500'],
         ]);
+
+        Settings::set('maintenance.enabled', $request->boolean('maintenance'));
+        Settings::set('maintenance.message', (string) ($data['maintenance_message'] ?? ''));
 
         // Generate the reply-token secret the first time reply-by-email is enabled.
         if ($data['reply_enabled'] && ! Settings::get('mail.reply_secret')) {
@@ -1526,6 +1574,7 @@ class AdminController extends Controller
             'container' => ['required', 'integer', 'in:0,1100,1240,1400,1600'],
             'avatar_shape' => ['nullable', 'in:circle,rounded,square'],
             'post_style' => ['nullable', 'in:card,bordered,flat'],
+            'footer_wave' => ['sometimes', 'boolean'],
             'header_bg' => ['nullable', 'in:surface,brand,custom'],
             'header_color' => ['nullable', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'density' => ['nullable', 'in:compact,comfortable,spacious'],
@@ -1551,6 +1600,7 @@ class AdminController extends Controller
             'theme.container' => (int) $data['container'],
             'theme.avatar_shape' => $data['avatar_shape'] ?? Settings::get('theme.avatar_shape', 'circle'),
             'theme.post_style' => $data['post_style'] ?? Settings::get('theme.post_style', 'card'),
+            'theme.footer_wave' => $request->has('footer_wave') ? $request->boolean('footer_wave') : Settings::get('theme.footer_wave', true),
             'theme.header_bg' => $data['header_bg'] ?? 'surface',
             'theme.header_color' => $data['header_color'] ?? Settings::get('theme.header_color', '#5b5bd6'),
             'theme.density' => $data['density'] ?? 'comfortable',

@@ -60,6 +60,7 @@ class Settings
         'theme.container' => 1240,           // content max width px (0 = full width)
         'theme.avatar_shape' => 'circle',    // circle | rounded | square
         'theme.post_style' => 'card',        // card | bordered | flat
+        'theme.footer_wave' => true,         // animated wave divider above the footer
         'theme.accent' => '#8b5cf6',         // secondary/accent color
         'theme.heading_font' => '',          // '' = same as body font; else a Theme::FONTS family
         'theme.header_bg' => 'surface',      // surface | brand | custom
@@ -209,6 +210,7 @@ class Settings
                 'container' => (int) self::get('theme.container'),
                 'avatarShape' => self::get('theme.avatar_shape'),
                 'postStyle' => self::get('theme.post_style'),
+                'footerWave' => (bool) self::get('theme.footer_wave', true),
                 'accent' => self::get('theme.accent'),
                 'headingFont' => self::get('theme.heading_font'),
                 'headerBg' => self::get('theme.header_bg'),

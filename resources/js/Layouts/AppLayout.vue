@@ -49,7 +49,12 @@ function onMoreDoc(e: MouseEvent) {
 onMounted(() => document.addEventListener('click', onMoreDoc));
 onBeforeUnmount(() => document.removeEventListener('click', onMoreDoc));
 const dmUnread = computed(() => Number((page.props as any).dmUnread ?? 0));
+const notifUnread = computed(() => Number((page.props as any).notifications?.unread ?? 0));
 const mobileBar = computed(() => !!(page.props as any).mobileNav?.enabled && ((page.props as any).mobileNav?.tabs?.length ?? 0) >= 2);
+function logout() {
+  mobileOpen.value = false;
+  router.post('/logout');
+}
 const siteLogo = computed(() => (page.props as any).site?.logo || '');
 const siteLogoDark = computed(() => (page.props as any).site?.logoDark || '');
 const initials = computed(() => {
@@ -74,6 +79,9 @@ function toggleAutoTranslate(e: Event) {
 watchEffect(() => {
   if (typeof document !== 'undefined') {
     document.documentElement.dir = (page.props as any).i18n?.rtl ? 'rtl' : 'ltr';
+    // Footer wave on/off (admin theme option). The live theme editor overrides
+    // this attribute directly for an instant preview.
+    document.documentElement.dataset.footerWave = (page.props as any).site?.theme?.footerWave === false ? 'off' : 'on';
   }
 });
 function startTopic() {
@@ -94,13 +102,13 @@ function goMobile(href: string) {
       <span>{{ t('You’re inside your hosted community') }}: <b>{{ activeTenant.name }}</b> — {{ t('its own database, you’re the admin.') }}</span>
       <button type="button" class="rounded bg-white/20 px-2 py-0.5 text-xs font-bold hover:bg-white/30" @click="router.post('/panel/exit')">{{ t('Exit to panel') }}</button>
     </div>
-    <a href="#main" class="skip-link">Skip to content</a>
+    <a href="#main" class="skip-link">{{ t('Skip to content') }}</a>
     <header class="q-header sticky top-0 z-40 border-b border-line backdrop-blur">
       <div class="mx-auto flex h-[60px] max-w-[var(--c-container)] items-center gap-5 px-6">
         <Link href="/" class="flex items-center">
           <template v-if="siteLogo || siteLogoDark">
-            <img :src="siteLogo || siteLogoDark" alt="Logo" class="block h-8 w-auto max-w-[180px] dark:hidden" />
-            <img :src="siteLogoDark || siteLogo" alt="Logo" class="hidden h-8 w-auto max-w-[180px] dark:block" />
+            <img :src="siteLogo || siteLogoDark" :alt="t('Logo')"class="block h-8 w-auto max-w-[180px] dark:hidden" />
+            <img :src="siteLogoDark || siteLogo" :alt="t('Logo')"class="hidden h-8 w-auto max-w-[180px] dark:block" />
           </template>
           <ConvoroLogo v-else :size="34" />
         </Link>
@@ -135,19 +143,24 @@ function goMobile(href: string) {
           <ThemeToggle />
           <Slot name="header:end" />
           <template v-if="user">
-            <Link href="/messages" class="relative flex h-[34px] w-[34px] items-center justify-center rounded-full border border-line bg-surface-2 text-ink-2 hover:text-ink" aria-label="Messages">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-              <span v-if="dmUnread > 0" class="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">{{ dmUnread > 99 ? '99+' : dmUnread }}</span>
-            </Link>
-            <NotificationBell />
-            <UserMenu />
+            <!-- On mobile the bottom tab bar owns Messages, Alerts and the account
+                 menu, so this top cluster is hidden there to drop the duplication
+                 (its essentials move into the hamburger menu below). -->
+            <div class="items-center gap-3" :class="mobileBar ? 'hidden md:flex' : 'flex'">
+              <Link href="/messages" class="relative flex h-[34px] w-[34px] items-center justify-center rounded-full border border-line bg-surface-2 text-ink-2 hover:text-ink" :aria-label="t('Messages')">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                <span v-if="dmUnread > 0" class="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-white">{{ dmUnread > 99 ? '99+' : dmUnread }}</span>
+              </Link>
+              <NotificationBell />
+              <UserMenu />
+            </div>
           </template>
           <template v-else>
             <button type="button" class="hidden rounded-lg px-3 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2 sm:block" @click="auth.open('login')">{{ t('Log in') }}</button>
             <button type="button" class="hidden rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white shadow-lg shadow-primary/30 hover:bg-primary-600 sm:block" @click="auth.open('register')">{{ t('Join') }}</button>
           </template>
           <!-- Mobile menu toggle -->
-          <button type="button" class="grid h-[34px] w-[34px] place-items-center rounded-full border border-line bg-surface-2 text-ink-2 hover:text-ink md:hidden" :aria-expanded="mobileOpen" aria-label="Menu" @click="mobileOpen = !mobileOpen">
+          <button type="button" class="grid h-[34px] w-[34px] place-items-center rounded-full border border-line bg-surface-2 text-ink-2 hover:text-ink md:hidden" :aria-expanded="mobileOpen" :aria-label="t('Menu')" @click="mobileOpen = !mobileOpen">
             <svg v-if="!mobileOpen" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 6h18M3 12h18M3 18h18" /></svg>
             <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
           </button>
@@ -158,7 +171,7 @@ function goMobile(href: string) {
       <Transition name="mnav">
         <div v-if="mobileOpen" class="border-t border-line bg-surface md:hidden">
           <nav class="mx-auto max-w-[var(--c-container)] space-y-1 px-4 py-3">
-            <button type="button" @click="startTopic" class="mb-2 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/30 hover:bg-primary-600">
+            <button v-if="!mobileBar" type="button" @click="startTopic" class="mb-2 flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-primary/30 hover:bg-primary-600">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 5v14M5 12h14" /></svg> {{ t('Start a discussion') }}
             </button>
             <button type="button" @click="goMobile('/')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Community') }}</button>
@@ -166,6 +179,23 @@ function goMobile(href: string) {
             <button type="button" @click="goMobile('/members')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Members') }}</button>
             <button type="button" @click="goMobile('/groups')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Groups') }}</button>
             <button v-for="n in visibleExtNav" :key="n.href" type="button" @click="goMobile(n.href)" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t(n.label) }}</button>
+
+            <!-- Account essentials — only when the top cluster is hidden (bottom bar
+                 active), so settings / log-out stay reachable on mobile. -->
+            <div v-if="user && mobileBar" class="!mt-3 space-y-1 border-t border-line pt-3">
+              <button type="button" @click="goMobile('/notifications')" class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">
+                <span>{{ t('Notifications') }}</span>
+                <span v-if="notifUnread > 0" class="rounded-full bg-primary px-1.5 text-[10px] font-bold text-white">{{ notifUnread > 99 ? '99+' : notifUnread }}</span>
+              </button>
+              <button type="button" @click="goMobile('/messages')" class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">
+                <span>{{ t('Messages') }}</span>
+                <span v-if="dmUnread > 0" class="rounded-full bg-primary px-1.5 text-[10px] font-bold text-white">{{ dmUnread > 99 ? '99+' : dmUnread }}</span>
+              </button>
+              <button type="button" @click="goMobile(`/u/${user.id}`)" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Your profile') }}</button>
+              <button type="button" @click="goMobile('/profile')" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Settings') }}</button>
+              <a v-if="isAdmin" href="/admin" target="_blank" rel="noopener" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-ink-2 hover:bg-surface-2">{{ t('Admin') }} ↗</a>
+              <button type="button" @click="logout" class="block w-full rounded-lg px-3 py-2.5 text-left text-sm font-semibold text-red-500 hover:bg-surface-2">{{ t('Log out') }}</button>
+            </div>
 
             <!-- Language + content auto-translate (the header controls are desktop-only). -->
             <div v-if="Object.keys(locales).length > 1 || user" class="!mt-3 space-y-2.5 border-t border-line pt-3">
@@ -232,6 +262,8 @@ function goMobile(href: string) {
 
 /* Wavy Prism footer */
 .footer-waves { height: 5.5rem; overflow: hidden; }
+[data-footer-wave='off'] .footer-waves,
+[data-footer-wave='off'] .footer-glow { display: none; }
 .wave {
   position: absolute; left: 0; top: 0; display: block;
   width: 200%; height: 5.5rem; will-change: transform;
