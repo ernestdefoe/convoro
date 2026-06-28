@@ -67,10 +67,18 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-title" content="{{ config('app.name', 'Convoro') }}">
         @php($iconRev = \App\Support\Settings::get('icons.rev', config('convoro.version', '1')))
-        <link rel="icon" href="/favicon.ico?v={{ $iconRev }}" sizes="any">
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg?v={{ $iconRev }}">
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v={{ $iconRev }}">
-        <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png?v={{ $iconRev }}">
+        @php($siteFavicon = \App\Support\Settings::get('site.favicon'))
+        @if ($siteFavicon)
+            {{-- A configured site favicon REPLACES the defaults — otherwise the
+                 typed/sized default links win and the brand icon is ignored. --}}
+            <link rel="icon" href="{{ $siteFavicon }}?v={{ $iconRev }}">
+            <link rel="apple-touch-icon" href="{{ $siteFavicon }}?v={{ $iconRev }}">
+        @else
+            <link rel="icon" href="/favicon.ico?v={{ $iconRev }}" sizes="any">
+            <link rel="icon" type="image/svg+xml" href="/favicon.svg?v={{ $iconRev }}">
+            <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png?v={{ $iconRev }}">
+            <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png?v={{ $iconRev }}">
+        @endif
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -88,9 +96,6 @@
             <link href="{{ $hfHref }}" rel="stylesheet" media="print" onload="this.media='all'" />
             <noscript><link href="{{ $hfHref }}" rel="stylesheet" /></noscript>
         @endif
-        @if ($favicon = \App\Support\Settings::get('site.favicon'))
-            <link rel="icon" href="{{ $favicon }}" />
-        @endif
 
         <!-- Scripts -->
         @routes
@@ -103,13 +108,19 @@
         @endif
 
         @if ($faKit = \App\Support\Settings::get('fa.kit_url'))
-            <script src="{{ $faKit }}" crossorigin="anonymous" defer></script>
+            {{-- Cache-bust the kit per release: a hard-refresh re-fetches this
+                 script tag but NOT the kit.js's own dynamically-loaded CSS +
+                 webfonts, so a pinned-version change (or any FA update) would
+                 otherwise wait out each visitor's cached kit. Bumping the query
+                 on deploy forces a fresh kit.js → fresh CSS/webfont URLs. --}}
+            @php($faSrc = $faKit . (str_contains($faKit, '?') ? '&' : '?') . 'v=' . config('convoro.version'))
+            <script src="{{ $faSrc }}" crossorigin="anonymous" defer></script>
         @else
             {{-- No Pro kit configured → load free Font Awesome so `fa-` icons
                  (e.g. category icons) render on any domain, no kit/allowlist.
                  Non-blocking: icons swap in once the stylesheet loads. --}}
-            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css" media="print" onload="this.media='all'">
-            <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css"></noscript>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.0/css/all.min.css" media="print" onload="this.media='all'">
+            <noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@7.3.0/css/all.min.css"></noscript>
         @endif
 
         @inertiaHead
