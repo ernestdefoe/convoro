@@ -11,7 +11,7 @@ createServer((page) =>
     createInertiaApp({
         page,
         render: renderToString,
-        title: (title) => `${title} - ${appName}`,
+        title: (title) => `${title} - ${(page.props as Record<string, any>)?.site?.name || appName}`,
         resolve: (name) =>
             resolvePageComponent(
                 `./Pages/${name}.vue`,

@@ -8,7 +8,7 @@ import { ZiggyVue } from '../../vendor/tightenco/ziggy';
 import { bootExtensions } from './lib/convoro-ext';
 import { initEmbeds } from './lib/embeds';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Convoro';
+let appName = import.meta.env.VITE_APP_NAME || 'Convoro';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -21,6 +21,10 @@ createInertiaApp({
         // Expose window.Convoro + load enabled extensions' prebuilt bundles
         // (shared as the `extAssets` Inertia prop) before mounting.
         const shared = (props.initialPage.props as Record<string, unknown>) ?? {};
+        // Use the configured site name as the tab-title suffix (per-site at runtime,
+        // since the bundle is shared across communities). Falls back to VITE_APP_NAME.
+        const siteName = (shared.site as { name?: string } | undefined)?.name;
+        if (siteName) appName = siteName;
         bootExtensions((shared.extAssets as { id: string; url: string }[]) ?? []);
         initEmbeds();
 
