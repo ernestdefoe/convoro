@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.43.6',
+            'date' => '2026-07-05',
+            'title' => 'Email verification actually asks',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'New members now receive a verification email at signup. The profile checkmark has always meant "email verified," but the verification mail was never being sent — so most members had no way to earn it. Existing members can verify any time from Settings → Profile ("resend verification email"). Nothing is locked behind verification; the checkmark is a trust signal.'],
+                ['type' => 'improved', 'text' => 'Updated the Inertia frontend library (2.3.27) and Laravel framework (13.18.1).'],
+            ],
+        ],
+        [
             'tag' => '1.43.5',
             'date' => '2026-07-05',
             'title' => 'Sandbox tags',

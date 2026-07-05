@@ -8,7 +8,7 @@
         "dev": "vite"
     },
     "devDependencies": {
-        "@inertiajs/vue3": "^2.0.0",
+        "@inertiajs/vue3": "^2.3.27",
         "@tailwindcss/forms": "^0.5.3",
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-vue": "^6.0.0",
@@ -36,7 +36,6 @@
         "highlight.js": "^11.11.1",
         "laravel-echo": "^2.3.7",
         "lowlight": "^3.3.0",
-        "pusher-js": "^8.5.0",
-        "vuedraggable": "^4.1.0"
+        "pusher-js": "^8.5.0"
     }
 }
