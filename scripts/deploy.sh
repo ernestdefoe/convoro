@@ -16,7 +16,10 @@
 #
 set -euo pipefail
 
-REMOTE="${CONVORO_REMOTE:-cc}"
+# Default target is the CURRENT prod box (convoro-prod / 103.195.100.103,
+# PHP 8.4 + Octane). `cc` is the OLD box — convoro.co no longer points at it;
+# deploying there looks successful but changes nothing the public sees.
+REMOTE="${CONVORO_REMOTE:-convoro-prod}"
 APP="/var/www/convoro"
 STAMP="$(git rev-parse --short HEAD 2>/dev/null || echo manual)"
 LOCAL_TGZ="$(mktemp -t convoro-deploy.XXXXXX).tgz"
@@ -72,6 +75,14 @@ sudo -u www-data rm -f bootstrap/cache/convoro-extensions.php
 sudo -u www-data php artisan config:cache
 sudo -u www-data php artisan route:cache
 sudo -u www-data php artisan view:cache
+# Keep the UI translation catalog in sync with the shipped code: lang/_catalog.json
+# is generated from t()/__() calls and is NOT part of the deployed lang/ snapshot,
+# so without this it drifts and newly-added strings silently fall back to English.
+# Then queue translation of anything now missing per active locale (the jobs
+# self-chain the rest in the background). Both are non-fatal — a translation
+# hiccup must never fail an otherwise-good deploy.
+sudo -u www-data php artisan convoro:i18n-scan || true
+sudo -u www-data php artisan convoro:i18n-translate || true
 rm -f /tmp/convoro-deploy.tgz
 REMOTE
 
@@ -81,7 +92,11 @@ set -euo pipefail
 sudo systemctl restart convoro-ssr.service
 # Graceful php-fpm reload starts fresh workers → empties OPcache, so the new
 # PHP bytecode is served immediately (OPcache is ON for the convoro pool).
-sudo systemctl reload php8.5-fpm.service
+# convoro-prod runs 8.4; fall back to 8.5 for any box still on the old stack.
+sudo systemctl reload php8.4-fpm.service 2>/dev/null || sudo systemctl reload php8.5-fpm.service
+# Octane serves the main site on convoro-prod — old workers keep the previous
+# code in memory until restarted. No-op on boxes without the unit.
+sudo systemctl restart convoro-octane.service 2>/dev/null || true
 sudo systemctl restart convoro-horizon.service || true
 sleep 2
 SSR=$(systemctl is-active convoro-ssr.service)
