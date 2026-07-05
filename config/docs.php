@@ -30,6 +30,18 @@ return [
                 ],
             ],
             [
+                'h' => 'Shared hosting, step by step',
+                'body' => [
+                    'Convoro is built to run on inexpensive shared hosting — no SSH, no Composer, no background services. Out of the box it uses file-based cache and sessions and processes jobs inline, so a $2–3/month cPanel or DirectAdmin plan is enough. Redis, websockets and dedicated search are optional upgrades for bigger communities, never requirements.',
+                    'First, in your hosting panel’s PHP selector, choose PHP 8.3 or newer and enable the pdo_mysql, mbstring, openssl, gd, fileinfo and zip extensions (most hosts have them on already). If your plan tops out below PHP 8.3, Convoro will not run — that is the one hard requirement budget hosts sometimes miss.',
+                    'Create a MySQL database and user in the panel and note the credentials. Then upload the zip with the panel’s file manager, extract it, and set your domain’s document root to the extracted public/ folder (cPanel: Domains → Document Root; DirectAdmin: Domain Setup). If your host will not let you change the primary domain’s root, install into a subdomain or addon domain instead — those always allow it.',
+                    'Visit /install in your browser and follow the wizard: it verifies the server, tests your database details, runs the migrations and creates your admin account. No terminal at any point.',
+                    'Finally, add one cron job in the panel so scheduled work runs (email digests, scheduled posts, backups). The forum works without it — these features simply wait until the cron exists:',
+                    ['code' => "# cPanel/DirectAdmin cron, run every minute:\ncd /home/YOURUSER/path-to-convoro && php artisan schedule:run", 'lang' => 'bash'],
+                    'Plan for roughly 300 MB of disk after extraction, plus room for your members’ uploads. If your community outgrows the plan, the same install moves to a VPS unchanged — and can then turn on Redis, realtime websockets and semantic search.',
+                ],
+            ],
+            [
                 'h' => 'Option B — Composer (command line)',
                 'body' => [
                     'Prefer the terminal? Clone the repository and let Composer do the rest. You need PHP 8.3+, Composer and Node.js on the machine.',
