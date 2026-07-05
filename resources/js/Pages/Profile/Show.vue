@@ -1,11 +1,10 @@
 <script setup lang="ts">
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import Slot from '@/Components/ext/Slot.vue';
 import Editor from '@/Components/Editor.vue';
-import ReadingScrubber from '@/Components/forum/ReadingScrubber.vue';
 import { t as tr } from '@/lib/i18n';
 
 const props = defineProps<{
@@ -38,12 +37,35 @@ function removePost(id: number) {
 function message() {
   router.post('/messages', { user_id: props.profile.id });
 }
+
+// ---- Live wall (Reverb public channel) ----
+// Render from a reactive copy so realtime arrivals + Inertia reloads both reflect.
+const livePosts = ref([...props.wall]);
+watch(() => props.wall, (w) => (livePosts.value = [...w]));
+const meId = computed(() => (page.props as any).auth?.user?.id ?? null);
+
+let channel: any = null;
+const Echo = () => (window as any).Echo;
+onMounted(() => {
+  if (!Echo()) return;
+  channel = Echo()
+    .channel(`profile.${props.profile.id}`)
+    .listen('.ProfilePostCreated', (e: any) => {
+      const post = e.post;
+      if (!post || livePosts.value.some((p) => p.id === post.id)) return;
+      // canDelete is viewer-specific, so recompute it here rather than trust the payload.
+      post.canDelete = !!meId.value && (meId.value === post.author?.id || meId.value === props.profile.id);
+      livePosts.value.unshift(post);
+    });
+});
+onBeforeUnmount(() => {
+  if (channel && Echo()) Echo().leave(`profile.${props.profile.id}`);
+});
 </script>
 
 <template>
   <Head :title="profile.name" />
   <AppLayout>
-    <ReadingScrubber />
     <div class="mx-auto max-w-[920px]">
       <!-- Cover + identity: a frosted-glass card pinned over the cover image -->
       <div class="relative">
@@ -64,12 +86,14 @@ function message() {
             <div class="min-w-0 flex-1">
               <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <h1 class="truncate text-2xl font-extrabold tracking-tight text-white drop-shadow-sm sm:text-3xl">{{ profile.name }}</h1>
-                <!-- Verified check: green when the email is confirmed, grey when not. -->
+                <!-- Verified check: only shown once the email is confirmed (a grey
+                     check for unverified users read as "verified" with a contradicting
+                     tooltip). -->
                 <span
-                  class="grid h-6 w-6 shrink-0 place-items-center rounded-full text-white shadow"
-                  :class="profile.verified ? 'bg-emerald-500' : 'bg-white/25'"
-                  :title="profile.verified ? tr('Email verified') : tr('Email not verified')"
-                  :aria-label="profile.verified ? tr('Email verified') : tr('Email not verified')"
+                  v-if="profile.verified"
+                  class="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-500 text-white shadow"
+                  :title="tr('Email verified')"
+                  :aria-label="tr('Email verified')"
                 >
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
                 </span>
@@ -122,7 +146,7 @@ function message() {
           </div>
 
           <div class="space-y-3">
-            <div v-for="p in wall" :key="p.id" class="rounded-c border border-line bg-surface p-4">
+            <div v-for="p in livePosts" :key="p.id" class="rounded-c border border-line bg-surface p-4">
               <div class="flex items-center gap-2">
                 <Link :href="p.author.url"><Avatar :avatar="p.author" :size="36" /></Link>
                 <div class="min-w-0 flex-1">
@@ -135,7 +159,7 @@ function message() {
               </div>
               <div class="prose-convoro mt-2 text-ink-2" v-html="p.html"></div>
             </div>
-            <p v-if="!wall.length" class="rounded-c border border-dashed border-line p-6 text-center text-sm text-ink-muted">{{ tr('No wall posts yet.') }}</p>
+            <p v-if="!livePosts.length" class="rounded-c border border-dashed border-line p-6 text-center text-sm text-ink-muted">{{ tr('No wall posts yet.') }}</p>
           </div>
         </div>
 

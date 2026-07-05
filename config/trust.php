@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.43.7',
+            'date' => '2026-07-05',
+            'title' => 'Cleaner profiles',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'The reading-position scrubber no longer floats over member profiles — it belongs to topic pages, where it still works as before.'],
+            ],
+        ],
+        [
             'tag' => '1.43.6',
             'date' => '2026-07-05',
             'title' => 'Email verification actually asks',
