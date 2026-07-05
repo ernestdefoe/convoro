@@ -19,7 +19,7 @@ class AiSpecController extends Controller
             'name' => 'Convoro extension & theme build spec',
             'version' => (string) config('convoro.version'),
             'summary' => 'Convoro is a Laravel + Inertia/Vue community platform. Extensions are public GitHub repos linked into the catalog; themes restyle via CSS design tokens. No zip uploads, no Composer required for the basic path.',
-            'docs' => url('/docs/extensions.html'),
+            'docs' => url('/docs/extensions'),
             'manifest' => [
                 'file' => 'extension.json (at repo root)',
                 'required' => ['id', 'name'],

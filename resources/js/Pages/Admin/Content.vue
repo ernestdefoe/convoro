@@ -5,7 +5,7 @@ import draggable from 'vuedraggable';
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { t as tr } from '@/lib/i18n';
 
-type Tag = { id: number; name: string; slug: string; color: string; icon: string | null; topics: number; children?: Tag[] };
+type Tag = { id: number; name: string; slug: string; color: string; icon: string | null; topics: number; is_sandbox?: boolean; children?: Tag[] };
 
 const props = defineProps<{
   categories: { id: number; name: string; slug: string; description: string | null; icon: string | null; color: string; position: number; topics: number; slow_mode: number }[];
@@ -78,12 +78,12 @@ function persistTree() {
 
 const newTag = reactive({ name: '', color: '#6366f1', icon: '' });
 const editTagId = ref<number | null>(null);
-const tagBuf = reactive({ name: '', color: '#6366f1', icon: '' });
+const tagBuf = reactive({ name: '', color: '#6366f1', icon: '', is_sandbox: false });
 function addTag() {
   if (!newTag.name.trim()) return;
   router.post('/admin/tags', { ...newTag }, { ...opts, onSuccess: () => Object.assign(newTag, { name: '', color: '#6366f1', icon: '' }) });
 }
-function startTag(t: Tag) { editTagId.value = t.id; Object.assign(tagBuf, { name: t.name, color: t.color, icon: t.icon ?? '' }); }
+function startTag(t: Tag) { editTagId.value = t.id; Object.assign(tagBuf, { name: t.name, color: t.color, icon: t.icon ?? '', is_sandbox: !!t.is_sandbox }); }
 function saveTag() { router.put(`/admin/tags/${editTagId.value}`, { ...tagBuf }, { ...opts, onSuccess: () => (editTagId.value = null) }); }
 
 // Reliable, non-drag nesting (drag is fiddly for empty zones). Mutate the tree
@@ -154,12 +154,17 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
                   <input v-model="tagBuf.name" :class="inp" class="w-40" />
                   <input v-model="tagBuf.icon" :class="inp" class="w-44 font-mono text-xs" :placeholder="tr('FA class')" />
                   <input v-model="tagBuf.color" type="color" class="h-8 w-9 rounded border-line bg-transparent" />
+                  <label class="flex items-center gap-1.5 text-xs text-ink-2" :title="tr('Sandbox tags are practice areas — their topics never trend and don’t count toward community or member stats.')">
+                    <input v-model="tagBuf.is_sandbox" type="checkbox" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />
+                    {{ tr('Sandbox') }}
+                  </label>
                   <button class="rounded-lg bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white" @click="saveTag">{{ tr('Save') }}</button>
                   <button class="text-xs text-ink-2 hover:text-ink" @click="editTagId = null">{{ tr('Cancel') }}</button>
                 </template>
                 <template v-else>
                   <i v-if="p.icon && p.icon.startsWith('fa')" :class="p.icon" :style="{ color: p.color }"></i>
                   <span class="font-semibold text-ink">{{ p.name }}</span>
+                  <span v-if="p.is_sandbox" class="rounded bg-amber-400/15 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-400" :title="tr('Practice area — excluded from Trending and stats')">{{ tr('Sandbox') }}</span>
                   <span class="text-xs text-ink-muted">{{ tr('{n} topics', { n: p.topics }) }}</span>
                   <span class="ml-auto"></span>
                   <select v-if="!p.children || !p.children.length" :class="inp" class="!py-1 text-[11px]" :title="tr('Make this a sub-tag of…')" @change="onNestSelect(p, $event)">
@@ -181,11 +186,16 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
                       <template v-if="editTagId === c.id">
                         <input v-model="tagBuf.name" :class="inp" class="w-32 !py-1 text-xs" />
                         <input v-model="tagBuf.color" type="color" class="h-7 w-8 rounded border-line bg-transparent" />
+                        <label class="flex items-center gap-1 text-[11px] text-ink-2" :title="tr('Sandbox tags are practice areas — their topics never trend and don’t count toward community or member stats.')">
+                          <input v-model="tagBuf.is_sandbox" type="checkbox" class="rounded border-line bg-appbg text-indigo-500 focus:ring-indigo-500" />
+                          {{ tr('Sandbox') }}
+                        </label>
                         <button class="rounded bg-emerald-500 px-2 py-1 text-[11px] font-semibold text-white" @click="saveTag">{{ tr('Save') }}</button>
                         <button class="text-[11px] text-ink-2 hover:text-ink" @click="editTagId = null">{{ tr('Cancel') }}</button>
                       </template>
                       <template v-else>
                         <span class="text-sm text-ink">{{ c.name }}</span>
+                        <span v-if="c.is_sandbox" class="rounded bg-amber-400/15 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-amber-400" :title="tr('Practice area — excluded from Trending and stats')">{{ tr('Sandbox') }}</span>
                         <span class="text-[11px] text-ink-muted">{{ c.topics }}</span>
                         <span class="ml-auto"></span>
                         <button class="text-[11px] text-indigo-400 hover:text-indigo-300" :title="tr('Move back to top level')" @click="promote(c, p)">↑ {{ tr('Promote') }}</button>

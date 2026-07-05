@@ -17,6 +17,23 @@ use Illuminate\Support\Facades\DB;
 /** Keeps the "Ask Convoro" index, cross-references and language detection in sync. */
 class PostObserver
 {
+    /** Issue the post's per-topic sequence number from topics.post_counter.
+     * The row lock makes concurrent replies take distinct numbers; the
+     * unique(topic_id, number) index is the backstop. */
+    public function creating(Post $post): void
+    {
+        if ($post->number === null && $post->topic_id) {
+            $post->number = DB::transaction(function () use ($post) {
+                $counter = (int) DB::table('topics')->where('id', $post->topic_id)
+                    ->lockForUpdate()->value('post_counter');
+                DB::table('topics')->where('id', $post->topic_id)
+                    ->update(['post_counter' => $counter + 1]);
+
+                return $counter + 1;
+            });
+        }
+    }
+
     public function created(Post $post): void
     {
         $this->reindex($post);

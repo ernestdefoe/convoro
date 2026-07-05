@@ -6,8 +6,6 @@ use App\Events\PostCreated;
 use App\Models\Post;
 use App\Models\Topic;
 use App\Models\User;
-use App\Notifications\MentionNotification;
-use App\Notifications\ReplyNotification;
 
 /**
  * Creates a reply post and runs the same side-effects the web composer does —
@@ -28,43 +26,21 @@ class ReplyPoster
         $topic->increment('reply_count');
         $topic->update(['last_post_at' => now()]);
 
+        // Best-effort like the web composer: a realtime outage must never
+        // fail the reply itself (this path serves reply-by-email too).
         $post->load(['user', 'reactions']);
-        broadcast(new PostCreated(Present::post($post, null), $topic->id));
+        try {
+            broadcast(new PostCreated(Present::post($post, null), $topic->id));
+        } catch (\Throwable $e) {
+            report($e);
+        }
 
-        self::notify($author, $topic, $post, $html);
+        // Same queued mention/reply fanout as the web composer.
+        \App\Jobs\NotifyParticipantsJob::dispatch($post->id)->afterCommit();
 
         Federation::announceReply($post, $topic);
         TrustLevels::evaluate($author);
 
         return $post;
-    }
-
-    /** Mention notifications to those named, reply notifications to participants. */
-    private static function notify(User $author, Topic $topic, Post $post, string $html): void
-    {
-        $authorId = (int) $author->id;
-
-        $mentioned = Mentions::parse(strip_tags($html));
-        $mentionedIds = $mentioned->pluck('id')->map(fn ($id) => (int) $id)->all();
-
-        foreach ($mentioned as $user) {
-            if ((int) $user->id === $authorId) {
-                continue;
-            }
-            Notifier::send($user, new MentionNotification($post));
-        }
-
-        $participantIds = Post::where('topic_id', $topic->id)
-            ->pluck('user_id')->map(fn ($id) => (int) $id)->all();
-        $replyIds = array_diff(
-            array_unique(array_merge($participantIds, [(int) $topic->user_id])),
-            array_merge([$authorId], $mentionedIds),
-        );
-
-        if (! empty($replyIds)) {
-            foreach (User::whereIn('id', $replyIds)->get() as $user) {
-                Notifier::send($user, new ReplyNotification($post));
-            }
-        }
     }
 }

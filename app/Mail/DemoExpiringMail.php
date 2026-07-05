@@ -16,7 +16,7 @@ class DemoExpiringMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Your Convoro demo expires tomorrow');
+        return new Envelope(subject: __('Your Convoro demo expires tomorrow'));
     }
 
     public function content(): Content

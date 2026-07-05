@@ -18,7 +18,7 @@ class DemoReadyMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: 'Your Convoro demo is ready');
+        return new Envelope(subject: __('Your Convoro demo is ready'));
     }
 
     public function content(): Content

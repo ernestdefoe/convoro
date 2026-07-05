@@ -26,9 +26,9 @@ class DemoRequestedAdminMail extends Mailable
 
     public function envelope(): Envelope
     {
-        $tag = $this->outcome === 'provisioned' ? 'new demo' : 'waitlisted';
+        $tag = $this->outcome === 'provisioned' ? __('new demo') : __('waitlisted');
 
-        return new Envelope(subject: "Convoro demo request ({$tag}): {$this->requester}");
+        return new Envelope(subject: __('Convoro demo request (:tag): :requester', ['tag' => $tag, 'requester' => $this->requester]));
     }
 
     public function content(): Content

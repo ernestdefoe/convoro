@@ -46,6 +46,8 @@ class Tag extends Model
             'c1' => $h['c1'] ?? ($this->color ?: '#7c3aed'),
             'c2' => $h['c2'] ?? null,
             'image' => $h['image'] ?? null,
+            'height' => $h['height'] ?? null,
+            'width' => $h['width'] ?? null,
         ];
     }
 }

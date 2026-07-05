@@ -17,7 +17,7 @@ class BlockBanned
     public function handle(Request $request, Closure $next): Response
     {
         if (IpBan::isBanned($request->ip())) {
-            abort(403, 'Access from your network has been restricted.');
+            abort(403, __('Access from your network has been restricted.'));
         }
 
         $user = $request->user();
@@ -27,7 +27,7 @@ class BlockBanned
                 Auth::guard('web')->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
-                abort(403, 'Your account has been suspended.');
+                abort(403, __('Your account has been suspended.'));
             }
         }
 

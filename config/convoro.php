@@ -2,7 +2,7 @@
 
 return [
     // Current installed version of the software.
-    'version' => '1.42.2',
+    'version' => '1.43.5',
 
     // Cache the Inertia SSR render of the static marketing pages (homepage,
     // changelog, roadmap, etc.). Self-invalidates on deploy + content change.
@@ -10,7 +10,7 @@ return [
 
     // Optional URL returning JSON {"version": "x.y.z", "url": "...", "notes": "..."}
     // used by the admin "check for updates" feature. Null = update checks disabled.
-    'update_url' => env('CONVORO_UPDATE_URL'),
+    'update_url' => env('CONVORO_UPDATE_URL', 'https://convoro.co/update-feed.json'),
 
     // One-click public demo: /demo logs in this account (read it from env so it
     // can be disabled by leaving it blank). Pair with MAIL_MAILER=array on the demo.
@@ -25,11 +25,11 @@ return [
     // The apex marketing/store domain. Marketing + store routes are scoped to
     // this host; the forum lives on its own (sub)domain. Shared login works
     // across both when SESSION_DOMAIN is set to the parent (e.g. .convoro.co).
-    'marketing_domain' => env('CONVORO_MARKETING_DOMAIN', 'convoro.co'),
+    'marketing_domain' => env('CONVORO_MARKETING_DOMAIN', parse_url((string) env('APP_URL'), PHP_URL_HOST) ?: 'localhost'),
 
     // The community/forum host. The public extension directory is mirrored here
     // too, so members can browse + buy without leaving the community.
-    'community_domain' => env('CONVORO_COMMUNITY_DOMAIN', 'community.convoro.co'),
+    'community_domain' => env('CONVORO_COMMUNITY_DOMAIN', parse_url((string) env('APP_URL'), PHP_URL_HOST) ?: 'localhost'),
 
     // The central store this install validates premium license keys against.
     'store_url' => env('CONVORO_STORE_URL', 'https://convoro.co'),

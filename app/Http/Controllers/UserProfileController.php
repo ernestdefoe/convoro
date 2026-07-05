@@ -6,6 +6,7 @@ use App\Models\ProfilePost;
 use App\Models\User;
 use App\Notifications\ProfileWallNotification;
 use App\Support\Content;
+use App\Events\ProfilePostCreated;
 use App\Support\Notifier;
 use App\Support\Present;
 use Illuminate\Http\JsonResponse;
@@ -90,10 +91,19 @@ class UserProfileController extends Controller
                         : null;
                 })(),
             ],
-            'stats' => [
-                'topics' => $user->topics()->count(),
-                'posts' => $user->posts()->count(),
-            ],
+            'stats' => (function () use ($user) {
+                // Sandbox-tag activity is practice, not contribution — keep it
+                // out of the numbers members compare.
+                $sandboxTopics = \App\Support\SandboxTags::topicIds();
+                $topics = $user->topics();
+                $posts = $user->posts();
+                if ($sandboxTopics !== null) {
+                    $topics->whereNotIn('topics.id', $sandboxTopics);
+                    $posts->whereNotIn('topic_id', $sandboxTopics);
+                }
+
+                return ['topics' => $topics->count(), 'posts' => $posts->count()];
+            })(),
             'recentTopics' => $recentTopics,
             'wall' => $wall,
         ]);
@@ -123,7 +133,7 @@ class UserProfileController extends Controller
         $data = $request->validate(['body_html' => ['required', 'string', 'max:20000']]);
 
         $html = Content::clean($data['body_html']);
-        abort_if(trim(strip_tags($html)) === '', 422, __('Empty post.'));
+        abort_if(trim(strip_tags($html, '<img><video><audio><iframe>')) === '', 422, __('Empty post.'));
 
         $post = ProfilePost::create([
             'profile_user_id' => $user->id,
@@ -135,6 +145,10 @@ class UserProfileController extends Controller
         if ((int) $user->id !== (int) $request->user()->id) {
             Notifier::send($user, new ProfileWallNotification($post));
         }
+
+        // Push the new post to everyone currently viewing this profile (live wall).
+        $post->load('author');
+        broadcast(new ProfilePostCreated(Present::profilePost($post, null), (int) $user->id));
 
         return back();
     }

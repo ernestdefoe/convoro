@@ -5,12 +5,8 @@ namespace App\Http\Controllers;
 use App\Events\PostCreated;
 use App\Models\Post;
 use App\Models\Topic;
-use App\Models\User;
-use App\Notifications\MentionNotification;
-use App\Notifications\ReplyNotification;
 use App\Support\Content;
 use App\Support\Mentions;
-use App\Support\Notifier;
 use App\Support\Present;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -32,7 +28,7 @@ class PostController extends Controller
         if (\App\Support\TrustLevels::gatesContent($request->user())) {
             $html = \App\Support\TrustLevels::stripLinksMedia($html);
         }
-        abort_if(trim(strip_tags($html)) === '', 422, __('Empty post.'));
+        abort_if(trim(strip_tags($html, '<img><video><audio><iframe>')) === '', 422, __('Empty post.'));
 
         // Spam, flood & slow-mode controls.
         $guard = \App\Support\PostGuard::inspect($request->user(), $html, 'reply', $topic->category);
@@ -71,7 +67,9 @@ class PostController extends Controller
         // topics only; gated inside TopicBroadcast.
         \App\Support\TopicBroadcast::activity($topic, false);
 
-        $this->notifyParticipants($request, $topic, $post, $html);
+        // Mention + reply notifications fan out on the queue — in a busy topic
+        // that's hundreds of DB writes and broadcasts that must not run inline.
+        \App\Jobs\NotifyParticipantsJob::dispatch($post->id)->afterCommit();
 
         // Social-group discussions stay inside the group: no AI auto-answer and
         // no fediverse cross-post (which would leak a private group's content).
@@ -110,7 +108,7 @@ class PostController extends Controller
         if (\App\Support\TrustLevels::gatesContent($user)) {
             $html = \App\Support\TrustLevels::stripLinksMedia($html);
         }
-        abort_if(trim(strip_tags($html)) === '', 422, __('Empty post.'));
+        abort_if(trim(strip_tags($html, '<img><video><audio><iframe>')) === '', 422, __('Empty post.'));
 
         $post->update(['body_html' => $html, 'edited_at' => now()]);
 
@@ -165,31 +163,4 @@ class PostController extends Controller
      * Notify @mentioned users (mention takes precedence) and other thread
      * participants (topic author + everyone who has posted), minus the author.
      */
-    private function notifyParticipants(Request $request, Topic $topic, Post $post, string $html): void
-    {
-        $authorId = (int) $request->user()->id;
-
-        $mentioned = Mentions::parse(strip_tags($html));
-        $mentionedIds = $mentioned->pluck('id')->map(fn ($id) => (int) $id)->all();
-
-        foreach ($mentioned as $user) {
-            if ((int) $user->id === $authorId) {
-                continue;
-            }
-            Notifier::send($user, new MentionNotification($post));
-        }
-
-        $participantIds = Post::where('topic_id', $topic->id)
-            ->pluck('user_id')->map(fn ($id) => (int) $id)->all();
-        $replyIds = array_diff(
-            array_unique(array_merge($participantIds, [(int) $topic->user_id])),
-            array_merge([$authorId], $mentionedIds),
-        );
-
-        if (! empty($replyIds)) {
-            foreach (User::whereIn('id', $replyIds)->get() as $user) {
-                Notifier::send($user, new ReplyNotification($post));
-            }
-        }
-    }
 }

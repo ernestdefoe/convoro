@@ -43,7 +43,7 @@ class GroupDiscussionController extends Controller
         if (TrustLevels::gatesContent($actor)) {
             $html = TrustLevels::stripLinksMedia($html);
         }
-        abort_if(trim(strip_tags($html)) === '', 422, __('Empty post.'));
+        abort_if(trim(strip_tags($html, '<img><video><audio><iframe>')) === '', 422, __('Empty post.'));
 
         $topic = \App\Support\TopicPublisher::publish($actor, [
             'title' => trim($data['title']),

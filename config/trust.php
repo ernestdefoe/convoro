@@ -10,6 +10,148 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.43.5',
+            'date' => '2026-07-05',
+            'title' => 'Sandbox tags',
+            'items' => [
+                ['type' => 'new', 'text' => 'Tags can be marked as a Sandbox in Admin → Tags. Sandbox tags are practice areas — perfect for a "test posting here" space where members can play with the editor, images and formatting. Topics in them work exactly like normal topics, but they never appear in Trending and don\'t count toward community totals or members\' topic/post counts.'],
+            ],
+        ],
+        [
+            'tag' => '1.43.4',
+            'date' => '2026-07-03',
+            'title' => 'Readable notifications panel + tidy editor toolbar',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'The notifications panel is solid again — the frosted-glass styling made it see-through (especially where the blur isn\'t supported), so page content showed through the list.'],
+                ['type' => 'fixed', 'text' => 'The editor\'s AI button no longer stacks its icon and label on two lines and poke out of the toolbar row.'],
+            ],
+        ],
+        [
+            'tag' => '1.43.3',
+            'date' => '2026-07-03',
+            'title' => 'Visible checkmarks',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'Checkboxes across the admin (and a few member forms) toggled correctly but didn\'t draw their checkmark on some themes, so settings looked impossible to enable. The stray background utility that suppressed the checked state is gone — checkmarks render everywhere again.'],
+            ],
+        ],
+        [
+            'tag' => '1.43.2',
+            'date' => '2026-07-03',
+            'title' => 'Your brand on the login modal',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'The log in / sign up modal and guest pages (password reset, verification) now show your community\'s own logo and name instead of the Convoro mark. Convoro branding only appears until you upload a logo in Admin → Branding.'],
+            ],
+        ],
+        [
+            'tag' => '1.43.1',
+            'date' => '2026-07-03',
+            'title' => 'Approving held posts from the reports queue',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'The moderation queue now shows "Approve & restore" for every held post — including posts held by the spam guard or first-post approval, not just AI-held ones. Previously, resolving such a report closed it without publishing the post, so a post could look approved but stay pending.'],
+            ],
+        ],
+        [
+            'tag' => '1.43.0',
+            'date' => '2026-07-03',
+            'title' => 'Big-board performance',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Long discussions now load a window of posts around where you are instead of the entire thread, and stream the rest in as you scroll or jump — a 10,000-post discussion opens as fast as a 10-post one. Every post has a permanent number you can link to.'],
+                ['type' => 'improved', 'text' => 'Reply notifications are sent in the background and members with an unseen notification for a discussion aren\'t re-notified on every new reply — busy threads stay fast for the poster and calmer for everyone else.'],
+                ['type' => 'improved', 'text' => 'The community home page caches its statistics and sidebar widgets, so it stays quick on forums with millions of posts.'],
+                ['type' => 'improved', 'text' => 'Built-in database search is smarter on very large forums: it searches titles first and automatically avoids slow full-body scans, so a search can never tie up the server.'],
+                ['type' => 'new', 'text' => 'Convoro can now run on Laravel Octane with FrankenPHP for memory-resident performance — an optional deployment mode for VPS and dedicated servers; standard PHP hosting keeps working exactly as before.'],
+            ],
+        ],
+        [
+            'tag' => '1.42.12',
+            'date' => '2026-06-27',
+            'title' => 'Readable theme editor',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'The theme editor controls are no longer shown through the frosted-glass effect, so swatches, labels and inputs stay crisp and readable while you customize. The live preview still shows the real frosted styling.'],
+            ],
+        ],
+        [
+            'tag' => '1.42.11',
+            'date' => '2026-06-27',
+            'title' => 'Reliable updates + animated & SVG avatars',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Software updates are far more reliable: they now run in the background without needing a queue worker (the most common cause of an update appearing to get "stuck"), the admin Updates page shows a pre-flight checklist of anything that would block an update, and you can apply an update straight from the terminal with "php artisan convoro:update" (or clear a stuck update flag with --reset).'],
+                ['type' => 'new', 'text' => 'Avatars now support animated images — animated PNG (APNG), GIF and WebP keep their animation instead of being flattened to a still frame — and SVG avatars are accepted too. Uploaded SVGs are sanitized first, so they can\'t carry scripts.'],
+            ],
+        ],
+        [
+            'tag' => '1.42.10',
+            'date' => '2026-06-26',
+            'title' => 'Hero size controls + translatable sidebar widgets',
+            'items' => [
+                ['type' => 'improved', 'text' => 'The Hero Studio now has Height and Max width controls, so you can set the banner\'s exact size — per page and per category.'],
+                ['type' => 'fixed', 'text' => 'The Trending, Upcoming events and Donate sidebar widgets now follow your forum\'s language instead of always showing English (their strings weren\'t reaching the translator). A couple of stuck/garbled translations were corrected too.'],
+            ],
+        ],
+        [
+            'tag' => '1.42.9',
+            'date' => '2026-06-26',
+            'title' => 'Translatable server-side messages (emails & access notices)',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'The remaining English-only server-side text now translates too: the "access restricted" / "account suspended" notices, and the demo emails (subjects and body) that were still hardcoded.'],
+            ],
+        ],
+        [
+            'tag' => '1.42.8',
+            'date' => '2026-06-26',
+            'title' => 'Much more of the interface is now translatable',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'A lot of the chrome that always stayed English regardless of your language — the admin sidebar, the marketing site nav/footer, the forum header (Skip to content, logo alt text, Messages/Menu), the update banner and various button/label text — now goes through the translation system.'],
+                ['type' => 'fixed', 'text' => 'Rebuilt the UI translation catalog, which had drifted out of date: hundreds of strings were already wrapped for translation but missing from the catalog, so they silently fell back to English. They are now picked up and translated for every language.'],
+            ],
+        ],
+        [
+            'tag' => '1.42.7',
+            'date' => '2026-06-26',
+            'title' => 'Self-hosting polish: own-domain federation, default update checks & themed settings',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'Self-hosted installs now federate under their own domain instead of community.convoro.co — the forum/federation domain defaults to your APP_URL host. (Convoro\'s own dual-domain setup is unaffected.)'],
+                ['type' => 'improved', 'text' => 'Admin "Check for updates" now works out of the box — it points at Convoro\'s release feed by default, so you no longer have to set CONVORO_UPDATE_URL by hand.'],
+                ['type' => 'fixed', 'text' => 'Editor: typing immediately after a link no longer continues in the link style.'],
+                ['type' => 'fixed', 'text' => 'Profiles: the verified checkmark now only appears once an email is actually confirmed (an unverified profile previously showed a grey check with a contradicting "not verified" tooltip).'],
+                ['type' => 'improved', 'text' => 'Profile/account settings now follow your theme — colours, surfaces and the accent are picked up from the live theme editor like the rest of the site.'],
+            ],
+        ],
+        [
+            'tag' => '1.42.6',
+            'date' => '2026-06-26',
+            'title' => 'Pro Font Awesome icons fixed for logged-in members',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'If you use a Font Awesome Pro kit, some Pro-only icons (e.g. duotone or regular-weight icons) showed as empty boxes for signed-in members while working for logged-out visitors. The bundled free icon set is no longer compiled into the stylesheet — it was being re-applied after the kit on logged-in navigations and overriding it. Free icons are unaffected (the kit covers them for Pro installs; the CDN covers them otherwise).'],
+            ],
+        ],
+        [
+            'tag' => '1.42.5',
+            'date' => '2026-06-26',
+            'title' => 'Self-healing Font Awesome kit cache',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'If you use a Font Awesome Pro kit, the kit script is now cache-busted on each release. Changing your kit’s version (or any FA update) now takes effect on visitors’ next load instead of waiting out their cached kit files — which previously left some icons showing as empty boxes even after a hard-refresh.'],
+            ],
+        ],
+        [
+            'tag' => '1.42.4',
+            'date' => '2026-06-26',
+            'title' => 'Font Awesome 7.3 & a message-composer fix',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Updated Font Awesome to 7.3 for the built-in free icons (Pro kits are unaffected — they keep using your own kit). The refreshed icon stylesheet also clears stale browser caches that could leave some icons showing as empty boxes.'],
+                ['type' => 'fixed', 'text' => 'The message composer no longer pushes the Send button off-screen when you add several images — the editor area now scrolls and images are sized to fit.'],
+            ],
+        ],
+        [
+            'tag' => '1.42.3',
+            'date' => '2026-06-25',
+            'title' => 'Live profile walls & a tidier mobile bar',
+            'items' => [
+                ['type' => 'improved', 'text' => 'Profile-wall posts now appear in real time — when someone posts on a wall, everyone viewing that profile sees it instantly instead of having to reload.'],
+                ['type' => 'improved', 'text' => 'Cleaner mobile navigation: the top bar no longer duplicates the actions already in the bottom tab bar (messages, alerts, the account menu and “new discussion”). Account essentials like Settings and Log out moved into the slide-out menu.'],
+            ],
+        ],
+        [
             'tag' => '1.42.2',
             'date' => '2026-06-25',
             'title' => 'Smoother self-hosted setup',

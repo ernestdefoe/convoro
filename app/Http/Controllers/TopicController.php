@@ -18,6 +18,48 @@ use Inertia\Response;
 
 class TopicController extends Controller
 {
+    /** Threads at or under this many posts ship whole (classic behavior). */
+    public const STREAM_FULL_LOAD = 150;
+
+    /** Posts per window / per stream fetch above that. */
+    public const STREAM_WINDOW = 50;
+
+    /** Posts in this topic the viewer is allowed to see: held posts stay
+     * visible to moderators and to their own author (who sees a notice). */
+    private function viewablePosts(Topic $topic, ?\App\Models\User $actor): \Illuminate\Database\Eloquent\Builder
+    {
+        $canModerate = (bool) ($actor && $actor->is_admin);
+
+        return \App\Models\Post::where('topic_id', $topic->id)
+            ->when(! $canModerate, fn ($q) => $q->where(fn ($w) => $w
+                ->where('hidden', false)
+                ->when($actor?->id, fn ($x, $id) => $x->orWhere('user_id', $id))));
+    }
+
+    /** JSON window of posts for the streamed topic view — the page calls this
+     * as the reader scrolls or scrubs instead of ever loading a whole thread. */
+    public function posts(Request $request, Topic $topic): \Illuminate\Http\JsonResponse
+    {
+        $actor = auth()->user();
+        abort_if($topic->hidden && ! ($actor && ($actor->is_admin || (int) $actor?->id === (int) $topic->user_id)), 404);
+
+        $limit = min(100, max(10, (int) $request->query('limit', self::STREAM_WINDOW)));
+        $query = $this->viewablePosts($topic, $actor)->with(['user.groups', 'reactions']);
+
+        if ($request->filled('before')) {
+            $posts = $query->where('number', '<', (int) $request->query('before'))
+                ->orderByDesc('number')->limit($limit)->get()->reverse()->values();
+        } else {
+            $posts = $query->where('number', '>', (int) $request->query('after', 0))
+                ->orderBy('number')->limit($limit)->get();
+        }
+
+        return response()->json([
+            'posts' => $posts->map(fn ($p) => Present::post($p, $actor?->id, $actor))->values(),
+            'total' => (int) $topic->post_counter,
+        ]);
+    }
+
     public function create(Request $request): Response
     {
         // Resume a saved draft when ?draft=<id> is present and it's the member's own.
@@ -103,7 +145,7 @@ class TopicController extends Controller
         // A body is required unless the board lets an extension supply the content
         // (e.g. a TMDB movie card), in which case an empty first post is fine.
         $bodyOptional = \App\Support\CategoryRules::isBodyOptional(! empty($data['category_id']) ? (int) $data['category_id'] : null);
-        abort_if(! $bodyOptional && trim(strip_tags($data['body_html'])) === '', 422, __('The post body is empty.'));
+        abort_if(! $bodyOptional && trim(strip_tags($data['body_html'], '<img><video><audio><iframe>')) === '', 422, __('The post body is empty.'));
 
         // Spam, flood & slow-mode controls.
         $category = ! empty($data['category_id']) ? \App\Models\Category::find($data['category_id']) : null;
@@ -198,20 +240,23 @@ class TopicController extends Controller
         abort_if($topic->hidden && ! ($actor && ($actor->is_admin || (int) $actorId === (int) $topic->user_id)), 404);
 
         $topic->increment('view_count');
-        $topic->load(['user', 'category', 'tags', 'posts.user.groups', 'posts.reactions', 'poll.options']);
+        $topic->load(['user', 'category', 'tags', 'poll.options']);
+        $topic->loadMissing('firstPost.user');
 
         // Work out where the member left off BEFORE we move their read marker,
         // so the page can jump to the first reply they haven't seen yet.
         $firstUnreadId = null;
+        $firstUnreadNumber = null;
         if ($actor) {
             $prev = \Illuminate\Support\Facades\DB::table('topic_reads')
                 ->where('user_id', $actor->id)->where('topic_id', $topic->id)->value('last_read_at');
             if ($prev) {
-                $prev = \Illuminate\Support\Carbon::parse($prev);
-                $firstUnreadId = $topic->posts
+                $unread = $this->viewablePosts($topic, $actor)
                     ->where('is_first', false)
-                    ->filter(fn ($p) => $p->created_at && $p->created_at->gt($prev))
-                    ->sortBy('created_at')->first()?->id;
+                    ->where('created_at', '>', \Illuminate\Support\Carbon::parse($prev))
+                    ->orderBy('number')->first(['id', 'number']);
+                $firstUnreadId = $unread?->id;
+                $firstUnreadNumber = $unread?->number ? (int) $unread->number : null;
             }
 
             // Mark this discussion read for the current member (clears its "new" badge).
@@ -219,6 +264,40 @@ class TopicController extends Controller
                 ['user_id' => $actor->id, 'topic_id' => $topic->id],
                 ['last_read_at' => now()],
             );
+        }
+
+        // Post window. Small topics ship whole, exactly as before. Big ones
+        // ship ~one screenful around the target position (?post=N, else the
+        // first unread reply, else the top) — never the entire thread; the
+        // page streams more from topics.posts as the reader moves.
+        $maxNumber = (int) $topic->post_counter;
+        $full = $maxNumber <= self::STREAM_FULL_LOAD;
+        $target = max(1, (int) $request->query('post', 0)) ?: ($firstUnreadNumber ?? 1);
+
+        $postsQuery = $this->viewablePosts($topic, $actor)->with(['user.groups', 'reactions']);
+        if ($full) {
+            $posts = $postsQuery->orderBy('number')->get();
+            $stream = null; // whole thread present — page behaves classically
+        } else {
+            $start = max(1, min($target - 5, $maxNumber - self::STREAM_WINDOW + 1));
+            $posts = $postsQuery->where('number', '>=', $start)
+                ->orderBy('number')->limit(self::STREAM_WINDOW)->get();
+            // The opening post is the page header — always ship it.
+            if ($start > 1 && ! $posts->contains(fn ($p) => $p->is_first)) {
+                $op = $this->viewablePosts($topic, $actor)->with(['user.groups', 'reactions'])
+                    ->where('is_first', true)->first();
+                if ($op) {
+                    $posts->prepend($op);
+                }
+            }
+            $replyNumbers = $posts->filter(fn ($p) => ! $p->is_first)->pluck('number')->filter();
+            $stream = [
+                'total' => $maxNumber,
+                'windowStart' => (int) ($replyNumbers->min() ?? $start),
+                'windowEnd' => (int) ($replyNumbers->max() ?? $maxNumber),
+                'hasBefore' => $start > 1,
+                'hasAfter' => (int) ($replyNumbers->max() ?? $maxNumber) < $maxNumber,
+            ];
         }
 
         return Inertia::render('Topic/Show', [
@@ -244,11 +323,8 @@ class TopicController extends Controller
                 'viewCount' => $topic->view_count,
                 'pending' => (bool) $topic->hidden,
             ],
-            'posts' => $topic->posts->sortBy('created_at')
-                // Posts held by the AI moderation copilot are hidden from everyone
-                // except moderators and the post's own author (who sees a notice).
-                ->filter(fn ($p) => ! $p->hidden || ($actor && $actor->is_admin) || ($actorId && (int) $p->user_id === (int) $actorId))
-                ->values()->map(fn ($p) => Present::post($p, $actorId, $actor)),
+            'posts' => $posts->values()->map(fn ($p) => Present::post($p, $actorId, $actor)),
+            'stream' => $stream,
             'firstUnreadId' => $firstUnreadId,
             'references' => \App\Support\CrossRef::into($topic->id),
             'categories' => Category::orderBy('position')->get(['id', 'name', 'icon', 'color']),
@@ -270,7 +346,7 @@ class TopicController extends Controller
                         ? ['name' => $f->user->name, 'url' => url('/u/'.$f->user->id)] : null,
                     'replyCount' => (int) $topic->reply_count,
                     'viewCount' => (int) $topic->view_count,
-                    'comments' => $topic->posts->where('is_first', false)->sortBy('created_at')->take(10)
+                    'comments' => $posts->filter(fn ($p) => ! $p->is_first)->sortBy('number')->take(10)
                         ->map(fn ($p) => [
                             'text' => $p->body_html,
                             'image' => \App\Support\Seo::firstImage($p->body_html),

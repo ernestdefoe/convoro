@@ -65,6 +65,10 @@ class ModerationController extends Controller
                 'authorId' => $p->user_id, 'author' => $p->user?->name,
                 'ip' => $p->ip_address,
                 'topic' => $p->topic?->title, 'topicSlug' => $p->topic?->slug,
+                // Whether the post is still hidden — the queue shows "Approve &
+                // restore" for ANY held post (guard-held or AI-held). Plain
+                // "Resolve" closes the report but deliberately does not unhide.
+                'held' => (bool) $p->hidden,
             ];
         }
 

@@ -8,6 +8,7 @@ use App\Support\LiveTopics;
 use App\Support\Present;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -68,12 +69,14 @@ class ForumController extends Controller
         $reader = $request->user();
         $actorId = $reader?->id;
 
-        $categories = Category::orderBy('position')->withCount('topics')->get()
+        // Cached: withCount('topics') is a COUNT per category — cheap on a small
+        // board, a table scan per category on a big one. Counts may lag 5 min.
+        $categories = Cache::remember('convoro.forum.categories', 300, fn () => Category::orderBy('position')->withCount('topics')->get()
             ->map(fn (Category $c) => [
                 'name' => $c->name, 'slug' => $c->slug, 'icon' => $c->icon,
                 'color' => $c->color, 'count' => $c->topics_count,
                 'description' => $c->description,
-            ])->all();
+            ])->all());
 
         $cards = collect($topics->items())
             ->map(fn (Topic $t) => Present::topicCard($t, $actorId, in_array($t->id, $unread, true), $t->is_live || in_array($t->id, $live, true)))
@@ -102,15 +105,20 @@ class ForumController extends Controller
         // Tags (with sub-tags) are the primary navigation in Convoro 2: each is
         // its own space with a customizable hero. Categories were imported into
         // this tag tree. The home page shows the community hero.
-        $tagTree = \App\Models\Tag::query()->whereNull('parent_id')
-            ->withCount('topics')->orderBy('position')->orderBy('name')
-            ->with(['children' => fn ($c) => $c->withCount('topics')->orderBy('position')->orderBy('name')])
-            ->get();
-        $mapTag = fn (\App\Models\Tag $t) => [
-            'name' => $t->name, 'slug' => $t->slug, 'icon' => $t->icon,
-            'color' => $t->color, 'count' => $t->topics_count,
-        ];
-        $tags = $tagTree->map(fn (\App\Models\Tag $t) => $mapTag($t) + ['children' => $t->children->map($mapTag)->all()])->all();
+        // Cached: the tree itself rarely changes and the per-tag topic counts are
+        // pivot COUNTs — one per tag per render otherwise. Counts may lag 5 min.
+        $tags = Cache::remember('convoro.forum.tagtree', 300, function () {
+            $tagTree = \App\Models\Tag::query()->whereNull('parent_id')
+                ->withCount('topics')->orderBy('position')->orderBy('name')
+                ->with(['children' => fn ($c) => $c->withCount('topics')->orderBy('position')->orderBy('name')])
+                ->get();
+            $mapTag = fn (\App\Models\Tag $t) => [
+                'name' => $t->name, 'slug' => $t->slug, 'icon' => $t->icon,
+                'color' => $t->color, 'count' => $t->topics_count,
+            ];
+
+            return $tagTree->map(fn (\App\Models\Tag $t) => $mapTag($t) + ['children' => $t->children->map($mapTag)->all()])->all();
+        });
 
         $activeTag = $tagSlug ? \App\Models\Tag::where('slug', $tagSlug)->first() : null;
         $subtags = null;
@@ -124,9 +132,31 @@ class ForumController extends Controller
             ];
         }
 
+        // Community-wide counts are COUNT(*) table scans on InnoDB — never run
+        // them per request on a big board. Staleness up to 10 min is fine here.
+        // Sandbox tags are practice areas — their topics/posts don't count.
+        $counts = Cache::remember('convoro.stats.counts', 600, function () {
+            $sandboxTopics = \App\Support\SandboxTags::topicIds();
+            $topics = Topic::query();
+            $posts = \App\Models\Post::query();
+            if ($sandboxTopics !== null) {
+                $topics->whereNotIn('id', $sandboxTopics);
+                $posts->whereNotIn('topic_id', $sandboxTopics);
+            }
+
+            return [
+                'members' => \App\Models\User::count(),
+                'topics' => $topics->count(),
+                'posts' => $posts->count(),
+                'reactions' => \App\Models\Reaction::count(),
+            ];
+        });
+
         $fmt = fn (int $n) => $n >= 1000 ? round($n / 1000, 1).'k' : (string) $n;
         $hero = $activeTag
-            ? $activeTag->heroConfig() + ['stats' => [['label' => 'Topics', 'icon' => 'fa-solid fa-comments', 'value' => $fmt((int) $activeTag->topics()->count())]]]
+            ? $activeTag->heroConfig() + ['stats' => [['label' => 'Topics', 'icon' => 'fa-solid fa-comments', 'value' => $fmt(
+                (int) Cache::remember('convoro.stats.tag_topics.'.$activeTag->id, 600, fn () => $activeTag->topics()->count())
+            )]]]
             : [
                 'title' => (string) \App\Support\Settings::get('community.name', config('app.name', 'Convoro')),
                 'subtitle' => (string) \App\Support\Settings::get('forum.hero_subtitle', 'where every tag refracts its own light'),
@@ -134,23 +164,30 @@ class ForumController extends Controller
                 'c1' => (string) \App\Support\Settings::get('forum.hero_c1', '#7c3aed'),
                 'c2' => (string) \App\Support\Settings::get('forum.hero_c2', '#ec4899'),
                 'image' => ((string) \App\Support\Settings::get('forum.hero_image', '')) ?: null,
+                'height' => ((int) \App\Support\Settings::get('forum.hero_height', 0)) ?: null,
+                'width' => ((int) \App\Support\Settings::get('forum.hero_width', 0)) ?: null,
                 'stats' => [
-                    ['label' => 'Members', 'icon' => 'fa-solid fa-users', 'value' => $fmt(\App\Models\User::count())],
-                    ['label' => 'Topics', 'icon' => 'fa-solid fa-comments', 'value' => $fmt(Topic::count())],
-                    ['label' => 'Posts', 'icon' => 'fa-solid fa-message', 'value' => $fmt(\App\Models\Post::count())],
-                    ['label' => 'Reactions', 'icon' => 'fa-solid fa-heart', 'value' => $fmt(\App\Models\Reaction::count())],
+                    ['label' => 'Members', 'icon' => 'fa-solid fa-users', 'value' => $fmt($counts['members'])],
+                    ['label' => 'Topics', 'icon' => 'fa-solid fa-comments', 'value' => $fmt($counts['topics'])],
+                    ['label' => 'Posts', 'icon' => 'fa-solid fa-message', 'value' => $fmt($counts['posts'])],
+                    ['label' => 'Reactions', 'icon' => 'fa-solid fa-heart', 'value' => $fmt($counts['reactions'])],
                 ],
             ];
 
         // "Hottest" topic = most engaged recently (replies + views), used as the
         // featured lead card on the feed. Falls back to null → the page uses the
         // top list item instead.
-        $hot = Topic::query()->visible()
+        // The engagement-score ORDER BY can't use an index, so it scans every
+        // topic active in the window. Cache the winning id (actor-independent)
+        // and refetch the row per request so unread/live flags stay personal.
+        $hotId = Cache::remember('convoro.feed.hot.'.($tagSlug ?: '_all'), 300, fn () => Topic::query()->visible()
             ->when($tagSlug, fn ($q) => $q->whereHas('tags', fn ($t) => $t->where('slug', $tagSlug)))
-            ->with(['user.groups', 'category', 'tags', 'firstPost.reactions'])
             ->where('last_post_at', '>=', now()->subDays(21))
             ->orderByRaw('(reply_count * 25 + view_count * 0.06) DESC')
-            ->first();
+            ->value('id') ?? 0);
+        $hot = $hotId
+            ? Topic::query()->visible()->with(['user.groups', 'category', 'tags', 'firstPost.reactions'])->find($hotId)
+            : null;
         $featured = $hot
             ? Present::topicCard($hot, $actorId, in_array($hot->id, $unread, true), $hot->is_live || in_array($hot->id, $live, true))
             : null;
@@ -169,12 +206,7 @@ class ForumController extends Controller
                 'data' => $cards,
                 'next' => $topics->nextPageUrl(),
             ],
-            'stats' => [
-                'members' => \App\Models\User::count(),
-                'topics' => Topic::count(),
-                'posts' => \App\Models\Post::count(),
-                'reactions' => \App\Models\Reaction::count(),
-            ],
+            'stats' => $counts,
             'widgets' => \App\Support\Settings::widgetLayout(),
             'widgetData' => $this->widgetData(),
             'aboutHtml' => (string) \App\Support\Settings::get('widgets.about_html', ''),
@@ -185,39 +217,60 @@ class ForumController extends Controller
         ]);
     }
 
-    /** Dynamic data for configurable sidebar widgets (cheap, index-only). */
+    /** Dynamic data for configurable sidebar widgets. Everything here is
+     * actor-independent, so each block is cached: presence briefly (it should
+     * feel live), the heavier aggregates for minutes. */
     private function widgetData(): array
     {
-        $onlineQuery = \App\Models\User::where('last_seen_at', '>=', now()->subMinutes(5));
+        $online = Cache::remember('convoro.widgets.online', 60, function () {
+            $onlineQuery = \App\Models\User::where('last_seen_at', '>=', now()->subMinutes(5));
+
+            return [
+                'onlineNow' => (clone $onlineQuery)->count(),
+                'onlineUsers' => (clone $onlineQuery)->latest('last_seen_at')->limit(12)->get()
+                    ->map(fn ($u) => Present::avatar($u))->all(),
+            ];
+        });
 
         // Trending: most-active topics by replies; fall back to most-viewed so an
-        // early forum (nothing replied to yet) still shows something.
-        $trending = Topic::query()->visible()->with('category')
-            ->where('reply_count', '>', 0)
-            ->orderByDesc('reply_count')->orderByDesc('view_count')
-            ->limit(5)->get();
-        if ($trending->isEmpty()) {
-            $trending = Topic::query()->visible()->with('category')->orderByDesc('view_count')->limit(5)->get();
-        }
+        // early forum (nothing replied to yet) still shows something. The ORDER BY
+        // has no covering index, hence the cache. Sandbox tags never trend.
+        $trending = Cache::remember('convoro.widgets.trending', 300, function () {
+            $sandbox = \App\Models\Tag::query()->where('is_sandbox', true)->pluck('id');
+            $scope = fn ($q) => $sandbox->isEmpty()
+                ? $q
+                : $q->whereDoesntHave('tags', fn ($t) => $t->whereIn('tags.id', $sandbox));
 
-        return [
-            'onlineNow' => (clone $onlineQuery)->count(),
-            'onlineGuests' => \App\Support\Presence::guestCount(),
-            'onlineUsers' => (clone $onlineQuery)->latest('last_seen_at')->limit(12)->get()
-                ->map(fn ($u) => Present::avatar($u))->all(),
-            'newestMembers' => \App\Models\User::latest()->limit(6)->get()
-                ->map(fn ($u) => Present::avatar($u))->all(),
-            'topPosters' => \Illuminate\Support\Facades\DB::table('posts')
-                ->join('users', 'users.id', '=', 'posts.user_id')
-                ->select('users.name', \Illuminate\Support\Facades\DB::raw('COUNT(*) c'))
-                ->groupBy('users.id', 'users.name')->orderByDesc('c')->limit(5)->get()
-                ->map(fn ($p) => ['name' => $p->name, 'count' => (int) $p->c])->all(),
-            'trending' => $trending->map(fn (Topic $t) => [
+            $trending = $scope(Topic::query()->visible()->with('category'))
+                ->where('reply_count', '>', 0)
+                ->orderByDesc('reply_count')->orderByDesc('view_count')
+                ->limit(5)->get();
+            if ($trending->isEmpty()) {
+                $trending = $scope(Topic::query()->visible()->with('category'))->orderByDesc('view_count')->limit(5)->get();
+            }
+
+            return $trending->map(fn (Topic $t) => [
                 'title' => $t->title,
                 'slug' => $t->slug,
                 'replies' => (int) $t->reply_count,
                 'cat' => $t->category?->name,
-            ])->all(),
+            ])->all();
+        });
+
+        return [
+            'onlineNow' => $online['onlineNow'],
+            'onlineGuests' => \App\Support\Presence::guestCount(),
+            'onlineUsers' => $online['onlineUsers'],
+            'newestMembers' => Cache::remember('convoro.widgets.newest', 300, fn () => \App\Models\User::latest()->limit(6)->get()
+                ->map(fn ($u) => Present::avatar($u))->all()),
+            // GROUP BY over the whole posts table — by far the most expensive
+            // widget on a big board; refreshing every 15 min is plenty.
+            'topPosters' => Cache::remember('convoro.widgets.top_posters', 900, fn () => \Illuminate\Support\Facades\DB::table('posts')
+                ->join('users', 'users.id', '=', 'posts.user_id')
+                ->select('users.name', \Illuminate\Support\Facades\DB::raw('COUNT(*) c'))
+                ->groupBy('users.id', 'users.name')->orderByDesc('c')->limit(5)->get()
+                ->map(fn ($p) => ['name' => $p->name, 'count' => (int) $p->c])->all()),
+            'trending' => $trending,
         ];
     }
 }

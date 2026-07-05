@@ -32,6 +32,18 @@ class I18nScan extends Command
             $this->harvest(File::get($file), $jsPattern, $keys);
         }
 
+        // Bundled + installed extension widgets (vanilla JS calling
+        // window.Convoro.t('…')) — scanned from the SAME roots the app loads
+        // extensions from, so a widget's strings share the core catalog.
+        foreach (\App\Support\ExtensionManager::roots() as $root) {
+            if (! is_dir($root)) {
+                continue;
+            }
+            foreach ($this->files($root, ['js']) as $file) {
+                $this->harvest(File::get($file), $jsPattern, $keys);
+            }
+        }
+
         // Server: __('…'), trans('…'), @lang('…') in PHP and Blade — these resolve
         // from the SAME lang/{locale}.json files, so they share the catalog.
         $phpPattern = '/(?:\b__|\btrans|@lang)\(\s*(?:\'((?:[^\'\\\\]|\\\\.)*)\'|"((?:[^"\\\\]|\\\\.)*)")/';

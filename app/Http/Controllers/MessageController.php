@@ -138,7 +138,7 @@ class MessageController extends Controller
 
         $data = $request->validate(['body_html' => ['required', 'string', 'max:20000']]);
         $html = Content::clean($data['body_html']);
-        abort_if(trim(strip_tags($html)) === '', 422, __('Empty message.'));
+        abort_if(trim(strip_tags($html, '<img><video><audio><iframe>')) === '', 422, __('Empty message.'));
 
         $message = $conversation->messages()->create(['user_id' => $me, 'body_html' => $html]);
         $conversation->update(['last_message_at' => now()]);

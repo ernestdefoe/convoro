@@ -274,6 +274,7 @@ class Present
 
         return [
             'id' => $p->id,
+            'number' => $p->number !== null ? (int) $p->number : null,
             'html' => PostRender::render($p->body_html),
             'cardHtml' => PostCard::render($p),
             'detectedLocale' => $p->detected_locale,

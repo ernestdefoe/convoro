@@ -17,6 +17,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -766,8 +767,10 @@ class AdminController extends Controller
                 ->with(['children' => fn ($c) => $c->withCount('topics')->orderBy('position')->orderBy('name')])
                 ->get()->map(fn (Tag $t) => [
                     'id' => $t->id, 'name' => $t->name, 'slug' => $t->slug, 'color' => $t->color, 'icon' => $t->icon, 'topics' => $t->topics_count,
+                    'is_sandbox' => (bool) ($t->is_sandbox ?? false),
                     'children' => $t->children->map(fn (Tag $c) => [
                         'id' => $c->id, 'name' => $c->name, 'slug' => $c->slug, 'color' => $c->color, 'icon' => $c->icon, 'topics' => $c->topics_count,
+                        'is_sandbox' => (bool) ($c->is_sandbox ?? false),
                     ])->all(),
                 ]),
         ]);
@@ -867,9 +870,13 @@ class AdminController extends Controller
             'name' => ['required', 'string', 'max:40'],
             'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
             'icon' => ['nullable', 'string', 'max:60'],
+            'is_sandbox' => ['nullable', 'boolean'],
         ]);
+        $data['is_sandbox'] = (bool) ($data['is_sandbox'] ?? false);
         $data['slug'] = $this->uniqueSlug(Tag::class, $data['name'], $tag->id);
         $tag->update($data);
+        Cache::forget('convoro.widgets.trending');
+        Cache::forget('convoro.stats.counts');
 
         return back();
     }
