@@ -61,6 +61,14 @@ return [
                     'Full details, the service list and configuration options are in docs/install-docker.md in the repository.',
                 ],
             ],
+            [
+                'h' => 'Troubleshooting the installer',
+                'body' => [
+                    'The installer redirects to the homepage and I see a database "does not exist" error — Convoro thinks it is already installed. This happens if a storage/installed flag file is present before you have run the wizard. Delete the file storage/installed from your upload, then reload /install and the wizard will appear. (Fresh downloads no longer contain this file.)',
+                    'Visiting /install returns 404 / "not found" — your web server is not routing through Convoro. Make sure the domain’s document root points at the extracted public/ folder (not the app root), and that .htaccess / mod_rewrite is enabled. If your host will not let you change the primary domain’s root, install into a subdomain or addon domain instead.',
+                    'The page is blank or shows a 500 error — check that PHP is 8.3+ with the pdo_mysql, mbstring, openssl, gd, fileinfo and zip extensions enabled, and that the storage/ and bootstrap/cache/ folders are writable by the web server.',
+                ],
+            ],
         ],
     ],
 
