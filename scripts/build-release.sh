@@ -54,6 +54,13 @@ for keep in \
   zip -q "$TMP" "$keep/.gitkeep"
 done
 
+# The broad ".env.*" exclusion above also strips .env.example — the template the
+# web installer copies to .env on first boot (SESSION_DRIVER=file, CACHE_STORE=
+# file, QUEUE_CONNECTION=sync, DB_CONNECTION=mysql). Without it a fresh install
+# falls back to Laravel's database/sqlite defaults and 500s before setup. It
+# holds no secrets (the scan below whitelists it), so re-add it explicitly.
+[ -f .env.example ] && zip -q "$TMP" .env.example
+
 # ---- secret scan (file-level, against the REAL live secrets) ----
 D="$(mktemp -d)"
 ( cd "$D" && unzip -q "$TMP" )
@@ -74,6 +81,7 @@ fi
 for req in bootstrap/cache storage/logs storage/framework/cache storage/framework/sessions storage/framework/views; do
   [ -d "$D/$req" ] || { echo "  ERROR: $req missing from the archive — Laravel would 500 on first boot"; fail=1; }
 done
+[ -f "$D/.env.example" ] || { echo "  ERROR: .env.example missing — the installer can't seed a working .env"; fail=1; }
 rm -rf "$D"
 
 if [ "$fail" = 1 ]; then
