@@ -30,8 +30,13 @@ zip -r -q "$TMP" . \
   -x "storage/app/backups/*" -x "storage/app/downloads/*" -x "storage/app/imports/*" -x "storage/app/public/*" \
   -x "storage/logs/*" -x "storage/framework/sessions/*" -x "storage/framework/cache/*" -x "storage/framework/views/*" \
   -x "bootstrap/cache/*" -x "public/releases/*" -x "public/storage/*" \
+  -x "storage/installed" \
   -x "database/database.sqlite" -x "database/tenants/*" -x "*.sqlite" \
+  -x "frankenphp" -x "storage/app/frankenphp/*" \
   -x "._*" -x "*/._*" -x ".DS_Store" -x "*/.DS_Store"
+# ^ frankenphp: the Octane binary is per-server runtime, not app code — 165MB,
+#   and its embedded Go test certificates trip the private-key scan below.
+#   `octane:install` downloads it on hosts that opt into Octane.
 
 # ---- secret scan (file-level, against the REAL live secrets) ----
 D="$(mktemp -d)"
@@ -47,6 +52,9 @@ if grep -rlaE "[-]{5}BEGIN [A-Z ]*PRIVATE KEY[-]{5}" "$D" --exclude-dir=vendor 2
   echo "  LEAK: a private key was found outside vendor/"; fail=1
 fi
 ( cd "$D" && php -r "require 'vendor/autoload.php';" ) >/dev/null 2>&1 || { echo "  ERROR: archive autoloader failed to load"; fail=1; }
+# The build host is an installed app root; shipping its storage/installed flag
+# makes every fresh upload think it's already installed and 404s the installer.
+[ -f "$D/storage/installed" ] && { echo "  ERROR: storage/installed is in the archive — fresh installs would be bricked"; fail=1; }
 rm -rf "$D"
 
 if [ "$fail" = 1 ]; then
