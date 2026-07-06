@@ -91,11 +91,18 @@ class Settings
     /** @return array<string, mixed> */
     public static function all(): array
     {
-        $stored = Cache::rememberForever(self::CACHE_KEY, function () {
-            return Setting::query()->pluck('value', 'key')
-                ->map(fn ($v) => json_decode((string) $v, true))
-                ->all();
-        });
+        try {
+            $stored = Cache::rememberForever(self::CACHE_KEY, function () {
+                return Setting::query()->pluck('value', 'key')
+                    ->map(fn ($v) => json_decode((string) $v, true))
+                    ->all();
+            });
+        } catch (\Throwable) {
+            // No database yet (the web installer runs before one is configured)
+            // or a transient DB error — serve defaults WITHOUT caching, so real
+            // settings load the moment the database is available.
+            return self::DEFAULTS;
+        }
 
         return array_merge(self::DEFAULTS, $stored);
     }

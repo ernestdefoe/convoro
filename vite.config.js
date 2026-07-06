@@ -24,4 +24,10 @@ export default defineConfig({
         // and only the bundle is shipped).
         noExternal: true,
     },
+    build: {
+        // Wipe public/build (and bootstrap/ssr) before each build so stale,
+        // manifest-orphaned hashed assets never pile up across builds — the
+        // release zip was accumulating ~16k dead files this way.
+        emptyOutDir: true,
+    },
 });

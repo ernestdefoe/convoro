@@ -8,13 +8,19 @@ class IpBan extends Model
 {
     protected $guarded = ['id'];
 
-    /** Quick check used by the BlockBannedIp middleware (cached). */
+    /** Quick check used by the BlockBanned middleware (cached). */
     public static function isBanned(string $ip): bool
     {
-        return \Illuminate\Support\Facades\Cache::remember(
-            'ipban:'.$ip, 60,
-            fn () => static::where('ip_address', $ip)->exists(),
-        );
+        // Fail open: a database hiccup must never 500 (or lock out) every
+        // request — an un-enforced ban for up to 60s is the safer failure.
+        try {
+            return \Illuminate\Support\Facades\Cache::remember(
+                'ipban:'.$ip, 60,
+                fn () => static::where('ip_address', $ip)->exists(),
+            );
+        } catch (\Throwable) {
+            return false;
+        }
     }
 
     public static function flush(string $ip): void

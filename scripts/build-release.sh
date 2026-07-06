@@ -23,6 +23,30 @@ cd "$APP"
 VER=$(grep -oE "'version' *=> *'[0-9][0-9.]*'" config/convoro.php | grep -oE "[0-9][0-9.]*" | head -1)
 [ -n "$VER" ] || VER="latest"
 
+# Prune orphaned Vite assets. The deploy copies each build's hashed assets into
+# public/build/assets without removing the previous build's, so it accumulates
+# thousands of dead files the current manifest never references (the zip had
+# ~16k orphans / 117 live). Delete anything not referenced by manifest.json —
+# safe in-place because the running site only ever serves manifest-listed files.
+if [ -f public/build/manifest.json ]; then
+  php -r '
+    $dir = "public/build";
+    $man = json_decode(@file_get_contents("$dir/manifest.json"), true) ?: [];
+    $keep = [];
+    foreach ($man as $e) {
+        if (!empty($e["file"])) $keep[basename($e["file"])] = 1;
+        foreach (($e["css"] ?? []) as $f) $keep[basename($f)] = 1;
+        foreach (($e["assets"] ?? []) as $f) $keep[basename($f)] = 1;
+    }
+    if (!$keep) { fwrite(STDERR, "  WARN: empty manifest — skipping asset prune\n"); exit; }
+    $removed = 0;
+    foreach (glob("$dir/assets/*") as $f) {
+        if (is_file($f) && !isset($keep[basename($f)])) { @unlink($f); $removed++; }
+    }
+    fwrite(STDERR, "  pruned $removed orphaned build assets (kept ".count($keep).")\n");
+  '
+fi
+
 TMP="$(mktemp -u)-convoro-install.zip"
 echo "  building installer ($VER)…"
 zip -r -q "$TMP" . \
@@ -33,7 +57,13 @@ zip -r -q "$TMP" . \
   -x "storage/installed" \
   -x "database/database.sqlite" -x "database/tenants/*" -x "*.sqlite" \
   -x "frankenphp" -x "storage/app/frankenphp/*" \
-  -x "._*" -x "*/._*" -x ".DS_Store" -x "*/.DS_Store"
+  -x "._*" -x "*/._*" -x ".DS_Store" -x "*/.DS_Store" \
+  -x "package.json" -x "package-lock.json" -x "postcss.config.js" -x ".npmrc" \
+  -x "vite.config.js" -x "tsconfig.json" -x "tsconfig.*.json" \
+  -x "phpunit.xml" -x ".phpunit.result.cache" -x "tests/*" \
+  -x ".editorconfig" -x ".gitattributes" -x ".dockerignore" -x "docs/*" \
+  -x "vendor/*/[Tt]ests/*" -x "vendor/*/[Tt]est/*" \
+  -x "vendor/*/docs/*" -x "vendor/*/doc/*" -x "vendor/*/examples/*" -x "vendor/*/.github/*"
 # ^ frankenphp: the Octane binary is per-server runtime, not app code — 165MB,
 #   and its embedded Go test certificates trip the private-key scan below.
 #   `octane:install` downloads it on hosts that opt into Octane.

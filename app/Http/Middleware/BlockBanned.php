@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\IpBan;
+use App\Support\Installer;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,6 +17,13 @@ class BlockBanned
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // Before the site is installed there is no configured database (and no
+        // bans to enforce). Skip the ip_bans lookup so a freshly-unzipped site
+        // can render the web installer instead of 500ing on it.
+        if (! Installer::isInstalled()) {
+            return $next($request);
+        }
+
         if (IpBan::isBanned($request->ip())) {
             abort(403, __('Access from your network has been restricted.'));
         }
