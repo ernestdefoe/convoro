@@ -52,10 +52,10 @@ class ImagePipeline
 
 
         $path = 'uploads/' . date('Y/m') . '/' . Str::random(24) . '.webp';
-        Storage::disk('public')->put($path, $webp, 'public');
+        Storage::disk((string) config('convoro.media_disk', 'public'))->put($path, $webp, 'public');
 
         return [
-            'url' => Storage::disk('public')->url($path),
+            'url' => Storage::disk((string) config('convoro.media_disk', 'public'))->url($path),
             'width' => $nw,
             'height' => $nh,
         ];
@@ -114,10 +114,10 @@ class ImagePipeline
         [$w, $h] = self::svgDimensions($clean);
 
         $path = 'uploads/' . date('Y/m') . '/' . Str::random(24) . '.svg';
-        Storage::disk('public')->put($path, $clean, 'public');
+        Storage::disk((string) config('convoro.media_disk', 'public'))->put($path, $clean, 'public');
 
         return [
-            'url' => Storage::disk('public')->url($path),
+            'url' => Storage::disk((string) config('convoro.media_disk', 'public'))->url($path),
             'width' => $w,
             'height' => $h,
         ];
@@ -174,10 +174,10 @@ class ImagePipeline
     private static function storeRaw(string $bytes, string $ext, int $w, int $h): array
     {
         $path = 'uploads/' . date('Y/m') . '/' . Str::random(24) . '.' . $ext;
-        Storage::disk('public')->put($path, $bytes, 'public');
+        Storage::disk((string) config('convoro.media_disk', 'public'))->put($path, $bytes, 'public');
 
         return [
-            'url' => Storage::disk('public')->url($path),
+            'url' => Storage::disk((string) config('convoro.media_disk', 'public'))->url($path),
             'width' => $w,
             'height' => $h,
         ];
@@ -218,10 +218,10 @@ class ImagePipeline
         $webp = (string) ob_get_clean();
 
         $path = 'uploads/' . date('Y/m') . '/' . Str::random(24) . '.webp';
-        Storage::disk('public')->put($path, $webp, 'public');
+        Storage::disk((string) config('convoro.media_disk', 'public'))->put($path, $webp, 'public');
 
         return [
-            'url' => Storage::disk('public')->url($path),
+            'url' => Storage::disk((string) config('convoro.media_disk', 'public'))->url($path),
             'width' => $nw,
             'height' => $nh,
         ];

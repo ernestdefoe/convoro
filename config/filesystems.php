@@ -60,6 +60,24 @@ return [
             'report' => false,
         ],
 
+        // Cloudflare R2 (S3-compatible, zero egress). Env-driven — inert until
+        // the R2_* vars are set. Region is 'auto', path-style is required, and
+        // 'url' is the bucket's public custom domain (fronted by Cloudflare's
+        // CDN) so Storage::disk('r2')->url() returns the cached, free-egress URL.
+        'r2' => [
+            'driver' => 's3',
+            'key' => env('R2_ACCESS_KEY_ID'),
+            'secret' => env('R2_SECRET_ACCESS_KEY'),
+            'region' => env('R2_DEFAULT_REGION', 'auto'),
+            'bucket' => env('R2_BUCKET'),
+            'url' => env('R2_URL'),
+            'endpoint' => env('R2_ENDPOINT'),
+            'use_path_style_endpoint' => env('R2_USE_PATH_STYLE_ENDPOINT', true),
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
     ],
 
     /*

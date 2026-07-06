@@ -4,6 +4,16 @@ return [
     // Current installed version of the software.
     'version' => '1.43.7',
 
+    // Disk that stores user-uploaded media (post images, avatars — the
+    // unbounded, disk-hogging content). Defaults to the local 'public' disk;
+    // set CONVORO_MEDIA_DISK=r2 (with the R2_* env, see config/filesystems.php)
+    // to offload to Cloudflare R2 and reclaim server disk. ImagePipeline serves
+    // via the disk's own url(), so URLs follow the switch automatically; only
+    // NEW uploads move — existing files stay where they are. (Generated
+    // marketplace covers stay local: they use a deliberately host-relative
+    // /storage URL, so they're not routed here.)
+    'media_disk' => env('CONVORO_MEDIA_DISK', 'public'),
+
     // Cache the Inertia SSR render of the static marketing pages (homepage,
     // changelog, roadmap, etc.). Self-invalidates on deploy + content change.
     'ssr_cache' => env('CONVORO_SSR_CACHE', true),
