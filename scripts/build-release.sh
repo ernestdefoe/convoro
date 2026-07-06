@@ -38,6 +38,22 @@ zip -r -q "$TMP" . \
 #   and its embedded Go test certificates trip the private-key scan below.
 #   `octane:install` downloads it on hosts that opt into Octane.
 
+# Laravel 500s on first boot if these runtime dirs are absent (it can't write
+# the package manifest, compiled views, sessions or logs). The broad storage/*
+# and bootstrap/cache/* exclusions above strip their contents INCLUDING any
+# .gitkeep, so the empty dirs never make it into the archive. Re-add a keeper
+# for each required dir so the extracted tree has them (empty, writable).
+for keep in \
+  bootstrap/cache \
+  storage/logs \
+  storage/framework storage/framework/cache storage/framework/cache/data \
+  storage/framework/sessions storage/framework/views \
+  storage/app storage/app/public storage/app/private; do
+  mkdir -p "$keep"
+  [ -f "$keep/.gitkeep" ] || : > "$keep/.gitkeep"
+  zip -q "$TMP" "$keep/.gitkeep"
+done
+
 # ---- secret scan (file-level, against the REAL live secrets) ----
 D="$(mktemp -d)"
 ( cd "$D" && unzip -q "$TMP" )
@@ -55,6 +71,9 @@ fi
 # The build host is an installed app root; shipping its storage/installed flag
 # makes every fresh upload think it's already installed and 404s the installer.
 [ -f "$D/storage/installed" ] && { echo "  ERROR: storage/installed is in the archive — fresh installs would be bricked"; fail=1; }
+for req in bootstrap/cache storage/logs storage/framework/cache storage/framework/sessions storage/framework/views; do
+  [ -d "$D/$req" ] || { echo "  ERROR: $req missing from the archive — Laravel would 500 on first boot"; fail=1; }
+done
 rm -rf "$D"
 
 if [ "$fail" = 1 ]; then
