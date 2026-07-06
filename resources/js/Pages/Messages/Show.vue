@@ -3,6 +3,7 @@ import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import Editor from '@/Components/Editor.vue';
 import ConversationList from '@/Components/messages/ConversationList.vue';
+import Slot from '@/Components/ext/Slot.vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { t } from '@/lib/i18n';
@@ -84,6 +85,14 @@ function send() {
     onSuccess: () => editor.value?.clear(),
     onFinish: () => (posting.value = false),
   });
+}
+
+// Ctrl/Cmd+Enter sends the current message.
+function onKeydown(e: KeyboardEvent) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    send();
+  }
 }
 
 // ---- Reply + quoting (client-side blockquote, mirrors the forum) ----
@@ -175,6 +184,7 @@ onMounted(() => {
   scrollDown();
   autoTranslateAll();
   document.addEventListener('selectionchange', onSelectionChange);
+  document.addEventListener('keydown', onKeydown);
   if (!Echo()) return;
   channel = Echo().private(`conversation.${props.conversation.id}`)
     .listen('.MessageCreated', (e: any) => {
@@ -205,6 +215,7 @@ onMounted(() => {
 });
 onBeforeUnmount(() => {
   document.removeEventListener('selectionchange', onSelectionChange);
+  document.removeEventListener('keydown', onKeydown);
   if (Echo()) Echo().leave(`conversation.${props.conversation.id}`);
 });
 </script>
@@ -221,7 +232,7 @@ onBeforeUnmount(() => {
       </div>
 
       <!-- Open conversation -->
-      <div class="flex h-full min-h-0 flex-col p-4">
+      <div class="flex h-full min-h-0 min-w-0 flex-col p-4">
       <div class="mb-3 flex items-center gap-3">
         <Link href="/messages" class="text-ink-muted hover:text-ink md:hidden" :aria-label="t('Back to messages')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6" /></svg>
@@ -235,10 +246,23 @@ onBeforeUnmount(() => {
           <h1 class="truncate text-lg font-bold">{{ conversation.title }}</h1>
           <p v-if="conversation.isGroup" class="text-xs text-ink-muted">{{ t('{n} people', { n: conversation.participants.length }) }}</p>
         </div>
-        <button type="button" class="ml-auto inline-flex items-center gap-1.5 rounded-c border border-line bg-surface px-3 py-1.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="adding = !adding">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
-          {{ t('Add people') }}
-        </button>
+        <div class="ml-auto flex items-center gap-2">
+          <!-- Extension hook: Calls drops its audio/video Call button here. -->
+          <Slot
+            name="messages:header"
+            :ctx="{
+              conversationId: conversation.id,
+              isGroup: conversation.isGroup,
+              partnerId: conversation.partner?.id,
+              partnerName: conversation.partner?.name,
+              online: conversation.isGroup ? true : !!conversation.partner?.online,
+            }"
+          />
+          <button type="button" class="inline-flex items-center gap-1.5 rounded-c border border-line bg-surface px-3 py-1.5 text-sm font-semibold text-ink-2 hover:bg-surface-2" @click="adding = !adding">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg>
+            {{ t('Add people') }}
+          </button>
+        </div>
       </div>
 
       <!-- Add-people search -->
@@ -256,7 +280,7 @@ onBeforeUnmount(() => {
       <div ref="thread" class="dm-thread min-h-0 flex-1 space-y-3 overflow-y-auto py-2 pl-0.5 pr-1.5">
         <div v-for="m in live" :key="m.id" class="flex gap-2.5" :class="mine(m) ? 'flex-row-reverse' : ''">
           <Avatar :avatar="m.author" :size="32" />
-          <div class="max-w-[75%]">
+          <div class="max-w-[75%] min-w-0">
             <div class="rounded-2xl px-3.5 py-2 text-sm" :class="mine(m) ? 'bg-primary text-white' : 'bg-surface-2 text-ink'">
               <div class="prose-q" :class="mine(m) ? 'prose-onprimary' : ''" :data-msg-id="m.id" :data-msg-author="m.author?.name" v-html="displayHtml(m)"></div>
             </div>
@@ -309,6 +333,11 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .prose-onprimary :deep(a) { color: #fff; text-decoration: underline; }
+/* Code on the blue own-bubble: the base styles use the primary colour, which is
+   invisible on a primary background. Force high-contrast white-on-translucent. */
+.prose-onprimary :deep(:not(pre) > code) { background: rgba(255, 255, 255, 0.22); color: #fff; }
+.prose-onprimary :deep(pre) { background: rgba(0, 0, 0, 0.28); border-color: rgba(255, 255, 255, 0.28); }
+.prose-onprimary :deep(pre code) { color: #fff; }
 
 /* The message list is the ONLY scroll region — no nested bordered box and no
    reading scrubber (this isn't a forum thread). Soft top/bottom fades and a

@@ -1,7 +1,12 @@
 /* Inter (brand default font) is loaded as a non-blocking <link> in app.blade.php
    — importing it here made it a render-blocking serial chain (css → @import →
    font css → font) that delayed first paint. */
-@import '@fortawesome/fontawesome-free/css/all.min.css';
+/* Font Awesome is NOT bundled here. When a Pro Kit is configured, app.css gets
+   applied a second time on logged-in (SPA) navigations — AFTER the kit's CSS —
+   so a bundled Free @import would override the kit's font-family and make
+   Pro-only icons fall back to the Free font (⊠ tofu) for logged-in users.
+   FA is now loaded conditionally in app.blade.php instead: the Pro Kit when set,
+   otherwise FA7 Free from the CDN. Free icons keep working in both cases. */
 
 @tailwind base;
 @tailwind components;
@@ -86,6 +91,12 @@ header.q-header { backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-fi
   .bg-surface-2 { background-color: rgb(var(--c-surface-2) / 0.66) !important; }
   .border-line { border-color: rgb(22 18 44 / 0.12) !important; }
   [data-theme='dark'] .border-line { border-color: rgb(255 255 255 / 0.09) !important; }
+
+  /* The theme editor controls must stay solid + crisp — the frosted/blurred
+     surfaces above make swatches, labels and inputs unreadable over the aurora
+     backdrop. Apply `no-frost` to a control panel to opt it out of the glass. */
+  .no-frost.bg-surface, .no-frost .bg-surface { background-color: rgb(var(--c-surface)) !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  .no-frost.bg-surface-2, .no-frost .bg-surface-2 { background-color: rgb(var(--c-surface-2)) !important; }
 }
 
 /* Live-editor tokens applied site-wide (every Convoro install gets these) */
@@ -151,6 +162,11 @@ main.q-main { padding-top: calc(1.5rem * var(--c-density, 1)); padding-bottom: c
    quoted reply reads as an intentional, on-brand card rather than a bare
    browser blockquote.
    --------------------------------------------------------------------------- */
+/* Long links/words and wide media must wrap or shrink — otherwise they blow a
+   DM bubble (and its 1fr grid column) past the container. */
+.prose-q { overflow-wrap: anywhere; }
+.prose-q img, .prose-q video { max-width: 100%; height: auto; }
+.prose-q table { display: block; max-width: 100%; overflow-x: auto; }
 .prose-q blockquote {
   margin: 16px 0;
   padding: 12px 16px;
