@@ -132,6 +132,19 @@ class Installer
             ];
         }
 
+        // Document root: if we're being served through the root shim (document
+        // root is the app root, not public/), the site works but the app root is
+        // web-exposed. Nudge the operator to repoint it.
+        $docRoot = isset($_SERVER['DOCUMENT_ROOT']) ? realpath($_SERVER['DOCUMENT_ROOT']) : false;
+        $publicPath = realpath(public_path());
+        if ($docRoot && $publicPath) {
+            $out[] = [
+                'label' => 'Document root points at the public/ folder',
+                'pass' => $docRoot === $publicPath,
+                'hint' => 'Your site works, but for security set your web/document root to public/ — or install into a subdomain whose root you can set.',
+            ];
+        }
+
         return $out;
     }
 

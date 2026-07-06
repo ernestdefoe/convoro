@@ -1,0 +1,26 @@
+# Convoro root .htaccess.
+#
+# This file is ONLY read when the web server's document root is the application
+# root instead of public/ (a misconfiguration). When the document root is
+# correctly set to public/, this file sits above the web root and is ignored,
+# so it never affects a proper install.
+#
+# It does two things: (1) deny direct access to sensitive files, and (2) forward
+# every request into public/ so the site still works. For best security, set
+# your document root to the public/ folder — the installer will remind you.
+
+# (1) Hard-deny the crown-jewel files/dirs (covers hosts with mod_rewrite off).
+#     None of these have a legitimate public URL, so denying them is always safe.
+RedirectMatch 403 (?i)^/(\.env($|\.)|\.git/|\.gitignore|auth\.json|composer\.(json|lock)|artisan$|.*\.sqlite$|storage/(logs|framework|app)/|(config|app|bootstrap|database|routes|tests|resources|node_modules)/)
+
+# (2) Forward everything else into public/ (public/.htaccess then routes to
+#     index.php). With mod_rewrite on, this alone also blocks app-root files:
+#     a request for /anything is remapped to public/anything, which 404s unless
+#     it is genuine public content.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>
+
+# If mod_rewrite is unavailable, the root index.php shim handles the request.
+DirectoryIndex index.php
