@@ -330,7 +330,19 @@ class StoreController extends Controller
     /** Public catalog consumed by remote installs' Marketplace. */
     public function catalog(): JsonResponse
     {
-        $items = Product::where('published', true)->orderByDesc('featured')->orderBy('name')->get()
+        return response()->json(['items' => self::catalogItems()]);
+    }
+
+    /**
+     * The published catalog as a plain array — shared by the public /api/catalog
+     * endpoint (consumed by remote installs) and, on the store-owner install, by
+     * the admin Marketplace directly (so it never HTTP-fetches its own catalog).
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public static function catalogItems(): array
+    {
+        return Product::where('published', true)->orderByDesc('featured')->orderBy('name')->get()
             ->map(fn (Product $p) => [
                 'slug' => $p->slug,
                 'name' => $p->name,
@@ -357,9 +369,7 @@ class StoreController extends Controller
                         ? ($p->isFree() ? route('catalog.download', $p) : null)
                         : $p->download_url)
                     : (($p->isFree() && $p->download_path) ? route('catalog.download', $p) : null),
-            ]);
-
-        return response()->json(['items' => $items]);
+            ])->all();
     }
 
     /** Stream a FREE product's package (no license needed). */

@@ -20,11 +20,17 @@ class SitemapController extends Controller
         $add(url('/extensions'), null, 'weekly', '0.6');
         $add(url('/members'), null, 'weekly', '0.4');
 
-        foreach (Category::all() as $c) {
+        // The sitemap is public, so exclude every private (view-restricted) category
+        // and any topic inside one.
+        $restrictedCats = \App\Support\CategoryVisibility::restrictedIds();
+
+        foreach (Category::whereNotIn('id', $restrictedCats ?: [0])->get() as $c) {
             $add(url('/?category='.$c->slug), null, 'daily', '0.6');
         }
 
-        Topic::query()->visible()->latest('last_post_at')->limit(5000)->get(['slug', 'updated_at'])
+        Topic::query()->visible()
+            ->when($restrictedCats, fn ($q, $ids) => $q->whereNotIn('category_id', $ids))
+            ->latest('last_post_at')->limit(5000)->get(['slug', 'updated_at'])
             ->each(fn (Topic $t) => $add(url('/t/'.$t->slug), optional($t->updated_at)->toAtomString(), 'weekly', '0.7'));
 
         User::query()->limit(5000)->get(['id', 'updated_at'])

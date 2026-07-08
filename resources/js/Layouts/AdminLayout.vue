@@ -5,6 +5,7 @@ import ThemeToggle from '@/Components/ThemeToggle.vue';
 import Toast from '@/Components/Toast.vue';
 import CommandPalette from '@/Components/CommandPalette.vue';
 import { useCommandPalette } from '@/lib/commandPalette';
+import { t } from '@/lib/i18n';
 
 const page = usePage();
 const palette = useCommandPalette();
@@ -63,39 +64,54 @@ function extIcon(e: { id?: string; name?: string }): string {
   return I.puzzle;
 }
 
-const groups = computed(() => [
-  { label: null, items: [{ label: 'Dashboard', href: '/admin', component: 'Admin/Dashboard', icon: I.dash }] },
-  { label: 'Community', items: [
-    { label: 'Members', href: '/admin/members', component: 'Admin/Members', icon: I.members },
-    { label: 'Tags', href: '/admin/content', component: 'Admin/Content', icon: I.tags },
-    { label: 'Hero Studio', href: '/admin/heroes', component: 'Admin/HeroStudio', icon: I.tags },
-    { label: 'Moderation', href: '/admin/moderation', component: 'Admin/Moderation', icon: I.shield },
-    { label: 'Spam & flood', href: '/admin/spam-flood', component: 'Admin/SpamFlood', icon: I.filter },
-    { label: 'Audit log', href: '/admin/audit-log', component: 'Admin/AuditLog', icon: I.log },
-    { label: 'Invites', href: '/admin/invites', component: 'Admin/Invites', icon: I.invite },
+// Labels are wrapped in t() here (not the template) so the literals are both
+// extracted into the catalog AND translated; `groups` is a computed, so they
+// re-resolve when the locale changes. Acronyms (AI, PWA) and extension names
+// (dynamic) stay literal.
+const isAdmin = computed(() => !!(page.props as any).auth?.isAdmin);
+const allGroups = computed(() => [
+  { label: null, items: [{ label: t('Dashboard'), href: '/admin', component: 'Admin/Dashboard', icon: I.dash }] },
+  { label: t('Community'), items: [
+    { label: t('Members'), href: '/admin/members', component: 'Admin/Members', icon: I.members },
+    { label: t('Tags'), href: '/admin/content', component: 'Admin/Content', icon: I.tags },
+    { label: t('Hero Studio'), href: '/admin/heroes', component: 'Admin/HeroStudio', icon: I.tags },
+    { label: t('Moderation'), href: '/admin/moderation', component: 'Admin/Moderation', icon: I.shield },
+    { label: t('Groups & permissions'), href: '/admin/permissions', component: 'Admin/Permissions', icon: I.shield },
+    { label: t('Spam & flood'), href: '/admin/spam-flood', component: 'Admin/SpamFlood', icon: I.filter },
+    { label: t('Audit log'), href: '/admin/audit-log', component: 'Admin/AuditLog', icon: I.log },
+    { label: t('Invites'), href: '/admin/invites', component: 'Admin/Invites', icon: I.invite },
   ] },
-  { label: 'Configuration', items: [
-    { label: 'Settings', href: '/admin/settings', component: 'Admin/Settings', icon: I.cog },
-    { label: 'Email', href: '/admin/email', component: 'Admin/Email', icon: I.mail },
-    { label: 'Languages', href: '/admin/languages', component: 'Admin/Languages', icon: I.globe },
+  { label: t('Configuration'), items: [
+    { label: t('Settings'), href: '/admin/settings', component: 'Admin/Settings', icon: I.cog },
+    { label: t('Email'), href: '/admin/email', component: 'Admin/Email', icon: I.mail },
+    { label: t('Languages'), href: '/admin/languages', component: 'Admin/Languages', icon: I.globe },
     { label: 'PWA', href: '/admin/pwa', component: 'Admin/Pwa', icon: I.pwa },
-    { label: 'Single sign-on', href: '/admin/sso', component: 'Admin/Sso', icon: I.shield },
+    { label: t('Single sign-on'), href: '/admin/sso', component: 'Admin/Sso', icon: I.shield },
   ] },
-  { label: 'Extensions', items: [
-    { label: 'Marketplace', href: '/admin/marketplace', component: 'Admin/Marketplace', icon: I.market },
+  { label: t('Extensions'), items: [
+    { label: t('Marketplace'), href: '/admin/marketplace', component: 'Admin/Marketplace', icon: I.market },
     // The seller/store console lives front-facing now (convoro.co/extensions/manage),
     // reached from the forum's "Extensions" nav — no admin Store section.
     // Each extension shows its OWN icon (inline SVG from its manifest); fall back
     // to the keyword-matched glyph only if it didn't ship one.
     ...extNav.value.map((e) => ({ label: e.name, href: e.href, component: '', icon: extIcon(e), iconSvg: (e as any).icon || null })),
   ] },
-  { label: 'System', items: [
+  { label: t('System'), items: [
     { label: 'AI', href: '/admin/ai', component: 'Admin/Ai', icon: I.ai },
-    { label: 'Knowledge Base', href: '/admin/knowledge', component: 'Admin/Knowledge', icon: I.book },
-    { label: 'Import', href: '/admin/import', component: 'Admin/Import', icon: I.import },
-    { label: 'Backups', href: '/admin/backups', component: 'Admin/Backups', icon: I.database },
+    { label: t('Knowledge Base'), href: '/admin/knowledge', component: 'Admin/Knowledge', icon: I.book },
+    { label: t('Import'), href: '/admin/import', component: 'Admin/Import', icon: I.import },
+    { label: t('Backups'), href: '/admin/backups', component: 'Admin/Backups', icon: I.database },
   ] },
 ]);
+
+// Full admins see everything; non-admin staff (moderators) see only Moderation.
+const groups = computed(() =>
+  isAdmin.value
+    ? allGroups.value
+    : allGroups.value
+        .map((g) => ({ ...g, items: g.items.filter((i) => i.href === '/admin/moderation') }))
+        .filter((g) => g.items.length),
+);
 
 const banner = () => (page.props as any).updateBanner ?? null;
 
@@ -111,7 +127,7 @@ function active(item: { component: string; href: string }) {
     <aside class="hidden w-[240px] shrink-0 flex-col border-r border-line bg-surface p-4 md:flex">
       <div class="mb-6 flex items-center gap-2 px-2">
         <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-violet-500 font-extrabold text-white">C</span>
-        <span class="text-sm font-bold text-ink">Convoro Admin</span>
+        <span class="text-sm font-bold text-ink">Convoro {{ t('Admin') }}</span>
       </div>
 
       <nav class="flex flex-col gap-1 overflow-y-auto">
@@ -133,7 +149,7 @@ function active(item: { component: string; href: string }) {
 
       <Link href="/" class="mt-auto flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-2 hover:bg-surface-2 hover:text-ink">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 19l-7-7 7-7" /></svg>
-        Back to site
+        {{ t('Back to site') }}
       </Link>
     </aside>
 
@@ -141,14 +157,14 @@ function active(item: { component: string; href: string }) {
     <div class="flex-1">
       <header class="flex items-center gap-4 border-b border-line bg-surface/70 px-6 py-4">
         <div class="min-w-0 flex-1">
-          <h1 class="text-lg font-bold text-ink"><slot name="title">Admin</slot></h1>
+          <h1 class="text-lg font-bold text-ink"><slot name="title">{{ t('Admin') }}</slot></h1>
           <p v-if="$slots.subtitle" class="mt-0.5 text-sm text-ink-2"><slot name="subtitle" /></p>
         </div>
         <button type="button" @click="palette.open()"
           class="hidden items-center gap-2 rounded-lg border border-line bg-surface-2 px-3 py-1.5 text-sm text-ink-muted hover:text-ink sm:flex"
-          aria-label="Open command palette">
+          :aria-label="t('Open command palette')">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7" /><path d="m21 21-4.3-4.3" /></svg>
-          <span>Search</span>
+          <span>{{ t('Search') }}</span>
           <kbd class="rounded border border-line bg-surface px-1.5 text-[10px] font-semibold">⌘K</kbd>
         </button>
         <ThemeToggle />
@@ -156,8 +172,8 @@ function active(item: { component: string; href: string }) {
       <main class="p-6">
         <Link v-if="banner()?.available" href="/admin/marketplace" class="mb-5 flex items-center gap-3 rounded-xl border border-indigo-500/40 bg-indigo-500/10 px-4 py-3 text-sm">
           <span class="flex h-7 w-7 items-center justify-center rounded-full bg-indigo-500/30 text-indigo-300">↑</span>
-          <span class="text-ink">Convoro <strong>{{ banner().latest }}</strong> is available.</span>
-          <span class="ml-auto font-semibold text-indigo-300">Update →</span>
+          <span class="text-ink">{{ t('Convoro {version} is available.', { version: banner().latest }) }}</span>
+          <span class="ml-auto font-semibold text-indigo-300">{{ t('Update') }} →</span>
         </Link>
         <slot />
       </main>

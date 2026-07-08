@@ -36,6 +36,7 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
                 'isAdmin' => (bool) $request->user()?->is_admin,
+                'canModerate' => (bool) $request->user()?->hasAnyPermission(\App\Support\Permissions::moderationKeys()),
                 'canInvite' => (bool) $request->user() && (bool) Settings::get('invites.members_enabled', true),
             ],
             'site' => fn () => Settings::public(),
@@ -59,7 +60,7 @@ class HandleInertiaRequests extends Middleware
             ],
             'composer' => fn () => ['gifs' => \App\Support\Gifs::enabled()],
             'inviteOnly' => fn () => (bool) Settings::get('invites.only', false),
-            'sso' => fn () => \App\Support\Oidc::enabled() ? ['enabled' => true, 'label' => \App\Support\Oidc::label()] : ['enabled' => false],
+            'sso' => fn () => \App\Support\Oidc::enabled() ? ['enabled' => true, 'label' => \App\Support\Oidc::label(), 'only' => (bool) Settings::get('sso.force', false)] : ['enabled' => false],
             'i18n' => fn () => [
                 'locale' => app()->getLocale(),
                 'rtl' => \App\Support\I18n::isRtl(app()->getLocale()),

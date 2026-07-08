@@ -34,6 +34,11 @@ class Present
             'url' => '/u/'.$user->id,
             'online' => $user->last_seen_at !== null && $user->last_seen_at >= now()->subMinutes(5),
             'staff' => self::staffBadge($user),
+            'primaryGroup' => self::primaryGroupBadge($user),
+            // Raw per-user attribute an extension can give meaning to (e.g. the
+            // Favorite Team extension resolves it to a logo badge via
+            // convoro.avatarBadge). Null when no such extension/column exists.
+            'favoriteTeamId' => $user->favorite_team ?? null,
             'fedi' => $user->is_federated ? ($user->federated_handle ?: null) : null,
             'fediUrl' => $user->is_federated ? $user->federated_actor : null,
         ];
@@ -64,17 +69,48 @@ class Present
         if ($user->is_admin) {
             $g = self::systemGroup('admin');
 
-            return ['name' => $g->name ?? 'Admin', 'color' => $g->color ?? '#5b5bd6'];
+            return [
+                'name' => $g->name ?? 'Admin',
+                'color' => $g->color ?? '#5b5bd6',
+                'icon' => $g->icon ?? 'fa-solid fa-shield-halved',
+            ];
         }
 
         if ($user->relationLoaded('groups')) {
             $staff = $user->groups->where('is_staff', true)->sortByDesc('priority')->first();
             if ($staff) {
-                return ['name' => $staff->name, 'color' => $staff->color];
+                return [
+                    'name' => $staff->name,
+                    'color' => $staff->color,
+                    'icon' => $staff->icon ?: 'fa-solid fa-user-tag',
+                ];
             }
         }
 
         return null;
+    }
+
+    /**
+     * The user's primary social group as a compact badge {name, slug, color, icon},
+     * or null. Only resolved when `primarySocialGroup` is eager-loaded so avatar
+     * presentation never triggers an N+1 query per author.
+     */
+    public static function primaryGroupBadge(?User $user): ?array
+    {
+        if (! $user || ! $user->relationLoaded('primarySocialGroup')) {
+            return null;
+        }
+        $g = optional($user->primarySocialGroup)->group;
+        if (! $g) {
+            return null;
+        }
+
+        return [
+            'name' => $g->name,
+            'slug' => $g->slug,
+            'color' => $g->color ?: '#5b5bd6',
+            'icon' => $g->icon ?: null,
+        ];
     }
 
     /** Shape a profile wall post for the frontend. */

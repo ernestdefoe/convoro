@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import AdminLayout from '@/Layouts/AdminLayout.vue';
 import { Head, router } from '@inertiajs/vue3';
-import { reactive, ref, watch } from 'vue';
+import { reactive, ref, watch, computed } from 'vue';
 import { t as tr } from '@/lib/i18n';
 import { toast } from '@/lib/toast';
 
 const props = defineProps<{
   users: { data: any[]; links: { url: string | null; label: string; active: boolean }[]; prev_page_url: string | null; next_page_url: string | null; total: number };
   q: string;
-  groups: { id: number; key: string | null; name: string; color: string; is_staff: boolean; priority: number; permissions: string[] | null }[];
+  groups: { id: number; key: string | null; name: string; color: string; icon: string | null; is_staff: boolean; priority: number; permissions: string[] | null }[];
   permissionCatalog: { key: string; label: string; category: string; baseline: boolean }[];
   trustLevels: Record<number, string> | null;
 }>();
@@ -19,6 +19,22 @@ const trustChoices = props.trustLevels
   : [];
 
 const assignablePerms = props.permissionCatalog.filter((p) => !p.baseline);
+// Group the assignable permissions by category so the editor reads as sections
+// (like Flarum's permission grid) rather than one flat list.
+const permsByCategory = computed(() => {
+  const map = new Map<string, typeof assignablePerms>();
+  for (const p of assignablePerms) {
+    if (!map.has(p.category)) map.set(p.category, []);
+    map.get(p.category)!.push(p);
+  }
+  return Array.from(map, ([category, perms]) => ({ category, perms }));
+});
+// A few common Font Awesome glyphs offered as one-click picks for group badges.
+const GROUP_ICONS = [
+  'fa-solid fa-shield-halved', 'fa-solid fa-user-shield', 'fa-solid fa-gavel', 'fa-solid fa-crown',
+  'fa-solid fa-star', 'fa-solid fa-user-tag', 'fa-solid fa-hammer', 'fa-solid fa-award',
+  'fa-solid fa-heart', 'fa-solid fa-bolt', 'fa-solid fa-check', 'fa-solid fa-fire',
+];
 // The Admin badge follows the (editable) Admin group's color.
 const adminColor = props.groups.find((g) => g.key === 'admin')?.color || '#6366f1';
 
@@ -77,14 +93,14 @@ function deleteMember() {
 }
 
 // --- groups manager ---
-const newGroup = reactive({ name: '', color: '#6366f1', is_staff: false, permissions: [] as string[] });
+const newGroup = reactive({ name: '', color: '#6366f1', icon: '', is_staff: false, permissions: [] as string[] });
 const editGroupId = ref<number | null>(null);
-const gbuf = reactive({ name: '', color: '#6366f1', is_staff: false, permissions: [] as string[] });
+const gbuf = reactive({ name: '', color: '#6366f1', icon: '', is_staff: false, permissions: [] as string[] });
 function addGroup() {
   if (!newGroup.name.trim()) return;
-  router.post('/admin/groups', { ...newGroup }, { ...opts, onSuccess: () => Object.assign(newGroup, { name: '', color: '#6366f1', is_staff: false, permissions: [] }) });
+  router.post('/admin/groups', { ...newGroup }, { ...opts, onSuccess: () => Object.assign(newGroup, { name: '', color: '#6366f1', icon: '', is_staff: false, permissions: [] }) });
 }
-function startGroup(g: any) { editGroupId.value = g.id; Object.assign(gbuf, { name: g.name, color: g.color, is_staff: g.is_staff, permissions: [...(g.permissions ?? [])] }); }
+function startGroup(g: any) { editGroupId.value = g.id; Object.assign(gbuf, { name: g.name, color: g.color, icon: g.icon ?? '', is_staff: g.is_staff, permissions: [...(g.permissions ?? [])] }); }
 function saveGroup() { router.put(`/admin/groups/${editGroupId.value}`, { ...gbuf }, { ...opts, onSuccess: () => (editGroupId.value = null) }); }
 function delGroup(g: any) { if (confirm(tr('Delete group “{name}”?', { name: g.name }))) router.delete(`/admin/groups/${g.id}`, opts); }
 
@@ -135,14 +151,27 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
           <input v-model="newGroup.name" :class="inp" class="w-full" :placeholder="tr('New group name')" @keyup.enter="addGroup" />
           <div class="flex items-center gap-2">
             <input v-model="newGroup.color" type="color" class="h-9 w-10 rounded border-line bg-transparent" />
-            <label class="flex items-center gap-1.5 text-xs text-ink-2"><input v-model="newGroup.is_staff" type="checkbox" class="rounded border-line bg-appbg text-indigo-500" /> {{ tr('Staff') }}</label>
+            <label class="flex items-center gap-1.5 text-xs text-ink-2"><input v-model="newGroup.is_staff" type="checkbox" class="rounded border-line text-indigo-500" /> {{ tr('Staff') }}</label>
             <button class="ml-auto rounded-lg bg-indigo-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-indigo-600" @click="addGroup">{{ tr('Add') }}</button>
           </div>
-          <div class="space-y-1 pt-1">
+          <!-- Group badge icon -->
+          <div class="flex items-center gap-2">
+            <span class="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-line" :style="{ color: newGroup.color }">
+              <i v-if="newGroup.icon" :class="newGroup.icon"></i><span v-else class="text-[10px] text-ink-muted">—</span>
+            </span>
+            <input v-model="newGroup.icon" :class="inp" class="flex-1" :placeholder="tr('Icon, e.g. fa-solid fa-crown')" />
+          </div>
+          <div class="flex flex-wrap gap-1">
+            <button v-for="ic in GROUP_ICONS" :key="ic" type="button" :title="ic" :class="newGroup.icon === ic ? 'border-indigo-500 text-indigo-500' : 'border-line text-ink-2 hover:border-indigo-400'" class="grid h-7 w-7 place-items-center rounded border" @click="newGroup.icon = ic"><i :class="ic"></i></button>
+          </div>
+          <div class="space-y-2 pt-1">
             <div class="text-[11px] uppercase tracking-wide text-ink-muted">{{ tr('Permissions') }}</div>
-            <label v-for="p in assignablePerms" :key="p.key" class="flex items-center gap-2 text-xs text-ink-2">
-              <input v-model="newGroup.permissions" type="checkbox" :value="p.key" class="rounded border-line bg-appbg text-indigo-500" /> {{ p.label }}
-            </label>
+            <div v-for="grp in permsByCategory" :key="grp.category" class="space-y-1">
+              <div class="text-[11px] font-semibold text-ink-2">{{ grp.category }}</div>
+              <label v-for="p in grp.perms" :key="p.key" class="flex items-center gap-2 pl-1 text-xs text-ink-2">
+                <input v-model="newGroup.permissions" type="checkbox" :value="p.key" class="rounded border-line text-indigo-500" /> {{ p.label }}
+              </label>
+            </div>
             <p class="text-[11px] text-ink-muted">{{ tr('All members can post, react & edit their own content by default.') }}</p>
           </div>
         </div>
@@ -152,17 +181,30 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
               <input v-model="gbuf.name" :class="inp" class="w-full" />
               <div class="mt-2 flex items-center gap-2">
                 <input v-model="gbuf.color" type="color" class="h-8 w-9 rounded border-line bg-transparent" />
-                <label class="flex items-center gap-1.5 text-xs text-ink-2"><input v-model="gbuf.is_staff" type="checkbox" class="rounded border-line bg-appbg text-indigo-500" /> {{ tr('Staff') }}</label>
+                <label class="flex items-center gap-1.5 text-xs text-ink-2"><input v-model="gbuf.is_staff" type="checkbox" class="rounded border-line text-indigo-500" /> {{ tr('Staff') }}</label>
                 <button class="ml-auto rounded-lg bg-emerald-500 px-2.5 py-1 text-sm font-semibold text-white" @click="saveGroup">{{ tr('Save') }}</button>
                 <button class="text-sm text-ink-2" @click="editGroupId = null">{{ tr('Cancel') }}</button>
               </div>
-              <div class="mt-2 space-y-1">
-                <label v-for="p in assignablePerms" :key="p.key" class="flex items-center gap-2 text-xs text-ink-2">
-                  <input v-model="gbuf.permissions" type="checkbox" :value="p.key" class="rounded border-line bg-appbg text-indigo-500" /> {{ p.label }}
-                </label>
+              <div class="mt-2 flex items-center gap-2">
+                <span class="grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-line" :style="{ color: gbuf.color }">
+                  <i v-if="gbuf.icon" :class="gbuf.icon"></i><span v-else class="text-[10px] text-ink-muted">—</span>
+                </span>
+                <input v-model="gbuf.icon" :class="inp" class="flex-1" :placeholder="tr('Icon, e.g. fa-solid fa-crown')" />
+              </div>
+              <div class="mt-1 flex flex-wrap gap-1">
+                <button v-for="ic in GROUP_ICONS" :key="ic" type="button" :title="ic" :class="gbuf.icon === ic ? 'border-indigo-500 text-indigo-500' : 'border-line text-ink-2 hover:border-indigo-400'" class="grid h-7 w-7 place-items-center rounded border" @click="gbuf.icon = ic"><i :class="ic"></i></button>
+              </div>
+              <div class="mt-2 space-y-2">
+                <div v-for="grp in permsByCategory" :key="grp.category" class="space-y-1">
+                  <div class="text-[11px] font-semibold text-ink-2">{{ grp.category }}</div>
+                  <label v-for="p in grp.perms" :key="p.key" class="flex items-center gap-2 pl-1 text-xs text-ink-2">
+                    <input v-model="gbuf.permissions" type="checkbox" :value="p.key" class="rounded border-line text-indigo-500" /> {{ p.label }}
+                  </label>
+                </div>
               </div>
             </template>
             <div v-else class="flex items-center gap-2">
+              <i v-if="g.icon" :class="g.icon" class="text-sm" :style="{ color: g.color }"></i>
               <span class="rounded-full px-2 py-0.5 text-xs font-semibold" :style="{ color: g.color, background: g.color + '22' }">{{ g.name }}</span>
               <span v-if="g.is_staff" class="text-[10px] font-bold text-ink-muted">{{ tr('STAFF') }}</span>
               <span v-if="g.key" class="text-[10px] font-bold text-ink-muted">{{ tr('SYSTEM') }}</span>
@@ -185,7 +227,7 @@ const inp = 'rounded-lg border-line bg-appbg text-sm text-ink focus:border-indig
         <label class="mt-3 block text-sm text-ink-2">{{ tr('Email') }}</label>
         <input v-model="buf.email" type="email" :class="inp" class="mt-1 w-full" />
         <label class="mt-3 flex items-center gap-2 text-sm text-ink-2">
-          <input v-model="buf.is_admin" type="checkbox" class="rounded border-line bg-appbg text-indigo-500" /> {{ tr('Administrator') }}
+          <input v-model="buf.is_admin" type="checkbox" class="rounded border-line text-indigo-500" /> {{ tr('Administrator') }}
         </label>
         <div class="mt-3">
           <div class="text-sm text-ink-2">{{ tr('Groups') }}</div>

@@ -97,9 +97,16 @@ class ModerationController extends Controller
         return back()->with('status', __('Report dismissed.'));
     }
 
+    /** Assert the actor holds a specific moderation permission (admins bypass). */
+    private function must(string $key): void
+    {
+        abort_unless((bool) request()->user()?->hasPermission($key), 403);
+    }
+
     /** Delete a post (and decrement its topic's reply count). */
     public function deletePost(Post $post): RedirectResponse
     {
+        $this->must('post.delete_any');
         $topic = $post->topic;
         if ($topic && ! $post->is_first && $topic->reply_count > 0) {
             $topic->decrement('reply_count');
@@ -115,6 +122,7 @@ class ModerationController extends Controller
     /** Approve a held post: restore it publicly and clear its open reports. */
     public function approvePost(Post $post): RedirectResponse
     {
+        $this->must('post.approve');
         $post->forceFill(['hidden' => false])->saveQuietly();
 
         // Approving a held opening post also publishes its (held) topic so it
@@ -134,6 +142,7 @@ class ModerationController extends Controller
     /** Ban a user (spammer). Optionally ban their last IP and wipe their posts. */
     public function banUser(Request $request, User $user): RedirectResponse
     {
+        $this->must('user.ban');
         abort_if($user->is_admin, 403, __('You cannot ban an administrator.'));
 
         $data = $request->validate([
@@ -165,6 +174,7 @@ class ModerationController extends Controller
 
     public function unbanUser(User $user): RedirectResponse
     {
+        $this->must('user.ban');
         $user->forceFill(['banned_at' => null, 'ban_reason' => null])->save();
         AuditLog::record('user.unban', $user, subject: $user);
 
@@ -173,6 +183,7 @@ class ModerationController extends Controller
 
     public function banIp(Request $request): RedirectResponse
     {
+        $this->must('user.ban');
         $data = $request->validate([
             'ip_address' => ['required', 'ip'],
             'reason' => ['nullable', 'string', 'max:255'],
@@ -185,6 +196,7 @@ class ModerationController extends Controller
 
     public function unbanIp(IpBan $ipBan): RedirectResponse
     {
+        $this->must('user.ban');
         $ip = $ipBan->ip_address;
         $ipBan->delete();
         IpBan::flush($ip);
@@ -196,6 +208,7 @@ class ModerationController extends Controller
     /** Move a topic into a different category. */
     public function moveTopic(Request $request, Topic $topic): RedirectResponse
     {
+        $this->must('topic.move');
         $data = $request->validate(['category_id' => ['nullable', 'integer', 'exists:categories,id']]);
         $from = $topic->category_id;
         $topic->update(['category_id' => $data['category_id'] ?? null]);
@@ -220,6 +233,7 @@ class ModerationController extends Controller
     /** Move a single post to a different existing topic. */
     public function movePost(Request $request, Post $post): RedirectResponse
     {
+        $this->must('post.move');
         $data = $request->validate(['topic_id' => ['required', 'integer', 'exists:topics,id']]);
         abort_if($post->is_first, 422, __('The opening post cannot be moved on its own.'));
 

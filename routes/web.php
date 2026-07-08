@@ -330,12 +330,10 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifications/channel-prefs', [NotificationController::class, 'channelPrefs'])->name('notifications.channel-prefs');
 });
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', [App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
-
-    // Moderation suite
+// Moderation panel — full admins, plus members holding any moderation permission.
+// Each action still asserts its specific permission in the controller.
+Route::middleware(['auth', 'staff'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/moderation', [App\Http\Controllers\ModerationController::class, 'index'])->name('moderation');
-    Route::get('/audit-log', [App\Http\Controllers\AuditLogController::class, 'index'])->name('audit-log');
     Route::post('/moderation/reports/{report}/resolve', [App\Http\Controllers\ModerationController::class, 'resolveReport'])->name('moderation.reports.resolve');
     Route::post('/moderation/reports/{report}/dismiss', [App\Http\Controllers\ModerationController::class, 'dismissReport'])->name('moderation.reports.dismiss');
     Route::delete('/moderation/posts/{post}', [App\Http\Controllers\ModerationController::class, 'deletePost'])->name('moderation.posts.delete');
@@ -347,6 +345,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/moderation/users/{user}/unban', [App\Http\Controllers\ModerationController::class, 'unbanUser'])->name('moderation.users.unban');
     Route::post('/moderation/ip-bans', [App\Http\Controllers\ModerationController::class, 'banIp'])->name('moderation.ip.ban');
     Route::delete('/moderation/ip-bans/{ipBan}', [App\Http\Controllers\ModerationController::class, 'unbanIp'])->name('moderation.ip.unban');
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [App\Http\Controllers\AdminController::class, 'dashboard'])->name('dashboard');
+
+    // Moderation suite lives in its own `staff`-guarded group (see below).
+    Route::get('/audit-log', [App\Http\Controllers\AuditLogController::class, 'index'])->name('audit-log');
 
     // Spam, flood & abuse controls
     Route::get('/spam-flood', [App\Http\Controllers\AdminController::class, 'spamFlood'])->name('spam-flood');
@@ -373,6 +378,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('/groups', [App\Http\Controllers\AdminController::class, 'storeGroup'])->name('groups.store');
     Route::put('/groups/{group}', [App\Http\Controllers\AdminController::class, 'updateGroup'])->name('groups.update');
     Route::delete('/groups/{group}', [App\Http\Controllers\AdminController::class, 'destroyGroup'])->name('groups.destroy');
+    Route::get('/permissions', [App\Http\Controllers\AdminController::class, 'permissions'])->name('permissions');
+    Route::post('/permissions/toggle', [App\Http\Controllers\AdminController::class, 'togglePermission'])->name('permissions.toggle');
 
     Route::get('/pwa', [App\Http\Controllers\AdminController::class, 'pwa'])->name('pwa');
     Route::post('/pwa', [App\Http\Controllers\AdminController::class, 'updatePwa'])->name('pwa.update');

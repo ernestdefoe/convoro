@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { convoro } from '@/lib/convoro-ext';
+import { t } from '@/lib/i18n';
 
 // Parent-passed attrs (class like `mx-auto`/`ring-2`, style, listeners) must land
 // on the AVATAR element — not the optional badge wrapper — so alignment is
@@ -17,6 +18,8 @@ const props = withDefaults(
       avatar?: string | null;
       staff?: { name: string; color: string } | null;
       online?: boolean;
+      /** Raw per-user attribute an extension resolves to an avatar badge. */
+      favoriteTeamId?: string | null;
     };
     size?: number;
     /** When true, show the staff badge (if any) beneath the avatar. */
@@ -40,13 +43,11 @@ const bg = computed(() => gradients[(props.avatar.color - 1) % 6]);
 
 const live = computed(() => convoro.isLive(props.avatar.id));
 const hasPresence = computed(() => props.presence != null);
-// Staff badges now show wherever the user is staff (not just when `badge` is set),
-// mirroring the LIVE badge. A live staff member gets the LIVE pill stacked under
-// the staff pill. The `badge` prop is kept for back-compat but no longer gates it.
-const showStaff = computed(() => !!props.avatar.staff);
-// Staff + LIVE render as overlay pills sitting on the avatar's bottom edge (with
-// a white ring), so we need the relative wrapper whenever any overlay applies.
-const hasOverlay = computed(() => hasPresence.value || showStaff.value || live.value);
+// The group (staff), primary-social-group and favorite-team badges now render as
+// an inline strip after the username (see UserBadges.vue), not on the avatar —
+// which also keeps them off the discussion list. The avatar keeps only the
+// presence dot and the LIVE pill.
+const hasOverlay = computed(() => hasPresence.value || live.value);
 const isOnline = computed(() =>
   props.presence === 'online' || (props.presence === 'auto' && !!props.avatar.online),
 );
@@ -82,25 +83,15 @@ const dotSize = computed(() => Math.max(9, Math.round(props.size * 0.26)));
       class="absolute right-0 top-0 rounded-full ring-2 ring-surface"
       :class="isOnline ? 'bg-emerald-500' : 'bg-ink-muted'"
       :style="{ width: dotSize + 'px', height: dotSize + 'px' }"
-      :title="isOnline ? 'Online' : 'Offline'"
+      :title="isOnline ? t('Online') : t('Offline')"
     ></span>
 
-    <!-- Staff (top) + LIVE (under) pills, centered on the avatar's bottom edge. -->
+    <!-- LIVE pill, centered on the avatar's bottom edge. -->
     <span
-      v-if="showStaff || live"
-      class="pointer-events-none absolute bottom-0 left-1/2 flex -translate-x-1/2 translate-y-1/2 flex-col items-center gap-0.5"
-    >
-      <span
-        v-if="showStaff"
-        class="whitespace-nowrap rounded-full px-1.5 py-0.5 text-[8px] font-extrabold uppercase leading-none tracking-wide text-white shadow-sm ring-2 ring-surface"
-        :style="{ background: avatar.staff?.color }"
-      >{{ avatar.staff?.name }}</span>
-      <span
-        v-if="live"
-        class="rounded-full bg-red-600 px-1 py-0.5 text-[8px] font-extrabold uppercase leading-none tracking-wide text-white shadow-sm ring-2 ring-surface"
-        title="Live now"
-      >Live</span>
-    </span>
+      v-if="live"
+      class="pointer-events-none absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 rounded-full bg-red-600 px-1 py-0.5 text-[8px] font-extrabold uppercase leading-none tracking-wide text-white shadow-sm ring-2 ring-surface"
+      :title="t('Live now')"
+    >{{ t('Live') }}</span>
   </span>
 
   <!-- Bare variants: the glyph carries the passed attrs. -->

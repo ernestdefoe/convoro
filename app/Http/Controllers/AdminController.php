@@ -571,20 +571,33 @@ class AdminController extends Controller
                 'icon' => \App\Support\ExtensionManager::iconSvgFor($m),
             ]);
 
-        // Browsable catalog from the central store (free items install directly;
-        // premium need a license key). Best-effort — never block the page.
-        $installedPackages = collect(\App\Support\ExtensionManager::all())->pluck('id')->all();
-        $catalog = [];
-        try {
-            $res = \Illuminate\Support\Facades\Http::acceptJson()->timeout(6)
-                ->get(rtrim(config('convoro.store_url'), '/').'/api/catalog');
-            if ($res->successful()) {
-                $catalog = collect($res->json('items', []))
-                    ->reject(fn ($i) => in_array($i['package'] ?? null, $installedPackages, true))
-                    ->values()->all();
+        // Browsable catalog of not-yet-installed extensions. Match on the
+        // extension id AND the composer package so an item installed under either
+        // name is correctly hidden.
+        $installedIds = collect(\App\Support\ExtensionManager::all());
+        $installedKeys = $installedIds->pluck('id')
+            ->merge($installedIds->pluck('package')->filter())
+            ->all();
+
+        // The store-owner install reads its own catalog directly (no self-HTTP,
+        // which broke once the app moved off the convoro.co apex). Ordinary
+        // installs fetch it from the central store over HTTP — best-effort.
+        $items = [];
+        if (config('convoro.store_owner')) {
+            $items = \App\Http\Controllers\StoreController::catalogItems();
+        } else {
+            try {
+                $res = \Illuminate\Support\Facades\Http::acceptJson()->timeout(6)
+                    ->get(rtrim(config('convoro.store_url'), '/').'/api/catalog');
+                if ($res->successful()) {
+                    $items = $res->json('items', []);
+                }
+            } catch (\Throwable) {
             }
-        } catch (\Throwable) {
         }
+        $catalog = collect($items)
+            ->reject(fn ($i) => in_array($i['package'] ?? null, $installedKeys, true) || in_array($i['slug'] ?? null, $installedKeys, true))
+            ->values()->all();
 
         return Inertia::render('Admin/Marketplace', [
             'update' => $this->updateState(),
@@ -1040,7 +1053,7 @@ class AdminController extends Controller
         return Inertia::render('Admin/Members', [
             'users' => $users,
             'q' => $q,
-            'groups' => Group::orderByDesc('priority')->orderBy('name')->get(['id', 'key', 'name', 'color', 'is_staff', 'priority', 'permissions']),
+            'groups' => Group::orderByDesc('priority')->orderBy('name')->get(['id', 'key', 'name', 'color', 'icon', 'is_staff', 'priority', 'permissions']),
             'permissionCatalog' => Permissions::catalog(),
             'trustLevels' => \App\Support\TrustLevels::enabled() ? \App\Support\TrustLevels::levels() : null,
         ]);
@@ -1113,11 +1126,61 @@ class AdminController extends Controller
         return back()->with('status', __('Member deleted along with their content (:posts posts, :topics topics).', ['posts' => $c['posts'], 'topics' => $c['topics']]));
     }
 
+    /** Flarum-style permission matrix: permissions × groups, plus per-category scoping. */
+    public function permissions(): \Inertia\Response
+    {
+        return Inertia::render('Admin/Permissions', [
+            'groups' => Group::orderByDesc('priority')->orderBy('name')->get(['id', 'key', 'name', 'color', 'icon', 'is_staff', 'permissions']),
+            'catalog' => Permissions::catalog(),
+            'baseline' => Permissions::baseline(),
+            'categories' => \App\Models\Category::orderBy('position')->orderBy('name')->get(['id', 'name', 'color', 'icon']),
+        ]);
+    }
+
+    /** Grant/revoke one permission (global or per-category) on one group. */
+    public function togglePermission(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'group_id' => ['required', 'integer', 'exists:groups,id'],
+            'key' => ['required', 'string', 'max:100'],
+            'on' => ['required', 'boolean'],
+        ]);
+
+        abort_unless(
+            in_array($data['key'], Permissions::keys(), true) || $this->isCategoryScopedKey($data['key']),
+            422,
+            __('Unknown permission.')
+        );
+
+        $group = Group::findOrFail($data['group_id']);
+        $perms = array_values(array_filter((array) $group->permissions, fn ($p) => $p !== $data['key']));
+        if ($data['on']) {
+            $perms[] = $data['key'];
+        }
+        $group->update(['permissions' => array_values(array_unique($perms))]);
+        Permissions::flush();
+        \App\Support\CategoryVisibility::flush();
+        \App\Support\AuditLog::record('group.update', $group, meta: ['permission' => $data['key'], 'granted' => (bool) $data['on']]);
+
+        return back();
+    }
+
+    /** A `category.{id}.{perm}` key whose category exists and whose perm is scopable. */
+    private function isCategoryScopedKey(string $key): bool
+    {
+        if (! preg_match('/^category\.(\d+)\.(.+)$/', $key, $m)) {
+            return false;
+        }
+
+        return \App\Models\Category::whereKey((int) $m[1])->exists() && Permissions::scopable($m[2]);
+    }
+
     private function groupRules(): array
     {
         return [
             'name' => ['required', 'string', 'max:40'],
             'color' => ['required', 'regex:/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/'],
+            'icon' => ['nullable', 'string', 'max:60'],
             'is_staff' => ['boolean'],
             'permissions' => ['array'],
             'permissions.*' => [Rule::in(Permissions::keys())],
@@ -1130,6 +1193,7 @@ class AdminController extends Controller
         $group = Group::create([
             'name' => $data['name'],
             'color' => $data['color'],
+            'icon' => $data['icon'] ?: null,
             'is_staff' => $request->boolean('is_staff'),
             'permissions' => array_values($data['permissions'] ?? []),
         ]);
@@ -1148,6 +1212,7 @@ class AdminController extends Controller
         $group->update([
             'name' => $data['name'],
             'color' => $data['color'],
+            'icon' => $data['icon'] ?: null,
             'is_staff' => $request->boolean('is_staff'),
             'permissions' => array_values($data['permissions'] ?? []),
         ]);

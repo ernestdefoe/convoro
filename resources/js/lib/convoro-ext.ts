@@ -75,6 +75,24 @@ class ConvoroRuntime {
     return id != null && this.liveUsers.has(Number(id));
   }
 
+  /**
+   * Small logo overlays the shared Avatar can pin to a user's avatar, keyed by a
+   * per-user attribute value the server sends on the avatar (e.g. the Favorite
+   * Team extension keys them by team id and populates {logo, label}). Reactive so
+   * badges appear when a late-loading extension registers its catalog.
+   */
+  readonly avatarBadges = reactive<Record<string, { logo: string; label?: string }>>({});
+
+  /** Register/replace avatar-badge definitions (merged in place to keep reactivity). */
+  setAvatarBadges(map: Record<string, { logo: string; label?: string }>): void {
+    Object.assign(this.avatarBadges, map ?? {});
+  }
+
+  /** The badge for a key (e.g. a team id), or null. */
+  avatarBadge(key?: string | number | null): { logo: string; label?: string } | null {
+    return key == null ? null : this.avatarBadges[String(key)] ?? null;
+  }
+
   private events: Record<string, Listener[]> = {};
   private seq = 0;
   private translator: (k: string, p?: Record<string, string | number>) => string = (k) => k;

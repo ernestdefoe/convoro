@@ -96,6 +96,45 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->groups->contains(fn ($g) => in_array($key, (array) $g->permissions, true));
     }
 
+    /** True if the user holds any of the given permission keys. */
+    public function hasAnyPermission(array $keys): bool
+    {
+        if ($this->is_admin) {
+            return true;
+        }
+
+        foreach ($keys as $k) {
+            if ($this->hasPermission($k)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Category-scoped permission check. When a permission is *restricted* in the
+     * given category (some group carries the `category.{id}.{perm}` key), only
+     * admins and groups explicitly granted it there pass — the global grant is
+     * ignored. Otherwise this defers to the global {@see hasPermission()}.
+     */
+    public function hasPermissionIn(?\App\Models\Category $category, string $key): bool
+    {
+        if ($this->is_admin) {
+            return true;
+        }
+        if (! $category) {
+            return $this->hasPermission($key);
+        }
+
+        $scopedKey = \App\Support\Permissions::categoryKey((int) $category->id, $key);
+        if (isset(\App\Support\Permissions::restrictedSet()[$scopedKey])) {
+            return $this->groups->contains(fn ($g) => in_array($scopedKey, (array) $g->permissions, true));
+        }
+
+        return $this->hasPermission($key);
+    }
+
     /** Direct-message conversations this user is part of. */
     public function conversations(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {

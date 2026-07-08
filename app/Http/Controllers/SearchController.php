@@ -55,6 +55,7 @@ class SearchController extends Controller
         if ($rankedIds !== null || $hasFilters) {
             $query = Topic::query()->visible()->with(['user', 'category', 'tags', 'firstPost.reactions'])
                 ->when($rankedIds !== null, fn ($qq) => $qq->whereIn('id', $rankedIds ?: [0]))
+                ->tap(fn ($qq) => \App\Support\CategoryVisibility::filterTopics($qq, auth()->user()))
                 ->when($category !== '', fn ($qq) => $qq->whereHas('category', fn ($c) => $c->where('slug', $category)))
                 ->when($author !== '', function ($qq) use ($author) {
                     $uid = DB::table('users')->whereRaw('LOWER(name) = ?', [mb_strtolower($author)])->value('id');
@@ -88,8 +89,9 @@ class SearchController extends Controller
             'results' => $results,
             'mode' => $mode,
             'filters' => ['category' => $category, 'author' => $author, 'when' => $when, 'sort' => $sort],
-            'categories' => Category::orderBy('position')->orderBy('name')->get(['name', 'slug'])
-                ->map(fn ($c) => ['name' => $c->name, 'slug' => $c->slug]),
+            'categories' => \App\Support\CategoryVisibility::visibleCategories(
+                Category::orderBy('position')->orderBy('name')->get(['id', 'name', 'slug']), auth()->user()
+            )->map(fn ($c) => ['name' => $c->name, 'slug' => $c->slug])->values(),
             'seo' => Seo::make(['title' => $q !== '' ? __('Search: :query', ['query' => $q]) : __('Search'), 'description' => __('Search the community.')]),
         ]);
     }

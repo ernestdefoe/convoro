@@ -37,6 +37,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\EnterTenant::class,
             \App\Http\Middleware\BlockBanned::class,
+            \App\Http\Middleware\Maintenance::class,
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
@@ -45,6 +46,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => \App\Http\Middleware\EnsureAdmin::class,
+            'staff' => \App\Http\Middleware\EnsureStaff::class,
             'store.owner' => \App\Http\Middleware\EnsureStoreOwner::class,
         ]);
 

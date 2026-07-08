@@ -17,6 +17,7 @@ class PostController extends Controller
     {
         abort_if($topic->is_locked, 403);
         abort_if($request->user()->isBanned(), 403, __('Your account is suspended.'));
+        abort_unless($request->user()->hasPermissionIn($topic->category, 'post.reply'), 403, __('You can’t reply in this category.'));
 
         $data = $request->validate([
             'body_html' => ['required', 'string', 'max:120000'],

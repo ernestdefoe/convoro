@@ -43,8 +43,11 @@ return [
     // too, so members can browse + buy without leaving the community.
     'community_domain' => env('CONVORO_COMMUNITY_DOMAIN', parse_url((string) env('APP_URL'), PHP_URL_HOST) ?: 'localhost'),
 
-    // The central store this install validates premium license keys against.
-    'store_url' => env('CONVORO_STORE_URL', 'https://convoro.co'),
+    // The central store this install validates premium license keys against and
+    // browses the extension catalog from. This is the Convoro app host (the
+    // catalog/license API lives there); the convoro.co apex is the WordPress
+    // marketing site and no longer serves these endpoints.
+    'store_url' => env('CONVORO_STORE_URL', 'https://community.convoro.co'),
 
     // Is THIS install the central Convoro storefront (sells extensions, runs
     // Stripe/licenses)? Off by default so ordinary installs don't ship the

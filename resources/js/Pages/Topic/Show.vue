@@ -4,6 +4,7 @@ import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { highlightWithin } from '@/lib/highlight';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Avatar from '@/Components/forum/Avatar.vue';
+import UserBadges from '@/Components/forum/UserBadges.vue';
 import Poll from '@/Components/forum/Poll.vue';
 import CategoryIcon from '@/Components/forum/CategoryIcon.vue';
 import ReaderMode from '@/Components/forum/ReaderMode.vue';
@@ -22,7 +23,7 @@ const auth = useAuthModal();
 // composer anywhere and the saved post cross-references this one — the target
 // gains a "Mentioned in" backlink and its author is notified.
 function copyPostLink(post: any) {
-  const url = `${window.location.origin}/t/${props.topic.slug}#post-${post.id}`;
+  const url = `${window.location.origin}/t/${props.topic.slug}${post.number ? `?post=${post.number}` : ''}#post-${post.id}`;
   if (navigator.clipboard) {
     navigator.clipboard.writeText(url)
       .then(() => toast(tr('Link copied — paste it in a post to cross-reference')))
@@ -34,7 +35,7 @@ function copyPostLink(post: any) {
 
 // Share a post: native share sheet where available, else copy the permalink.
 function sharePost(post: any) {
-  const url = `${window.location.origin}/t/${props.topic.slug}#post-${post.id}`;
+  const url = `${window.location.origin}/t/${props.topic.slug}${post.number ? `?post=${post.number}` : ''}#post-${post.id}`;
   if (navigator.share) {
     navigator.share({ title: props.topic.title, url }).catch(() => {});
     return;
@@ -46,7 +47,7 @@ function sharePost(post: any) {
   }
 }
 
-const props = defineProps<{ topic: any; posts: any[]; canReply: boolean; categories?: any[]; allTags?: any[]; references?: { title: string; slug: string }[]; firstUnreadId?: number | null; group?: any; replyUrl?: string; moderateBase?: string }>();
+const props = defineProps<{ topic: any; posts: any[]; canReply: boolean; categories?: any[]; allTags?: any[]; references?: { title: string; slug: string }[]; firstUnreadId?: number | null; group?: any; replyUrl?: string; moderateBase?: string; stream?: { total: number; windowStart: number; windowEnd: number; hasBefore: boolean; hasAfter: boolean } | null }>();
 const page = usePage();
 const aiEnabled = computed(() => !!(page.props as any).ask?.enabled);
 const summary = ref('');
@@ -171,9 +172,80 @@ function toggleLock() {
 }
 
 // Local copy so live-broadcast posts can be appended; resync when the server
-// sends fresh props (after our own post / a reaction toggle reload).
+// sends fresh props (after our own post / a reaction toggle reload). In a
+// streamed (windowed) topic we MERGE instead of replace, so ranges the reader
+// already loaded survive an Inertia prop refresh.
+const sortPosts = (a: any, b: any) => (a.number && b.number ? a.number - b.number : a.id - b.id);
 const livePosts = ref<any[]>([...props.posts]);
-watch(() => props.posts, (val) => { livePosts.value = [...val]; });
+watch(() => props.posts, (val) => {
+  if (!props.stream) { livePosts.value = [...val]; return; }
+  const byId = new Map(livePosts.value.map((p) => [p.id, p]));
+  for (const p of val) byId.set(p.id, p);
+  livePosts.value = [...byId.values()].sort(sortPosts);
+});
+
+// ---- Streamed thread state (big topics ship a window, not the whole thread) ----
+const streamTotal = ref(props.stream?.total ?? 0);
+const exhaustedBefore = ref(!props.stream || !props.stream.hasBefore);
+const exhaustedAfter = ref(!props.stream || !props.stream.hasAfter);
+const loadingEdge = ref<null | 'before' | 'after'>(null);
+const loadedReplyNumbers = computed(() =>
+  livePosts.value.filter((p) => !p.isFirst && p.number).map((p) => p.number as number)
+);
+
+async function loadMore(dir: 'before' | 'after') {
+  if (loadingEdge.value) return;
+  if (dir === 'before' ? exhaustedBefore.value : exhaustedAfter.value) return;
+  const nums = loadedReplyNumbers.value;
+  if (!nums.length) return;
+  const param = dir === 'before' ? `before=${Math.min(...nums)}` : `after=${Math.max(...nums)}`;
+  loadingEdge.value = dir;
+  try {
+    const r = await fetch(`/t/${props.topic.slug}/posts?${param}&limit=50`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' });
+    if (!r.ok) return;
+    const d = await r.json();
+    streamTotal.value = d.total ?? streamTotal.value;
+    const batch: any[] = d.posts || [];
+    if (batch.length < 50) (dir === 'before' ? exhaustedBefore : exhaustedAfter).value = true;
+    if (!batch.length) return;
+    const byId = new Map(livePosts.value.map((p) => [p.id, p]));
+    for (const p of batch) byId.set(p.id, p);
+    if (dir === 'before') {
+      // Prepending content shifts the page — hold the reader's position still.
+      const el = document.scrollingElement || document.documentElement;
+      const prevHeight = el.scrollHeight;
+      const prevTop = el.scrollTop;
+      livePosts.value = [...byId.values()].sort(sortPosts);
+      await nextTick();
+      el.scrollTop = prevTop + (el.scrollHeight - prevHeight);
+    } else {
+      livePosts.value = [...byId.values()].sort(sortPosts);
+    }
+  } catch {
+    /* transient — the sentinel retriggers on the next scroll */
+  } finally {
+    loadingEdge.value = null;
+  }
+}
+
+// Sentinels at the loaded edges stream the next window in as the reader
+// approaches — plain IntersectionObserver, nothing loads unless it's near.
+const topSentinel = ref<HTMLElement | null>(null);
+const bottomSentinel = ref<HTMLElement | null>(null);
+let edgeObserver: IntersectionObserver | null = null;
+onMounted(() => {
+  if (!props.stream || typeof IntersectionObserver === 'undefined') return;
+  edgeObserver = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      if (e.target === topSentinel.value) loadMore('before');
+      if (e.target === bottomSentinel.value) loadMore('after');
+    }
+  }, { rootMargin: '600px 0px' });
+  watch(topSentinel, (el, old) => { if (old) edgeObserver?.unobserve(old); if (el) edgeObserver?.observe(el); }, { immediate: true });
+  watch(bottomSentinel, (el, old) => { if (old) edgeObserver?.unobserve(old); if (el) edgeObserver?.observe(el); }, { immediate: true });
+});
+onBeforeUnmount(() => edgeObserver?.disconnect());
 
 // The opening post gets a prominent blog-style treatment; the rest are replies.
 const firstPost = computed(() => livePosts.value.find((p) => p.isFirst) ?? livePosts.value[0] ?? null);
@@ -200,8 +272,10 @@ async function pollPresence() {
 onMounted(() => { presenceTimer = setInterval(pollPresence, 45000); });
 onBeforeUnmount(() => { if (presenceTimer) clearInterval(presenceTimer); });
 
-// Sequential post number within the topic (#1 = opening post). Doubles as a permalink.
+// Sequential post number within the topic (#1 = opening post). Doubles as a
+// permalink. Server-issued and permanent; index fallback covers legacy posts.
 function postNumber(post: any): number | null {
+  if (post?.number) return post.number;
   const i = livePosts.value.findIndex((p) => p.id === post?.id);
   return i >= 0 ? i + 1 : null;
 }
@@ -349,9 +423,13 @@ onMounted(() => {
     .joining(() => (hereCount.value++))
     .leaving(() => (hereCount.value = Math.max(0, hereCount.value - 1)))
     .listen('.PostCreated', (e: any) => {
-      if (e.post && !livePosts.value.some((p) => p.id === e.post.id)) {
-        livePosts.value.push(e.post);
-      }
+      if (!e.post || livePosts.value.some((p) => p.id === e.post.id)) return;
+      if (e.post.number && e.post.number > streamTotal.value) streamTotal.value = e.post.number;
+      // In a streamed topic only append when the reader has the end loaded —
+      // otherwise the post arrives via the stream when they scroll there.
+      if (props.stream && !exhaustedAfter.value) return;
+      livePosts.value.push(e.post);
+      if (props.stream) livePosts.value.sort(sortPosts);
     })
     .listenForWhisper('typing', (e: any) => {
       if (user.value && e.name === user.value.name) return;
@@ -484,7 +562,11 @@ function submitReply() {
 <template>
   <Head :title="topic.title" />
   <AppLayout>
-    <ReadingScrubber :count="replies.length" />
+    <ReadingScrubber
+      :count="stream ? Math.max(replies.length, streamTotal - 1) : replies.length"
+      :loaded-count="stream ? replies.length : undefined"
+      :offset="stream && loadedReplyNumbers.length ? Math.max(0, Math.min(...loadedReplyNumbers) - 2) : 0"
+    />
     <div class="mx-auto max-w-3xl">
       <Link href="/" class="mb-3 inline-flex items-center gap-1.5 text-sm font-semibold text-ink-muted hover:text-ink-2">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6" /></svg> {{ tr('Back to Community') }}
@@ -523,6 +605,7 @@ function submitReply() {
             <Link :href="firstPost.author.url"><Avatar :avatar="firstPost.author" :size="56" badge :presence="presenceFor(firstPost.author)" /></Link>
             <div>
               <Link :href="firstPost.author.url" class="font-bold hover:underline">{{ firstPost.author.name }}</Link>
+              <UserBadges :author="firstPost.author" class="ml-1.5" />
               <a v-if="firstPost.author.fedi" :href="firstPost.author.fediUrl" target="_blank" rel="noopener" class="ml-1.5 inline-flex items-center gap-1 rounded-full bg-surface-2 px-1.5 py-0.5 align-middle text-[11px] font-medium text-ink-muted hover:text-primary" :title="tr('From the fediverse')">🌐 {{ firstPost.author.fedi }}</a>
               <div class="text-sm text-ink-muted">
                 <a :href="'#post-' + firstPost.id" @click.prevent="copyPostLink(firstPost)" class="cursor-pointer font-semibold text-ink-muted hover:text-primary" :title="tr('Copy link to this post (paste it to cross-reference)')">#{{ postNumber(firstPost) }}</a>
@@ -621,6 +704,10 @@ function submitReply() {
           <div class="whitespace-pre-wrap text-sm leading-relaxed text-ink-2">{{ summary }}</div>
         </div>
         <div class="space-y-3">
+          <div v-if="stream && !exhaustedBefore" ref="topSentinel" class="flex items-center justify-center gap-2 py-3 text-xs font-semibold text-ink-muted">
+            <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-line border-t-primary"></span>
+            {{ tr('Loading earlier replies…') }}
+          </div>
           <template v-for="post in replies" :key="post.id">
           <div v-if="firstUnreadId && post.id === firstUnreadId" class="flex items-center gap-3 py-1 text-[11px] font-bold uppercase tracking-wide text-primary">
             <span class="h-px flex-1 bg-primary/30"></span>{{ tr('New') }}<span class="h-px flex-1 bg-primary/30"></span>
@@ -629,6 +716,7 @@ function submitReply() {
             <div class="w-24 shrink-0 text-center">
               <Link :href="post.author.url"><Avatar :avatar="post.author" :size="52" class="mx-auto" badge :presence="presenceFor(post.author)" /></Link>
               <div class="mt-2 text-sm font-bold">{{ post.author.name }}</div>
+              <div class="mt-1 flex justify-center"><UserBadges :author="post.author" /></div>
               <a v-if="post.author.fedi" :href="post.author.fediUrl" target="_blank" rel="noopener" class="mt-0.5 block truncate text-[11px] text-ink-muted hover:text-primary" :title="tr('From the fediverse')">🌐 {{ post.author.fedi }}</a>
               <span v-if="post.isAi" class="mt-1 inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">✦ AI</span>
             </div>
@@ -689,6 +777,10 @@ function submitReply() {
             </div>
           </article>
           </template>
+          <div v-if="stream && !exhaustedAfter" ref="bottomSentinel" class="flex items-center justify-center gap-2 py-3 text-xs font-semibold text-ink-muted">
+            <span class="h-3.5 w-3.5 animate-spin rounded-full border-2 border-line border-t-primary"></span>
+            {{ tr('Loading more replies…') }}
+          </div>
         </div>
       </section>
 

@@ -55,6 +55,7 @@ class ForumController extends Controller
             ->with(['user.groups', 'category', 'tags', 'firstPost.reactions'])
             ->when($categorySlug, fn ($q) => $q->whereHas('category', fn ($c) => $c->where('slug', $categorySlug)))
             ->when($tagSlug, fn ($q) => $q->whereHas('tags', fn ($t) => $t->where('slug', $tagSlug)));
+        \App\Support\CategoryVisibility::filterTopics($query, $request->user());
 
         $query->orderByDesc('is_pinned');
         match ($sort) {
@@ -73,10 +74,16 @@ class ForumController extends Controller
         // board, a table scan per category on a big one. Counts may lag 5 min.
         $categories = Cache::remember('convoro.forum.categories', 300, fn () => Category::orderBy('position')->withCount('topics')->get()
             ->map(fn (Category $c) => [
-                'name' => $c->name, 'slug' => $c->slug, 'icon' => $c->icon,
+                'id' => $c->id, 'name' => $c->name, 'slug' => $c->slug, 'icon' => $c->icon,
                 'color' => $c->color, 'count' => $c->topics_count,
                 'description' => $c->description,
             ])->all());
+        // Hide private categories the reader may not view (filtered per-request,
+        // since the list above is cached globally).
+        $hiddenCats = \App\Support\CategoryVisibility::hiddenFor($reader);
+        if ($hiddenCats) {
+            $categories = collect($categories)->reject(fn ($c) => in_array($c['id'], $hiddenCats, true))->values()->all();
+        }
 
         $cards = collect($topics->items())
             ->map(fn (Topic $t) => Present::topicCard($t, $actorId, in_array($t->id, $unread, true), $t->is_live || in_array($t->id, $live, true)))
@@ -182,6 +189,7 @@ class ForumController extends Controller
         // and refetch the row per request so unread/live flags stay personal.
         $hotId = Cache::remember('convoro.feed.hot.'.($tagSlug ?: '_all'), 300, fn () => Topic::query()->visible()
             ->when($tagSlug, fn ($q) => $q->whereHas('tags', fn ($t) => $t->where('slug', $tagSlug)))
+            ->when(\App\Support\CategoryVisibility::restrictedIds(), fn ($q, $ids) => $q->whereNotIn('category_id', $ids))
             ->where('last_post_at', '>=', now()->subDays(21))
             ->orderByRaw('(reply_count * 25 + view_count * 0.06) DESC')
             ->value('id') ?? 0);
@@ -237,9 +245,17 @@ class ForumController extends Controller
         // has no covering index, hence the cache. Sandbox tags never trend.
         $trending = Cache::remember('convoro.widgets.trending', 300, function () {
             $sandbox = \App\Models\Tag::query()->where('is_sandbox', true)->pluck('id');
-            $scope = fn ($q) => $sandbox->isEmpty()
-                ? $q
-                : $q->whereDoesntHave('tags', fn ($t) => $t->whereIn('tags.id', $sandbox));
+            $restricted = \App\Support\CategoryVisibility::restrictedIds();
+            $scope = function ($q) use ($sandbox, $restricted) {
+                if ($sandbox->isNotEmpty()) {
+                    $q->whereDoesntHave('tags', fn ($t) => $t->whereIn('tags.id', $sandbox));
+                }
+                if ($restricted) {
+                    $q->whereNotIn('category_id', $restricted);
+                }
+
+                return $q;
+            };
 
             $trending = $scope(Topic::query()->visible()->with('category'))
                 ->where('reply_count', '>', 0)

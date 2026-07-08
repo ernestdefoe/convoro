@@ -73,7 +73,9 @@ return [
         RequestReceived::class => [
             ...Octane::prepareApplicationForNextOperation(),
             ...Octane::prepareApplicationForNextRequest(),
-            //
+            // Clear the permission/visibility static memos so each request
+            // recomputes from current state (no cross-user or stale leakage).
+            \App\Octane\FlushPermissionCaches::class,
         ],
 
         RequestHandled::class => [

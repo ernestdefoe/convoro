@@ -44,7 +44,7 @@ class TopicController extends Controller
         abort_if($topic->hidden && ! ($actor && ($actor->is_admin || (int) $actor?->id === (int) $topic->user_id)), 404);
 
         $limit = min(100, max(10, (int) $request->query('limit', self::STREAM_WINDOW)));
-        $query = $this->viewablePosts($topic, $actor)->with(['user.groups', 'reactions']);
+        $query = $this->viewablePosts($topic, $actor)->with(['user.groups', 'user.primarySocialGroup.group', 'reactions']);
 
         if ($request->filled('before')) {
             $posts = $query->where('number', '<', (int) $request->query('before'))
@@ -97,7 +97,7 @@ class TopicController extends Controller
         }
 
         return [
-            'categories' => Category::orderBy('position')->get(['id', 'name', 'icon', 'color']),
+            'categories' => \App\Support\CategoryVisibility::visibleCategories(Category::orderBy('position')->get(['id', 'name', 'icon', 'color']), auth()->user()),
             'tags' => Tag::whereNull('parent_id')->orderBy('position')->orderBy('name')
                 ->with(['children' => fn ($c) => $c->orderBy('position')->orderBy('name')])
                 ->get()->map(fn ($t) => [
@@ -174,6 +174,7 @@ class TopicController extends Controller
 
         // Spam, flood & slow-mode controls.
         $category = ! empty($data['category_id']) ? \App\Models\Category::find($data['category_id']) : null;
+        abort_unless($request->user()->hasPermissionIn($category, 'topic.create'), 403, __('You can’t start topics in this category.'));
         $guard = \App\Support\PostGuard::inspect($request->user(), $data['body_html'], 'topic', $category);
         abort_if($guard['block'], 422, $guard['message'] ?? __('Your topic was blocked.'));
 
@@ -264,9 +265,14 @@ class TopicController extends Controller
         // admins (who see a "pending review" banner); everyone else gets a 404.
         abort_if($topic->hidden && ! ($actor && ($actor->is_admin || (int) $actorId === (int) $topic->user_id)), 404);
 
+        // Private category: a topic in a view-restricted category 404s for anyone
+        // without access (its author included — the restriction is on the space).
+        $topic->loadMissing('category');
+        abort_unless(\App\Support\CategoryVisibility::canView($actor, $topic->category), 404);
+
         $topic->increment('view_count');
         $topic->load(['user', 'category', 'tags', 'poll.options']);
-        $topic->loadMissing('firstPost.user');
+        $topic->loadMissing('firstPost.user.groups', 'firstPost.user.primarySocialGroup.group');
 
         // Work out where the member left off BEFORE we move their read marker,
         // so the page can jump to the first reply they haven't seen yet.
@@ -299,7 +305,7 @@ class TopicController extends Controller
         $full = $maxNumber <= self::STREAM_FULL_LOAD;
         $target = max(1, (int) $request->query('post', 0)) ?: ($firstUnreadNumber ?? 1);
 
-        $postsQuery = $this->viewablePosts($topic, $actor)->with(['user.groups', 'reactions']);
+        $postsQuery = $this->viewablePosts($topic, $actor)->with(['user.groups', 'user.primarySocialGroup.group', 'reactions']);
         if ($full) {
             $posts = $postsQuery->orderBy('number')->get();
             $stream = null; // whole thread present — page behaves classically
@@ -309,7 +315,7 @@ class TopicController extends Controller
                 ->orderBy('number')->limit(self::STREAM_WINDOW)->get();
             // The opening post is the page header — always ship it.
             if ($start > 1 && ! $posts->contains(fn ($p) => $p->is_first)) {
-                $op = $this->viewablePosts($topic, $actor)->with(['user.groups', 'reactions'])
+                $op = $this->viewablePosts($topic, $actor)->with(['user.groups', 'user.primarySocialGroup.group', 'reactions'])
                     ->where('is_first', true)->first();
                 if ($op) {
                     $posts->prepend($op);
@@ -352,7 +358,7 @@ class TopicController extends Controller
             'stream' => $stream,
             'firstUnreadId' => $firstUnreadId,
             'references' => \App\Support\CrossRef::into($topic->id),
-            'categories' => Category::orderBy('position')->get(['id', 'name', 'icon', 'color']),
+            'categories' => \App\Support\CategoryVisibility::visibleCategories(Category::orderBy('position')->get(['id', 'name', 'icon', 'color']), auth()->user()),
             'allTags' => Tag::orderBy('name')->get(['id', 'name', 'color']),
             'canReply' => auth()->check() && ! $topic->is_locked,
             'seo' => \App\Support\Seo::make([
