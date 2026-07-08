@@ -10,6 +10,14 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.44.1',
+            'date' => '2026-07-08',
+            'title' => 'Updates that apply themselves',
+            'items' => [
+                ['type' => 'fixed', 'text' => 'On high-performance (Octane) hosting, in-app updates and Marketplace extension installs now take effect immediately. Previously the server could keep running the old code in memory until it was restarted by hand, so a freshly installed extension or update looked like it "didn\'t happen".'],
+            ],
+        ],
+        [
             'tag' => '1.44.0',
             'date' => '2026-07-08',
             'title' => 'Groups, permissions & private categories',

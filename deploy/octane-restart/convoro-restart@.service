@@ -1,0 +1,6 @@
+[Unit]
+Description=Restart %i Octane/SSR after an app-requested change (update / extension)
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/convoro-service-restart %i

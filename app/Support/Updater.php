@@ -114,6 +114,11 @@ class Updater
             @opcache_reset();
         }
 
+        // Long-lived Octane workers + the SSR sidecar still hold the pre-update
+        // code (and Vue tree) in memory — ask the host to restart them so the new
+        // version is actually served (no-op where there's no watcher).
+        ServiceRestart::request();
+
         Settings::setMany([
             'update.available' => false,
             'update.latest' => $version ?: config('convoro.version'),

@@ -43,6 +43,12 @@ class Caches
         }
 
         self::resetOpcache();
+
+        // opcache_reset() reloads bytecode for PHP-FPM, but long-lived Octane
+        // workers + the SSR sidecar keep the OLD code (routes, providers, Vue) in
+        // memory. Ask the host to restart them so an extension enable/install/
+        // uninstall actually takes effect (no-op where there's no watcher).
+        ServiceRestart::request();
     }
 
     /**

@@ -1,0 +1,11 @@
+[Unit]
+Description=Watch %i for an app-requested Octane/SSR restart
+
+[Path]
+# App\Support\ServiceRestart::request() writes this on a self-update or an
+# extension enable/install; the .service then restarts %i-octane / %i-ssr.
+PathExists=/var/www/%i/storage/app/services-restart.flag
+Unit=convoro-restart@%i.service
+
+[Install]
+WantedBy=multi-user.target

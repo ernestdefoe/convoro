@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+#
+# Restart a Convoro install's long-lived processes (Octane worker + SSR sidecar)
+# after the app asked for it. Triggered by the systemd .path unit that watches
+# the install's storage/app/services-restart.flag (written by
+# App\Support\ServiceRestart::request() on a self-update or extension change).
+#
+# Runs as root (installed to /usr/local/bin, invoked by convoro-restart@.service).
+#   convoro-service-restart <instance>      # instance = /var/www/<instance> + <instance>-octane/-ssr
+#
+set -uo pipefail
+
+INSTANCE="${1:?usage: convoro-service-restart <instance>}"
+APP="/var/www/${INSTANCE}"
+FLAG="${APP}/storage/app/services-restart.flag"
+
+[ -d "$APP" ] || { logger -t convoro-service-restart "no such install: $APP"; exit 0; }
+
+# Let the triggering web request finish and coalesce a burst of requests
+# (install → migrate → enable can touch the flag several times in a second).
+sleep 3
+rm -f "$FLAG"
+
+# Re-cache config for performance (the app cleared it). NEVER route:cache —
+# enabled extensions register closure-based routes that can't be route-cached.
+runuser -u www-data -- env HOME=/tmp php "${APP}/artisan" config:cache >/dev/null 2>&1 || true
+
+# Restart the processes that hold code in memory. Skip units this install lacks.
+for unit in "${INSTANCE}-octane" "${INSTANCE}-ssr"; do
+  if systemctl list-unit-files "${unit}.service" >/dev/null 2>&1; then
+    systemctl restart "${unit}" && logger -t convoro-service-restart "restarted ${unit}" \
+      || logger -t convoro-service-restart "FAILED to restart ${unit}"
+  fi
+done
