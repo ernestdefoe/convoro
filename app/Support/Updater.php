@@ -18,6 +18,9 @@ class Updater
     /** Paths (relative to base) never overwritten by an update. */
     private const PROTECTED = ['.env', 'storage', 'public/storage', 'public/releases', 'public/update-feed.json', 'bootstrap/cache'];
 
+    /** Detail of the last copy failure, surfaced in the user-facing message. */
+    private static ?string $copyError = null;
+
     /**
      * @return array{ok:bool, message:string, version?:string}
      */
@@ -88,7 +91,7 @@ class Updater
 
         // 5. Copy the new files over the live install.
         if (! self::copyOver($root, base_path())) {
-            return ['ok' => false, 'message' => 'Failed to copy the new files into place.'];
+            return ['ok' => false, 'message' => self::copyFailureMessage(base_path())];
         }
 
         // 6. Post-update: migrate + rebuild caches + bust opcache.
@@ -123,6 +126,8 @@ class Updater
     /** Copy src contents into dest. Prefer fast native copy; fall back to pure PHP. */
     private static function copyOver(string $src, string $dest): bool
     {
+        self::$copyError = null;
+
         if (function_exists('exec') && ! in_array('exec', array_map('trim', explode(',', (string) ini_get('disable_functions'))), true)) {
             $out = [];
             $code = 0;
@@ -130,6 +135,8 @@ class Updater
             if ($code === 0) {
                 return true;
             }
+            // Keep the last couple of lines of cp's own error for the message.
+            self::$copyError = trim(implode(' | ', array_slice(array_values(array_filter($out)), -2)));
         }
 
         // Pure-PHP recursive copy (shared-hosting fallback, no shell).
@@ -144,10 +151,70 @@ class Updater
                 File::ensureDirectoryExists($target);
             } elseif (! self::put($item->getPathname(), $target)) {
                 $ok = false;
+                self::$copyError ??= 'could not write '.$iter->getSubPathname();
             }
         }
 
         return $ok;
+    }
+
+    /**
+     * A clear, actionable message when the copy fails — almost always a
+     * permissions problem: some files (typically vendor/) are owned by a
+     * different user than the web server (e.g. from a `sudo composer install`),
+     * so the web user can't replace them. Names the culprit + the exact fix.
+     */
+    private static function copyFailureMessage(string $base): string
+    {
+        $user = self::webUser();
+        $culprit = self::firstUnwritable($base);
+        $msg = 'Could not replace the application files';
+        if ($culprit !== null) {
+            $msg .= " — “{$culprit}” isn’t writable by the web user ({$user})";
+        }
+        $msg .= '. This usually means some files are owned by a different user (often root, from running composer with sudo). '
+              .'Give the web user ownership and update again:  chown -R '.$user.' '.$base;
+        if (self::$copyError) {
+            $msg .= '  ['.self::$copyError.']';
+        }
+
+        return $msg;
+    }
+
+    /** Best-effort OS user the web process runs as, for chown guidance. */
+    private static function webUser(): string
+    {
+        if (function_exists('posix_geteuid') && function_exists('posix_getpwuid')) {
+            $u = @posix_getpwuid(posix_geteuid());
+            if (! empty($u['name'])) {
+                return $u['name'];
+            }
+        }
+
+        return get_current_user() ?: 'the web user';
+    }
+
+    /**
+     * First path (relative to base) an update must overwrite but the web user
+     * can't — the dirs a release ships, then a shallow scan of vendor/ (the usual
+     * root-owned culprit). Null when everything is writable. Used both to explain
+     * a failure and as a pre-flight check so the problem is caught up front.
+     */
+    public static function firstUnwritable(string $base): ?string
+    {
+        foreach (['vendor', 'app', 'config', 'public', 'bootstrap', 'resources', 'routes'] as $d) {
+            $p = $base.'/'.$d;
+            if (is_dir($p) && ! is_writable($p)) {
+                return $d;
+            }
+        }
+        foreach (glob($base.'/vendor/*/*', GLOB_ONLYDIR) ?: [] as $p) {
+            if (! is_writable($p)) {
+                return 'vendor/'.basename(dirname($p)).'/'.basename($p);
+            }
+        }
+
+        return null;
     }
 
     /**

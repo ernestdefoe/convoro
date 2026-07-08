@@ -86,7 +86,10 @@ class UpdatePreflight
         $freeGb = round($free / 1073741824, 1);
         $hasFeed = (bool) config('convoro.update_url');
         $hasZip = extension_loaded('zip');
-        $writable = is_writable($base);
+        // Not just the base dir — an update overwrites vendor/app/config/etc, and a
+        // root-owned vendor/ (from a sudo composer install) is the usual blocker.
+        $unwritable = Updater::firstUnwritable($base);
+        $writable = is_writable($base) && $unwritable === null;
         $enoughDisk = $free >= self::NEED_BYTES;
         $auto = self::canRunDetached();
 
@@ -96,7 +99,9 @@ class UpdatePreflight
             ['key' => 'zip', 'label' => 'PHP zip extension', 'ok' => $hasZip,
                 'detail' => $hasZip ? '' : 'Required to extract the release archive.'],
             ['key' => 'writable', 'label' => 'Application files writable', 'ok' => $writable,
-                'detail' => $writable ? '' : 'The web user needs write access to the project directory.'],
+                'detail' => $writable ? '' : ($unwritable !== null
+                    ? "“{$unwritable}” isn’t writable by the web user — usually a root-owned vendor/ from a “sudo composer install”. Fix: chown -R <web-user> ".$base
+                    : 'The web user needs write access to the project directory.')],
             ['key' => 'disk', 'label' => 'Free disk space', 'ok' => $enoughDisk,
                 'detail' => $enoughDisk ? $freeGb.' GB free' : 'Low disk space — only '.$freeGb.' GB free.'],
             ['key' => 'runner', 'label' => 'Automatic install', 'ok' => $auto,
