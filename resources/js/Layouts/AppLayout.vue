@@ -17,11 +17,14 @@ import CommandPalette from '@/Components/CommandPalette.vue';
 import Slot from '@/Components/ext/Slot.vue';
 import { convoro } from '@/lib/convoro-ext';
 import { useAuthModal } from '@/lib/authModal';
+import { useComposer } from '@/lib/composer';
+import ComposerSheet from '@/Components/ComposerSheet.vue';
 import { t } from '@/lib/i18n';
 
 const hasFooter = computed(() => convoro.slotEntries('forum:footer').length > 0);
 
 const auth = useAuthModal();
+const composer = useComposer();
 
 const page = usePage();
 const user = computed(() => (page.props as any).auth?.user ?? null);
@@ -86,8 +89,23 @@ watchEffect(() => {
 });
 function startTopic() {
   mobileOpen.value = false;
-  user.value ? router.visit('/new') : auth.open('register');
+  user.value ? composer.open() : auth.open('register');
 }
+
+// Open the composer when arriving via ?compose= (the old /new route redirects
+// here, preserving ?draft as compose=draft:<id>), then strip the param so a
+// refresh doesn't reopen it.
+onMounted(() => {
+  if (typeof window === 'undefined') return;
+  const params = new URLSearchParams(window.location.search);
+  const c = params.get('compose');
+  if (c && user.value) {
+    composer.open({ draftId: c.startsWith('draft:') ? Number(c.slice(6)) || null : null });
+    params.delete('compose');
+    const qs = params.toString();
+    window.history.replaceState({}, '', window.location.pathname + (qs ? '?' + qs : '') + window.location.hash);
+  }
+});
 function goMobile(href: string) {
   mobileOpen.value = false;
   router.visit(href);
@@ -250,6 +268,7 @@ function goMobile(href: string) {
     <PullToRefresh />
     <PwaBanner />
     <AuthModal />
+    <ComposerSheet v-if="user" />
     <ThemeEditor v-if="isAdmin" />
     <Toast />
     <CommandPalette />

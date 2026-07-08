@@ -60,7 +60,14 @@ class TopicController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response
+    /**
+     * Everything the composer needs to render — categories, the tag tree (with
+     * each tag's colour + icon), any resumable draft / rolling autosave, the
+     * body-optional boards and the Flarum-style primary-tag rules. Shared by the
+     * (now redirecting) full-page route and the JSON endpoint the bottom-sheet
+     * composer fetches when it opens.
+     */
+    private function composerProps(Request $request): array
     {
         // Resume a saved draft when ?draft=<id> is present and it's the member's own.
         $draft = null;
@@ -89,13 +96,13 @@ class TopicController extends Controller
             }
         }
 
-        return Inertia::render('Topic/Create', [
+        return [
             'categories' => Category::orderBy('position')->get(['id', 'name', 'icon', 'color']),
             'tags' => Tag::whereNull('parent_id')->orderBy('position')->orderBy('name')
                 ->with(['children' => fn ($c) => $c->orderBy('position')->orderBy('name')])
                 ->get()->map(fn ($t) => [
                     'id' => $t->id, 'name' => $t->name, 'icon' => $t->icon, 'color' => $t->color,
-                    'children' => $t->children->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'color' => $c->color])->all(),
+                    'children' => $t->children->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'icon' => $c->icon, 'color' => $c->color])->all(),
                 ]),
             'draft' => $draft,
             'autosave' => $autosave,
@@ -106,7 +113,25 @@ class TopicController extends Controller
                 'minPrimary' => (int) \App\Support\Settings::get('tags.min_primary', 0),
                 'maxPrimary' => (int) \App\Support\Settings::get('tags.max_primary', 0),
             ],
-        ]);
+        ];
+    }
+
+    /**
+     * The composer is now a global bottom-sheet, so the old full-page /new route
+     * just bounces to the forum with ?compose set — the sheet opens there and
+     * fetches its data, preserving ?draft deep-links.
+     */
+    public function newRedirect(Request $request): RedirectResponse
+    {
+        $compose = $request->filled('draft') ? 'draft:' . $request->query('draft') : '1';
+
+        return redirect('/?compose=' . $compose);
+    }
+
+    /** JSON the bottom-sheet composer fetches when it opens. */
+    public function composerData(Request $request): \Illuminate\Http\JsonResponse
+    {
+        return response()->json($this->composerProps($request));
     }
 
     public function store(Request $request): RedirectResponse

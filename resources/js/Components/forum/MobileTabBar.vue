@@ -3,10 +3,12 @@ import { Link, router, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import Avatar from '@/Components/forum/Avatar.vue';
 import { useAuthModal } from '@/lib/authModal';
+import { useComposer } from '@/lib/composer';
 import { t } from '@/lib/i18n';
 
 const page = usePage();
 const auth = useAuthModal();
+const composer = useComposer();
 const user = computed(() => (page.props as any).auth?.user ?? null);
 const cfg = computed(() => (page.props as any).mobileNav ?? { enabled: true, tabs: [] });
 // The centre button shows the community's brand mark when one is set (favicon is
@@ -35,7 +37,7 @@ type Tab = { key: string; label: string; href?: string; icon: string; auth?: boo
 const CATALOG: Record<string, Tab> = {
   home: { key: 'home', label: t('Home'), href: '/', icon: I.home, active: (c) => c.startsWith('Forum') },
   search: { key: 'search', label: t('Search'), href: '/search', icon: I.search, active: (c) => c.startsWith('Search') },
-  compose: { key: 'compose', label: t('Post'), href: '/new', icon: I.compose, auth: true, center: true, active: (c) => c === 'Topic/Create' },
+  compose: { key: 'compose', label: t('Post'), icon: I.compose, auth: true, center: true, active: () => composer.state.value.open },
   notifications: { key: 'notifications', label: t('Alerts'), href: '/notifications', icon: I.notifications, auth: true, badge: 'notif', active: (c) => c.startsWith('Notifications') },
   messages: { key: 'messages', label: t('Messages'), href: '/messages', icon: I.messages, auth: true, badge: 'dm', active: (c) => c.startsWith('Messages') },
   members: { key: 'members', label: t('Members'), href: '/members', icon: I.members, active: (c) => c === 'Members/Index' },
@@ -66,6 +68,11 @@ function go(tb: Tab, e: Event) {
   if (!user.value && (tb.key === 'compose' || tb.key === 'account' || tb.auth)) {
     e.preventDefault();
     auth.open(tb.key === 'compose' ? 'register' : 'login');
+    return;
+  }
+  if (tb.key === 'compose' && user.value) {
+    e.preventDefault();
+    composer.open();
     return;
   }
   if (tb.key === 'account' && user.value) {

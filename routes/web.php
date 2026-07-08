@@ -109,6 +109,8 @@ Route::domain(config('convoro.marketing_domain'))->group(function () use ($convo
     Route::get('/guidelines', [App\Http\Controllers\TrustController::class, 'legal'])->defaults('key', 'guidelines')->name('guidelines');
     // Documentation hub + guides.
     Route::get('/docs', [App\Http\Controllers\DocsController::class, 'index'])->name('docs');
+    // Legacy static-docs URLs (/docs/install.html etc.) -> pretty doc routes.
+    Route::get('/docs/{guide}.html', fn (string $guide) => redirect()->route('docs.show', ['guide' => $guide], 301));
     Route::get('/docs/{guide}', [App\Http\Controllers\DocsController::class, 'show'])->name('docs.show');
     $convoroStoreRoutes();
 });
@@ -148,6 +150,11 @@ Route::get('/api/gifs/search', [App\Http\Controllers\GifController::class, 'sear
 Route::post('/mail/inbound', [App\Http\Controllers\MailInboundController::class, 'inbound'])->middleware('throttle:120,1')->name('mail.inbound');
 Route::get('/llms.txt', [App\Http\Controllers\AiSpecController::class, 'llms'])->name('ai.llms');
 Route::get('/api/catalog', [App\Http\Controllers\StoreController::class, 'catalog'])->name('catalog');
+// Read-only marketing JSON for the WordPress site (Convoro Bridge plugin).
+Route::get('/api/marketing/docs', [App\Http\Controllers\MarketingApiController::class, 'docs'])->name('marketing.api.docs');
+Route::get('/api/marketing/docs/{guide}', [App\Http\Controllers\MarketingApiController::class, 'doc'])->name('marketing.api.doc');
+Route::get('/api/marketing/changelog', [App\Http\Controllers\MarketingApiController::class, 'changelog'])->name('marketing.api.changelog');
+Route::get('/api/marketing/status', [App\Http\Controllers\MarketingApiController::class, 'status'])->name('marketing.api.status');
 Route::get('/api/catalog/download/{product}', [App\Http\Controllers\StoreController::class, 'freeDownload'])->name('catalog.download');
 Route::post('/api/licenses/validate', [App\Http\Controllers\LicenseController::class, 'validateKey'])->name('licenses.validate');
 Route::get('/api/licenses/download', [App\Http\Controllers\LicenseController::class, 'download'])->name('licenses.download');
@@ -219,6 +226,7 @@ if (config('convoro.hosting')) {
 Route::get('/', [ForumController::class, 'index'])->name('forum.index');
 Route::get('/search', [App\Http\Controllers\SearchController::class, 'index'])->name('search');
 Route::get('/t/{topic}', [TopicController::class, 'show'])->name('topics.show');
+Route::get('/t/{topic}/posts', [TopicController::class, 'posts'])->name('topics.posts');
 // Live viewers — fresh "LIVE" badges driven by who's reading right now.
 Route::get('/api/live-topics', [App\Http\Controllers\ForumController::class, 'liveTopics'])->name('topics.live');
 Route::get('/api/presence', [App\Http\Controllers\ForumController::class, 'presence'])->name('users.presence');
@@ -244,7 +252,8 @@ Route::get('/welcome', fn () => Inertia::render('Welcome', [
 Route::get('/dashboard', fn () => redirect()->route('forum.index'))->middleware('auth')->name('dashboard');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/new', [TopicController::class, 'create'])->name('topics.create');
+    Route::get('/new', [TopicController::class, 'newRedirect'])->name('topics.create');
+    Route::get('/new/data', [TopicController::class, 'composerData'])->name('topics.composer-data');
     Route::post('/topics', [TopicController::class, 'store'])->name('topics.store');
 
     // POC ONLY — managed-hosting panel. Gated off in production (config flag).
@@ -455,6 +464,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('/system/update-status', [App\Http\Controllers\AdminController::class, 'updateStatus'])->name('system.update-status');
     Route::post('/system/check-updates', [App\Http\Controllers\AdminController::class, 'checkUpdates'])->name('system.check');
     Route::post('/system/update', [App\Http\Controllers\AdminController::class, 'applyUpdate'])->name('system.update');
+    Route::post('/system/update/reset', [App\Http\Controllers\AdminController::class, 'resetUpdate'])->name('system.update.reset');
 });
 
 Route::middleware('auth')->group(function () {

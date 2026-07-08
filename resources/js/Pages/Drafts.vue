@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import EmptyState from '@/Components/EmptyState.vue';
+import { useComposer } from '@/lib/composer';
 import { t as tr } from '@/lib/i18n';
 
 defineProps<{ drafts: { id: number; title: string; excerpt: string; scheduledAt: string | null; scheduledLabel: string | null; isScheduled: boolean; updated: string; hasPoll: boolean }[] }>();
+
+const composer = useComposer();
 
 function publish(id: number) {
   router.post(`/drafts/${id}/publish`, {}, { preserveScroll: true });
@@ -20,7 +23,7 @@ function remove(id: number) {
     <div class="mx-auto max-w-2xl px-4 py-8">
       <div class="mb-5 flex items-center justify-between">
         <h1 class="text-2xl font-extrabold tracking-tight text-ink">{{ tr('Drafts & scheduled') }}</h1>
-        <Link href="/new" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600">{{ tr('Start a topic') }}</Link>
+        <button type="button" class="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600" @click="composer.open()">{{ tr('Start a topic') }}</button>
       </div>
 
       <div v-if="drafts.length" class="space-y-3">
@@ -38,7 +41,7 @@ function remove(id: number) {
             </div>
           </div>
           <div class="mt-3 flex flex-wrap items-center gap-2 border-t border-line pt-3">
-            <Link :href="`/new?draft=${d.id}`" class="rounded-lg bg-surface-2 px-3 py-1.5 text-sm font-semibold text-ink hover:bg-appbg">{{ tr('Edit') }}</Link>
+            <button type="button" class="rounded-lg bg-surface-2 px-3 py-1.5 text-sm font-semibold text-ink hover:bg-appbg" @click="composer.open({ draftId: d.id })">{{ tr('Edit') }}</button>
             <button type="button" class="rounded-lg bg-primary px-3 py-1.5 text-sm font-semibold text-white hover:bg-primary-600" @click="publish(d.id)">{{ d.isScheduled ? tr('Publish now') : tr('Publish') }}</button>
             <button type="button" class="ml-auto rounded-lg px-3 py-1.5 text-sm font-semibold text-ink-2 hover:text-red-500" @click="remove(d.id)">{{ tr('Delete') }}</button>
           </div>
@@ -46,7 +49,7 @@ function remove(id: number) {
       </div>
 
       <EmptyState v-else icon="📝" :title="tr('No drafts yet')" :body="tr('Save a topic as a draft to finish later, or schedule it to publish at a set time.')">
-        <Link href="/new" class="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-600">{{ tr('Start a topic') }}</Link>
+        <button type="button" class="rounded-lg bg-primary px-5 py-2.5 text-sm font-bold text-white hover:bg-primary-600" @click="composer.open()">{{ tr('Start a topic') }}</button>
       </EmptyState>
     </div>
   </AppLayout>

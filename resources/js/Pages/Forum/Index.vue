@@ -9,11 +9,13 @@ import EmptyState from '@/Components/EmptyState.vue';
 import AskBar from '@/Components/AskBar.vue';
 import DonateWidget from '@/Components/DonateWidget.vue';
 import { useAuthModal } from '@/lib/authModal';
+import { useComposer } from '@/lib/composer';
 import { t as tr } from '@/lib/i18n';
 import { convoro } from '@/lib/convoro-ext';
 
 const pg = usePage();
 const auth = useAuthModal();
+const composer = useComposer();
 const loggedIn = computed(() => !!(pg.props as any).auth?.user);
 const askEnabled = computed(() => !!(pg.props as any).ask?.enabled);
 const donate = computed(() => (pg.props as any).donate || {});
@@ -24,7 +26,7 @@ const barHasCompose = computed(() => {
   return !!m?.enabled && (m?.tabs ?? []).includes('compose');
 });
 function startTopic() {
-  loggedIn.value ? router.visit('/new') : auth.open('register');
+  loggedIn.value ? composer.open() : auth.open('register');
 }
 
 // Search moved out of the header and surfaced prominently above the discussion list.
@@ -173,7 +175,7 @@ function isActiveTop(t: any) {
 </script>
 
 <template>
-  <Head title="Community" />
+  <Head :title="tr('Community')" />
   <AppLayout>
     <PrismHero v-if="hero" :config="hero" class="mb-5" />
 
