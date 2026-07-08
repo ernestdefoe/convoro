@@ -10,6 +10,17 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.44.0',
+            'date' => '2026-07-08',
+            'title' => 'Groups, permissions & private categories',
+            'items' => [
+                ['type' => 'new', 'text' => 'Admin → Groups & permissions is now a full permission grid: grant abilities to each group globally or per-category, give a group its own Font Awesome icon, and hand trusted members a Moderator role that sees only the moderation tools — no full admin access needed.'],
+                ['type' => 'new', 'text' => 'Private categories — restrict a category to chosen groups and it disappears from the feed, search, navigation, sitemap and feeds for everyone else.'],
+                ['type' => 'improved', 'text' => 'A member\'s group and primary-group badges now sit inline next to their name (as small icons, with the name on hover) instead of a pill under their avatar, and no longer appear on the discussion list.'],
+                ['type' => 'fixed', 'text' => 'The admin Marketplace lists installable extensions again — the catalog endpoint had moved when the marketing site became WordPress.'],
+            ],
+        ],
+        [
             'tag' => '1.43.8',
             'date' => '2026-07-08',
             'title' => 'A new way to post',

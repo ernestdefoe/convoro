@@ -2,7 +2,7 @@
 
 return [
     // Current installed version of the software.
-    'version' => '1.43.8',
+    'version' => '1.44.0',
 
     // Disk that stores user-uploaded media (post images, avatars — the
     // unbounded, disk-hogging content). Defaults to the local 'public' disk;
