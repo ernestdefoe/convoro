@@ -2,7 +2,7 @@
 
 return [
     // Current installed version of the software.
-    'version' => '1.43.7',
+    'version' => '1.43.8',
 
     // Disk that stores user-uploaded media (post images, avatars — the
     // unbounded, disk-hogging content). Defaults to the local 'public' disk;
@@ -20,7 +20,9 @@ return [
 
     // Optional URL returning JSON {"version": "x.y.z", "url": "...", "notes": "..."}
     // used by the admin "check for updates" feature. Null = update checks disabled.
-    'update_url' => env('CONVORO_UPDATE_URL', 'https://convoro.co/update-feed.json'),
+    // NB: convoro.co is now the WordPress marketing site, so the update feed is
+    // served from the flagship community forum instead (WP doesn't intercept it).
+    'update_url' => env('CONVORO_UPDATE_URL', 'https://community.convoro.co/update-feed.json'),
 
     // One-click public demo: /demo logs in this account (read it from env so it
     // can be disabled by leaving it blank). Pair with MAIL_MAILER=array on the demo.

@@ -10,6 +10,15 @@ return [
     // Most recent first. `tag` is the version, `date` is YYYY-MM-DD.
     'changelog' => [
         [
+            'tag' => '1.43.8',
+            'date' => '2026-07-08',
+            'title' => 'A new way to post',
+            'items' => [
+                ['type' => 'new', 'text' => 'Starting a topic now opens a composer that slides up over the page — set the title, pick tags from a searchable picker (each shown in its colour and icon), add a cover image and a poll, all without leaving what you were reading.'],
+                ['type' => 'improved', 'text' => 'The post editor gained a floating format toolbar — select any text to bold, italicise, underline, strike or link it inline.'],
+            ],
+        ],
+        [
             'tag' => '1.43.7',
             'date' => '2026-07-05',
             'title' => 'Cleaner profiles',
