@@ -2,6 +2,7 @@
 import { onBeforeUnmount, computed, ref } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 import { useEditor, EditorContent } from '@tiptap/vue-3';
+import { BubbleMenu } from '@tiptap/vue-3/menus';
 import StarterKit from '@tiptap/starter-kit';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
@@ -40,7 +41,8 @@ const editor = useEditor({
     CodeBlockLowlight.configure({ lowlight, defaultLanguage: 'plaintext' }),
     Spoiler,
     Underline,
-    Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer nofollow', target: '_blank' } }),
+    // inclusive: false → typing right after a link no longer continues the link style.
+    Link.extend({ inclusive: false }).configure({ openOnClick: false, autolink: true, HTMLAttributes: { rel: 'noopener noreferrer nofollow', target: '_blank' } }),
     Image,
     Placeholder.configure({ placeholder: t(props.placeholder) }),
     MentionText,
@@ -228,7 +230,10 @@ function onFile(e: Event) {
 
 <template>
   <div class="relative rounded-c border border-line bg-surface">
-    <div v-if="editor" class="flex flex-wrap items-center gap-0.5 rounded-t-c border-b border-line bg-surface-2 px-2.5 py-2">
+    <!-- translate="no": browser page-translation (e.g. Chrome on a Portuguese
+         DM thread) otherwise "translates" toolbar labels — "AI" is Portuguese
+         "aí" and renders as THERE. UI chrome is never content to translate. -->
+    <div v-if="editor" translate="no" class="flex flex-wrap items-center gap-0.5 rounded-t-c border-b border-line bg-surface-2 px-2.5 py-2">
       <button type="button" class="tb" :class="{ on: isActive('bold') }" :aria-label="t('Bold')" :data-tip="t('Bold (Ctrl+B)')" @click="editor.chain().focus().toggleBold().run()"><b>B</b></button>
       <button type="button" class="tb italic" :class="{ on: isActive('italic') }" :aria-label="t('Italic')" :data-tip="t('Italic (Ctrl+I)')" @click="editor.chain().focus().toggleItalic().run()">I</button>
       <button type="button" class="tb underline" :class="{ on: isActive('underline') }" :aria-label="t('Underline')" :data-tip="t('Underline (Ctrl+U)')" @click="editor.chain().focus().toggleUnderline().run()">U</button>
@@ -250,11 +255,11 @@ function onFile(e: Event) {
       <button type="button" class="tb" :aria-label="t('Insert image')" :data-tip="t('Insert image')" @click="pickImage">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-5-5L5 21" /></svg>
       </button>
-      <button v-if="gifsEnabled" type="button" class="tb w-auto px-1.5 text-[11px] font-bold" :aria-label="t('Insert GIF')" :data-tip="t('Insert GIF')" @click="openGifs">GIF</button>
+      <button v-if="gifsEnabled" type="button" class="tb w-auto px-1.5 text-[11px] font-bold" :aria-label="t('Insert GIF')" :data-tip="t('Insert GIF')" @click="openGifs">{{ t('GIF') }}</button>
       <template v-if="aiEnabled">
         <span class="mx-1.5 h-5 w-px bg-line"></span>
         <div class="relative">
-          <button type="button" class="tb w-auto gap-1 px-2 font-semibold text-primary" :class="{ on: aiMenuOpen }" :data-tip="t('AI writing assistant')" :disabled="aiBusy" @click="aiMenuOpen = !aiMenuOpen">
+          <button type="button" class="tb tb-wide px-2 font-semibold text-primary" :class="{ on: aiMenuOpen }" :data-tip="t('AI writing assistant')" :disabled="aiBusy" @click="aiMenuOpen = !aiMenuOpen">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3M12 18v3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M3 12h3M18 12h3M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1" /><circle cx="12" cy="12" r="3" /></svg>
             <span class="text-xs">{{ aiBusy ? t('Thinking…') : 'AI' }}</span>
           </button>
@@ -272,7 +277,18 @@ function onFile(e: Event) {
       <Slot name="composer:toolbar" :ctx="{ insertText, topicId: props.topicId, categoryId: props.categoryId }" />
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFile" />
     </div>
-    <EditorContent :editor="editor" class="min-h-[110px] px-4 py-3 text-ink" />
+    <!-- Floating bubble menu on text selection — complements the fixed toolbar above. -->
+    <BubbleMenu v-if="editor" :editor="editor" :update-delay="80">
+      <div translate="no" class="flex items-center gap-0.5 rounded-lg border border-line bg-surface px-1 py-1 shadow-xl">
+        <button type="button" class="tb" :class="{ on: isActive('bold') }" :data-tip="t('Bold')" @click="editor.chain().focus().toggleBold().run()"><b>B</b></button>
+        <button type="button" class="tb italic" :class="{ on: isActive('italic') }" :data-tip="t('Italic')" @click="editor.chain().focus().toggleItalic().run()">I</button>
+        <button type="button" class="tb underline" :class="{ on: isActive('underline') }" :data-tip="t('Underline')" @click="editor.chain().focus().toggleUnderline().run()">U</button>
+        <button type="button" class="tb line-through" :class="{ on: isActive('strike') }" :data-tip="t('Strikethrough')" @click="editor.chain().focus().toggleStrike().run()">S</button>
+        <span class="mx-0.5 h-4 w-px bg-line"></span>
+        <button type="button" class="tb" :class="{ on: isActive('link') }" :data-tip="t('Link')" @click="setLink">🔗</button>
+      </div>
+    </BubbleMenu>
+    <EditorContent :editor="editor" class="min-h-[110px] max-h-[40vh] overflow-y-auto px-4 py-3 text-ink" />
     <div v-if="uploading" class="pointer-events-none absolute bottom-2 left-3 inline-flex items-center gap-2 rounded-full bg-slate-900/80 px-3 py-1 text-xs font-semibold text-white">
       <span class="h-2 w-2 animate-pulse rounded-full bg-white"></span> {{ t('Uploading & converting to WebP…') }}
     </div>
@@ -324,6 +340,10 @@ function onFile(e: Event) {
 
 <style scoped>
 .tb { position: relative; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 7px; color: rgb(var(--c-text-2)); cursor: pointer; border: 0; background: none; font-size: 14px; }
+/* Toolbar buttons with an icon + text label: .tb's grid stacks two children
+   into two rows (label under icon, jutting out of the 30px row). Wide buttons
+   lay out as a single inline-flex row instead. */
+.tb-wide { display: inline-flex; align-items: center; gap: 4px; width: auto; }
 .tb:hover { background: rgb(var(--c-surface)); box-shadow: 0 0 0 1px rgb(var(--c-border)); }
 .tb[data-tip]:hover::after {
   content: attr(data-tip);
@@ -349,4 +369,8 @@ function onFile(e: Event) {
 :deep(.prose-q h2) { font-size: 1.3em; font-weight: 700; margin: 4px 0 8px; }
 :deep(.prose-q a) { color: rgb(var(--c-primary)); text-decoration: underline; }
 :deep(.prose-q img) { max-width: 100%; height: auto; border-radius: 10px; border: 1px solid rgb(var(--c-border)); margin: 4px 0; }
+/* Cap images INSIDE the editor so inserting several doesn't blow up the
+   composer height (which used to push the Send button off-screen). The editor
+   area itself also scrolls (max-h on EditorContent). */
+:deep(.ProseMirror img) { max-width: 100%; max-height: 200px; width: auto; height: auto; border-radius: 10px; border: 1px solid rgb(var(--c-border)); margin: 4px 6px 4px 0; display: inline-block; vertical-align: top; }
 </style>
