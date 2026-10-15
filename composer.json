@@ -7,7 +7,7 @@
     "license": "MIT",
     "require": {
         "php": "^8.3",
-        "enshrined/svg-sanitize": "^0.22.0",
+        "enshrined/svg-sanitize": "^1.0",
         "ezyang/htmlpurifier": "^4.19",
         "inertiajs/inertia-laravel": "^2.0",
         "intervention/image": "^4.1",

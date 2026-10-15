@@ -38,5 +38,8 @@
         "lowlight": "^3.3.0",
         "pusher-js": "^8.5.0",
         "vuedraggable": "^4.1.0"
+    },
+    "overrides": {
+        "postcss-selector-parser": "^7.1.6"
     }
 }
